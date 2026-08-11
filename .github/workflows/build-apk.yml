@@ -1,0 +1,163 @@
+name: 🤖 Build APK Android
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Tipo de build'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+
+# Cancela runs anteriores em andamento para a mesma branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build APK (${{ github.event.inputs.build_type || 'debug' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: 📥 Checkout do repositório
+        uses: actions/checkout@v4
+
+      # ── 2. Node 20 ───────────────────────────────────────────────────────────
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # ── 3. Java 17 ───────────────────────────────────────────────────────────
+      - name: ☕ Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # ── 4. Android SDK ───────────────────────────────────────────────────────
+      - name: 🤖 Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # ── 5. Cache Gradle ──────────────────────────────────────────────────────
+      - name: 📦 Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # ── 6. Cache node_modules ────────────────────────────────────────────────
+      - name: 📦 Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # ── 7. Instalar dependências ─────────────────────────────────────────────
+      - name: 📦 Instalar dependências npm
+        run: npm ci
+
+      # ── 8. Build Vite → dist/ ────────────────────────────────────────────────
+      - name: 🔨 Build web (Vite)
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL || '' }}
+
+      # ── 9. Verificar se pasta android/ existe ────────────────────────────────
+      - name: 🔍 Verificar pasta android/
+        id: check_android
+        run: |
+          if [ -d "android" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      # ── 10. Adicionar plataforma Android (só se não existir) ─────────────────
+      - name: ➕ Capacitor add android
+        if: steps.check_android.outputs.exists == 'false'
+        run: npx cap add android
+
+      # ── 11. Capacitor sync ───────────────────────────────────────────────────
+      - name: 🔄 Capacitor sync
+        run: npx cap sync android
+
+      # ── 12. Permissão Gradle ─────────────────────────────────────────────────
+      - name: 🔐 Permissão gradlew
+        run: chmod +x android/gradlew
+
+      # ── 13a. Build DEBUG ─────────────────────────────────────────────────────
+      - name: 🛠️ Build APK Debug
+        if: ${{ github.event.inputs.build_type != 'release' }}
+        run: |
+          cd android
+          ./gradlew assembleDebug \
+            --no-daemon \
+            --stacktrace \
+            -Dorg.gradle.jvmargs="-Xmx2048m"
+
+      # ── 13b. Build RELEASE (requer keystore) ─────────────────────────────────
+      - name: 🔏 Build APK Release
+        if: ${{ github.event.inputs.build_type == 'release' }}
+        run: |
+          cd android
+          ./gradlew assembleRelease \
+            --no-daemon \
+            --stacktrace \
+            -Dorg.gradle.jvmargs="-Xmx2048m"
+        env:
+          KEYSTORE_FILE:    ${{ secrets.KEYSTORE_FILE }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS:        ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD:     ${{ secrets.KEY_PASSWORD }}
+
+      # ── 14. Localizar APK gerado ─────────────────────────────────────────────
+      - name: 🔍 Localizar APK
+        id: find_apk
+        run: |
+          APK=$(find android/app/build/outputs/apk -name "*.apk" | head -1)
+          echo "path=$APK" >> $GITHUB_OUTPUT
+          echo "APK encontrado: $APK"
+          ls -lh "$APK"
+
+      # ── 15. Upload do APK ────────────────────────────────────────────────────
+      - name: 📤 Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: GuiaDOA-${{ github.event.inputs.build_type || 'debug' }}-v${{ github.run_number }}
+          path: ${{ steps.find_apk.outputs.path }}
+          retention-days: 30
+          if-no-files-found: error
+
+      # ── 16. Sumário no GitHub ────────────────────────────────────────────────
+      - name: 📋 Sumário do build
+        if: always()
+        run: |
+          echo "## 🤖 Build APK — Guia DOA" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Campo | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Versão** | \`$(node -p "require('./package.json').version")\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Tipo** | \`${{ github.event.inputs.build_type || 'debug' }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Run** | \`#${{ github.run_number }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> APK disponível na aba **Artifacts** acima por 30 dias." >> $GITHUB_STEP_SUMMARY

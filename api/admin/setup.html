@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia DOA — Setup</title>
+<style>
+  :root {
+    --navy:#1C3A5E; --navy2:#2A4C72; --navy3:#12284A;
+    --gold:#C8A84A; --gold2:#A88530; --gold3:#8A6818; --gold-pale:#F0DFA0;
+    --bg:#E8E0CC; --bg2:#DDD5BE; --card:#F2EADA; --card2:#EAE0C8;
+    --dark:#3E2F1C; --mid:#6E5A3C; --muted:#9A7D56; --faint:#B8A07A; --cream:#F8F2E0;
+    --red:#A83C2C; --red2:#C85050; --green:#5A8A5C; --green2:#78AA7A; --blue:#3B5C8C;
+    --ok-bg:rgba(90,138,92,0.12); --ok-bd:rgba(90,138,92,0.35);
+    --err-bg:rgba(168,60,44,0.1); --err-bd:rgba(168,60,44,0.35);
+    --warn-bg:rgba(200,168,74,0.12); --warn-bd:rgba(200,168,74,0.4);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--dark);min-height:100vh;}
+
+  /* ── TOPBAR ── */
+  .topbar{background:linear-gradient(135deg,var(--navy),var(--navy2));padding:0 18px;height:52px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:2px solid var(--gold3);position:sticky;top:0;z-index:100;
+    box-shadow:0 2px 16px rgba(0,0,0,0.35);}
+  .topbar-brand{display:flex;align-items:center;gap:10px;}
+  .topbar-brand .shield{font-size:1.3rem;filter:drop-shadow(0 1px 3px rgba(200,168,74,0.4));}
+  .topbar-brand .name{color:var(--gold);font-weight:800;font-size:0.75rem;letter-spacing:3px;text-transform:uppercase;}
+  .topbar-brand .sep{color:rgba(200,168,74,0.4);font-size:0.8rem;margin:0 2px;}
+  .topbar-brand .page{color:rgba(248,242,224,0.55);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;}
+  .topbar-link{color:rgba(248,242,224,0.55);font-size:0.72rem;text-decoration:none;font-weight:700;
+    border:1px solid rgba(200,168,74,0.2);padding:4px 10px;border-radius:6px;letter-spacing:0.5px;
+    transition:all 0.15s;}
+  .topbar-link:hover{color:var(--gold);border-color:rgba(200,168,74,0.5);}
+
+  /* ── LAYOUT ── */
+  .page-wrap{max-width:820px;margin:0 auto;padding:20px 16px 48px;}
+
+  /* ── HERO ── */
+  .setup-hero{text-align:center;padding:28px 16px 22px;position:relative;}
+  .setup-hero::after{content:'';display:block;height:1px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    opacity:0.5;margin-top:22px;}
+  .hero-icon{font-size:2.8rem;filter:drop-shadow(0 2px 8px rgba(200,168,74,0.3));margin-bottom:8px;}
+  .hero-title{font-size:1.1rem;letter-spacing:4px;color:var(--navy);text-transform:uppercase;font-weight:800;}
+  .hero-sub{font-size:0.75rem;color:var(--muted);letter-spacing:1px;margin-top:4px;}
+
+  /* ── CARDS ── */
+  .card{background:var(--card);border:1px solid rgba(200,168,74,0.35);border-radius:14px;
+    overflow:hidden;box-shadow:0 2px 12px rgba(62,47,28,0.1);margin-bottom:16px;}
+  .card-header{background:linear-gradient(180deg,var(--card2),var(--card));padding:11px 16px;
+    border-bottom:1.5px solid rgba(200,168,74,0.3);display:flex;align-items:center;
+    justify-content:space-between;gap:10px;}
+  .card-header-left{display:flex;align-items:center;gap:10px;}
+  .card-icon{font-size:1.1rem;line-height:1;}
+  .card-title{font-size:0.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--dark);font-weight:800;}
+  .card-badge{font-size:0.6rem;font-weight:900;padding:2px 8px;border-radius:6px;letter-spacing:0.5px;}
+  .badge-ok{background:var(--ok-bg);border:1px solid var(--ok-bd);color:var(--green);}
+  .badge-warn{background:var(--warn-bg);border:1px solid var(--warn-bd);color:var(--gold2);}
+  .badge-err{background:var(--err-bg);border:1px solid var(--err-bd);color:var(--red);}
+  .card-body{padding:16px;}
+
+  /* ── DB STATUS ── */
+  .db-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+  @media(min-width:520px){.db-grid{grid-template-columns:repeat(4,1fr);}}
+  .db-stat{background:var(--card2);border:1px solid rgba(200,168,74,0.28);border-radius:10px;
+    padding:10px 8px;text-align:center;border-bottom:3px solid var(--gold);}
+  .db-stat .val{font-size:1.6rem;font-weight:900;color:var(--gold3);line-height:1;}
+  .db-stat .lbl{font-size:0.58rem;font-weight:800;letter-spacing:1.5px;color:var(--muted);
+    margin-top:3px;text-transform:uppercase;}
+  .db-info-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .db-info-chip{background:rgba(28,58,94,0.08);border:1px solid rgba(28,58,94,0.18);
+    border-radius:6px;padding:5px 10px;font-size:0.7rem;color:var(--navy);font-weight:700;}
+  .db-info-chip span{color:var(--muted);font-weight:600;margin-right:4px;}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;}
+  .dot-ok{background:var(--green);}
+  .dot-err{background:var(--red);}
+
+  /* ── FORM ── */
+  .field{margin-bottom:14px;}
+  label{display:block;font-size:0.63rem;font-weight:800;letter-spacing:1.5px;
+    color:var(--muted);margin-bottom:5px;text-transform:uppercase;}
+  input{width:100%;font-family:inherit;font-size:0.88rem;font-weight:600;
+    background:#F8F4E8;color:var(--dark);border:1.5px solid var(--gold);
+    border-radius:8px;padding:8px 12px;outline:none;transition:border-color 0.2s;}
+  input:focus{border-color:var(--gold3);box-shadow:0 0 0 3px rgba(200,168,74,0.18);}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:420px){.field-row{grid-template-columns:1fr;}}
+
+  /* ── BUTTONS ── */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    font-family:inherit;font-weight:800;font-size:0.82rem;border:none;
+    border-radius:8px;padding:9px 18px;cursor:pointer;transition:all 0.15s;letter-spacing:0.5px;}
+  .btn:disabled{opacity:0.45;cursor:not-allowed;}
+  .btn:not(:disabled):active{transform:scale(0.97);}
+  .btn-gold{background:linear-gradient(180deg,#C8A84A,#A88530);color:#FFF8EE;
+    border:1px solid #8A6818;box-shadow:0 2px 6px rgba(62,47,28,0.2);}
+  .btn-gold:not(:disabled):hover{background:linear-gradient(180deg,#A88530,#8A6818);}
+  .btn-navy{background:linear-gradient(180deg,#4A6FA5,#3B5C8C);color:#FFF8EE;border:1px solid #2A4470;}
+  .btn-navy:not(:disabled):hover{background:linear-gradient(180deg,#3B5C8C,#2A4470);}
+  .btn-red{background:linear-gradient(180deg,#C85050,#A83C2C);color:#fff;border:1px solid #6A1C0C;}
+  .btn-red:not(:disabled):hover{background:linear-gradient(180deg,#A83C2C,#8A2C1C);}
+  .btn-green{background:linear-gradient(180deg,#78AA7A,#5A8A5C);color:#fff;border:1px solid #3A6A3C;}
+  .btn-ghost{background:var(--bg2);color:var(--mid);border:1px solid rgba(200,168,74,0.35);}
+  .btn-ghost:not(:disabled):hover{background:var(--card2);border-color:var(--gold);}
+  .btn-sm{padding:6px 12px;font-size:0.75rem;}
+  .btn-full{width:100%;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+
+  /* ── MODO SELECTOR ── */
+  .modo-group{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .modo-opt{flex:1;min-width:140px;}
+  .modo-opt input[type=radio]{display:none;}
+  .modo-opt label{display:flex;flex-direction:column;gap:3px;padding:10px 12px;
+    border:1.5px solid rgba(200,168,74,0.3);border-radius:10px;cursor:pointer;
+    background:var(--card2);transition:all 0.15s;font-size:0.78rem;font-weight:800;
+    color:var(--mid);letter-spacing:0.5px;text-transform:none;}
+  .modo-opt label .sub{font-size:0.63rem;font-weight:600;color:var(--muted);letter-spacing:0;}
+  .modo-opt input:checked + label{border-color:var(--gold);background:rgba(200,168,74,0.12);
+    color:var(--dark);}
+  .modo-opt input:checked + label .sub{color:var(--gold2);}
+
+  /* ── PROGRESS LOG ── */
+  .progress-wrap{display:none;margin-top:14px;}
+  .progress-wrap.visible{display:block;}
+  .progress-bar-bg{background:rgba(62,47,28,0.12);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px;}
+  .progress-bar{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--gold2),var(--gold));
+    width:0%;transition:width 0.25s;}
+  .progress-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .pstat{font-size:0.68rem;font-weight:800;padding:3px 8px;border-radius:5px;}
+  .pstat-ins{background:var(--ok-bg);color:var(--green);border:1px solid var(--ok-bd);}
+  .pstat-upd{background:rgba(59,92,140,0.12);color:var(--blue);border:1px solid rgba(59,92,140,0.3);}
+  .pstat-skip{background:rgba(154,125,86,0.12);color:var(--muted);border:1px solid rgba(154,125,86,0.3);}
+  .log-box{background:var(--navy3);border-radius:10px;padding:10px 12px;
+    max-height:220px;overflow-y:auto;font-family:'Consolas',monospace;font-size:0.72rem;
+    line-height:1.6;border:1px solid rgba(200,168,74,0.15);}
+  .log-box::-webkit-scrollbar{width:4px;}
+  .log-box::-webkit-scrollbar-track{background:transparent;}
+  .log-box::-webkit-scrollbar-thumb{background:rgba(200,168,74,0.3);border-radius:2px;}
+  .log-ins{color:#78DD7A;}
+  .log-upd{color:#78AAEE;}
+  .log-skip{color:#9A7D56;}
+  .log-warn{color:#F0C040;}
+  .log-err{color:#EE6666;}
+  .log-done{color:#C8A84A;font-weight:bold;}
+  .log-info{color:#AAD0EE;}
+
+  /* ── ALERT MESSAGES ── */
+  .alert{padding:10px 14px;border-radius:8px;font-size:0.78rem;font-weight:700;
+    margin-top:12px;display:none;align-items:flex-start;gap:8px;line-height:1.5;}
+  .alert.visible{display:flex;}
+  .alert-ok{background:var(--ok-bg);border:1px solid var(--ok-bd);color:var(--green);}
+  .alert-err{background:var(--err-bg);border:1px solid var(--err-bd);color:var(--red);}
+  .alert-warn{background:var(--warn-bg);border:1px solid var(--warn-bd);color:var(--gold2);}
+  .alert-icon{font-size:1rem;flex-shrink:0;margin-top:1px;}
+
+  /* ── CONFIRM OVERLAY ── */
+  .overlay{display:none;position:fixed;inset:0;background:rgba(18,40,74,0.7);z-index:200;
+    align-items:center;justify-content:center;padding:16px;}
+  .overlay.open{display:flex;}
+  .confirm-box{background:var(--card);border:1.5px solid var(--gold);border-radius:16px;
+    padding:24px 20px;max-width:340px;width:100%;box-shadow:0 12px 48px rgba(0,0,0,0.4);}
+  .confirm-box h3{font-size:0.85rem;letter-spacing:2px;text-transform:uppercase;
+    color:var(--red);margin-bottom:10px;}
+  .confirm-box p{font-size:0.8rem;color:var(--mid);line-height:1.6;margin-bottom:18px;}
+  .confirm-btns{display:flex;gap:8px;justify-content:flex-end;}
+
+  /* ── SECTION DIVIDER ── */
+  .section-hint{font-size:0.68rem;color:var(--muted);font-weight:600;
+    margin-bottom:10px;line-height:1.5;padding:8px 10px;
+    background:rgba(200,168,74,0.06);border-left:3px solid rgba(200,168,74,0.4);
+    border-radius:0 6px 6px 0;}
+
+  /* ── QUICK SETUP CARD ── */
+  .quick-card{background:linear-gradient(135deg,rgba(28,58,94,0.06),rgba(200,168,74,0.06));
+    border:1.5px solid rgba(200,168,74,0.4);border-radius:14px;padding:18px;
+    margin-bottom:16px;position:relative;overflow:hidden;}
+  .quick-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--navy2),var(--gold),var(--navy2));}
+  .quick-title{font-size:0.8rem;letter-spacing:2px;text-transform:uppercase;
+    font-weight:900;color:var(--navy);margin-bottom:4px;}
+  .quick-desc{font-size:0.72rem;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+  .quick-checks{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+  .qcheck{font-size:0.68rem;font-weight:800;padding:4px 10px;border-radius:6px;
+    background:var(--ok-bg);border:1px solid var(--ok-bd);color:var(--green);}
+
+  /* ── SEPARADOR ── */
+  hr.divider{border:none;height:1px;background:linear-gradient(90deg,transparent,rgba(200,168,74,0.4),transparent);
+    margin:6px 0 14px;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="topbar-brand">
+    <span class="shield">🛡️</span>
+    <span class="name">Guia DOA</span>
+    <span class="sep">›</span>
+    <span class="page">Setup</span>
+  </div>
+  <a href="/admin" class="topbar-link">← Admin</a>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- HERO -->
+  <div class="setup-hero">
+    <div class="hero-icon">⚙️</div>
+    <div class="hero-title">Configuração Inicial</div>
+    <div class="hero-sub">Importe dados e configure o banco sem usar o terminal</div>
+  </div>
+
+  <!-- ── BANCO DE DADOS ── -->
+  <div class="card" id="card-db">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-icon">🗄️</span>
+        <span class="card-title">Banco de Dados</span>
+      </div>
+      <span class="card-badge badge-warn" id="db-badge">Carregando…</span>
+    </div>
+    <div class="card-body">
+      <div class="db-grid">
+        <div class="db-stat"><div class="val" id="stat-tropas">—</div><div class="lbl">Tropas</div></div>
+        <div class="db-stat"><div class="val" id="stat-especiais">—</div><div class="lbl">Especiais</div></div>
+        <div class="db-stat"><div class="val" id="stat-niveis">—</div><div class="lbl">Níveis</div></div>
+        <div class="db-stat"><div class="val" id="stat-users">—</div><div class="lbl">Usuários</div></div>
+      </div>
+      <div class="db-info-row" id="db-info-row">
+        <div class="db-info-chip"><span>Host</span><span id="db-host">…</span></div>
+        <div class="db-info-chip"><span>DB</span><span id="db-name">…</span></div>
+        <div class="db-info-chip"><span>Estado</span>
+          <span class="dot" id="db-dot"></span><span id="db-estado">…</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── IMPORTAÇÃO RÁPIDA ── -->
+  <div class="quick-card">
+    <div class="quick-title">⚡ Importação Completa</div>
+    <div class="quick-desc">Importa todos os dados disponíveis de uma vez: tropas especiais, tropas treináveis e todos os níveis de experiência. Itens já existentes serão pulados.</div>
+    <div class="quick-checks">
+      <span class="qcheck">✓ 25 Tropas Especiais</span>
+      <span class="qcheck">✓ 28 Tropas Treináveis</span>
+      <span class="qcheck">✓ 60 Níveis de XP</span>
+    </div>
+    <button class="btn btn-gold" id="btn-importar-tudo" onclick="importarTudo()">
+      ⚡ Importar Tudo Agora
+    </button>
+    <div class="progress-wrap" id="prog-tudo">
+      <div class="progress-bar-bg"><div class="progress-bar" id="bar-tudo"></div></div>
+      <div class="progress-stats" id="stats-tudo"></div>
+      <div class="log-box" id="log-tudo"></div>
+    </div>
+  </div>
+
+  <!-- ── USUÁRIO ADMIN ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-icon">👤</span>
+        <span class="card-title">Usuário Admin</span>
+      </div>
+      <span class="card-badge" id="badge-user">—</span>
+    </div>
+    <div class="card-body">
+      <div class="section-hint">
+        Define as credenciais de acesso ao painel. Se já existe um usuário, marque "Recriar" para substituí-lo.
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Usuário</label>
+          <input type="text" id="inp-usuario" placeholder="admin" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Senha</label>
+          <input type="password" id="inp-senha" placeholder="mínimo 6 caracteres">
+        </div>
+      </div>
+      <div class="field">
+        <label>Confirmar Senha</label>
+        <input type="password" id="inp-confirma" placeholder="repita a senha">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="salvarUsuario(false)">💾 Salvar Usuário</button>
+        <button class="btn btn-ghost btn-sm" onclick="salvarUsuario(true)">↺ Recriar (apaga o atual)</button>
+      </div>
+      <div class="alert" id="alert-user"></div>
+    </div>
+  </div>
+
+  <!-- ── TROPAS ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-icon">⚔️</span>
+        <span class="card-title">Tropas</span>
+      </div>
+      <span class="card-badge badge-warn" id="badge-tropas">—</span>
+    </div>
+    <div class="card-body">
+      <div class="section-hint">
+        53 tropas disponíveis: 25 especiais + 28 treináveis. Escolha como importar abaixo.
+      </div>
+      <div class="modo-group">
+        <div class="modo-opt">
+          <input type="radio" name="modo-tropas" id="mt-novas" value="novas" checked>
+          <label for="mt-novas">
+            Apenas Faltantes
+            <span class="sub">Pula as que já existem no banco</span>
+          </label>
+        </div>
+        <div class="modo-opt">
+          <input type="radio" name="modo-tropas" id="mt-tudo" value="tudo">
+          <label for="mt-tudo">
+            Reimportar Tudo
+            <span class="sub">Apaga e recria toda a coleção</span>
+          </label>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-navy" onclick="importarTropas()">⚔️ Importar Tropas</button>
+        <button class="btn btn-red btn-sm" onclick="confirmarLimpar('tropas')">🗑 Limpar Coleção</button>
+      </div>
+      <div class="progress-wrap" id="prog-tropas">
+        <hr class="divider">
+        <div class="progress-bar-bg"><div class="progress-bar" id="bar-tropas"></div></div>
+        <div class="progress-stats" id="stats-tropas"></div>
+        <div class="log-box" id="log-tropas"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── NÍVEIS ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-icon">📊</span>
+        <span class="card-title">Níveis de Experiência</span>
+      </div>
+      <span class="card-badge badge-warn" id="badge-niveis">—</span>
+    </div>
+    <div class="card-body">
+      <div class="section-hint">
+        60 níveis (1–60) com valores de XP. Níveis sem XP conhecido são importados como nulos.
+      </div>
+      <div class="modo-group">
+        <div class="modo-opt">
+          <input type="radio" name="modo-niveis" id="mn-novas" value="novas" checked>
+          <label for="mn-novas">
+            Apenas Faltantes
+            <span class="sub">Pula os que já existem no banco</span>
+          </label>
+        </div>
+        <div class="modo-opt">
+          <input type="radio" name="modo-niveis" id="mn-tudo" value="tudo">
+          <label for="mn-tudo">
+            Reimportar Tudo
+            <span class="sub">Apaga e recria toda a coleção</span>
+          </label>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-navy" onclick="importarNiveis()">📊 Importar Níveis</button>
+        <button class="btn btn-red btn-sm" onclick="confirmarLimpar('niveis')">🗑 Limpar Coleção</button>
+      </div>
+      <div class="progress-wrap" id="prog-niveis">
+        <hr class="divider">
+        <div class="progress-bar-bg"><div class="progress-bar" id="bar-niveis"></div></div>
+        <div class="progress-stats" id="stats-niveis"></div>
+        <div class="log-box" id="log-niveis"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<!-- CONFIRM OVERLAY -->
+<div class="overlay" id="overlay-confirm">
+  <div class="confirm-box">
+    <h3>⚠️ Confirmar Exclusão</h3>
+    <p id="confirm-msg">Tem certeza? Esta ação não pode ser desfeita.</p>
+    <div class="confirm-btns">
+      <button class="btn btn-ghost btn-sm" onclick="fecharConfirm()">Cancelar</button>
+      <button class="btn btn-red btn-sm" id="btn-confirm-ok" onclick="executarLimpar()">Apagar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api/setup';
+let limparAlvo = null;
+
+// ── STATUS ────────────────────────────────────────────────────────────────────
+async function carregarStatus() {
+  try {
+    const r = await fetch(`${API}/status`);
+    const d = await r.json();
+
+    document.getElementById('stat-tropas').textContent   = d.colecoes.tropas.total;
+    document.getElementById('stat-especiais').textContent = d.colecoes.tropas.especiais;
+    document.getElementById('stat-niveis').textContent    = d.colecoes.niveis.total;
+    document.getElementById('stat-users').textContent     = d.colecoes.usuarios.total;
+    document.getElementById('db-host').textContent        = d.db.host;
+    document.getElementById('db-name').textContent        = d.db.nome;
+    document.getElementById('db-estado').textContent      = d.db.estado;
+
+    const dot = document.getElementById('db-dot');
+    const badge = document.getElementById('db-badge');
+    if (d.db.estadoCodigo === 1) {
+      dot.className = 'dot dot-ok';
+      badge.textContent = 'Conectado';
+      badge.className = 'card-badge badge-ok';
+    } else {
+      dot.className = 'dot dot-err';
+      badge.textContent = 'Desconectado';
+      badge.className = 'card-badge badge-err';
+    }
+
+    // Badges tropas
+    const bt = document.getElementById('badge-tropas');
+    const totalT = d.colecoes.tropas.total;
+    const dispT  = d.colecoes.tropas.disponiveis;
+    if (totalT === 0) {
+      bt.textContent = 'Vazio'; bt.className = 'card-badge badge-err';
+    } else if (totalT < dispT) {
+      bt.textContent = `${totalT}/${dispT} importadas`; bt.className = 'card-badge badge-warn';
+    } else {
+      bt.textContent = `${totalT} importadas`; bt.className = 'card-badge badge-ok';
+    }
+
+    // Badges níveis
+    const bn = document.getElementById('badge-niveis');
+    const totalN = d.colecoes.niveis.total;
+    const dispN  = d.colecoes.niveis.disponiveis;
+    if (totalN === 0) {
+      bn.textContent = 'Vazio'; bn.className = 'card-badge badge-err';
+    } else if (totalN < dispN) {
+      bn.textContent = `${totalN}/${dispN} importados`; bn.className = 'card-badge badge-warn';
+    } else {
+      bn.textContent = `${totalN} importados`; bn.className = 'card-badge badge-ok';
+    }
+
+    // Badge usuário
+    const bu = document.getElementById('badge-user');
+    if (d.colecoes.usuarios.total > 0) {
+      bu.textContent = 'Configurado'; bu.className = 'card-badge badge-ok';
+    } else {
+      bu.textContent = 'Sem usuário'; bu.className = 'card-badge badge-err';
+    }
+
+  } catch(e) {
+    document.getElementById('db-badge').textContent = 'Erro';
+    document.getElementById('db-badge').className = 'card-badge badge-err';
+  }
+}
+
+// ── SSE HELPER ───────────────────────────────────────────────────────────────
+function iniciarSSE(url, { barId, logId, statsId, progId, total, onDone }) {
+  const prog  = document.getElementById(progId);
+  const bar   = document.getElementById(barId);
+  const log   = document.getElementById(logId);
+  const stats = document.getElementById(statsId);
+
+  prog.classList.add('visible');
+  log.innerHTML  = '';
+  stats.innerHTML = '';
+  bar.style.width = '0%';
+
+  let contagem = 0;
+  const counts = { inseridos: 0, atualizados: 0, pulados: 0 };
+
+  const es = new EventSource(url);
+  es.onmessage = (ev) => {
+    const d = JSON.parse(ev.data);
+
+    if (d.type === 'inicio') {
+      adicionarLog(log, 'info', `▶ Iniciando — ${d.total} itens (modo: ${d.modo})`);
+    }
+    else if (d.type === 'item') {
+      contagem++;
+      const pct = Math.round((contagem / total) * 100);
+      bar.style.width = pct + '%';
+
+      if (d.status === 'inserido')   { counts.inseridos++;   adicionarLog(log, 'ins',  `+ ${d.nome || 'Nível ' + d.nivel}`); }
+      if (d.status === 'atualizado') { counts.atualizados++; adicionarLog(log, 'upd',  `↺ ${d.nome || 'Nível ' + d.nivel}`); }
+      if (d.status === 'pulado')     { counts.pulados++;     /* silencioso */ }
+
+      atualizarStats(stats, counts);
+    }
+    else if (d.type === 'log') {
+      adicionarLog(log, d.nivel, d.texto);
+    }
+    else if (d.type === 'concluido') {
+      bar.style.width = '100%';
+      const ins = d.inseridas ?? d.inseridos ?? 0;
+      const upd = d.atualizadas ?? d.atualizados ?? 0;
+      const pul = d.puladas ?? d.pulados ?? 0;
+      adicionarLog(log, 'done', `✓ Concluído — ${ins} inseridos · ${upd} atualizados · ${pul} pulados · Total: ${d.totalFinal}`);
+      es.close();
+      carregarStatus();
+      if (onDone) onDone();
+    }
+    else if (d.type === 'erro') {
+      adicionarLog(log, 'err', `✕ Erro: ${d.mensagem}`);
+      es.close();
+    }
+  };
+  es.onerror = () => {
+    adicionarLog(log, 'err', '✕ Conexão perdida.');
+    es.close();
+  };
+}
+
+function adicionarLog(box, tipo, texto) {
+  const span = document.createElement('span');
+  span.className = `log-${tipo}`;
+  span.textContent = texto + '\n';
+  box.appendChild(span);
+  box.scrollTop = box.scrollHeight;
+}
+
+function atualizarStats(el, c) {
+  el.innerHTML = `
+    <span class="pstat pstat-ins">✓ ${c.inseridos} inseridos</span>
+    <span class="pstat pstat-upd">↺ ${c.atualizados} atualizados</span>
+    <span class="pstat pstat-skip">⊘ ${c.pulados} pulados</span>
+  `;
+}
+
+// ── IMPORTAR TROPAS ────────────────────────────────────────────────────────────
+function importarTropas() {
+  const modo = document.querySelector('input[name="modo-tropas"]:checked').value;
+  iniciarSSE(`${API}/importar/tropas?modo=${modo}`, {
+    barId: 'bar-tropas', logId: 'log-tropas',
+    statsId: 'stats-tropas', progId: 'prog-tropas',
+    total: 53,
+  });
+}
+
+// ── IMPORTAR NÍVEIS ────────────────────────────────────────────────────────────
+function importarNiveis() {
+  const modo = document.querySelector('input[name="modo-niveis"]:checked').value;
+  iniciarSSE(`${API}/importar/niveis?modo=${modo}`, {
+    barId: 'bar-niveis', logId: 'log-niveis',
+    statsId: 'stats-niveis', progId: 'prog-niveis',
+    total: 60,
+  });
+}
+
+// ── IMPORTAR TUDO ─────────────────────────────────────────────────────────────
+let tudoPendente = 0;
+function importarTudo() {
+  const btn = document.getElementById('btn-importar-tudo');
+  btn.disabled = true;
+  tudoPendente = 2;
+
+  document.getElementById('prog-tudo').classList.add('visible');
+  const log = document.getElementById('log-tudo');
+  log.innerHTML = '';
+
+  function fazerNiveis() {
+    iniciarSSE(`${API}/importar/niveis?modo=novas`, {
+      barId: 'bar-tudo', logId: 'log-tudo',
+      statsId: 'stats-tudo', progId: 'prog-tudo',
+      total: 60,
+      onDone: () => { btn.disabled = false; }
+    });
+  }
+
+  iniciarSSE(`${API}/importar/tropas?modo=novas`, {
+    barId: 'bar-tudo', logId: 'log-tudo',
+    statsId: 'stats-tudo', progId: 'prog-tudo',
+    total: 53,
+    onDone: fazerNiveis
+  });
+}
+
+// ── SALVAR USUÁRIO ─────────────────────────────────────────────────────────────
+async function salvarUsuario(forcar) {
+  const usuario = document.getElementById('inp-usuario').value.trim();
+  const senha   = document.getElementById('inp-senha').value;
+  const confirma= document.getElementById('inp-confirma').value;
+  const alertEl = document.getElementById('alert-user');
+
+  const show = (tipo, msg) => {
+    alertEl.className = `alert alert-${tipo} visible`;
+    alertEl.innerHTML = `<span class="alert-icon">${tipo==='ok'?'✓':tipo==='err'?'✕':'⚠'}</span><span>${msg}</span>`;
+  };
+
+  if (!usuario || !senha) return show('err', 'Preencha usuário e senha.');
+  if (usuario.length < 3)  return show('err', 'Usuário deve ter ao menos 3 caracteres.');
+  if (senha.length < 6)    return show('err', 'Senha deve ter ao menos 6 caracteres.');
+  if (senha !== confirma)  return show('err', 'Senhas não coincidem.');
+
+  try {
+    const r = await fetch(`${API}/usuario`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario, senha, forcar }),
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      if (d.existe && !forcar)
+        return show('warn', `Usuário já existe. Clique em "Recriar" para substituir.`);
+      return show('err', d.erro || 'Erro ao salvar.');
+    }
+    show('ok', d.mensagem || 'Usuário salvo com sucesso!');
+    document.getElementById('inp-usuario').value = '';
+    document.getElementById('inp-senha').value   = '';
+    document.getElementById('inp-confirma').value = '';
+    carregarStatus();
+  } catch(e) {
+    show('err', 'Erro de conexão: ' + e.message);
+  }
+}
+
+// ── LIMPAR COLEÇÃO ────────────────────────────────────────────────────────────
+const NOMES = { tropas: 'doa_tropas', niveis: 'doa_niveis', usuarios: 'doa_users' };
+function confirmarLimpar(alvo) {
+  limparAlvo = alvo;
+  document.getElementById('confirm-msg').textContent =
+    `Apagar TODOS os documentos da coleção "${NOMES[alvo]}"? Esta ação não pode ser desfeita.`;
+  document.getElementById('overlay-confirm').classList.add('open');
+}
+function fecharConfirm() {
+  document.getElementById('overlay-confirm').classList.remove('open');
+  limparAlvo = null;
+}
+async function executarLimpar() {
+  if (!limparAlvo) return;
+  fecharConfirm();
+  try {
+    const r = await fetch(`${API}/limpar/${limparAlvo}`, { method: 'DELETE' });
+    const d = await r.json();
+    if (r.ok) carregarStatus();
+    else alert('Erro: ' + d.erro);
+  } catch(e) {
+    alert('Erro: ' + e.message);
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+carregarStatus();
+setInterval(carregarStatus, 30000);
+</script>
+</body>
+</html>

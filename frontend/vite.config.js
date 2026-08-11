@@ -1,0 +1,78 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const appPackage = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'))
+const viteCacheDir = path.resolve(__dirname, 'node_modules', `.vite-${appPackage.version}`)
+// AL Sistemas: alterações de release invalidam o grafo otimizado com segurança no Termux.
+
+// ─── Plugin: injeta versão de build no sw.js ─────────────────
+function swVersionPlugin() {
+  return {
+    name: 'vite-plugin-sw-version',
+    closeBundle() {
+      const swPath = path.resolve(__dirname, 'dist/sw.js')
+      if (!fs.existsSync(swPath)) return
+      const version = Date.now()
+      let sw = fs.readFileSync(swPath, 'utf-8')
+      sw = sw
+        .replace(/'alsistemas-v1'/g,     `'alsistemas-${version}'`)
+        .replace(/'alsistemas-api-v1'/g, `'alsistemas-api-${version}'`)
+      fs.writeFileSync(swPath, sw)
+      console.log(`\x1b[32m✓ sw-version\x1b[0m cache → alsistemas-${version}`)
+    },
+  }
+}
+
+const gitSha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.RAILWAY_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || ''
+const buildId = gitSha || Date.now().toString()
+
+if (process.env.VERCEL && !process.env.VITE_API_URL) {
+  throw new Error('VITE_API_URL não configurada. Na Vercel, defina a URL pública do backend Render terminando em /api.')
+}
+
+export default defineConfig({
+  // Cache isolado por versão. O Vite que já está rodando continua usando
+  // o cache da versão atual; a próxima inicialização usa um diretório novo.
+  // Isso evita apagar o pre-bundle ativo no Termux durante uma atualização.
+  cacheDir: viteCacheDir,
+  define: { __APP_BUILD_ID__: JSON.stringify(buildId), __APP_VERSION__: JSON.stringify(appPackage.version), __APP_GIT_SHA__: JSON.stringify(gitSha) },
+  plugins: [react(), swVersionPlugin()],
+  server: {
+    port: 5173,
+    host: true,
+    // ─── Proxy local (apenas dev): redireciona /api → backend local ──
+    // Em produção (Vercel) o VITE_API_URL aponta direto para o Render.
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+  resolve: {
+    dedupe: ['react', 'react-dom', 'react-router-dom'],
+    alias: [
+      { find: /^react$/, replacement: path.resolve(__dirname, 'node_modules/react') },
+      { find: /^react-dom$/, replacement: path.resolve(__dirname, 'node_modules/react-dom') },
+      { find: /^react-dom\/(.*)$/, replacement: path.resolve(__dirname, 'node_modules/react-dom/$1') },
+    ],
+  },
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
+      },
+    },
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'react-hot-toast'],
+  },
+})

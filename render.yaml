@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: al-sistemas-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install --omit=dev --no-audit --no-fund
+    startCommand: npm start
+    healthCheckPath: /api/health/live
+    autoDeployTrigger: commit
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: MONGO_DB_NAME
+        value: alsistemas
+      - key: ALLOW_VERCEL_PREVIEWS
+        value: 'false'

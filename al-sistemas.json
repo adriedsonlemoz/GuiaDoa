@@ -1,0 +1,21 @@
+{
+  "product": "AL Sistemas",
+  "version": "1.0.102",
+  "packageFormat": 2,
+  "changelog": [
+    "GitHub corrige definitivamente a grade da Central do Repositório para 3 cards por linha no celular; uma regra global antiga do admin ainda forçava 2 colunas.",
+    "Visão geral passa a carregar o README no momento em que o card é aberto, mantendo a renderização completa em modal/drawer como nas versões anteriores.",
+    "Publicar deixa de aparecer ao lado de Baixar projeto no cabeçalho; Baixar projeto fica como ação de download e Publicar permanece como ferramenta própria da Central, abrindo o Wizard GitHub/R2/Vercel/Render.",
+    "Workflows recebem ações mobile mais compactas em grade de 3 colunas, textos sem quebra letra a letra e estados traduzidos para português.",
+    "Build Android fixa Capacitor 6.2.1 e tar 6.2.1 para eliminar a incompatibilidade que causava TypeError ao executar cap add android; Node do workflow passa a 22.",
+    "O workflow usa a versão real do frontend/package.json em VITE_APP_VERSION, em vez do nome da branch main.",
+    "Render configura trust proxy automaticamente em produção gerenciada, preservando Termux/local e permitindo ativação explícita em VPS com TRUST_PROXY=1.",
+    "O diagnóstico Render deixa de marcar deploy antigo deactivated/canceled como falha quando a versão atual do serviço está saudável.",
+    "O teste de cookie Vercel→Render passa por /auth/cookie-probe e deixa de gerar um 401 deliberado logo após login; fallback Bearer continua preservado.",
+    "Frontend, backend, Setup, backup/exportação, manifesto e changelog sincronizados em 1.0.102."
+  ],
+  "updatePackages": {
+    "full": true,
+    "incremental": false
+  }
+}

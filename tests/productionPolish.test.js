@@ -36,7 +36,7 @@ test('perfil foi dividido em etapas e usa a camada central de idiomas', () => {
   const details = read('src/components/ProfileLogin/ProfileDetailsStep.jsx');
   assert.match(form, /ProfileLanguageStep/);
   assert.match(form, /ProfileDetailsStep/);
-  assert.match(language, /useI18n/);
+  assert.match(language, /LanguageChooser/);
   assert.match(details, /t\('profile\.continue'\)/);
 });
 

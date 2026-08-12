@@ -1,3 +1,5 @@
+import { parseUtcOffset } from './timezone.js';
+
 /**
  * Chaves do localStorage centralizadas.
  * Altere aqui e reflete em todo o app.
@@ -7,25 +9,32 @@ export const STORAGE_KEYS = {
   FUSO_OFFSET:  'doa_fuso_offset',
   TERMO_ACEITO: 'doa_termo_aceito',
   LOCALE:       'doa_locale',
-  // dados de jogo
+  // dados pessoais do dispositivo
   TROPAS_QTD:   'doa_tropas_quantidades',
   PODER_NIVEIS: 'doa_poder_niveis',
   PODER_ANTIGO: 'doa_poder_antigo',
 };
 
-export const getProfile  = ()  => JSON.parse(localStorage.getItem(STORAGE_KEYS.PROFILE) || 'null');
-export const saveProfile = (p) => {
-  localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(p));
-  const match  = (p.fuso || '').match(/UTC([+-]?\d+)/);
-  const offset = match ? parseInt(match[1], 10) : 0;
-  localStorage.setItem(STORAGE_KEYS.FUSO_OFFSET, offset);
+export const getProfile = () => {
+  const raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROFILE) || 'null');
+  if (!raw || typeof raw !== 'object') return raw;
+
+  // Beta 2.12: o ID do jogador deixou de fazer parte do perfil.
+  // Remove silenciosamente o campo legado sem apagar nome/reino/fuso.
+  if (Object.prototype.hasOwnProperty.call(raw, 'playerId')) {
+    const { playerId: _legacyPlayerId, ...clean } = raw;
+    localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(clean));
+    return clean;
+  }
+  return raw;
 };
 
-/** Retorna o ID real do jogador guardado no perfil, ou null */
-export const getPlayerId = () => {
-  const p = getProfile();
-  return p?.playerId || null;
+export const saveProfile = (profile) => {
+  const { playerId: _legacyPlayerId, ...p } = profile || {};
+  localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(p));
+  localStorage.setItem(STORAGE_KEYS.FUSO_OFFSET, parseUtcOffset(p.fuso));
 };
+
 export const clearProfile  = ()  => localStorage.removeItem(STORAGE_KEYS.PROFILE);
 export const getFusoOffset = ()  => parseInt(localStorage.getItem(STORAGE_KEYS.FUSO_OFFSET) || '0', 10);
 export const getTermoAceito= ()  => localStorage.getItem(STORAGE_KEYS.TERMO_ACEITO) === 'true';

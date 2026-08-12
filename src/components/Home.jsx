@@ -8,9 +8,8 @@ import Toast from '../ui/Toast.jsx';
 import { C } from '../theme.js';
 import AssistenteTatico from './AssistenteTatico.jsx';
 import ColorTextBuilder from './colorbuilder/index.jsx';
-import { useI18n, LocaleSwitcher } from '../hooks/useI18n.jsx';
+import { useI18n } from '../hooks/useI18n.jsx';
 import ConfiguracoesIdioma from './ProfileLogin/ConfiguracoesIdioma.jsx';
-import useServerClock from './home/useServerClock.js';
 import HomeDivider from './home/HomeDivider.jsx';
 import HomeProfileCard from './home/HomeProfileCard.jsx';
 import HomeToolsGrid from './home/HomeToolsGrid.jsx';
@@ -20,7 +19,6 @@ const Home = ({ setRoute }) => {
   const [termoAceito, setTermoAceito] = useState(() => getTermoAceito());
   const [alertaModal, setAlertaModal] = useState({ open: false, msg: '' });
   const { toast, closeToast } = useToast();
-  const horaServidor = useServerClock();
   const [modalExtra, setModalExtra] = useState(null);
   const [verIdioma, setVerIdioma] = useState(false);
   const [editarPerfil, setEditarPerfil] = useState(false);
@@ -39,9 +37,9 @@ const Home = ({ setRoute }) => {
     <div style={{ maxWidth: 480, margin: '0 auto', paddingBottom: 16 }}>
       <Toast {...toast} onClose={closeToast} />
       <AlertaModal open={alertaModal.open} message={alertaModal.msg} onClose={() => setAlertaModal({ open: false, msg: '' })} />
-      <HomeProfileCard profile={profile} horaServidor={horaServidor} onLanguage={() => setVerIdioma(true)} onEdit={() => setEditarPerfil(true)} />
+      <HomeProfileCard profile={profile} onLanguage={() => setVerIdioma(true)} onEdit={() => setEditarPerfil(true)} />
       <div style={{ padding: '0 8px', animation: 'reveal-up 0.4s 0.14s ease both' }}>
-        <HomeDivider label={t('home.arsenal.titulo')} extra={<LocaleSwitcher />} />
+        <HomeDivider label={t('home.arsenal.titulo')} />
         <HomeToolsGrid t={t} onTool={handleTool} />
         <div style={{ marginTop: 12 }}><HomeDivider label={t('home.conselheiro.titulo')} /><AssistenteTatico /></div>
       </div>

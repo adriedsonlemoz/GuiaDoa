@@ -94,3 +94,11 @@ A internacionalização possui duas camadas independentes:
 A localização de conteúdo é apenas de apresentação. IDs, slugs, nomes técnicos usados por regras, valores de cálculo e o registro bruto vindo de `GameDataContext` permanecem estáveis. Isso evita que uma troca de idioma altere identidade, persistência ou cálculos.
 
 O antigo módulo central de traduções e a integração automática externa foram removidos. Novos Dragões, Tropas, Itens e demais conteúdos não precisam de arquivo de tradução próprio: a tradução acompanha o próprio registro e pode ser atualizada sem redeploy do frontend.
+
+## Beta 2.12 — idioma, perfil e relógio do realm
+
+- `src/components/language/LanguageChooser.jsx` é a única experiência visual para escolher idioma, reutilizada no primeiro acesso e nas configurações.
+- O perfil público armazena somente `nome`, `reino` e `fuso`; `playerId` é removido de perfis legados na leitura.
+- IDs numéricos dos realms continuam no banco como identidade técnica, mas não são exibidos no seletor do perfil.
+- `src/components/reinos/RealmClock.jsx` e `useRealmClock.js` centralizam a apresentação e cálculo do horário do realm pelo fuso salvo no perfil.
+- `src/utils/timezone.js` centraliza a conversão de rótulos `UTC±N` em offset numérico.

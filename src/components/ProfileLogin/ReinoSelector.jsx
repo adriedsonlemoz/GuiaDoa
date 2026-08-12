@@ -27,16 +27,7 @@ const ReinoCard = ({ reino, selecionado, onClick }) => {
       transition: 'all 0.15s',
     }}
   >
-    {/* ID */}
-    <span style={{
-      fontFamily: 'monospace', fontWeight: 900, fontSize: '0.68rem',
-      color: selecionado ? C.ACCENT : C.TEXT_FAINT,
-      minWidth: 26, textAlign: 'right', flexShrink: 0,
-    }}>
-      {reino.id}
-    </span>
-
-    {/* Nome + Região */}
+    {/* Nome + metadados */}
     <span style={{ flex: 1, minWidth: 0 }}>
       <span style={{
         display: 'block',
@@ -119,10 +110,6 @@ const ReinoSelector = ({ value, onChange }) => {
       >
         {selecionado ? (
           <>
-            <span style={{
-              fontFamily: 'monospace', fontWeight: 900, fontSize: '0.68rem',
-              color: C.TEXT_FAINT, minWidth: 26, textAlign: 'right', flexShrink: 0,
-            }}>{selecionado.id}</span>
             <span style={{ flex: 1 }}>
               <span style={{
                 display: 'block', fontFamily: '"Nunito",sans-serif',

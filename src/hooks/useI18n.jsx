@@ -4,8 +4,8 @@ import enUS from '../locales/en-US.js';
 import { getLocale, saveLocale } from '../utils/storage.js';
 
 export const LOCALES_DISPONIVEIS = [
-  { code: 'pt-BR', label: 'Português', nativo: 'Português', flag: '🇧🇷' },
-  { code: 'en-US', label: 'English', nativo: 'English', flag: '🇺🇸' },
+  { code: 'pt-BR', label: 'Português (Brasil)', nativo: 'Português', flag: '🇧🇷' },
+  { code: 'en-US', label: 'English (United States)', nativo: 'English', flag: '🇺🇸' },
 ];
 
 const DICTIONARIES = Object.freeze({

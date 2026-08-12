@@ -2,11 +2,11 @@ import React from 'react';
 import { C } from '../../theme.js';
 import Field from './ProfileField.jsx';
 import ReinoSelector from './ReinoSelector.jsx';
+import RealmClock from '../reinos/RealmClock.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
 
 export default function ProfileDetailsStep({
-  editing, nome, setNome, playerId, setPlayerId, reino, onReino, fuso, horaLocal,
-  onSave, onBack, onCancel,
+  editing, nome, setNome, reino, onReino, fuso, onSave, onBack, onCancel,
 }) {
   const { t } = useI18n();
   return (
@@ -52,11 +52,7 @@ export default function ProfileDetailsStep({
               <input className="tw-input" autoComplete="nickname" maxLength={40} placeholder={t('profile.commander_placeholder')} value={nome} onChange={e => setNome(e.target.value)} />
             </Field>
 
-            <Field label={t('profile.player_id')} hint={t('common.optional')}>
-              <input className="tw-input font-mono" inputMode="numeric" maxLength={20} placeholder={t('profile.player_id_placeholder')} value={playerId} onChange={e => setPlayerId(e.target.value.replace(/\D/g, ''))} style={{ letterSpacing:'.08em' }} />
-            </Field>
-
-            <div style={{ display:'flex', alignItems:'center', gap:8, margin:'16px 0 14px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, margin:'17px 0 14px' }}>
               <div style={{ flex:1, height:1, background:C.BORDER_SOFT }} />
               <span className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.62rem', fontWeight:900, letterSpacing:1.6, textTransform:'uppercase' }}>{t('profile.realm_section')}</span>
               <div style={{ flex:1, height:1, background:C.BORDER_SOFT }} />
@@ -66,18 +62,7 @@ export default function ProfileDetailsStep({
               <ReinoSelector value={reino} onChange={onReino} />
             </Field>
 
-            {fuso && (
-              <div style={{
-                marginTop:4, padding:'10px 12px', borderRadius:9, display:'flex', alignItems:'center', justifyContent:'space-between',
-                background:'rgba(28,58,94,.055)', border:'1px solid rgba(28,58,94,.14)',
-              }}>
-                <span className="font-nunito" style={{ color:C.TEXT_MUTED, fontWeight:800, fontSize:'.68rem' }}>🕐 {t('profile.realm_clock')}</span>
-                <div style={{ textAlign:'right' }}>
-                  <strong className="font-nunito" style={{ display:'block', color:C.BLUE_DARK, fontSize:'.92rem', fontVariantNumeric:'tabular-nums' }}>{horaLocal}</strong>
-                  <span className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.6rem' }}>{fuso}</span>
-                </div>
-              </div>
-            )}
+            {fuso && <RealmClock realm={reino} fuso={fuso} compact />}
 
             <p className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.62rem', lineHeight:1.45, margin:'13px 0 0' }}>🔒 {t('profile.privacy')}</p>
           </div>

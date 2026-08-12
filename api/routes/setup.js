@@ -10,8 +10,48 @@ import mongoose    from 'mongoose';
 import User        from '../models/User.js';
 import Tropa       from '../models/Tropa.js';
 import Nivel       from '../models/Nivel.js';
+import { autenticar, exigirAdmin } from '../middleware/auth.js';
+import { decidirAcessoSetup } from '../security/setupAccess.js';
 
 const router = Router();
+
+const autenticarAdmin = (req, res, next) => autenticar(req, res, () => exigirAdmin(req, res, next));
+
+// Sem usuários: permite somente o bootstrap inicial. Depois disso, setup exige admin.
+const setupInicialOuAdmin = async (req, res, next) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const acesso = decidirAcessoSetup(
+      totalUsers,
+      process.env.SETUP_KEY,
+      req.get('x-setup-key') || ''
+    );
+
+    if (acesso.modo === 'negado') {
+      return res.status(401).json({
+        codigo: 'SETUP_KEY_INVALIDA',
+        erro: 'Chave de setup inválida ou não fornecida.',
+      });
+    }
+    if (acesso.modo === 'inicial') {
+      req.setupInicial = true;
+      return next();
+    }
+    return autenticarAdmin(req, res, next);
+  } catch (err) {
+    return res.status(500).json({ codigo: 'SETUP_STATUS_FALHOU', erro: 'Não foi possível validar o estado do setup.' });
+  }
+};
+
+const protegerSeConfigurado = async (req, res, next) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    if (totalUsers === 0) return next();
+    return autenticarAdmin(req, res, next);
+  } catch {
+    return res.status(500).json({ erro: 'Não foi possível validar o estado do setup.' });
+  }
+};
 
 // ── Dados embutidos (espelho do setup.js original) ───────────────────────────
 
@@ -105,7 +145,7 @@ function sseSend(res, type, data) {
 
 // ── GET /api/setup/status ────────────────────────────────────────────────────
 
-router.get('/status', async (req, res) => {
+router.get('/status', protegerSeConfigurado, async (req, res) => {
   try {
     const dbState    = mongoose.connection.readyState; // 0=disc,1=conn,2=conn-ing,3=disc-ing
     const stateLabel = ['desconectado', 'conectado', 'conectando', 'desconectando'];
@@ -128,6 +168,7 @@ router.get('/status', async (req, res) => {
         nome: dbName,
         host: dbHost,
       },
+      setup: { necessario: totalUsers === 0, chaveObrigatoria: totalUsers === 0 && Boolean(process.env.SETUP_KEY) },
       colecoes: {
         tropas:      { total: totalTropas, especiais: totalEspeciais, treinaveis: totalTreinaveis,
                        disponiveis: TODAS_TROPAS.length },
@@ -142,9 +183,9 @@ router.get('/status', async (req, res) => {
 
 // ── POST /api/setup/usuario ──────────────────────────────────────────────────
 
-router.post('/usuario', async (req, res) => {
-  const { usuario, senha, forcar } = req.body;
-  if (!usuario || !senha)
+router.post('/usuario', setupInicialOuAdmin, async (req, res) => {
+  const { usuario, senha, forcar } = req.body || {};
+  if (typeof usuario !== 'string' || typeof senha !== 'string' || !usuario || !senha)
     return res.status(400).json({ erro: 'Usuário e senha são obrigatórios.' });
   if (usuario.trim().length < 3)
     return res.status(400).json({ erro: 'Usuário deve ter pelo menos 3 caracteres.' });
@@ -152,17 +193,36 @@ router.post('/usuario', async (req, res) => {
     return res.status(400).json({ erro: 'Senha deve ter pelo menos 6 caracteres.' });
 
   try {
-    const existe = await User.findOne({ usuario: usuario.toLowerCase().trim() });
-    if (existe && !forcar)
-      return res.status(409).json({ erro: 'Usuário já existe. Envie forcar: true para recriar.', existe: true });
+    const usuarioNormalizado = usuario.toLowerCase().trim();
+    const totalUsers = await User.countDocuments();
+    const existe = await User.findOne({ usuario: usuarioNormalizado });
 
-    await User.deleteMany({});
+    if (totalUsers > 0 && !forcar) {
+      return res.status(409).json({
+        erro: existe
+          ? 'Usuário já existe. Use a opção Recriar para trocar a senha.'
+          : 'O setup já possui administrador. Use Recriar para substituir explicitamente.',
+        existe: Boolean(existe),
+        configurado: true,
+      });
+    }
+
+    if (totalUsers > 0 && forcar) {
+      await User.deleteMany({});
+    }
+
     await User.create({
-      usuario: usuario.toLowerCase().trim(),
+      usuario: usuarioNormalizado,
       senhaHash: await bcrypt.hash(senha, 12),
       papel: 'admin',
     });
-    res.json({ ok: true, mensagem: `Usuário "${usuario}" criado com sucesso.` });
+    res.json({
+      ok: true,
+      setupInicial: totalUsers === 0,
+      mensagem: totalUsers === 0
+        ? `Administrador "${usuarioNormalizado}" criado com sucesso.`
+        : `Administrador substituído por "${usuarioNormalizado}" com sucesso. Sessões antigas foram revogadas.`,
+    });
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
@@ -170,8 +230,9 @@ router.post('/usuario', async (req, res) => {
 
 // ── GET /api/setup/importar/tropas  (SSE) ───────────────────────────────────
 
-router.get('/importar/tropas', async (req, res) => {
+router.get('/importar/tropas', autenticar, exigirAdmin, async (req, res) => {
   const modo = req.query.modo || 'novas'; // 'novas' | 'tudo'
+  if (!['novas', 'tudo'].includes(modo)) return res.status(400).json({ erro: 'Modo de importação inválido.' });
   sseSetup(res);
 
   try {
@@ -215,8 +276,9 @@ router.get('/importar/tropas', async (req, res) => {
 
 // ── GET /api/setup/importar/niveis  (SSE) ────────────────────────────────────
 
-router.get('/importar/niveis', async (req, res) => {
+router.get('/importar/niveis', autenticar, exigirAdmin, async (req, res) => {
   const modo = req.query.modo || 'novas';
+  if (!['novas', 'tudo'].includes(modo)) return res.status(400).json({ erro: 'Modo de importação inválido.' });
   sseSetup(res);
 
   try {
@@ -259,7 +321,7 @@ router.get('/importar/niveis', async (req, res) => {
 
 // ── DELETE /api/setup/limpar/:colecao ────────────────────────────────────────
 
-router.delete('/limpar/:colecao', async (req, res) => {
+router.delete('/limpar/:colecao', autenticar, exigirAdmin, async (req, res) => {
   const { colecao } = req.params;
   try {
     if (colecao === 'tropas') {

@@ -1,7 +1,17 @@
 import express from 'express';
 import mongoose from 'mongoose';
+import { criarRateLimit } from '../middleware/rateLimit.js';
+import { validarEntradaAssistente } from '../utils/assistantValidation.js';
 
 const router = express.Router();
+
+const ASSISTENTE_MAX = Math.max(3, Number(process.env.AI_RATE_LIMIT_MAX) || 20);
+const assistenteRateLimit = criarRateLimit({
+  janelaMs: 5 * 60 * 1000,
+  max: ASSISTENTE_MAX,
+  prefixo: 'assistente',
+  mensagem: 'Muitas perguntas em pouco tempo. Aguarde alguns minutos e tente novamente.',
+});
 
 // ── Reutiliza modelos já registrados ─────────────────────────────────────────
 const mdl = (name, schema, col) => {
@@ -394,11 +404,14 @@ const detectarIntencao = (pergunta) => {
 };
 
 // ── POST /api/assistente ──────────────────────────────────────────────────────
-router.post('/', async (req, res) => {
-  const { pergunta, historico = [] } = req.body;
+router.post('/', assistenteRateLimit, async (req, res) => {
+  const entrada = validarEntradaAssistente(req.body);
+  if (!entrada.ok) {
+    return res.status(400).json({ codigo: entrada.codigo, erro: entrada.mensagem });
+  }
 
-  if (!pergunta || typeof pergunta !== 'string' || pergunta.trim().length < 2)
-    return res.status(400).json({ erro: 'Pergunta inválida.' });
+  const perguntaLimpa = entrada.pergunta;
+  const historicoSeguro = entrada.historico;
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey)
@@ -407,11 +420,11 @@ router.post('/', async (req, res) => {
   const { tropasTxt, itensTxt, edificiosTxt, dragoesTxt, pesquisasTxt, niveisTxt, reinosTxt, aprTxt, tropasDados } =
     await buildContext();
 
-  const intencao = detectarIntencao(pergunta);
+  const intencao = detectarIntencao(perguntaLimpa);
 
   // ── Análise pré-calculada para perguntas analíticas de tropas ─────────────
   // Reutiliza tropasDados já carregadas pelo buildContext (sem 2ª query ao banco)
-  const analise = detectarAnalise(pergunta);
+  const analise = detectarAnalise(perguntaLimpa);
   const contextoAnalitico = (analise && tropasDados.length)
     ? buildContextoAnalitico(tropasDados, analise)
     : '';
@@ -442,7 +455,7 @@ router.post('/', async (req, res) => {
     ? `━━ 📊 ANÁLISE JÁ CALCULADA (use estes dados como resposta base):\n${contextoAnalitico}\n`
     : '';
 
-  const systemPrompt = `Você é o CONSELHEIRO TÁTICO do Guia DOA — especialista em Dragon's of Aether (DOA). Você conhece tropas, dragões, edifícios, pesquisas, aprimoramentos, torneios, generais, ilhas e reinos.
+  const systemPrompt = `Você é o CONSELHEIRO TÁTICO do Guia DOA — especialista em Dragons of Atlantis (DOA). Você conhece tropas, dragões, edifícios, pesquisas, aprimoramentos, torneios, generais, ilhas e reinos.
 
 ━━ REGRAS:
 1. Responda SEMPRE em português brasileiro informal e amigável.
@@ -485,9 +498,12 @@ ${blocoAnalitico}${blocosAtivos.join('\n\n')}
 ${aprTxt}`;
 
   const mensagens = [
-    ...historico.slice(-20).map(m => ({ role: m.role, content: m.content })),
-    { role: 'user', content: pergunta.trim() },
+    ...historicoSeguro,
+    { role: 'user', content: perguntaLimpa },
   ];
+
+  const ctrl = new AbortController();
+  const timeoutId = setTimeout(() => ctrl.abort(), 20_000);
 
   try {
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -496,6 +512,7 @@ ${aprTxt}`;
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
+      signal: ctrl.signal,
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'system', content: systemPrompt }, ...mensagens],
@@ -512,13 +529,17 @@ ${aprTxt}`;
       return res.status(502).json({ erro: 'Erro ao consultar o assistente. Tente novamente.' });
     }
 
+    clearTimeout(timeoutId);
     const data = await groqRes.json();
     const resposta = data.choices?.[0]?.message?.content?.trim() || 'Não consegui gerar uma resposta.';
 
     // Devolve também a intenção detectada para debug (opcional)
     res.json({ resposta, intencao });
   } catch (e) {
+    clearTimeout(timeoutId);
     console.error('[assistente] fetch error:', e.message);
+    if (e.name === 'AbortError')
+      return res.status(504).json({ erro: 'O assistente demorou demais para responder. Tente novamente.' });
     res.status(502).json({ erro: 'Falha na conexão com o assistente.' });
   }
 });

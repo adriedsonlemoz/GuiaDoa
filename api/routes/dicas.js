@@ -5,6 +5,7 @@ import streamifier    from 'streamifier';
 import Dica           from '../models/Dica.js';
 import CategoriaDica  from '../models/CategoriaDica.js';
 import { autenticar } from '../middleware/auth.js';
+import { executarUploadLote } from '../utils/cloudinaryBatch.js';
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ─── Multer (memória — envia para Cloudinary ou salva base64) ─────────────────
+// ─── Multer (memória temporária — persistência somente no Cloudinary) ─────────
 const upload = multer({
   storage: multer.memoryStorage(),
   limits:  { fileSize: 10 * 1024 * 1024 }, // 10 MB
@@ -135,7 +136,7 @@ router.get('/admin', autenticar, async (req, res) => {
 // GET /api/dicas/:id
 router.get('/:id', async (req, res) => {
   try {
-    const dica = await Dica.findById(req.params.id);
+    const dica = await Dica.findOne({ _id: req.params.id, ativo: true });
     if (!dica) return res.status(404).json({ erro: 'Não encontrada' });
     res.json(dica);
   } catch (e) { res.status(500).json({ erro: e.message }); }
@@ -189,16 +190,22 @@ router.post('/:id/imagens', autenticar, upload.array('imagens', 10), async (req,
     if (!dica) return res.status(404).json({ erro: 'Não encontrada' });
     if (!req.files?.length) return res.status(400).json({ erro: 'Nenhuma imagem enviada' });
 
-    const novas = [];
-    for (const file of req.files) {
-      try {
-        const result = await uploadParaCloudinary(file.buffer);
-        novas.push({ url: result.secure_url, publicId: result.public_id, fonte: 'cloudinary' });
-      } catch (e) {
-        // Fallback local: converte para base64 data URL
-        const dataUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-        novas.push({ url: dataUrl, publicId: '', fonte: 'local' });
-      }
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return res.status(503).json({ erro: 'Cloudinary não configurado. O upload foi cancelado sem salvar imagens no banco.' });
+    }
+
+    let novas;
+    try {
+      novas = await executarUploadLote(req.files, {
+        upload: (file) => uploadParaCloudinary(file.buffer),
+        destroy: (publicId) => cloudinary.uploader.destroy(publicId),
+      });
+    } catch (uploadErr) {
+      console.error('[dicas] upload Cloudinary:', uploadErr.message);
+      return res.status(502).json({
+        codigo: 'CLOUDINARY_UPLOAD_FAILED',
+        erro: 'Falha ao enviar imagens ao Cloudinary. Nenhuma imagem foi salva.',
+      });
     }
 
     dica.imagens.push(...novas);

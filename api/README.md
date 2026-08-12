@@ -58,8 +58,8 @@ npm run dev
 | Health check  | http://localhost:3001/         |
 
 **Login do painel:**
-- Usuário: `adrilemoz`
-- Senha: `@aL0524$`
+- Use o administrador criado em `/admin/setup`.
+- Nunca salve senhas reais neste arquivo ou no repositório.
 
 ---
 
@@ -76,7 +76,7 @@ npm run dev
 ```bash
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"usuario":"adrilemoz","senha":"@aL0524$"}'
+  -d '{"usuario":"admin","senha":"SUA_SENHA"}'
 ```
 
 ---
@@ -160,6 +160,9 @@ export const carregarTropas = async () => {
 ```env
 MONGO_URI=mongodb+srv://...    # String de conexão MongoDB Atlas
 JWT_SECRET=...                 # Chave secreta para assinar tokens
+SETUP_KEY=...                  # Recomendado: protege a criação do primeiro admin
+LOGIN_RATE_LIMIT_MAX=8         # Opcional
+AI_RATE_LIMIT_MAX=20           # Opcional
 PORT=3001                      # Porta da API
 ```
 
@@ -180,3 +183,55 @@ PORT=3001                      # Porta da API
 
 **Setup falha na metade:**
 → Corre `npm run setup` novamente — tropas já existentes são puladas.
+
+## Beta 2.3 — diagnóstico e testes
+
+### Health check
+
+- `GET /api/health` — estado sanitizado da API e do MongoDB, além de indicar se Cloudinary e Groq estão configurados.
+- `GET /api/health/deep` — exige JWT de administrador e testa de fato a conectividade com Cloudinary e Groq.
+
+Nenhum dos endpoints retorna chaves, secrets, URI do MongoDB ou outras credenciais.
+
+### Erros padronizados
+
+Respostas HTTP de erro seguem o formato abaixo, mantendo `erro` temporariamente para compatibilidade com clientes antigos:
+
+```json
+{
+  "sucesso": false,
+  "codigo": "NAO_AUTORIZADO",
+  "mensagem": "Token não fornecido",
+  "erro": "Token não fornecido",
+  "requestId": "..."
+}
+```
+
+O header `X-Request-Id` permite correlacionar uma falha do frontend com os logs do backend.
+
+### Testes
+
+Na raiz do projeto:
+
+```bash
+npm test
+```
+
+Smoke test contra uma API já publicada:
+
+```bash
+cd api
+API_BASE_URL=https://sua-api.exemplo.com npm run test:smoke
+```
+
+Para também validar login correto/incorreto e o health profundo, use uma conta de teste separada:
+
+```bash
+API_BASE_URL=https://sua-api.exemplo.com \
+TEST_ADMIN_USER=usuario_teste \
+TEST_ADMIN_PASSWORD='senha_de_teste' \
+npm run test:smoke
+```
+
+O smoke test não cria, altera ou apaga dados.
+

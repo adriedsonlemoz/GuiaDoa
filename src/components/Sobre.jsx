@@ -3,8 +3,30 @@ import GameHeader from './shared/GameHeader.jsx';
 import Modal from '../ui/Modal.jsx';
 import Toast from '../ui/Toast.jsx';
 import { C } from '../theme.js';
+import { DISPLAY_VERSION } from '../version.js';
 
 const CHANGELOG = [
+  {
+    ver: DISPLAY_VERSION, icon: '🧪', nome: 'Confiabilidade e Plataforma', cor: '#5A8A5C',
+    items: [
+      'Testes automatizados de segurança, rate limit, histórico da IA, rollback de upload e sincronização, além de smoke test opcional da API',
+      'Novo health check consolidado para API, MongoDB, Cloudinary e Groq, com diagnóstico profundo autenticado no painel Admin',
+      'Erros da API padronizados com código, mensagem e requestId sem quebrar a compatibilidade com o painel existente',
+      'Painel Admin começou a ser modularizado: núcleo comum, Traduções e Dicas agora ficam em arquivos JavaScript separados',
+      'Sincronização mostra claramente estado online/cache/erro, última atualização e botão “Sincronizar agora”',
+      'PWA ganhou ícones 192/512/maskable; navegação por hash melhora Voltar no Android e builds release recusam API localhost',
+    ],
+  },
+  {
+    ver: 'Beta 2.2', icon: '🛡️', nome: 'Segurança e Estabilidade', cor: '#5A8A5C',
+    items: [
+      'Setup protegido após a criação do primeiro administrador, com revogação de sessões antigas ao recriar o usuário',
+      'Rate limit no login e no Assistente Tático, com validação segura do histórico enviado à IA',
+      'Uploads de dicas agora dependem do Cloudinary e fazem rollback em caso de falha, sem salvar imagens Base64 no MongoDB',
+      'Sincronização de Itens, Edifícios e Pesquisas executada em paralelo e cache antigo não é mais reportado como sincronização online',
+      'Sanitização reforçada no painel Admin e versão do app unificada a partir do package.json',
+    ],
+  },
   {
     ver: 'Beta 2.1', icon: '🔧', nome: 'Correções e Ajustes de Torneios', cor: '#5A8A5C',
     items: [
@@ -29,7 +51,7 @@ const CHANGELOG = [
     items: [
       'Módulo de Itens com cadastro pelo painel Admin',
       'Importação de dados via interface web com progresso em tempo real',
-      'Sistema de usuários com bloqueio por tentativas e reset de senha',
+      'Sistema de usuários com autenticação JWT e proteção contra tentativas repetidas de login',
       'Painel Admin completo: tropas, níveis, itens, dragões, edifícios',
     ],
   },
@@ -106,7 +128,7 @@ const Sobre = () => {
 
           <div className="inline-flex items-center gap-2 mb-1">
             <p className="font-cinzel font-bold text-lg uppercase tracking-widest m-0" style={{ color: C.ACCENT_DEEP }}>
-              Beta 2.1
+              {DISPLAY_VERSION}
             </p>
             <span
               className="font-nunito font-black text-[0.58rem] px-2 py-0.5 rounded-full text-white"
@@ -117,7 +139,7 @@ const Sobre = () => {
           </div>
 
           <p className="font-nunito font-semibold text-xs italic m-0 mb-2" style={{ color: C.TEXT_MUTED }}>
-            "Correções de Torneios — Fósseis, Pontuações e Ajustes Visuais"
+            "Confiabilidade, diagnóstico e experiência mobile"
           </p>
           <div className="gold-stripe mb-3 opacity-50" />
           <p className="font-nunito font-semibold text-sm leading-relaxed text-justify m-0" style={{ color: C.TEXT_PRIMARY }}>

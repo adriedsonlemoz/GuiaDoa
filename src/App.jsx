@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Component } from 'react';
+import React, { useState, useEffect, useCallback, Component } from 'react';
 import { C } from './theme.js';
 import { I18nProvider } from './hooks/useI18n.jsx';
 
@@ -40,9 +40,10 @@ import {
   precisaSincronizar,
   temAlgumCache,
   getSyncInfo,
-  APP_VERSION,
   formatarUltimaSyncPt,
 } from './data/syncService.js';
+import { descreverSyncStatus } from './data/syncStatus.js';
+import { DISPLAY_VERSION } from './version.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ORNAMENT STRIPE
@@ -122,11 +123,51 @@ const BASE_LABELS = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// NAVEGAÇÃO — hash routes funcionam no navegador, PWA e WebView/Capacitor
+// ─────────────────────────────────────────────────────────────────────────────
+const lerRotaDaUrl = () => {
+  if (typeof window === 'undefined') return 'home';
+  const raw = window.location.hash.replace(/^#\/?/, '');
+  if (!raw) return 'home';
+  try { return decodeURIComponent(raw); } catch { return raw; }
+};
+
+const hashDaRota = (route) => route === 'home' ? '#/' : `#/${encodeURIComponent(route)}`;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // APP
 // ─────────────────────────────────────────────────────────────────────────────
 const App = () => {
-  const [route, setRoute] = useState('home');
+  const [route, _setRoute] = useState(() => lerRotaDaUrl());
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
+
+  const setRoute = useCallback((nextRoute, options = {}) => {
+    const destino = typeof nextRoute === 'string' && nextRoute ? nextRoute : 'home';
+    const hash = hashDaRota(destino);
+    const atual = window.history.state || {};
+    const baseIndex = Number.isFinite(atual.doaIndex) ? atual.doaIndex : 0;
+    const state = { doa: true, doaIndex: options.replace ? baseIndex : baseIndex + 1, route: destino };
+
+    if (window.location.hash !== hash || options.replace) {
+      if (options.replace) window.history.replaceState(state, '', hash);
+      else window.history.pushState(state, '', hash);
+    }
+    _setRoute(destino);
+  }, []);
+
+  useEffect(() => {
+    const rotaInicial = lerRotaDaUrl();
+    if (!window.history.state?.doa) {
+      window.history.replaceState({ doa: true, doaIndex: 0, route: rotaInicial }, '', hashDaRota(rotaInicial));
+    }
+    const atualizarPelaUrl = () => _setRoute(lerRotaDaUrl());
+    window.addEventListener('popstate', atualizarPelaUrl);
+    window.addEventListener('hashchange', atualizarPelaUrl);
+    return () => {
+      window.removeEventListener('popstate', atualizarPelaUrl);
+      window.removeEventListener('hashchange', atualizarPelaUrl);
+    };
+  }, []);
 
   useEffect(() => {
     window.__setRoute = setRoute;
@@ -134,11 +175,29 @@ const App = () => {
   }, [setRoute]);
 
   // null | 'syncing' | 'ok' | 'parcial' | 'estatico' | 'erro'
-  const [syncStatus,   setSyncStatus]   = useState(null);
+  const [syncStatus,   setSyncStatus]   = useState(() => getSyncInfo().status || null);
   const [syncProgress, setSyncProgress] = useState({ step: 0, total: 3, label: 'Iniciando…' });
+  const [syncInfo,     setSyncInfo]     = useState(() => getSyncInfo());
   const [isOffline,    setIsOffline]    = useState(() =>
     typeof navigator !== 'undefined' ? !navigator.onLine : false
   );
+
+  const aplicarResultadoSync = useCallback((resultado) => {
+    setSyncStatus(resultado?.status || 'erro');
+    setSyncInfo(getSyncInfo());
+  }, []);
+
+  const sincronizarAgora = useCallback(async () => {
+    setSyncStatus('syncing');
+    setSyncProgress({ step: 0, total: 3, label: 'Iniciando…' });
+    try {
+      const resultado = await syncTodos((prog) => setSyncProgress(prog));
+      aplicarResultadoSync(resultado);
+    } catch {
+      setSyncStatus(temAlgumCache() ? 'cache' : 'erro');
+      setSyncInfo(getSyncInfo());
+    }
+  }, [aplicarResultadoSync]);
 
   // Detecta mudanças de conectividade em tempo real
   useEffect(() => {
@@ -159,9 +218,10 @@ const App = () => {
 
       // Já tem cache e não forçou → sync silencioso em background
       if (temCache && !forcar) {
-        syncTodos().then(r => {
-          setSyncStatus(r.usouEstatico ? 'estatico' : r.sucesso ? 'ok' : 'parcial');
-        }).catch(() => {});
+        syncTodos().then(aplicarResultadoSync).catch(() => {
+          setSyncStatus('cache');
+          setSyncInfo(getSyncInfo());
+        });
         return;
       }
 
@@ -171,17 +231,13 @@ const App = () => {
 
       const resultado = await syncTodos((prog) => {
         setSyncProgress(prog);
-      }).catch(() => ({ ok: 0, total: 3, sucesso: false, usouEstatico: false }));
+      }).catch(() => ({ ok: 0, total: 3, sucesso: false, usouEstatico: false, usouCache: false, status: 'erro' }));
 
-      if (resultado.usouEstatico && resultado.ok === 0) {
-        setSyncStatus('estatico');
-      } else {
-        setSyncStatus(resultado.sucesso ? 'ok' : 'erro');
-      }
+      aplicarResultadoSync(resultado);
     };
 
     rodarSync();
-  }, []); // roda uma vez na abertura
+  }, [aplicarResultadoSync]); // roda uma vez na abertura
 
   const renderComponent = () => {
     switch (route) {
@@ -231,6 +287,13 @@ const App = () => {
   const handleGoHome = () => {
     if (window.temAlteracoesNaoSalvas) setExitDialogOpen(true);
     else setRoute('home');
+  };
+
+  const handleBack = () => {
+    if (window.temAlteracoesNaoSalvas) return setExitDialogOpen(true);
+    if (route === 'home') return;
+    if ((window.history.state?.doaIndex || 0) > 0) window.history.back();
+    else setRoute('home', { replace: true });
   };
 
   // Build route labels including dynamic dragon routes
@@ -302,94 +365,6 @@ const App = () => {
         );
       })()}
 
-      {/* Offline com dados locais (edifícios embutidos, sem API) */}
-      {syncStatus === 'estatico' && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
-          background: 'linear-gradient(90deg,#4A3A10,#6A5218)',
-          borderBottom: '1px solid rgba(200,168,74,0.5)',
-          padding: '6px 16px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-        }}>
-          <span style={{
-            fontFamily: '"Nunito",sans-serif', fontWeight: 800,
-            fontSize: '0.71rem', color: '#FFE580',
-          }}>
-            📦 Offline — usando dados locais embutidos
-          </span>
-          <button
-            onClick={() => {
-              setSyncStatus('syncing');
-              setSyncProgress({ step: 0, total: 3, label: 'Iniciando…' });
-              syncTodos(p => setSyncProgress(p))
-                .then(r => setSyncStatus(r.usouEstatico && r.ok === 0 ? 'estatico' : r.sucesso ? 'ok' : 'erro'))
-                .catch(() => setSyncStatus('erro'));
-            }}
-            style={{
-              fontFamily: '"Nunito",sans-serif', fontWeight: 800, fontSize: '0.64rem',
-              background: 'rgba(255,229,128,0.18)', border: '1px solid rgba(255,229,128,0.4)',
-              color: '#FFE580', borderRadius: 6, padding: '3px 10px', cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}>
-            Tentar online
-          </button>
-        </div>
-      )}
-
-      {/* Sem dados — offline e sem nenhum fallback disponível */}
-      {syncStatus === 'erro' && !temAlgumCache() && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
-          background: 'linear-gradient(90deg,#5A1A1A,#7A2020)',
-          borderBottom: '1px solid rgba(200,80,80,0.5)',
-          padding: '6px 16px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-        }}>
-          <span style={{
-            fontFamily: '"Nunito",sans-serif', fontWeight: 800,
-            fontSize: '0.71rem', color: '#FFD0D0',
-          }}>
-            📶 Sem conexão. Itens e Pesquisas indisponíveis.
-          </span>
-          <button
-            onClick={() => {
-              setSyncStatus('syncing');
-              setSyncProgress({ step: 0, total: 3, label: 'Iniciando…' });
-              syncTodos(p => setSyncProgress(p))
-                .then(r => setSyncStatus(r.usouEstatico && r.ok === 0 ? 'estatico' : r.sucesso ? 'ok' : 'erro'))
-                .catch(() => setSyncStatus('erro'));
-            }}
-            style={{
-              fontFamily: '"Nunito",sans-serif', fontWeight: 800, fontSize: '0.64rem',
-              background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
-              color: '#FFD0D0', borderRadius: 6, padding: '3px 10px', cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}>
-            Tentar novamente
-          </button>
-        </div>
-      )}
-
-      {/* Badge de offline persistente (fora do sync inicial) */}
-      {isOffline && syncStatus !== 'syncing' && (
-        <div style={{
-          position: 'fixed', top: 0, right: 0, zIndex: 9998,
-          background: 'rgba(60,40,10,0.92)',
-          border: '1px solid rgba(200,168,74,0.35)',
-          borderTop: 'none', borderRight: 'none',
-          borderRadius: '0 0 0 8px',
-          padding: '3px 10px',
-          pointerEvents: 'none',
-        }}>
-          <span style={{
-            fontFamily: '"Nunito",sans-serif', fontWeight: 800,
-            fontSize: '0.6rem', color: 'rgba(255,229,128,0.8)', letterSpacing: '0.5px',
-          }}>
-            📶 offline
-          </span>
-        </div>
-      )}
-
       {/* ── EXIT DIALOG ──────────────────────────────────────────────────── */}
       <Modal open={exitDialogOpen} onClose={() => setExitDialogOpen(false)} maxWidth={320}>
         <div className="p-4 text-center">
@@ -448,7 +423,7 @@ const App = () => {
           {/* BACK BUTTON */}
           {currentRoute && (
             <button
-              onClick={handleGoHome}
+              onClick={handleBack}
               className="flex items-center gap-1 shrink-0 rounded-md px-2 py-1 transition-all"
               style={{
                 border: '1px solid rgba(200,168,74,0.4)',
@@ -462,6 +437,39 @@ const App = () => {
           )}
         </div>
         <OrnamentStripe opacity={0.5} />
+        {syncStatus && syncStatus !== 'syncing' && (() => {
+          const visual = descreverSyncStatus(syncStatus, !isOffline);
+          const ultima = formatarUltimaSyncPt(syncInfo.ts);
+          const bg = visual.nivel === 'ok' ? 'rgba(55,105,65,0.28)'
+            : visual.nivel === 'erro' ? 'rgba(130,45,35,0.30)'
+            : 'rgba(150,110,25,0.28)';
+          return (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '5px 10px', background: bg,
+              borderTop: '1px solid rgba(200,168,74,0.18)',
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="font-nunito font-black text-[0.67rem]" style={{ color: C.TEXT_HEADER }}>
+                  {visual.emoji} {visual.label}
+                </div>
+                <div className="font-nunito text-[0.56rem] truncate" style={{ color: '#B9B0A0' }}>
+                  Última atualização: {ultima}
+                </div>
+              </div>
+              <button
+                onClick={sincronizarAgora}
+                className="font-nunito font-black text-[0.6rem] rounded-md px-2 py-1"
+                style={{
+                  color: C.ACCENT, background: 'rgba(200,168,74,0.08)',
+                  border: '1px solid rgba(200,168,74,0.35)', whiteSpace: 'nowrap',
+                }}
+              >
+                ↻ Sincronizar agora
+              </button>
+            </div>
+          );
+        })()}
       </header>
 
       {/* ── BODY ─────────────────────────────────────────────────────────── */}
@@ -477,7 +485,7 @@ const App = () => {
         <div className="py-2 text-center flex items-center justify-center gap-2 relative">
           <span style={{ color: C.ACCENT, fontSize: '0.7rem', opacity: 0.6 }}>◆</span>
           <span className="font-nunito text-[0.72rem] tracking-widest font-semibold" style={{ color: '#9A9080', letterSpacing: '2.5px' }}>
-            GUIA DOA · BETA 1
+            GUIA DOA · {DISPLAY_VERSION}
           </span>
           <span style={{ color: C.ACCENT, fontSize: '0.7rem', opacity: 0.6 }}>◆</span>
 

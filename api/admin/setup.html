@@ -283,6 +283,10 @@
         <label>Confirmar Senha</label>
         <input type="password" id="inp-confirma" placeholder="repita a senha">
       </div>
+      <div class="field" id="field-setup-key" style="display:none">
+        <label>Chave de Setup</label>
+        <input type="password" id="inp-setup-key" placeholder="SETUP_KEY configurada no servidor" autocomplete="off">
+      </div>
       <div class="btn-row">
         <button class="btn btn-gold" onclick="salvarUsuario(false)">💾 Salvar Usuário</button>
         <button class="btn btn-ghost btn-sm" onclick="salvarUsuario(true)">↺ Recriar (apaga o atual)</button>
@@ -389,14 +393,34 @@
   </div>
 </div>
 
+<script src="/admin/js/admin-core.js"></script>
 <script>
+const AdminCore = window.DOAAdminCore;
 const API = '/api/setup';
+const AUTH_API = '/api/auth';
 let limparAlvo = null;
+
+const getToken = () => AdminCore.getToken();
+const authHeaders = (extra = {}) => {
+  const token = getToken();
+  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
+};
+const setupHeaders = (extra = {}) => {
+  const headers = authHeaders(extra);
+  const setupKey = document.getElementById('inp-setup-key')?.value || '';
+  if (setupKey) headers['X-Setup-Key'] = setupKey;
+  return headers;
+};
 
 // ── STATUS ────────────────────────────────────────────────────────────────────
 async function carregarStatus() {
   try {
-    const r = await fetch(`${API}/status`);
+    const r = await fetch(`${API}/status`, { headers: authHeaders() });
+    if (r.status === 401) {
+      document.getElementById('db-badge').textContent = 'Protegido';
+      document.getElementById('db-badge').className = 'card-badge badge-warn';
+      return;
+    }
     const d = await r.json();
 
     document.getElementById('stat-tropas').textContent   = d.colecoes.tropas.total;
@@ -406,6 +430,9 @@ async function carregarStatus() {
     document.getElementById('db-host').textContent        = d.db.host;
     document.getElementById('db-name').textContent        = d.db.nome;
     document.getElementById('db-estado').textContent      = d.db.estado;
+
+    const setupKeyField = document.getElementById('field-setup-key');
+    if (setupKeyField) setupKeyField.style.display = d.setup?.chaveObrigatoria ? 'block' : 'none';
 
     const dot = document.getElementById('db-dot');
     const badge = document.getElementById('db-badge');
@@ -458,60 +485,80 @@ async function carregarStatus() {
 }
 
 // ── SSE HELPER ───────────────────────────────────────────────────────────────
-function iniciarSSE(url, { barId, logId, statsId, progId, total, onDone }) {
+async function iniciarSSE(url, { barId, logId, statsId, progId, total, onDone }) {
   const prog  = document.getElementById(progId);
   const bar   = document.getElementById(barId);
   const log   = document.getElementById(logId);
   const stats = document.getElementById(statsId);
 
   prog.classList.add('visible');
-  log.innerHTML  = '';
-  stats.innerHTML = '';
+  log.textContent = '';
+  stats.textContent = '';
   bar.style.width = '0%';
 
   let contagem = 0;
+  let concluido = false;
   const counts = { inseridos: 0, atualizados: 0, pulados: 0 };
 
-  const es = new EventSource(url);
-  es.onmessage = (ev) => {
-    const d = JSON.parse(ev.data);
-
+  const processar = (d) => {
     if (d.type === 'inicio') {
       adicionarLog(log, 'info', `▶ Iniciando — ${d.total} itens (modo: ${d.modo})`);
-    }
-    else if (d.type === 'item') {
+    } else if (d.type === 'item') {
       contagem++;
       const pct = Math.round((contagem / total) * 100);
       bar.style.width = pct + '%';
-
-      if (d.status === 'inserido')   { counts.inseridos++;   adicionarLog(log, 'ins',  `+ ${d.nome || 'Nível ' + d.nivel}`); }
-      if (d.status === 'atualizado') { counts.atualizados++; adicionarLog(log, 'upd',  `↺ ${d.nome || 'Nível ' + d.nivel}`); }
-      if (d.status === 'pulado')     { counts.pulados++;     /* silencioso */ }
-
+      if (d.status === 'inserido')   { counts.inseridos++;   adicionarLog(log, 'ins', `+ ${d.nome || 'Nível ' + d.nivel}`); }
+      if (d.status === 'atualizado') { counts.atualizados++; adicionarLog(log, 'upd', `↺ ${d.nome || 'Nível ' + d.nivel}`); }
+      if (d.status === 'pulado') counts.pulados++;
       atualizarStats(stats, counts);
-    }
-    else if (d.type === 'log') {
+    } else if (d.type === 'log') {
       adicionarLog(log, d.nivel, d.texto);
-    }
-    else if (d.type === 'concluido') {
+    } else if (d.type === 'concluido') {
       bar.style.width = '100%';
       const ins = d.inseridas ?? d.inseridos ?? 0;
       const upd = d.atualizadas ?? d.atualizados ?? 0;
       const pul = d.puladas ?? d.pulados ?? 0;
       adicionarLog(log, 'done', `✓ Concluído — ${ins} inseridos · ${upd} atualizados · ${pul} pulados · Total: ${d.totalFinal}`);
-      es.close();
+      concluido = true;
       carregarStatus();
-      if (onDone) onDone();
-    }
-    else if (d.type === 'erro') {
+      onDone?.();
+    } else if (d.type === 'erro') {
       adicionarLog(log, 'err', `✕ Erro: ${d.mensagem}`);
-      es.close();
     }
   };
-  es.onerror = () => {
-    adicionarLog(log, 'err', '✕ Conexão perdida.');
-    es.close();
-  };
+
+  try {
+    const r = await fetch(url, { headers: authHeaders({ Accept: 'text/event-stream' }) });
+    if (r.status === 401 || r.status === 403) {
+      adicionarLog(log, 'err', '✕ Faça login no painel Admin antes de executar esta ação.');
+      return false;
+    }
+    if (!r.ok || !r.body) {
+      adicionarLog(log, 'err', `✕ Falha HTTP ${r.status}.`);
+      return false;
+    }
+
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const eventos = buffer.split('\n\n');
+      buffer = eventos.pop() || '';
+      for (const evento of eventos) {
+        const linha = evento.split('\n').find(l => l.startsWith('data: '));
+        if (!linha) continue;
+        try { processar(JSON.parse(linha.slice(6))); } catch { /* ignora evento inválido */ }
+      }
+    }
+  } catch (e) {
+    adicionarLog(log, 'err', `✕ Conexão perdida: ${e.message}`);
+    return false;
+  }
+  return concluido;
 }
 
 function adicionarLog(box, tipo, texto) {
@@ -523,11 +570,18 @@ function adicionarLog(box, tipo, texto) {
 }
 
 function atualizarStats(el, c) {
-  el.innerHTML = `
-    <span class="pstat pstat-ins">✓ ${c.inseridos} inseridos</span>
-    <span class="pstat pstat-upd">↺ ${c.atualizados} atualizados</span>
-    <span class="pstat pstat-skip">⊘ ${c.pulados} pulados</span>
-  `;
+  el.textContent = '';
+  const dados = [
+    ['pstat pstat-ins', `✓ ${c.inseridos} inseridos`],
+    ['pstat pstat-upd', `↺ ${c.atualizados} atualizados`],
+    ['pstat pstat-skip', `⊘ ${c.pulados} pulados`],
+  ];
+  dados.forEach(([cls, texto]) => {
+    const span = document.createElement('span');
+    span.className = cls;
+    span.textContent = texto;
+    el.appendChild(span);
+  });
 }
 
 // ── IMPORTAR TROPAS ────────────────────────────────────────────────────────────
@@ -552,30 +606,30 @@ function importarNiveis() {
 
 // ── IMPORTAR TUDO ─────────────────────────────────────────────────────────────
 let tudoPendente = 0;
-function importarTudo() {
+async function importarTudo() {
   const btn = document.getElementById('btn-importar-tudo');
   btn.disabled = true;
   tudoPendente = 2;
 
   document.getElementById('prog-tudo').classList.add('visible');
   const log = document.getElementById('log-tudo');
-  log.innerHTML = '';
+  log.textContent = '';
 
-  function fazerNiveis() {
-    iniciarSSE(`${API}/importar/niveis?modo=novas`, {
-      barId: 'bar-tudo', logId: 'log-tudo',
-      statsId: 'stats-tudo', progId: 'prog-tudo',
-      total: 60,
-      onDone: () => { btn.disabled = false; }
-    });
-  }
-
-  iniciarSSE(`${API}/importar/tropas?modo=novas`, {
+  const tropasOk = await iniciarSSE(`${API}/importar/tropas?modo=novas`, {
     barId: 'bar-tudo', logId: 'log-tudo',
     statsId: 'stats-tudo', progId: 'prog-tudo',
     total: 53,
-    onDone: fazerNiveis
   });
+
+  if (tropasOk) {
+    await iniciarSSE(`${API}/importar/niveis?modo=novas`, {
+      barId: 'bar-tudo', logId: 'log-tudo',
+      statsId: 'stats-tudo', progId: 'prog-tudo',
+      total: 60,
+    });
+  }
+
+  btn.disabled = false;
 }
 
 // ── SALVAR USUÁRIO ─────────────────────────────────────────────────────────────
@@ -587,7 +641,13 @@ async function salvarUsuario(forcar) {
 
   const show = (tipo, msg) => {
     alertEl.className = `alert alert-${tipo} visible`;
-    alertEl.innerHTML = `<span class="alert-icon">${tipo==='ok'?'✓':tipo==='err'?'✕':'⚠'}</span><span>${msg}</span>`;
+    alertEl.textContent = '';
+    const icon = document.createElement('span');
+    icon.className = 'alert-icon';
+    icon.textContent = tipo==='ok' ? '✓' : tipo==='err' ? '✕' : '⚠';
+    const text = document.createElement('span');
+    text.textContent = msg;
+    alertEl.append(icon, text);
   };
 
   if (!usuario || !senha) return show('err', 'Preencha usuário e senha.');
@@ -598,7 +658,7 @@ async function salvarUsuario(forcar) {
   try {
     const r = await fetch(`${API}/usuario`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: setupHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ usuario, senha, forcar }),
     });
     const d = await r.json();
@@ -606,6 +666,17 @@ async function salvarUsuario(forcar) {
       if (d.existe && !forcar)
         return show('warn', `Usuário já existe. Clique em "Recriar" para substituir.`);
       return show('err', d.erro || 'Erro ao salvar.');
+    }
+    // Após criar/substituir o admin, autentica com as novas credenciais para
+    // que imports e limpezas protegidas continuem disponíveis nesta página.
+    const login = await fetch(`${AUTH_API}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario, senha }),
+    });
+    if (login.ok) {
+      const ld = await login.json();
+      AdminCore.setToken(ld.token);
     }
     show('ok', d.mensagem || 'Usuário salvo com sucesso!');
     document.getElementById('inp-usuario').value = '';
@@ -633,7 +704,7 @@ async function executarLimpar() {
   if (!limparAlvo) return;
   fecharConfirm();
   try {
-    const r = await fetch(`${API}/limpar/${limparAlvo}`, { method: 'DELETE' });
+    const r = await fetch(`${API}/limpar/${limparAlvo}`, { method: 'DELETE', headers: authHeaders() });
     const d = await r.json();
     if (r.ok) carregarStatus();
     else alert('Erro: ' + d.erro);

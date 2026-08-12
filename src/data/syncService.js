@@ -15,11 +15,10 @@
  */
 
 import { dbEdificios } from './edificios.js';
+import { APP_VERSION } from '../version.js';
+import { calcularSyncStatus } from './syncStatus.js';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-// ─── VERSÃO DO APP ───────────────────────────────────────────────────────────
-export const APP_VERSION = '1.0.1';
 
 // ─── CHAVES DO CACHE ─────────────────────────────────────────────────────────
 export const SYNC_KEYS = {
@@ -29,6 +28,7 @@ export const SYNC_KEYS = {
   SYNC_TS:     'doa_ultima_sync',
   APP_VER:     'doa_sync_app_version',
   SYNC_STATUS: 'doa_sync_status',
+  LAST_OK_TS:  'doa_ultima_sync_ok',
 };
 
 // ─── LEITORES DE CACHE (síncronos) ───────────────────────────────────────────
@@ -47,9 +47,10 @@ export const getCachedPesquisas = () => {
 
 // ─── INFO DO ÚLTIMO SYNC ─────────────────────────────────────────────────────
 export const getSyncInfo = () => ({
-  ts:     localStorage.getItem(SYNC_KEYS.SYNC_TS)     || null,
-  ver:    localStorage.getItem(SYNC_KEYS.APP_VER)     || null,
-  status: localStorage.getItem(SYNC_KEYS.SYNC_STATUS) || null,
+  ts:          localStorage.getItem(SYNC_KEYS.LAST_OK_TS) || (localStorage.getItem(SYNC_KEYS.APP_VER) ? localStorage.getItem(SYNC_KEYS.SYNC_TS) : null),
+  tentativaTs: localStorage.getItem(SYNC_KEYS.SYNC_TS) || null,
+  ver:         localStorage.getItem(SYNC_KEYS.APP_VER) || null,
+  status:      localStorage.getItem(SYNC_KEYS.SYNC_STATUS) || null,
 });
 
 export const precisaSincronizar = () => getSyncInfo().ver !== APP_VERSION;
@@ -140,55 +141,78 @@ async function fetchEndpoint(path, chave, dataKey, timeout = 10000) {
  */
 export async function syncTodos(onProgress) {
   const endpoints = [
-    { path: 'itens?limite=500', chave: SYNC_KEYS.ITENS,      dataKey: 'itens',      label: 'Itens',      staticFn: null              },
-    { path: 'edificios',        chave: SYNC_KEYS.EDIFICIOS,   dataKey: 'edificios',  label: 'Edifícios',  staticFn: getStaticEdificios },
-    { path: 'pesquisas',        chave: SYNC_KEYS.PESQUISAS,   dataKey: 'pesquisas',  label: 'Pesquisas',  staticFn: null              },
+    { path: 'itens?limite=500', chave: SYNC_KEYS.ITENS,       dataKey: 'itens',      label: 'Itens',      staticFn: null               },
+    { path: 'edificios',        chave: SYNC_KEYS.EDIFICIOS,   dataKey: 'edificios',  label: 'Edifícios', staticFn: getStaticEdificios },
+    { path: 'pesquisas',        chave: SYNC_KEYS.PESQUISAS,   dataKey: 'pesquisas',  label: 'Pesquisas', staticFn: null               },
   ];
 
-  let ok           = 0;
-  let usouEstatico = false;
+  let concluidos    = 0;
+  let ok            = 0;
+  let usouEstatico  = false;
+  let usouCache     = false;
 
-  for (let i = 0; i < endpoints.length; i++) {
-    const ep = endpoints[i];
-    onProgress?.({ step: i, total: endpoints.length, label: ep.label });
+  onProgress?.({ step: 0, total: endpoints.length, label: 'Conectando' });
 
-    // 1. Tenta API (que consulta MongoDB)
-    const apiOk = await fetchEndpoint(ep.path, ep.chave, ep.dataKey);
+  const tarefas = endpoints.map(async (ep) => {
+    const apiOk = isOnline() ? await fetchEndpoint(ep.path, ep.chave, ep.dataKey) : false;
+    let origem = 'erro';
 
     if (apiOk) {
-      ok++;
-    } else if (ep.staticFn) {
-      // 2. API falhou → verifica cache atual
-      const cacheAtual = JSON.parse(localStorage.getItem(ep.chave) || '[]');
-      if (cacheAtual.length === 0) {
-        // 3. Sem cache → popula com dados estáticos embutidos
+      ok += 1;
+      origem = 'api';
+    } else {
+      let cacheAtual = [];
+      try { cacheAtual = JSON.parse(localStorage.getItem(ep.chave) || '[]'); }
+      catch { cacheAtual = []; }
+
+      if (cacheAtual.length > 0) {
+        usouCache = true;
+        origem = 'cache';
+      } else if (ep.staticFn) {
         const staticData = ep.staticFn();
         if (staticData.length > 0) {
           localStorage.setItem(ep.chave, JSON.stringify(staticData));
           usouEstatico = true;
+          origem = 'estatico';
         }
       }
-      // Se cache existia, ele continua válido — não faz nada
     }
-  }
 
+    concluidos += 1;
+    onProgress?.({ step: concluidos, total: endpoints.length, label: ep.label });
+    return { label: ep.label, origem };
+  });
+
+  const resultados = await Promise.allSettled(tarefas);
   onProgress?.({ step: endpoints.length, total: endpoints.length, label: 'Concluído' });
 
-  const status =
-    ok === endpoints.length ? 'ok'
-    : ok > 0                ? 'parcial'
-    : usouEstatico          ? 'estatico'
-    : 'erro';
+  const status = calcularSyncStatus({
+    ok,
+    total: endpoints.length,
+    usouEstatico,
+    usouCache,
+  });
 
-  localStorage.setItem(SYNC_KEYS.SYNC_TS,     new Date().toISOString());
+  const agora = new Date().toISOString();
+  localStorage.setItem(SYNC_KEYS.SYNC_TS, agora);
+  if (ok > 0) localStorage.setItem(SYNC_KEYS.LAST_OK_TS, agora);
   localStorage.setItem(SYNC_KEYS.SYNC_STATUS, status);
 
-  // Marca versão como sincronizada se qualquer dado está disponível
-  if (ok > 0 || usouEstatico || temAlgumCache()) {
+  // Só considera esta versão totalmente sincronizada quando todos os endpoints
+  // responderam pela API. Cache antigo não mascara uma falha de sincronização.
+  if (ok === endpoints.length) {
     localStorage.setItem(SYNC_KEYS.APP_VER, APP_VERSION);
   }
 
-  return { ok, total: endpoints.length, sucesso: ok > 0 || usouEstatico || temAlgumCache(), usouEstatico };
+  return {
+    ok,
+    total: endpoints.length,
+    sucesso: ok > 0,
+    status,
+    usouEstatico,
+    usouCache,
+    resultados,
+  };
 }
 
 // ─── FORMATA TIMESTAMP ───────────────────────────────────────────────────────

@@ -25,22 +25,37 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3001',
   'http://127.0.0.1:5173',
-  'https://guiadoa.vercel.app',
-  'https://guiadoa.onrender.com',
+  'https://guia-doa.vercel.app',
   ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean) : []),
 ];
 
+function getRequestOrigin(req) {
+  const forwardedHost = (req.get('x-forwarded-host') || req.get('host') || '').split(',')[0].trim();
+  const forwardedProto = (req.get('x-forwarded-proto') || req.protocol || '').split(',')[0].trim();
+  if (!forwardedHost || !forwardedProto) return '';
+  return `${forwardedProto}://${forwardedHost}`;
+}
+
+function corsOptions(req, cb) {
+  const origin = req.get('origin');
+  const selfOrigin = getRequestOrigin(req);
+  const permitido = !origin || origin === selfOrigin || ALLOWED_ORIGINS.includes(origin);
+
+  if (permitido) {
+    return cb(null, {
+      origin: origin || true,
+      credentials: true,
+    });
+  }
+
+  const err = new Error('Origem não permitida pelo CORS.');
+  err.status = 403;
+  return cb(err);
+}
+
 app.use(requestContext);
 app.use(padronizarRespostasDeErro);
-app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    const err = new Error(`Origem não permitida pelo CORS.`);
-    err.status = 403;
-    cb(err);
-  },
-  credentials: true,
-}));
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '1mb' }));
 
 app.use('/api/health', healthRoutes);

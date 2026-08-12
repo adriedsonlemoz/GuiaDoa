@@ -7,6 +7,14 @@ let DI_DICAS    = [];   // dicas da categoria aberta
 let DI_CAT      = null; // categoria ativa
 let DI_EDITANDO = null; // dica sendo editada
 
+const DI_MODULOS = [
+  ['ilhas','🏝️ Cidade/Ilhas'], ['edificios','🏰 Edifícios'], ['tropas','⚔️ Tropas'],
+  ['dragoes','🐉 Dragões'], ['pesquisas','🔬 Pesquisas'], ['itens','🎒 Itens'],
+  ['niveis','📈 Níveis'], ['torneios','🏆 Torneios'],
+];
+const diCsv = value => String(value || '').split(',').map(v=>v.trim()).filter(Boolean);
+const diJoin = value => Array.isArray(value) ? value.join(', ') : '';
+
 const DI_CSS = `<style>
 .di-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px}
 .di-cat-card{background:var(--card);border:1.5px solid rgba(200,168,74,0.2);border-radius:12px;
@@ -43,7 +51,12 @@ const DI_CSS = `<style>
   padding:8px 12px;font-size:0.85rem;font-family:inherit;outline:none;
   transition:border-color 0.15s;box-sizing:border-box}
 .di-field input:focus,.di-field select:focus,.di-field textarea:focus{border-color:var(--gold)}
-.di-field textarea{resize:vertical;min-height:80px}
+.di-field textarea{resize:vertical;min-height:130px}
+.di-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.di-rel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:7px}
+.di-rel-opt{display:flex;align-items:center;gap:7px;padding:8px 9px;border:1px solid rgba(200,168,74,.22);border-radius:8px;background:rgba(200,168,74,.04);font-size:.7rem;color:var(--text);cursor:pointer}
+.di-rel-opt input{width:auto!important}
+@media(max-width:600px){.di-meta-grid,.di-rel-grid{grid-template-columns:1fr}}
 .di-imgs-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .di-img-thumb{position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden}
 .di-img-thumb img{width:100%;height:100%;object-fit:cover}
@@ -173,8 +186,8 @@ function renderListaDicas(){
               :`<div class="di-dica-img-ph">${esc(cat.icon)}</div>`}
             <div class="di-dica-body">
               <div class="di-dica-titulo">${esc(d.titulo)} ${d.destaque?'<span class="di-badge-dest">⭐</span>':''} ${!d.ativo?'<span style="font-size:0.6rem;color:#A83C2C">[Inativa]</span>':''}</div>
-              ${d.conteudo?`<div class="di-dica-conteudo">${esc(d.conteudo)}</div>`:''}
-              <div style="font-size:0.6rem;color:var(--muted);margin-top:3px">${d.imagens?.length||0} imagem(ns)</div>
+              ${d.resumo?`<div class="di-dica-conteudo">${esc(d.resumo)}</div>`:(d.conteudo?`<div class="di-dica-conteudo">${esc(d.conteudo)}</div>`:'')}
+              <div style="font-size:0.6rem;color:var(--muted);margin-top:5px">${esc(d.tipo||'dica')} · ${Number(d.leituraMin||0)} min · ${d.imagens?.length||0} imagem(ns) · ${(d.relacionados?.modulos||[]).length} módulo(s)</div>
               <div class="di-dica-acoes">
                 <button class="di-btn di-btn-edit" onclick="mostrarFormDica(fromDataArg('${dataArg(d)}'))">✏️ Editar</button>
                 <button class="di-btn di-btn-del"  onclick="excluirDica(fromStrArg('${strArg(d._id)}'),fromStrArg('${strArg(d.titulo)}'))">🗑️</button>
@@ -201,27 +214,62 @@ function mostrarFormDica(dica){
         <input id="di-titulo" value="${isEdit?esc(dica.titulo):''}" placeholder="Ex: Como evoluir Dragões rapidamente" />
       </div>
 
-      <div class="di-field">
-        <label>Categoria</label>
-        <select id="di-cat-sel">
-          ${DI_CATS.map(c=>`<option value="${esc(c.slug)}" ${DI_CAT?.slug===c.slug?'selected':''}>${esc(c.icon)} ${esc(c.label)}</option>`).join('')}
-        </select>
+      <div class="di-meta-grid">
+        <div class="di-field">
+          <label>Categoria</label>
+          <select id="di-cat-sel">
+            ${DI_CATS.map(c=>`<option value="${esc(c.slug)}" ${(isEdit?dica.categoria:DI_CAT?.slug)===c.slug?'selected':''}>${esc(c.icon)} ${esc(c.label)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="di-field">
+          <label>Tipo</label>
+          <select id="di-tipo">
+            ${['dica','guia','tutorial'].map(v=>`<option value="${v}" ${(isEdit?dica.tipo:'guia')===v?'selected':''}>${v[0].toUpperCase()+v.slice(1)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="di-meta-grid">
+        <div class="di-field"><label>Slug</label><input id="di-slug" value="${isEdit?esc(dica.slug||''):''}" placeholder="guia-inicial-construcoes" /></div>
+        <div class="di-field"><label>Tempo de leitura (min)</label><input id="di-leitura" type="number" min="0" max="120" value="${isEdit?Number(dica.leituraMin||0):5}" /></div>
       </div>
 
       <div class="di-field">
-        <label>Conteúdo / Descrição</label>
-        <textarea id="di-conteudo" placeholder="Descreva a dica ou tutorial aqui…">${isEdit?esc(dica.conteudo||''):''}</textarea>
+        <label>Resumo</label>
+        <textarea id="di-resumo" style="min-height:78px" placeholder="Uma frase curta para o card da biblioteca…">${isEdit?esc(dica.resumo||''):''}</textarea>
+      </div>
+
+      <div class="di-field">
+        <label>Conteúdo do guia</label>
+        <textarea id="di-conteudo" style="min-height:320px" placeholder="Use linhas com emoji como títulos, - para listas e --- para separar seções.">${isEdit?esc(dica.conteudo||''):''}</textarea>
+        <div style="font-size:.64rem;color:var(--muted);margin-top:5px">O app transforma o texto em seções visuais. Ex.: 🏰 Título · - item · ---. Dados dinâmicos: {{fonte_n35}} e {{fontes_38}}.</div>
+      </div>
+
+      <div class="di-field">
+        <label>Conectar com módulos do jogo</label>
+        <div class="di-rel-grid">
+          ${DI_MODULOS.map(([id,label])=>`<label class="di-rel-opt"><input type="checkbox" data-di-modulo="${id}" ${(dica?.relacionados?.modulos||[]).includes(id)?'checked':''}/> ${label}</label>`).join('')}
+        </div>
+      </div>
+      <div class="di-meta-grid">
+        <div class="di-field"><label>Edifícios relacionados (slugs)</label><input id="di-rel-edificios" value="${isEdit?esc(diJoin(dica.relacionados?.edificios)):''}" placeholder="FonteDaCura, Casa, Fabrica" /></div>
+        <div class="di-field"><label>Tropas relacionadas (nomes)</label><input id="di-rel-tropas" value="${isEdit?esc(diJoin(dica.relacionados?.tropas)):''}" placeholder="Hoplita, Ogros de Granito" /></div>
+        <div class="di-field"><label>Dragões relacionados (slugs)</label><input id="di-rel-dragoes" value="${isEdit?esc(diJoin(dica.relacionados?.dragoes)):''}" placeholder="dragao_agua, dragao_terra" /></div>
+        <div class="di-field"><label>Pesquisas relacionadas (slugs)</label><input id="di-rel-pesquisas" value="${isEdit?esc(diJoin(dica.relacionados?.pesquisas)):''}" placeholder="opcional" /></div>
       </div>
 
       <div class="i18n-section" style="margin:14px 0">
         <div class="i18n-title">🇺🇸 English <span style="font-weight:500;opacity:.7">(opcional)</span></div>
         <div class="di-field">
           <label>Title</label>
-          <input id="di-en-titulo" value="${isEdit?esc(dica.i18n?.['en-US']?.titulo||''):''}" placeholder="e.g. How to level Dragons quickly" />
+          <input id="di-en-titulo" value="${isEdit?esc(dica.i18n?.['en-US']?.titulo||''):''}" placeholder="e.g. Beginner Building Guide" />
+        </div>
+        <div class="di-field">
+          <label>Summary</label>
+          <textarea id="di-en-resumo" style="min-height:78px" placeholder="Short summary shown on the guide card…">${isEdit?esc(dica.i18n?.['en-US']?.resumo||''):''}</textarea>
         </div>
         <div class="di-field" style="margin-bottom:0">
-          <label>Content / Description</label>
-          <textarea id="di-en-conteudo" placeholder="Write the tip or tutorial in English…">${isEdit?esc(dica.i18n?.['en-US']?.conteudo||''):''}</textarea>
+          <label>Guide content</label>
+          <textarea id="di-en-conteudo" style="min-height:280px" placeholder="Write the guide in English…">${isEdit?esc(dica.i18n?.['en-US']?.conteudo||''):''}</textarea>
         </div>
       </div>
 
@@ -291,13 +339,26 @@ function previewImagens(input){
 async function salvarDica(){
   const titulo   = document.getElementById('di-titulo')?.value.trim();
   const categoria= document.getElementById('di-cat-sel')?.value;
+  const slug      = document.getElementById('di-slug')?.value.trim();
+  const tipo      = document.getElementById('di-tipo')?.value || 'dica';
+  const leituraMin= Number(document.getElementById('di-leitura')?.value || 0);
+  const resumo    = document.getElementById('di-resumo')?.value.trim();
   const conteudo = document.getElementById('di-conteudo')?.value.trim();
   const destaque = document.getElementById('di-destaque')?.checked;
   const ativo    = document.getElementById('di-ativo')?.checked;
   const i18n     = { 'en-US': {
     titulo: document.getElementById('di-en-titulo')?.value.trim() || '',
+    resumo: document.getElementById('di-en-resumo')?.value.trim() || '',
     conteudo: document.getElementById('di-en-conteudo')?.value.trim() || '',
   } };
+
+  const relacionados = {
+    modulos: [...document.querySelectorAll('[data-di-modulo]:checked')].map(el=>el.dataset.diModulo),
+    edificios: diCsv(document.getElementById('di-rel-edificios')?.value),
+    tropas: diCsv(document.getElementById('di-rel-tropas')?.value),
+    dragoes: diCsv(document.getElementById('di-rel-dragoes')?.value),
+    pesquisas: diCsv(document.getElementById('di-rel-pesquisas')?.value),
+  };
 
   if(!titulo){toast('Título é obrigatório','aviso');return;}
 
@@ -306,25 +367,31 @@ async function salvarDica(){
     if(DI_EDITANDO){
       const r=await fetch(`${API}/dicas/${DI_EDITANDO._id}`,{
         method:'PATCH',headers:{'Content-Type':'application/json',Authorization:`Bearer ${TOKEN}`},
-        body:JSON.stringify({titulo,categoria,conteudo,destaque,ativo,i18n}),
+        body:JSON.stringify({titulo,slug,categoria,resumo,conteudo,tipo,leituraMin,relacionados,destaque,ativo,i18n}),
       });
       dica=await r.json();
+      if(!r.ok) throw new Error(dica.erro || 'Não foi possível salvar a dica.');
     } else {
       const r=await fetch(`${API}/dicas`,{
         method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${TOKEN}`},
-        body:JSON.stringify({titulo,categoria,conteudo,destaque,ativo,i18n}),
+        body:JSON.stringify({titulo,slug,categoria,resumo,conteudo,tipo,leituraMin,relacionados,destaque,ativo,i18n}),
       });
       dica=await r.json();
+      if(!r.ok) throw new Error(dica.erro || 'Não foi possível criar a dica.');
     }
 
     // Upload de imagens pendentes
     if(DI_FILES_PENDENTES.length && dica._id){
       const fd=new FormData();
       DI_FILES_PENDENTES.forEach(f=>fd.append('imagens',f));
-      await fetch(`${API}/dicas/${dica._id}/imagens`,{
+      const uploadResp=await fetch(`${API}/dicas/${dica._id}/imagens`,{
         method:'POST',headers:{Authorization:`Bearer ${TOKEN}`},
         body:fd,
       });
+      if(!uploadResp.ok){
+        const uploadErro=await uploadResp.json().catch(()=>({}));
+        throw new Error(uploadErro.erro || 'A dica foi salva, mas o envio das imagens falhou.');
+      }
       DI_FILES_PENDENTES=[];
     }
 

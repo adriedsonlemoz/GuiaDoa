@@ -9,7 +9,47 @@ import { executarUploadLote } from '../utils/cloudinaryBatch.js';
 import { sanitizeContentI18n } from '../utils/contentI18n.js';
 
 const router = express.Router();
-const I18N_DICA_FIELDS = ['titulo', 'conteudo'];
+const I18N_DICA_FIELDS = ['titulo', 'resumo', 'conteudo'];
+const MODULOS_DICA = new Set(['ilhas', 'edificios', 'tropas', 'dragoes', 'pesquisas', 'reinos', 'itens', 'niveis', 'torneios']);
+
+function slugifyDica(texto) {
+  return String(texto || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
+function sanitizeRefs(values) {
+  return [...new Set((Array.isArray(values) ? values : []).map(v => String(v || '').trim()).filter(Boolean))].slice(0, 40);
+}
+
+function sanitizeRelacionados(input = {}) {
+  return {
+    modulos: sanitizeRefs(input.modulos).filter(v => MODULOS_DICA.has(v)),
+    edificios: sanitizeRefs(input.edificios),
+    tropas: sanitizeRefs(input.tropas),
+    dragoes: sanitizeRefs(input.dragoes),
+    pesquisas: sanitizeRefs(input.pesquisas),
+    reinos: sanitizeRefs(input.reinos),
+  };
+}
+
+function sanitizeDicaBody(input = {}, { partial = false } = {}) {
+  const out = {};
+  const copy = (key, fn = v => v) => { if (!partial || key in input) out[key] = fn(input[key]); };
+  copy('titulo', v => String(v || '').trim());
+  copy('slug', v => slugifyDica(v));
+  copy('categoria', v => String(v || '').trim());
+  copy('resumo', v => String(v || '').trim());
+  copy('conteudo', v => String(v || ''));
+  copy('tipo', v => ['dica','guia','tutorial'].includes(v) ? v : 'dica');
+  copy('leituraMin', v => Math.max(0, Math.min(120, Number(v) || 0)));
+  copy('destaque', Boolean);
+  copy('ativo', Boolean);
+  copy('ordem', v => Number(v) || 0);
+  copy('relacionados', sanitizeRelacionados);
+  if (!partial || 'i18n' in input) out.i18n = sanitizeContentI18n(input.i18n, I18N_DICA_FIELDS);
+  return out;
+}
 const I18N_CAT_FIELDS = ['label'];
 
 // ─── Cloudinary config ────────────────────────────────────────────────────────
@@ -131,18 +171,24 @@ router.get('/:id', async (req, res) => {
 // POST /api/dicas — cria dica (sem imagens ainda)
 router.post('/', autenticar, async (req, res) => {
   try {
-    const { titulo, categoria, conteudo, destaque, ordem, i18n } = req.body;
-    if (!titulo || !categoria) return res.status(400).json({ erro: 'título e categoria são obrigatórios' });
-    const dica = await Dica.create({ titulo, categoria, conteudo, destaque, ordem, i18n: sanitizeContentI18n(i18n, I18N_DICA_FIELDS) });
+    const body = sanitizeDicaBody(req.body);
+    if (!('ativo' in req.body)) delete body.ativo;
+    if (!('destaque' in req.body)) delete body.destaque;
+    if (!('ordem' in req.body)) delete body.ordem;
+    if (!body.titulo || !body.categoria) return res.status(400).json({ erro: 'título e categoria são obrigatórios' });
+    if (!body.slug) body.slug = slugifyDica(body.titulo);
+    const dica = await Dica.create(body);
     res.status(201).json(dica);
-  } catch (e) { res.status(500).json({ erro: e.message }); }
+  } catch (e) {
+    if (e.code === 11000) return res.status(409).json({ erro: 'Já existe uma dica com esse identificador.' });
+    res.status(500).json({ erro: e.message });
+  }
 });
 
 // PATCH /api/dicas/:id — atualiza dados (sem imagens)
 router.patch('/:id', autenticar, async (req, res) => {
   try {
-    const body = { ...req.body };
-    if ('i18n' in body) body.i18n = sanitizeContentI18n(body.i18n, I18N_DICA_FIELDS);
+    const body = sanitizeDicaBody(req.body, { partial: true });
     const dica = await Dica.findByIdAndUpdate(
       req.params.id,
       { ...body, atualizadoEm: new Date() },
@@ -150,7 +196,10 @@ router.patch('/:id', autenticar, async (req, res) => {
     );
     if (!dica) return res.status(404).json({ erro: 'Não encontrada' });
     res.json(dica);
-  } catch (e) { res.status(500).json({ erro: e.message }); }
+  } catch (e) {
+    if (e.code === 11000) return res.status(409).json({ erro: 'Já existe uma dica com esse identificador.' });
+    res.status(500).json({ erro: e.message });
+  }
 });
 
 // DELETE /api/dicas/:id

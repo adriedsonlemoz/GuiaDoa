@@ -8,10 +8,11 @@ const readJson = async response => {
 };
 
 export default function useDicasFeed() {
-  const { t } = useI18n();
+  const { t, content } = useI18n();
   const [categorias, setCategorias] = useState([]);
   const [dicas, setDicas] = useState([]);
   const [filtroCat, setFiltroCat] = useState(null);
+  const [busca, setBusca] = useState('');
   const [loading, setLoading] = useState(true);
   const [artigoAberto, setArtigoAberto] = useState(null);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'info' });
@@ -32,14 +33,22 @@ export default function useDicasFeed() {
       if (active) setLoading(false);
     });
     return () => { active = false; };
-  }, []);
+  }, [t]);
 
   const catMap = useMemo(() => Object.fromEntries(categorias.map(categoria => [categoria.slug, categoria])), [categorias]);
-  const dicasFiltradas = useMemo(() => (filtroCat ? dicas.filter(dica => dica.categoria === filtroCat) : dicas), [dicas, filtroCat]);
+  const dicasFiltradas = useMemo(() => {
+    const termo = busca.trim().toLocaleLowerCase();
+    return dicas.filter(dica => {
+      if (filtroCat && dica.categoria !== filtroCat) return false;
+      if (!termo) return true;
+      return [content(dica, 'titulo'), content(dica, 'resumo'), content(dica, 'conteudo')]
+        .some(valor => String(valor || '').toLocaleLowerCase().includes(termo));
+    });
+  }, [dicas, filtroCat, busca, content]);
   const closeToast = () => setToast(current => ({ ...current, open: false }));
 
   return {
-    categorias, dicasFiltradas, filtroCat, setFiltroCat, loading,
+    categorias, dicas, dicasFiltradas, filtroCat, setFiltroCat, busca, setBusca, loading,
     artigoAberto, setArtigoAberto, toast, closeToast, catMap,
   };
 }

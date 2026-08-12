@@ -4,6 +4,7 @@ import app from './app.js';
 import { COLLECTION_PREFIX, mongoConnectOptions } from './config/database.js';
 import { migrarColecoesLegadas } from './utils/migrateLegacyCollections.js';
 import { executarMigracaoAutomatica } from './services/autoMigration.js';
+import { executarMigracoesConteudo } from './services/contentMigrations.js';
 
 if (!process.env.MONGO_URI) {
   console.error('❌  MONGO_URI não definida. Configure a variável de ambiente no Render.');
@@ -34,6 +35,14 @@ mongoose.connect(process.env.MONGO_URI, mongoConnectOptions())
     } else {
       console.error(`⚠️   Migração automática falhou: ${migracao.erro}`);
     }
+
+    const conteudo = await executarMigracoesConteudo();
+    if (conteudo.ok && !conteudo.ignorada) {
+      console.log(`📚  Conteúdo:      ${conteudo.inseridas || 0} dica(s) inserida(s), ${conteudo.adaptadas || 0} adaptada(s)`);
+    } else if (!conteudo.ok) {
+      console.error(`⚠️   Migração de conteúdo falhou: ${conteudo.erro}`);
+    }
+
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {
       console.log(`🛡️  API rodando em http://localhost:${PORT}`);

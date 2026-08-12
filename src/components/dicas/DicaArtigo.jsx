@@ -2,138 +2,74 @@ import React, { useState } from 'react';
 import { C } from '../../theme.js';
 import { fmtData } from './dicasUtils.js';
 import ImagemLightbox from './ImagemLightbox.jsx';
+import GuideContentRenderer from './GuideContentRenderer.jsx';
+import DicaGameContext from './DicaGameContext.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
+import { useGameData } from '../../data/GameDataContext.jsx';
+import { buildDicaGameVariables } from './dicaGameUtils.js';
 
-const DicaArtigo = ({ dica, catInfo, onClose }) => {
+const typeIcon = { guia: '🧭', tutorial: '📘', dica: '💡' };
+
+const DicaArtigo = ({ dica, catInfo, onClose, setRoute }) => {
   const [lightboxIdx, setLightboxIdx] = useState(null);
   const { t, content, locale } = useI18n();
+  const { edificios } = useGameData();
+  const gameVariables = buildDicaGameVariables(edificios, locale);
   const titulo = content(dica, 'titulo');
+  const resumo = content(dica, 'resumo');
   const conteudo = content(dica, 'conteudo');
   const categoria = catInfo ? content(catInfo, 'label') : '';
 
+  const navegar = route => {
+    onClose?.();
+    setRoute?.(route);
+  };
+
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 9000,
-      background: C.BG_MAIN || C.BG_CARD,
-      display: 'flex', flexDirection: 'column',
-      overflowY: 'auto',
-    }}>
-      {/* Header sticky */}
-      <div style={{
-        background: `linear-gradient(135deg,${C.BG_HEADER},#2A4C72)`,
-        padding: '11px 14px',
-        display: 'flex', alignItems: 'center', gap: 10,
-        position: 'sticky', top: 0, zIndex: 10,
-        borderBottom: `1px solid rgba(200,168,74,0.3)`,
-      }}>
-        <button onClick={onClose} style={{
-          background: 'transparent', border: '1px solid rgba(200,168,74,0.3)',
-          borderRadius: 7, color: 'rgba(200,168,74,0.7)', width: 30, height: 30,
-          cursor: 'pointer', fontSize: '1rem', flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>←</button>
-        <p className="font-cinzel font-bold" style={{
-          fontSize: '0.76rem', color: 'rgba(200,168,74,0.9)',
-          letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0, flex: 1,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-        }}>
-          {catInfo ? `${catInfo.icon} ${categoria}` : `💡 ${t('tips.title')}`}
-        </p>
-      </div>
-      <div style={{ height: 2, background: `linear-gradient(90deg,transparent,${C.ACCENT},transparent)`, opacity: 0.5 }} />
-
-      <div style={{ maxWidth: 560, width: '100%', margin: '0 auto', flex: 1 }}>
-
-        {/* Imagem de capa — clicável para lightbox */}
-        {dica.imagens?.length > 0 && (
-          <div style={{ position: 'relative', background: C.BG_SECONDARY, cursor: 'zoom-in' }}
-            onClick={() => setLightboxIdx(0)}>
-            <img src={dica.imagens[0].url} alt={titulo}
-              style={{ width: '100%', maxHeight: 300, objectFit: 'cover', display: 'block' }}
-              onError={e => { e.target.style.display = 'none'; }}
-            />
-            <span style={{
-              position: 'absolute', bottom: 8, right: 8,
-              background: 'rgba(0,0,0,0.6)', color: '#fff',
-              fontSize: '0.68rem', padding: '3px 10px', borderRadius: 100,
-              display: 'flex', alignItems: 'center', gap: 4,
-            }}>🔍 {t('tips.view_image')}{dica.imagens.length > 1 ? ` (${dica.imagens.length})` : ''}</span>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9000, background: C.BG_MAIN || C.BG_CARD, overflowY: 'auto' }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(28,58,94,.97)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(200,168,74,.28)' }}>
+        <div style={{ maxWidth: 640, margin: '0 auto', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={onClose} aria-label={t('common.back')} style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(200,168,74,.28)', borderRadius: 9, color: '#e7c96e', width: 34, height: 34, cursor: 'pointer', fontSize: '1rem' }}>←</button>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div className="font-nunito" style={{ fontSize: '.59rem', color: 'rgba(255,255,255,.55)', textTransform: 'uppercase', letterSpacing: '.07em' }}>{t('tips.reading')}</div>
+            <div className="font-cinzel" style={{ fontSize: '.72rem', color: '#fff8e8', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{titulo}</div>
           </div>
-        )}
-
-        {/* Corpo do artigo */}
-        <div style={{ padding: '20px 18px 8px' }}>
-          {dica.destaque && (
-            <span style={{
-              fontSize: '0.64rem', fontWeight: 700, color: C.ACCENT,
-              textTransform: 'uppercase', letterSpacing: '0.07em',
-              display: 'inline-block', marginBottom: 8,
-              background: 'rgba(200,168,74,0.12)', padding: '2px 10px', borderRadius: 100,
-            }}>{`⭐ ${t('tips.featured')}`}</span>
-          )}
-
-          <h1 className="font-cinzel font-bold"
-            style={{ fontSize: '1.25rem', color: C.TEXT_PRIMARY, margin: '0 0 8px', lineHeight: 1.3 }}>
-            {titulo}
-          </h1>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-            {catInfo && (
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: C.TEXT_SECONDARY }}>
-                {catInfo.icon} {categoria}
-              </span>
-            )}
-            {dica.criadoEm && (
-              <>
-                <span style={{ color: C.TEXT_FAINT, fontSize: '0.65rem' }}>•</span>
-                <span style={{ fontSize: '0.7rem', color: C.TEXT_FAINT }}>{fmtData(dica.criadoEm, locale)}</span>
-              </>
-            )}
-          </div>
-
-          {conteudo && (
-            <p className="font-nunito" style={{
-              fontSize: '0.9rem', color: C.TEXT_SECONDARY, lineHeight: 1.8,
-              margin: 0, whiteSpace: 'pre-wrap',
-            }}>
-              {conteudo}
-            </p>
-          )}
         </div>
-
-        {/* Galeria de imagens adicionais — estilo matéria com fotos */}
-        {dica.imagens?.length > 1 && (
-          <div style={{ padding: '8px 18px 24px' }}>
-            <p style={{
-              fontSize: '0.66rem', fontWeight: 700, color: C.TEXT_MUTED,
-              textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10,
-            }}>{`📷 ${t('tips.gallery')}`}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
-              {dica.imagens.map((img, i) => (
-                <div key={i}
-                  onClick={() => setLightboxIdx(i)}
-                  style={{
-                    aspectRatio: '1/1', borderRadius: 8, overflow: 'hidden',
-                    cursor: 'zoom-in', border: `1px solid ${C.BORDER_SOFT}`,
-                  }}>
-                  <img src={img.url} alt=""
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={e => { e.target.style.display = 'none'; }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Lightbox */}
-      {lightboxIdx !== null && (
-        <ImagemLightbox imagens={dica.imagens} indexInicial={lightboxIdx} onClose={() => setLightboxIdx(null)} />
+      <main style={{ maxWidth: 640, width: '100%', margin: '0 auto', paddingBottom: 34 }}>
+        {dica.imagens?.length > 0 && (
+          <div style={{ position: 'relative', height: 245, overflow: 'hidden', cursor: 'zoom-in', background: C.BG_SECONDARY }} onClick={() => setLightboxIdx(0)}>
+            <img src={dica.imagens[0].url} alt={titulo} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(28,58,94,.72), transparent 60%)' }} />
+          </div>
+        )}
+
+        <header style={{ padding: '22px 16px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '.63rem', fontWeight: 900, color: C.ACCENT, textTransform: 'uppercase', letterSpacing: '.06em' }}>{typeIcon[dica.tipo] || '💡'} {t(`tips.type_${dica.tipo || 'dica'}`)}</span>
+            {catInfo && <span style={{ fontSize: '.63rem', color: C.TEXT_MUTED }}>• {catInfo.icon} {categoria}</span>}
+            {dica.destaque && <span style={{ fontSize: '.62rem', color: C.ACCENT, fontWeight: 900 }}>⭐ {t('tips.featured')}</span>}
+          </div>
+          <h1 className="font-cinzel" style={{ margin: '8px 0 0', color: C.TEXT_PRIMARY, fontSize: '1.28rem', lineHeight: 1.32 }}>{titulo}</h1>
+          {resumo && <p className="font-nunito" style={{ margin: '9px 0 0', fontSize: '.84rem', lineHeight: 1.62, color: C.TEXT_SECONDARY }}>{resumo}</p>}
+          <div className="font-nunito" style={{ display: 'flex', gap: 9, flexWrap: 'wrap', marginTop: 11, fontSize: '.64rem', color: C.TEXT_FAINT }}>
+            {dica.leituraMin > 0 && <span>⏱️ {t('tips.minutes', { count: dica.leituraMin })}</span>}
+            {dica.atualizadoEm && <span>• {t('tips.updated')} {fmtData(dica.atualizadoEm, locale)}</span>}
+          </div>
+        </header>
+
+        <div style={{ padding: '0 12px' }}>
+          <GuideContentRenderer content={conteudo} variables={gameVariables} />
+          <DicaGameContext dica={dica} setRoute={navegar} />
+        </div>
+      </main>
+
+      {lightboxIdx !== null && dica.imagens?.length > 0 && (
+        <ImagemLightbox imagens={dica.imagens} indiceInicial={lightboxIdx} onClose={() => setLightboxIdx(null)} />
       )}
     </div>
   );
 };
-
 
 export default DicaArtigo;

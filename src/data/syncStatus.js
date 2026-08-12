@@ -5,8 +5,8 @@ export function calcularSyncStatus({ ok = 0, total = 0 } = {}) {
 }
 
 export function descreverSyncStatus(status, online = true) {
-  if (status === 'syncing') return { emoji:'🔄', label:'Atualizando do MongoDB', nivel:'info' };
-  if (status === 'ok' && online) return { emoji:'🟢', label:'MongoDB conectado', nivel:'ok' };
-  if (status === 'parcial') return { emoji:'🟡', label:'Dados incompletos', nivel:'aviso' };
-  return { emoji:'🔴', label:online ? 'API/MongoDB indisponível' : 'Sem conexão', nivel:'erro' };
+  if (status === 'syncing') return { emoji:'🔄', label:'Sincronizando dados', nivel:'info' };
+  if (status === 'ok' && online) return { emoji:'🟢', label:'Dados atualizados', nivel:'ok' };
+  if (status === 'parcial') return { emoji:'🟡', label:'Atualização parcial', nivel:'aviso' };
+  return { emoji:'🔴', label:online ? 'Serviço de dados indisponível' : 'Sem conexão', nivel:'erro' };
 }

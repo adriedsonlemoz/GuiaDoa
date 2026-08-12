@@ -1,44 +1,45 @@
 import React, { Component } from 'react';
+import AppErrorState from '../ui/AppErrorState.jsx';
+import { buildDiagnostic } from '../errors/appErrors.js';
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError:false, error:null, componentStack:'' };
   }
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error) {
+    return { hasError:true, error };
   }
 
   componentDidCatch(error, info) {
-    console.error('Falha no módulo:', error, info);
+    console.error('[GD-UI-001]', error, info);
+    this.setState({ componentStack:info?.componentStack || '' });
   }
+
+  reset = () => this.setState({ hasError:false, error:null, componentStack:'' });
 
   render() {
     if (this.state.hasError) {
+      const diagnostic = buildDiagnostic({
+        code:'GD-UI-001',
+        error:this.state.error,
+        componentStack:this.state.componentStack,
+        context:typeof window !== 'undefined' ? window.location.hash || 'interface' : 'interface',
+      });
       return (
-        <div className="text-center mt-12 px-4 max-w-xs mx-auto">
-          <div
-            className="w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center text-4xl bg-aoe-card border-2 border-aoe-gold2"
-            style={{ boxShadow: '0 4px 16px rgba(62,47,28,0.15)' }}
-          >
-            ⚠️
-          </div>
-          <p className="font-cinzel font-bold text-base tracking-wide text-aoe-red mb-1 m-0">
-            Módulo Inacessível
-          </p>
-          <p className="font-nunito text-sm text-aoe-mid leading-relaxed mb-4 m-0">
-            Ocorreu uma falha ao carregar esta secção.
-          </p>
-          <button
-            className="btn-navy btn-lg"
-            onClick={() => {
-              this.setState({ hasError: false });
-              this.props.onReset();
+        <div style={{ padding:'24px 10px' }}>
+          <AppErrorState
+            title="Não foi possível abrir esta seção"
+            message="Ocorreu uma falha inesperada na interface. Você pode tentar novamente ou voltar ao início."
+            code="GD-UI-001"
+            diagnostic={diagnostic}
+            onRetry={this.reset}
+            onHome={() => {
+              this.reset();
+              this.props.onReset?.();
             }}
-          >
-            ← Voltar ao Quartel
-          </button>
+          />
         </div>
       );
     }

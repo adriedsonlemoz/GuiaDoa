@@ -182,17 +182,17 @@ function Skeleton() {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 const Itens = () => {
-  const { itens: itensMongo } = useGameData();
+  const { itens: itensOnline } = useGameData();
   const [busca, setBusca] = useState('');
   const [selecionado, setSelecionado] = useState(null);
 
   const termo = busca.trim().toLowerCase();
   const itens = termo
-    ? itensMongo.filter(i =>
+    ? itensOnline.filter(i =>
         i.nome?.toLowerCase().includes(termo) ||
         i.categoria?.toLowerCase().includes(termo)
       )
-    : itensMongo;
+    : itensOnline;
 
 
   return (
@@ -244,7 +244,7 @@ const Itens = () => {
              style={{ color: C.TEXT_SECONDARY, maxWidth: '260px' }}>
             {busca
               ? `Nenhum item corresponde a "${busca}".`
-              : 'Os itens cadastrados no painel admin aparecerão aqui.'}
+              : 'Os itens disponíveis aparecerão aqui assim que forem publicados.'}
           </p>
         </div>
       )}

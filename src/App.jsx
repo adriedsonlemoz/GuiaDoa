@@ -143,40 +143,6 @@ const GuiaApp = () => {
             </span>
             <span style={{ color: C.ACCENT, fontSize: '0.7rem', opacity: 0.6 }}>◆</span>
 
-            <a
-              href={`${import.meta.env.VITE_API_URL || window.location.origin}/admin`}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Painel Admin"
-              style={{
-                position: 'absolute',
-                right: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '26px',
-                height: '26px',
-                borderRadius: '6px',
-                background: 'rgba(200,168,74,0.08)',
-                border: '1px solid rgba(200,168,74,0.2)',
-                fontSize: '0.85rem',
-                textDecoration: 'none',
-                opacity: 0.5,
-                transition: 'opacity 0.2s, border-color 0.2s',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.opacity = '1';
-                e.currentTarget.style.borderColor = 'rgba(200,168,74,0.5)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.opacity = '0.5';
-                e.currentTarget.style.borderColor = 'rgba(200,168,74,0.2)';
-              }}
-            >
-              ⚙️
-            </a>
           </div>
         </footer>
       </>

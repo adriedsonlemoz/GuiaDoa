@@ -51,7 +51,7 @@ const PesquisaDetalhe = ({ slug }) => {
     <div style={{ padding: 20, textAlign: 'center', color: C.ERROR }}>
       <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>⚠️</div>
       <p style={{ fontFamily: '"Nunito",sans-serif', fontSize: '0.85rem', margin: 0 }}>
-        Pesquisa não encontrada no MongoDB.
+        Pesquisa não encontrada nos dados disponíveis.
       </p>
     </div>
   );
@@ -312,7 +312,7 @@ const PesquisaDetalhe = ({ slug }) => {
               fontFamily: '"Nunito",sans-serif', fontWeight: 600,
               fontSize: '0.65rem', color: C.TEXT_FAINT, fontStyle: 'italic',
             }}>
-              Tempos serão adicionados em breve via Admin
+              Tempos serão adicionados em uma próxima atualização
             </span>
           </div>
         )}

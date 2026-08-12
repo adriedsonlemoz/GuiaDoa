@@ -1,4 +1,3 @@
-import { APP_VERSION } from '../version.js';
 import Tropa from '../models/Tropa.js';
 import Nivel from '../models/Nivel.js';
 import Dragao from '../models/Dragao.js';
@@ -15,7 +14,7 @@ import { PESQUISAS_SEED } from '../seeds/pesquisas.js';
 import { REINOS_SEED } from '../seeds/reinos.js';
 import { CATS_PADRAO } from '../seeds/categoriasDicas.js';
 import { mesclarSeed } from '../utils/seedMerge.js';
-import { deveExecutarMigracao, forceMigrationFromEnv } from '../utils/migrationPolicy.js';
+import { DATA_MIGRATION_VERSION, deveExecutarMigracao, forceMigrationFromEnv } from '../utils/migrationPolicy.js';
 
 const INSTALL_KEY = 'installation';
 
@@ -70,7 +69,7 @@ export async function executarMigracaoAutomatica() {
     const forcar = forceMigrationFromEnv();
     const totalUsuariosAtual = await User.countDocuments();
 
-    if (!deveExecutarMigracao(configAtual, APP_VERSION, forcar)) {
+    if (!deveExecutarMigracao(configAtual, DATA_MIGRATION_VERSION, forcar)) {
       return {
         ok: true,
         ignorada: true,
@@ -82,7 +81,7 @@ export async function executarMigracaoAutomatica() {
     const inicio = new Date();
     await AppConfig.findOneAndUpdate(
       { chave: INSTALL_KEY },
-      { $set: { modoDados: 'mongo', migracaoEstado: 'executando', migracaoVersao: APP_VERSION, ultimoErro: '', atualizadoEm: inicio } },
+      { $set: { modoDados: 'mongo', migracaoEstado: 'executando', migracaoVersao: DATA_MIGRATION_VERSION, ultimoErro: '', atualizadoEm: inicio } },
       { upsert: true, setDefaultsOnInsert: true }
     );
 
@@ -103,7 +102,7 @@ export async function executarMigracaoAutomatica() {
     await AppConfig.findOneAndUpdate(
       { chave: INSTALL_KEY },
       { $set: {
-        modoDados: 'mongo', migracaoEstado: 'pronto', migracaoVersao: APP_VERSION,
+        modoDados: 'mongo', migracaoEstado: 'pronto', migracaoVersao: DATA_MIGRATION_VERSION,
         migracaoEm: agora, relatorioMigracao: relatorio,
         setupConcluido: totalUsuarios > 0,
         ...(totalUsuarios > 0 ? { setupConcluidoEm: agora } : {}),
@@ -115,7 +114,7 @@ export async function executarMigracaoAutomatica() {
   } catch (err) {
     await AppConfig.findOneAndUpdate(
       { chave: INSTALL_KEY },
-      { $set: { migracaoEstado: 'erro', migracaoVersao: APP_VERSION, ultimoErro: err.message, atualizadoEm: new Date() } },
+      { $set: { migracaoEstado: 'erro', migracaoVersao: DATA_MIGRATION_VERSION, ultimoErro: err.message, atualizadoEm: new Date() } },
       { upsert: true, setDefaultsOnInsert: true }
     ).catch(() => {});
     return { ok: false, erro: err.message };

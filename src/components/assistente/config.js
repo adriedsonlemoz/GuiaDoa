@@ -1,4 +1,4 @@
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+export { API_URL } from '../../config/api.js';
 export const COR = '#5C7FA3';
 export const COR_DRK = '#1A3050';
 
@@ -39,7 +39,7 @@ export const INTENCAO_LABEL = {
 export const PENSANDO_MSGS = [
   'Consultando os dados do jogo…',
   'Analisando estratégias…',
-  'Verificando o banco de dados…',
+  'Verificando os dados online…',
   'Calculando pontos…',
   'Buscando informações…',
 ];

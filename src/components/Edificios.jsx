@@ -45,7 +45,7 @@ const Edificios = () => {
         <p style={{ fontSize:'2.5rem', marginBottom:10 }}>🏗️</p>
         <p className="font-cinzel font-bold" style={{ color:C.TEXT_PRIMARY, marginBottom:8 }}>Nenhum edifício cadastrado</p>
         <p style={{ fontSize:'0.78rem', color:C.TEXT_SECONDARY, lineHeight:1.6 }}>
-          Nenhum edifício foi encontrado no MongoDB. Verifique o estado da migração automática no Admin.
+          Nenhum edifício está disponível no momento. Tente sincronizar novamente em instantes.
         </p>
       </div>
     </div>

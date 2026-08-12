@@ -155,7 +155,7 @@ export default function ConfiguracoesIdioma({ onVoltar }) {
             fontSize: '0.68rem', color: C.TEXT_MUTED,
             lineHeight: 1.6, margin: 0,
           }}>
-            💡 Traduções em inglês são geradas automaticamente e revisadas pelo administrador.
+            💡 Traduções em inglês são atualizadas e revisadas continuamente.
             Alguns termos específicos do jogo podem aparecer em português.
           </p>
         </div>

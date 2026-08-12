@@ -1,11 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { C } from '../../theme.js';
 import { useGameData } from '../../data/GameDataContext.jsx';
+import { useI18n } from '../../hooks/useI18n.jsx';
+import { getProfileCopy } from './profileCopy.js';
 
 /* ─── helpers ───────────────────────────────────────────────────────────────── */
 // REGIOES agora é calculado dinamicamente dentro do ReinoSelector, a partir dos reinos carregados da API.
 
-const ReinoCard = ({ reino, selecionado, onClick }) => (
+const ReinoCard = ({ reino, selecionado, onClick }) => {
+  const meta = [reino.regiao, reino.idioma].filter(Boolean).join(' · ');
+  return (
   <button
     type="button"
     onClick={() => onClick(reino)}
@@ -43,12 +47,12 @@ const ReinoCard = ({ reino, selecionado, onClick }) => (
       }}>
         {reino.nome}
       </span>
-      <span style={{
+      {meta && <span style={{
         fontFamily: '"Nunito",sans-serif', fontWeight: 600,
         fontSize: '0.62rem', color: C.TEXT_FAINT,
       }}>
-        {reino.regiao} · {reino.idioma}
-      </span>
+        {meta}
+      </span>}
     </span>
 
     {/* Fuso */}
@@ -62,16 +66,20 @@ const ReinoCard = ({ reino, selecionado, onClick }) => (
       {reino.fuso}
     </span>
   </button>
-);
+  );
+};
 
 /* ─── Seletor customizado ───────────────────────────────────────────────────── */
 const ReinoSelector = ({ value, onChange }) => {
   const [aberto,   setAberto]   = useState(false);
   const [regiao,   setRegiao]   = useState('');
   const { reinos, loading: carregando } = useGameData();
+  const { locale } = useI18n();
+  const copy = getProfileCopy(locale);
   const painelRef = useRef(null);
 
   const selecionado = reinos.find(r => r.nome === value) || null;
+  const metaSelecionado = selecionado ? [selecionado.regiao, selecionado.idioma].filter(Boolean).join(' · ') : '';
   const REGIOES = [...new Set(reinos.map(r => r.regiao).filter(Boolean))].sort();
 
   // Fecha ao clicar fora — sem foco automático em nenhum input (evita abrir teclado)
@@ -123,12 +131,12 @@ const ReinoSelector = ({ value, onChange }) => {
               }}>
                 {selecionado.nome}
               </span>
-              <span style={{
+              {metaSelecionado && <span style={{
                 fontFamily: '"Nunito",sans-serif', fontWeight: 600,
                 fontSize: '0.62rem', color: C.TEXT_FAINT,
               }}>
-                {selecionado.regiao} · {selecionado.idioma}
-              </span>
+                {metaSelecionado}
+              </span>}
             </span>
             <span style={{
               fontFamily: 'monospace', fontWeight: 800, fontSize: '0.7rem',
@@ -142,7 +150,7 @@ const ReinoSelector = ({ value, onChange }) => {
             fontFamily: '"Nunito",sans-serif', fontWeight: 700,
             fontSize: '0.82rem', color: C.TEXT_FAINT, flex: 1,
           }}>
-            — Selecionar Reino —
+            — {copy.selectRealm} —
           </span>
         )}
         <span style={{
@@ -171,7 +179,7 @@ const ReinoSelector = ({ value, onChange }) => {
             <span style={{
               fontFamily: '"Nunito",sans-serif', fontWeight: 700,
               fontSize: '0.7rem', color: C.TEXT_SECONDARY, flexShrink: 0,
-            }}>Filtrar:</span>
+            }}>{copy.filter}:</span>
             <select
               value={regiao}
               onChange={e => setRegiao(e.target.value)}
@@ -182,7 +190,7 @@ const ReinoSelector = ({ value, onChange }) => {
                 padding: '6px 8px', color: C.TEXT_SECONDARY, cursor: 'pointer',
               }}
             >
-              <option value="">Todas as regiões</option>
+              <option value="">{copy.allRegions}</option>
               {REGIOES.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
@@ -195,7 +203,7 @@ const ReinoSelector = ({ value, onChange }) => {
                 fontFamily: '"Nunito",sans-serif', fontWeight: 700,
                 fontSize: '0.78rem', color: C.TEXT_FAINT,
               }}>
-                Carregando reinos…
+                {copy.loadingRealms}
               </div>
             ) : filtrados.length === 0 ? (
               <div style={{
@@ -203,7 +211,7 @@ const ReinoSelector = ({ value, onChange }) => {
                 fontFamily: '"Nunito",sans-serif', fontWeight: 700,
                 fontSize: '0.78rem', color: C.TEXT_FAINT,
               }}>
-                Nenhum reino nessa região
+                {copy.noRealms}
               </div>
             ) : filtrados.map(r => (
               <ReinoCard
@@ -222,7 +230,7 @@ const ReinoSelector = ({ value, onChange }) => {
             fontFamily: '"Nunito",sans-serif', fontWeight: 700,
             fontSize: '0.62rem', color: C.TEXT_FAINT,
           }}>
-            {filtrados.length} de {reinos.length} reinos
+            {copy.realmCount(filtrados.length, reinos.length)}
           </div>
         </div>
       )}

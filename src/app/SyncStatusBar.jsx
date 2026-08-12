@@ -35,7 +35,7 @@ export default function SyncStatusBar({ status, isOffline, syncInfo, onSync }) {
           whiteSpace: 'nowrap',
         }}
       >
-        ↻ Atualizar do MongoDB
+        ↻ Sincronizar
       </button>
     </div>
   );

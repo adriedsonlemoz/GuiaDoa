@@ -33,7 +33,7 @@ Ao subir uma nova versão, o backend verifica `guiadoa_config` e executa a migra
 ## 🧭 Primeiro acesso
 
 1. O backend conecta ao MongoDB.
-2. A migração da versão atual cria os registros canônicos que estiverem ausentes e completa somente campos vazios.
+2. A migração da versão de dados atual cria os registros canônicos que estiverem ausentes e completa somente campos vazios.
 3. A migração é registrada em `guiadoa_config`.
 4. Se ainda não houver administrador, o frontend e `/admin` exibem a criação do primeiro usuário e senha.
 5. Depois disso, o aplicativo lê os dados exclusivamente da API/MongoDB.
@@ -72,7 +72,7 @@ guiadoa_dicas
 guiadoa_dicas_categorias
 ```
 
-`guiadoa_config` registra a versão/estado da migração. A migração canônica roda **uma vez por versão**. Quando ela já está marcada como `pronto` para a mesma versão, reiniciar o Render não reimporta seeds nem recria registros apagados: o MongoDB permanece soberano.
+`guiadoa_config` registra a versão/estado da migração. A migração canônica usa uma **versão de dados independente da versão visual do aplicativo**. Atualizações apenas de interface não reimportam seeds. A versão de dados só deve avançar quando houver uma migração real de conteúdo; reiniciar o Render não recria registros apagados quando a migração já estiver concluída.
 
 ### Recuperação avançada
 

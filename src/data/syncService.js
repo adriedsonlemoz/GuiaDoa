@@ -1,6 +1,6 @@
 /**
  * Compatibilidade da Beta 2.8.
- * Os dados do jogo não são mais persistidos no navegador: MongoDB/API é a fonte única.
+ * Os dados oficiais do jogo são carregados exclusivamente pelo serviço online.
  */
 export const SYNC_KEYS = Object.freeze({
   ITENS: 'doa_cache_itens_v2',

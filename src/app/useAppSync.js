@@ -14,7 +14,7 @@ export default function useAppSync() {
   }, []);
 
   const syncStatus = loading ? 'syncing' : (erro ? 'erro' : 'ok');
-  const syncInfo = useMemo(() => ({ ts:lastUpdated, status:syncStatus, fonte:'mongo' }), [lastUpdated, syncStatus]);
+  const syncInfo = useMemo(() => ({ ts:lastUpdated, status:syncStatus, fonte:'online' }), [lastUpdated, syncStatus]);
   const sincronizarAgora = async () => { try { await refresh(); } catch { /* exibido pelo provider/status */ } };
 
   return { syncStatus, syncProgress:progress, syncInfo, isOffline, sincronizarAgora };

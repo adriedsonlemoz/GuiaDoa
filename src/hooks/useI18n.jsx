@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, createContext, useContext } from 'rea
 import ptBR from '../locales/pt-BR.js';
 import { getLocale, saveLocale } from '../utils/storage.js';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { API_URL as API } from '../config/api.js';
 
 export const LOCALES_DISPONIVEIS = [
   { code: 'pt-BR', label: 'Português', nativo: 'Português', flag: '🇧🇷' },

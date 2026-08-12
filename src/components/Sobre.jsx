@@ -7,92 +7,96 @@ import { DISPLAY_VERSION } from '../version.js';
 
 const CHANGELOG = [
   {
-    ver: DISPLAY_VERSION, icon: '🗄️', nome: 'MongoDB como Fonte Única', cor: '#5A8A5C',
+    ver: DISPLAY_VERSION, icon: '🧩', nome: 'Arquitetura Modular — Fase 2', cor: '#5C7FA3',
     items: [
-      'Migração automática leva os dados padrão atuais para o MongoDB antes de a API iniciar e é registrada em guiadoa_config',
-      'A migração roda uma vez por versão; depois disso reiniciar a mesma versão não repõe nem sobrescreve o MongoDB',
-      'Primeiro acesso do aplicativo agora verifica o banco e, se necessário, pede apenas usuário, senha e confirmação para criar o administrador',
-      'SETUP_KEY deixa de aparecer por padrão; a chave de instalação só é exigida quando REQUIRE_SETUP_KEY=true for ativado explicitamente no servidor',
-      'Tropas, níveis, dragões, edifícios, pesquisas, reinos e categorias padrão passam a ser carregados exclusivamente da API/MongoDB',
-      'Caches locais antigos de dados do jogo são apagados e não existe mais fallback offline para esconder falhas da API',
-      'O antigo /admin/setup, o setup CLI e os endpoints/botões manuais de seed foram aposentados; seeds existem somente para migrações versionadas',
+      'Ilhas separadas em regras, persistência, tabela, status, infraestrutura e produção',
+      'Níveis separados em cálculo de progressão, estado, cartões, diálogos e tabela',
+      'Dragões, Dicas, Home, Comparação de Tropas e Simulador de Batalha reorganizados em componentes de domínio menores',
+      'Configuração da URL do serviço online centralizada em um único módulo',
+      'Corrigida uma falha no seletor de tropas que poderia ocorrer ao abrir a comparação',
     ],
   },
   {
-    ver: 'Beta 2.7', icon: '🧭', nome: 'Bootstrap Inteligente do Admin', cor: '#5A8A5C',
+    ver: 'Beta 2.9', icon: '✨', nome: 'Experiência e Perfil Refinados', cor: '#5C7FA3',
     items: [
-      'Admin passou a detectar automaticamente a ausência do primeiro usuário e dados iniciais',
-      'Foi introduzido o primeiro assistente de criação do administrador dentro do próprio painel',
-      'A versão preparou o projeto para a migração automática e definitiva implementada na Beta 2.8',
+      'Mensagens de carregamento e sincronização foram reescritas para uma experiência mais clara e profissional',
+      'Erros agora exibem códigos de suporte e permitem copiar um diagnóstico para facilitar a identificação de falhas',
+      'Corrigida a falha que podia ocorrer ao avançar da escolha de idioma para a configuração do perfil',
+      'Perfil redesenhado, dividido em componentes menores e com edição posterior sem apagar os dados do jogador',
+      'Seletor de reinos melhorado para lidar corretamente com registros que ainda não possuem região ou idioma preenchidos',
+    ],
+  },
+  {
+    ver: 'Beta 2.8', icon: '☁️', nome: 'Dados Online como Fonte Única', cor: '#5A8A5C',
+    items: [
+      'Dados padrão passaram por migração automática para a base online antes da primeira utilização',
+      'A migração é versionada e preserva alterações já cadastradas',
+      'O primeiro acesso verifica a configuração e permite definir as credenciais administrativas quando necessário',
+      'Tropas, níveis, dragões, edifícios, pesquisas, reinos e categorias são carregados exclusivamente pelo serviço online',
+      'Caches antigos de dados do jogo foram removidos para evitar informações desatualizadas',
+    ],
+  },
+  {
+    ver: 'Beta 2.7', icon: '🧭', nome: 'Configuração Inteligente', cor: '#5A8A5C',
+    items: [
+      'Painel administrativo passou a detectar automaticamente a ausência do primeiro usuário e dos dados iniciais',
+      'Foi introduzido o assistente de criação do primeiro administrador',
+      'A versão preparou o projeto para a migração automática implementada na Beta 2.8',
     ],
   },
   {
     ver: 'Beta 2.6', icon: '🧩', nome: 'Arquitetura Modular', cor: '#5C7FA3',
     items: [
-      'Painel Admin reorganizado em módulos independentes por domínio, removendo a lógica concentrada do index.html',
-      'Traduções separadas em catálogo, navegação de categorias e editor; utilidades compartilhadas movidas para o núcleo do Admin',
-      'App principal dividido em roteamento, sincronização, rotas, Error Boundary e componentes visuais de status',
-      'Conselheiro Tático dividido em configuração, parser, mensagens, modal e hook de estado/comunicação',
-      'Backend do Assistente dividido em modelos, contexto, análise numérica, intenção, prompt e cliente Groq',
-      'Novos testes garantem que intenção, ranking e montagem do prompt continuam funcionando após a modularização',
+      'Painel administrativo reorganizado em módulos independentes por domínio',
+      'Traduções separadas em catálogo, navegação de categorias e editor',
+      'Aplicativo principal dividido em roteamento, sincronização, rotas, tratamento de erros e componentes de status',
+      'Conselheiro Tático dividido em configuração, mensagens, modal e lógica de comunicação',
+      'Novos testes protegem os principais fluxos após a modularização',
     ],
   },
   {
-    ver: 'Beta 2.5', icon: '🌍', nome: 'Novos Reinos e Validação do MongoDB', cor: '#5A8A5C',
+    ver: 'Beta 2.5', icon: '🌍', nome: 'Novos Reinos', cor: '#5A8A5C',
     items: [
       'Adicionados os Realms 345 Corvith (UTC+0), 346 Kenorax (UTC-7), 347 Eisenhold (UTC+1) e 348 Zulanka (UTC-4)',
-      'Os quatro novos reinos são gravados automaticamente em guiadoa_reinos ao iniciar o backend, usando upsert por ID e sem gerar duplicatas',
-      'O seed automático preserva região e idioma preenchidos posteriormente no Admin',
-      'Fallback local de reinos também inclui os novos Realms para o seletor continuar funcional quando a API estiver offline',
-      'Corrigido o contador do Seed padrão do Admin para distinguir corretamente registros inseridos e atualizados',
+      'Importação dos novos reinos passou a evitar duplicações e preservar informações complementares já cadastradas',
     ],
   },
   {
-    ver: 'Beta 2.4', icon: '🗄️', nome: 'Banco Compartilhado com Isolamento', cor: '#5A8A5C',
+    ver: 'Beta 2.4', icon: '🗂️', nome: 'Organização dos Dados', cor: '#5A8A5C',
     items: [
-      'MongoDB pode compartilhar exatamente o mesmo banco do AL Sistemas por MONGO_DB_NAME, sem misturar dados entre os projetos',
-      'Coleções do Guia DOA agora usam prefixo centralizado guiadoa_ (configurável por MONGO_COLLECTION_PREFIX)',
-      'Health check e Setup exibem o banco e o prefixo de coleções realmente usados pela aplicação',
-      'Migração segura opcional renomeia coleções antigas doa_* para guiadoa_* sem sobrescrever destinos existentes',
-      'Removidas referências antigas ao banco iguanews; a conexão agora respeita somente a configuração real do ambiente',
+      'Dados do GUIA DOA passaram a ter identificação própria para coexistir com outros projetos na mesma infraestrutura',
+      'Diagnóstico e configuração passaram a informar de forma mais clara o estado dos dados do aplicativo',
     ],
   },
   {
     ver: 'Beta 2.2', icon: '🛡️', nome: 'Segurança e Estabilidade', cor: '#5A8A5C',
     items: [
-      'Setup protegido após a criação do primeiro administrador, com revogação de sessões antigas ao recriar o usuário',
-      'Rate limit no login e no Assistente Tático, com validação segura do histórico enviado à IA',
-      'Uploads de dicas agora dependem do Cloudinary e fazem rollback em caso de falha, sem salvar imagens Base64 no MongoDB',
-      'Sincronização de Itens, Edifícios e Pesquisas executada em paralelo e cache antigo não é mais reportado como sincronização online',
-      'Sanitização reforçada no painel Admin e versão do app unificada a partir do package.json',
+      'Configuração inicial protegida após a criação do primeiro administrador',
+      'Proteção contra tentativas repetidas de login e uso excessivo do Assistente Tático',
+      'Uploads de dicas passaram a fazer rollback seguro em caso de falha',
+      'Sincronização paralela e sanitização reforçada no painel administrativo',
     ],
   },
   {
     ver: 'Beta 2.1', icon: '🔧', nome: 'Correções e Ajustes de Torneios', cor: '#5A8A5C',
     items: [
-      'Evolução de Tropas: reescrito com 3 fósseis (Crepúsculo 1, Crepúsculo 2, Ancião 2 — 10 pts cada), remoção das categorias de tropas e nova seção "Como Funciona" com instruções de obtenção via Antropos, Loja de Surpresas e eventos',
-      'Habilidade de Dragão: corrigido valor de pontos por Essência da Fúria de 10 para 100 pontos',
-      'Home: item Nuvem/Sincronização removido do grid de módulos',
+      'Evolução de Tropas revisada com novos fósseis e instruções de obtenção',
+      'Habilidade de Dragão: corrigido o valor de pontos por Essência da Fúria',
+      'Tela inicial recebeu ajustes de organização',
     ],
   },
   {
     ver: 'Beta 2', icon: '⚔️', nome: 'Módulo de Torneios Reformulado', cor: '#C87A2C',
     items: [
-      'Treinamento do Dragão: calculador com 6 tipos de carne (Carneiro, Boi, Frango, Veado, Salmão, Lagosta)',
-      'Treino de Tropa: seleção de tropa, quantidade e bônus multiplicador (x1 a x5)',
-      'Pontos de Talismã: grid 2×2, total com salvamento e campo de pontos possuídos',
-      'General, Matar Tropas, Poder e Aliança: convertidos para páginas informativas',
-      'Torneio de Conhecimento: renomeado do módulo de Poções Antigas',
-      'Conselheiro Tático: assistente de IA integrado na Home, alimentado pelos dados do jogo',
+      'Novas calculadoras e páginas informativas para os principais torneios',
+      'Conselheiro Tático integrado à tela inicial e alimentado pelos dados do jogo',
     ],
   },
   {
     ver: 'Beta 1', icon: '🚀', nome: 'Lançamento Beta', cor: '#5C7FA3',
     items: [
-      'Módulo de Itens com cadastro pelo painel Admin',
-      'Importação de dados via interface web com progresso em tempo real',
-      'Sistema de usuários com autenticação JWT e proteção contra tentativas repetidas de login',
-      'Painel Admin completo: tropas, níveis, itens, dragões, edifícios',
+      'Primeiros módulos de itens, tropas, níveis, dragões e edifícios',
+      'Sistema administrativo com autenticação e gerenciamento de conteúdo',
     ],
   },
 ];
@@ -100,7 +104,7 @@ const CHANGELOG = [
 const INFO_CARDS = [
   { icon: '🏰', title: 'Ferramenta Não Oficial', text: 'Criada pela comunidade, sem vínculo com a Deca Games. Resultados são aproximações baseadas em análises de jogadores.' },
   { icon: '⚔️', title: 'Cálculos Táticos',       text: 'As fórmulas foram estudadas e validadas por jogadores experientes. Pequenas variações podem ocorrer.' },
-  { icon: '🐉', title: 'Dados Dinâmicos',         text: 'Base de dados actualizada regularmente pela comunidade. Contribuições são bem-vindas.' },
+  { icon: '🐉', title: 'Dados Dinâmicos',         text: 'Base de dados atualizada regularmente pela comunidade. Contribuições são bem-vindas.' },
 ];
 
 const Sobre = () => {
@@ -147,7 +151,7 @@ const Sobre = () => {
           <p className="font-cinzel font-bold text-base tracking-wide m-0 mb-1" style={{ color: C.BLUE }}>Linha Direta</p>
           <div className="gold-stripe mb-3 opacity-40" />
           <p className="font-nunito font-semibold text-sm leading-relaxed text-justify m-0 mb-3" style={{ color: C.TEXT_SECONDARY }}>
-            Encontrou algum erro nos cálculos? Tem uma sugestão tática? Envie uma mensagem directamente para a engenharia central.
+            Encontrou algum erro nos cálculos? Tem uma sugestão tática? Envie uma mensagem diretamente para a equipe de suporte.
           </p>
           <div className="py-2.5 px-3 rounded-lg mb-3" style={{ background: C.BG_SECONDARY, border: `2px dashed ${C.BORDER}` }}>
             <p className="font-nunito font-black text-[0.7rem] uppercase tracking-wider m-0 mb-0.5" style={{ color: C.TEXT_MUTED }}>E-mail de Suporte:</p>
@@ -179,11 +183,11 @@ const Sobre = () => {
           </div>
 
           <p className="font-nunito font-semibold text-xs italic m-0 mb-2" style={{ color: C.TEXT_MUTED }}>
-            "MongoDB como fonte única de dados"
+            "Dados sempre atualizados, onde você estiver"
           </p>
           <div className="gold-stripe mb-3 opacity-50" />
           <p className="font-nunito font-semibold text-sm leading-relaxed text-justify m-0" style={{ color: C.TEXT_PRIMARY }}>
-            Este aplicativo foi forjado para auxiliar os Comandantes a optimizarem os seus recursos, planearem os seus ataques e dominarem os torneios com precisão matemática.
+            Este aplicativo foi forjado para auxiliar os Comandantes a otimizarem seus recursos, planejarem seus ataques e dominarem os torneios com precisão matemática.
           </p>
         </div>
       </div>

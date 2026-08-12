@@ -19,13 +19,13 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
       manifest: {
-        name: 'Guia Tático DOA',
+        name: 'GUIA DOA — Guia Tático',
         short_name: 'Guia DOA',
         start_url: '/',
         display: 'standalone',
-        background_color: '#E8D8B5',
-        theme_color: '#B8965A',
-        description: 'Ferramentas e cálculos para otimização de jogo.',
+        background_color: '#E8E0CC',
+        theme_color: '#1C3A5E',
+        description: 'Guia comunitário com ferramentas táticas, cálculos e informações para jogadores de Dragons of Atlantis.',
         icons: [
           { src: 'img/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'img/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

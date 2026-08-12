@@ -20,7 +20,7 @@ export default function SyncProgressBanner({ status, progress }) {
           fontFamily: '"Nunito",sans-serif', fontWeight: 800,
           fontSize: '0.72rem', letterSpacing: '0.5px', color: '#F8F2E0', flex: 1,
         }}>
-          {progress.step < progress.total ? `MongoDB: ${progress.label}…` : 'Finalizando…'}
+          {progress.step < progress.total ? `Sincronizando: ${progress.label}…` : 'Finalizando…'}
         </span>
         <span style={{
           fontFamily: '"Nunito",sans-serif', fontWeight: 900,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGameData } from '../../data/GameDataContext.jsx';
 import { C } from '../../theme.js';
 
@@ -121,7 +121,7 @@ const AtributosSection = ({ niveis, cor }) => {
       style={{ border:`1px dashed ${C.BORDER}`, background:C.BG_CARD }}>
       <p className="font-nunito text-sm m-0" style={{ color:C.TEXT_MUTED }}>
         Atributos ainda não cadastrados para este dragão.<br/>
-        <span style={{ fontSize:'0.72rem', fontStyle:'italic' }}>Admin → Dragões → Atributos</span>
+        <span style={{ fontSize:'0.72rem', fontStyle:'italic' }}>Dados de atributos ainda não disponíveis</span>
       </p>
     </div>
   );

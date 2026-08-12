@@ -1,6 +1,6 @@
 {
   "appId": "com.guiadoa.app",
-  "appName": "Guia DOA",
+  "appName": "GUIA DOA",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

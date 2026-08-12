@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { COLLECTIONS } from '../config/database.js';
 
 const DicaSchema = new mongoose.Schema({
   titulo:    { type: String, required: true, trim: true },
@@ -10,7 +11,7 @@ const DicaSchema = new mongoose.Schema({
   ordem:     { type: Number, default: 0 },
   criadoEm:  { type: Date, default: Date.now },
   atualizadoEm: { type: Date, default: Date.now },
-}, { collection: 'doa_dicas' });
+}, { collection: COLLECTIONS.dicas });
 
 DicaSchema.index({ categoria: 1, ordem: 1 });
 

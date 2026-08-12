@@ -7,14 +7,13 @@ import { DISPLAY_VERSION } from '../version.js';
 
 const CHANGELOG = [
   {
-    ver: DISPLAY_VERSION, icon: '🧪', nome: 'Confiabilidade e Plataforma', cor: '#5A8A5C',
+    ver: DISPLAY_VERSION, icon: '🗄️', nome: 'Banco Compartilhado com Isolamento', cor: '#5A8A5C',
     items: [
-      'Testes automatizados de segurança, rate limit, histórico da IA, rollback de upload e sincronização, além de smoke test opcional da API',
-      'Novo health check consolidado para API, MongoDB, Cloudinary e Groq, com diagnóstico profundo autenticado no painel Admin',
-      'Erros da API padronizados com código, mensagem e requestId sem quebrar a compatibilidade com o painel existente',
-      'Painel Admin começou a ser modularizado: núcleo comum, Traduções e Dicas agora ficam em arquivos JavaScript separados',
-      'Sincronização mostra claramente estado online/cache/erro, última atualização e botão “Sincronizar agora”',
-      'PWA ganhou ícones 192/512/maskable; navegação por hash melhora Voltar no Android e builds release recusam API localhost',
+      'MongoDB pode compartilhar exatamente o mesmo banco do AL Sistemas por MONGO_DB_NAME, sem misturar dados entre os projetos',
+      'Coleções do Guia DOA agora usam prefixo centralizado guiadoa_ (configurável por MONGO_COLLECTION_PREFIX)',
+      'Health check e Setup exibem o banco e o prefixo de coleções realmente usados pela aplicação',
+      'Migração segura opcional renomeia coleções antigas doa_* para guiadoa_* sem sobrescrever destinos existentes',
+      'Removidas referências antigas ao banco iguanews; a conexão agora respeita somente a configuração real do ambiente',
     ],
   },
   {

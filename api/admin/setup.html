@@ -230,6 +230,7 @@
       <div class="db-info-row" id="db-info-row">
         <div class="db-info-chip"><span>Host</span><span id="db-host">…</span></div>
         <div class="db-info-chip"><span>DB</span><span id="db-name">…</span></div>
+        <div class="db-info-chip"><span>Prefixo</span><span id="db-prefix">…</span></div>
         <div class="db-info-chip"><span>Estado</span>
           <span class="dot" id="db-dot"></span><span id="db-estado">…</span>
         </div>
@@ -429,6 +430,8 @@ async function carregarStatus() {
     document.getElementById('stat-users').textContent     = d.colecoes.usuarios.total;
     document.getElementById('db-host').textContent        = d.db.host;
     document.getElementById('db-name').textContent        = d.db.nome;
+    document.getElementById('db-prefix').textContent      = d.db.prefixoColecoes || 'guiadoa_';
+    if (d.colecoes?.nomes) Object.assign(NOMES, d.colecoes.nomes);
     document.getElementById('db-estado').textContent      = d.db.estado;
 
     const setupKeyField = document.getElementById('field-setup-key');
@@ -689,7 +692,7 @@ async function salvarUsuario(forcar) {
 }
 
 // ── LIMPAR COLEÇÃO ────────────────────────────────────────────────────────────
-const NOMES = { tropas: 'doa_tropas', niveis: 'doa_niveis', usuarios: 'doa_users' };
+const NOMES = { tropas: 'guiadoa_tropas', niveis: 'guiadoa_niveis', usuarios: 'guiadoa_users' };
 function confirmarLimpar(alvo) {
   limparAlvo = alvo;
   document.getElementById('confirm-msg').textContent =

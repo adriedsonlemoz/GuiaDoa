@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { COLLECTIONS } from '../config/database.js';
 
 const ReinoSchema = new mongoose.Schema({
   id:       { type: Number, required: true, unique: true },  // ID numérico visível no jogo
@@ -8,6 +9,6 @@ const ReinoSchema = new mongoose.Schema({
   regiao:   { type: String, default: '' },                   // ex: 'América do Sul'
   idioma:   { type: String, default: '' },                   // ex: 'Português'
   atualizadoEm: { type: Date, default: Date.now },
-}, { collection: 'doa_reinos' });
+}, { collection: COLLECTIONS.reinos });
 
 export default mongoose.model('Reino', ReinoSchema);

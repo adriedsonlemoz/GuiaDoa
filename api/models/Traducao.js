@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { COLLECTIONS } from '../config/database.js';
 
 /**
  * Modelo de tradução
@@ -18,7 +19,7 @@ const TraducaoSchema = new mongoose.Schema({
   status:   { type: String, enum: ['rascunho', 'revisado', 'ativo'], default: 'rascunho' },
   fonte:    { type: String, enum: ['manual', 'mymemory', 'libretranslate'], default: 'manual' },
   updatedAt:{ type: Date, default: Date.now },
-}, { collection: 'doa_traducoes' });
+}, { collection: COLLECTIONS.traducoes });
 
 // Índice composto — chave + locale é único
 TraducaoSchema.index({ chave: 1, locale: 1 }, { unique: true });

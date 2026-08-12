@@ -12,6 +12,7 @@ import Tropa       from '../models/Tropa.js';
 import Nivel       from '../models/Nivel.js';
 import { autenticar, exigirAdmin } from '../middleware/auth.js';
 import { decidirAcessoSetup } from '../security/setupAccess.js';
+import { COLLECTIONS, COLLECTION_PREFIX } from '../config/database.js';
 
 const router = Router();
 
@@ -149,7 +150,7 @@ router.get('/status', protegerSeConfigurado, async (req, res) => {
   try {
     const dbState    = mongoose.connection.readyState; // 0=disc,1=conn,2=conn-ing,3=disc-ing
     const stateLabel = ['desconectado', 'conectado', 'conectando', 'desconectando'];
-    const dbName     = mongoose.connection.name || 'iguanews';
+    const dbName     = mongoose.connection.name || process.env.MONGO_DB_NAME || 'não definido';
     const dbHost     = mongoose.connection.host || '—';
 
     const [totalTropas, totalEspeciais, totalTreinaveis, totalNiveis, totalUsers] =
@@ -167,6 +168,7 @@ router.get('/status', protegerSeConfigurado, async (req, res) => {
         estadoCodigo: dbState,
         nome: dbName,
         host: dbHost,
+        prefixoColecoes: COLLECTION_PREFIX,
       },
       setup: { necessario: totalUsers === 0, chaveObrigatoria: totalUsers === 0 && Boolean(process.env.SETUP_KEY) },
       colecoes: {
@@ -174,6 +176,11 @@ router.get('/status', protegerSeConfigurado, async (req, res) => {
                        disponiveis: TODAS_TROPAS.length },
         niveis:      { total: totalNiveis, disponiveis: NIVEIS_DATA.length },
         usuarios:    { total: totalUsers },
+        nomes: {
+          tropas: COLLECTIONS.tropas,
+          niveis: COLLECTIONS.niveis,
+          usuarios: COLLECTIONS.users,
+        },
       },
     });
   } catch (err) {
@@ -240,7 +247,7 @@ router.get('/importar/tropas', autenticar, exigirAdmin, async (req, res) => {
 
     if (modo === 'tudo') {
       await Tropa.deleteMany({});
-      sseSend(res, 'log', { nivel: 'warn', texto: 'Coleção doa_tropas limpa.' });
+      sseSend(res, 'log', { nivel: 'warn', texto: `Coleção ${COLLECTIONS.tropas} limpa.` });
     }
 
     let inseridas = 0, atualizadas = 0, puladas = 0;
@@ -286,7 +293,7 @@ router.get('/importar/niveis', autenticar, exigirAdmin, async (req, res) => {
 
     if (modo === 'tudo') {
       await Nivel.deleteMany({});
-      sseSend(res, 'log', { nivel: 'warn', texto: 'Coleção doa_niveis limpa.' });
+      sseSend(res, 'log', { nivel: 'warn', texto: `Coleção ${COLLECTIONS.niveis} limpa.` });
     }
 
     let inseridos = 0, atualizados = 0, pulados = 0;
@@ -326,15 +333,15 @@ router.delete('/limpar/:colecao', autenticar, exigirAdmin, async (req, res) => {
   try {
     if (colecao === 'tropas') {
       const { deletedCount } = await Tropa.deleteMany({});
-      return res.json({ ok: true, removidos: deletedCount, colecao: 'doa_tropas' });
+      return res.json({ ok: true, removidos: deletedCount, colecao: COLLECTIONS.tropas });
     }
     if (colecao === 'niveis') {
       const { deletedCount } = await Nivel.deleteMany({});
-      return res.json({ ok: true, removidos: deletedCount, colecao: 'doa_niveis' });
+      return res.json({ ok: true, removidos: deletedCount, colecao: COLLECTIONS.niveis });
     }
     if (colecao === 'usuarios') {
       const { deletedCount } = await User.deleteMany({});
-      return res.json({ ok: true, removidos: deletedCount, colecao: 'doa_users' });
+      return res.json({ ok: true, removidos: deletedCount, colecao: COLLECTIONS.users });
     }
     res.status(400).json({ erro: `Coleção desconhecida: ${colecao}` });
   } catch (err) {

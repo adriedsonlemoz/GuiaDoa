@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { COLLECTIONS } from '../config/database.js';
 
 const TropaSchema = new mongoose.Schema({
   nome:      { type: String, required: true, unique: true, trim: true },
@@ -16,7 +17,7 @@ const TropaSchema = new mongoose.Schema({
   combate:   { type: String, enum: ['corpo_a_corpo', 'distancia'], default: 'corpo_a_corpo' },
   rapida:    { type: Boolean, default: false },
   atualizadoEm: { type: Date, default: Date.now },
-}, { collection: 'doa_tropas' });
+}, { collection: COLLECTIONS.tropas });
 
 TropaSchema.index({ nome: 'text', desc: 'text' });
 

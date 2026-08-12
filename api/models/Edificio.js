@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { COLLECTIONS } from '../config/database.js';
 
 // Cada coluna tem: key (interno), label (exibição), tipo ('text' | 'number')
 const ColunaSchema = new mongoose.Schema({
@@ -17,6 +18,6 @@ const EdificioSchema = new mongoose.Schema({
   colunas:   [ColunaSchema],                   // define as colunas da tabela de níveis
   niveis:    { type: mongoose.Schema.Types.Mixed, default: [] }, // [{nivel:1, pop:5, prodHora:100, ...}]
   atualizadoEm: { type: Date, default: Date.now },
-}, { collection: 'doa_edificios' });
+}, { collection: COLLECTIONS.edificios });
 
 export default mongoose.model('Edificio', EdificioSchema);

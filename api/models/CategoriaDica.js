@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { COLLECTIONS } from '../config/database.js';
 
 const CategoriaSchema = new mongoose.Schema({
   slug:  { type: String, required: true, unique: true, trim: true },
@@ -6,6 +7,6 @@ const CategoriaSchema = new mongoose.Schema({
   icon:  { type: String, default: '📖' },
   ordem: { type: Number, default: 0 },
   ativo: { type: Boolean, default: true },
-}, { collection: 'doa_dicas_categorias' });
+}, { collection: COLLECTIONS.dicasCategorias });
 
 export default mongoose.model('CategoriaDica', CategoriaSchema);

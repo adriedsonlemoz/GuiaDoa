@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { criarRateLimit } from '../middleware/rateLimit.js';
 import { validarEntradaAssistente } from '../utils/assistantValidation.js';
+import { COLLECTIONS } from '../config/database.js';
 
 const router = express.Router();
 
@@ -25,17 +26,17 @@ const TropaSchema = new mongoose.Schema({
   atqPerto: Number, atqDist: Number, alcance: Number,
   vel: Number, car: Number, gestao: Number, desc: String,
   tipo: String, combate: String, rapida: Boolean,
-}, { collection: 'doa_tropas' });
+}, { collection: COLLECTIONS.tropas });
 
 const ItemSchema = new mongoose.Schema({
   nome: String, icone: String, descricao: String, onde: String,
-}, { collection: 'doa_itens' });
+}, { collection: COLLECTIONS.itens });
 
 const EdificioSchema = new mongoose.Schema({
   nome: String, icone: String, tag: String, descricao: String,
   colunas: [{ key: String, label: String, tipo: String }],
   niveis: mongoose.Schema.Types.Mixed,
-}, { collection: 'doa_edificios' });
+}, { collection: COLLECTIONS.edificios });
 
 const DragaoSchema = new mongoose.Schema({
   nome: String, slug: String, elemento: String, emoji: String,
@@ -48,22 +49,22 @@ const DragaoSchema = new mongoose.Schema({
     bombardeioElemental: Number, confrontoElemental: Number,
     bloqueioElemental: Number, rupturaElemental: Number,
   }],
-}, { collection: 'doa_dragoes' });
+}, { collection: COLLECTIONS.dragoes });
 
 const PesquisaSchema = new mongoose.Schema({
   nome: String, slug: String, icone: String, descricao: String,
   categoria: String, nivelMax: Number, ordem: Number,
   niveis: [{ nivel: Number, tempo: String }],
-}, { collection: 'doa_pesquisas' });
+}, { collection: COLLECTIONS.pesquisas });
 
 const NivelSchema = new mongoose.Schema({
   nivel: Number, xp: Number,
-}, { collection: 'doa_niveis' });
+}, { collection: COLLECTIONS.niveis });
 
 const ReinoSchema = new mongoose.Schema({
   id: Number, slug: String, nome: String,
   fuso: String, regiao: String, idioma: String,
-}, { collection: 'doa_reinos' });
+}, { collection: COLLECTIONS.reinos });
 
 // ── Dados estáticos de aprimoramento (não vêm do MongoDB) ─────────────────────
 const APRIMORAMENTO = {
@@ -114,13 +115,13 @@ const calcCustoApr = (raridade, nivelDe, nivelAte) => {
 const buildContext = async () => {
   try {
     const [tropas, itens, edificios, dragoes, pesquisas, niveis, reinos] = await Promise.all([
-      mdl('AssT', TropaSchema,    'doa_tropas').find({}).lean(),
-      mdl('AssI', ItemSchema,     'doa_itens').find({}).lean(),
-      mdl('AssE', EdificioSchema, 'doa_edificios').find({}).lean(),
-      mdl('AssD', DragaoSchema,   'doa_dragoes').find({}).lean(),
-      mdl('AssP', PesquisaSchema, 'doa_pesquisas').find({}).sort({ categoria: 1, ordem: 1 }).lean(),
-      mdl('AssN', NivelSchema,    'doa_niveis').find({}).sort({ nivel: 1 }).lean(),
-      mdl('AssR', ReinoSchema,    'doa_reinos').find({}).sort({ id: 1 }).lean(),
+      mdl('AssT', TropaSchema,    COLLECTIONS.tropas).find({}).lean(),
+      mdl('AssI', ItemSchema,     COLLECTIONS.itens).find({}).lean(),
+      mdl('AssE', EdificioSchema, COLLECTIONS.edificios).find({}).lean(),
+      mdl('AssD', DragaoSchema,   COLLECTIONS.dragoes).find({}).lean(),
+      mdl('AssP', PesquisaSchema, COLLECTIONS.pesquisas).find({}).sort({ categoria: 1, ordem: 1 }).lean(),
+      mdl('AssN', NivelSchema,    COLLECTIONS.niveis).find({}).sort({ nivel: 1 }).lean(),
+      mdl('AssR', ReinoSchema,    COLLECTIONS.reinos).find({}).sort({ id: 1 }).lean(),
     ]);
 
     // ── TROPAS ────────────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { v2 as cloudinary } from 'cloudinary';
 import { autenticar, exigirAdmin } from '../middleware/auth.js';
 import { APP_VERSION } from '../version.js';
+import { COLLECTION_PREFIX } from '../config/database.js';
 
 const router = Router();
 const iniciouEm = Date.now();
@@ -19,6 +20,8 @@ const mongoEstado = () => {
   return {
     status: readyState === 1 ? 'ok' : readyState === 2 ? 'conectando' : 'indisponivel',
     estado: mapa[readyState] || 'desconhecido',
+    banco: mongoose.connection.name || process.env.MONGO_DB_NAME || null,
+    prefixoColecoes: COLLECTION_PREFIX,
   };
 };
 

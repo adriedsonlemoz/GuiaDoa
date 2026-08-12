@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { COLLECTIONS } from '../config/database.js';
 
 const ItemSchema = new mongoose.Schema({
   nome:      { type: String, required: true, unique: true, trim: true },
@@ -7,7 +8,7 @@ const ItemSchema = new mongoose.Schema({
   onde:      { type: String, default: '' },
   criadoEm:     { type: Date, default: Date.now },
   atualizadoEm: { type: Date, default: Date.now },
-}, { collection: 'doa_itens' });
+}, { collection: COLLECTIONS.itens });
 
 ItemSchema.index({ nome: 'text', descricao: 'text' });
 

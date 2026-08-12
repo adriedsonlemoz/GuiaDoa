@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { COLLECTIONS } from '../config/database.js';
 
 const NivelPesquisaSchema = new mongoose.Schema({
   nivel: { type: Number, required: true },
@@ -19,6 +20,6 @@ const PesquisaSchema = new mongoose.Schema({
   ordem:     { type: Number, default: 0 },
   niveis:    [NivelPesquisaSchema],
   atualizadoEm: { type: Date, default: Date.now },
-}, { collection: 'doa_pesquisas' });
+}, { collection: COLLECTIONS.pesquisas });
 
 export default mongoose.model('Pesquisa', PesquisaSchema);

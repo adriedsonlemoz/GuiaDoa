@@ -13,8 +13,8 @@ guiadoa-api/
 ├── .env                   ← Variáveis de ambiente (não commitar)
 ├── package.json
 ├── models/
-│   ├── User.js            ← coleção doa_users
-│   └── Tropa.js           ← coleção doa_tropas
+│   ├── User.js            ← coleção guiadoa_users
+│   └── Tropa.js           ← coleção guiadoa_tropas
 ├── routes/
 │   ├── auth.js            ← POST /api/auth/login
 │   └── tropas.js          ← CRUD /api/tropas
@@ -110,12 +110,12 @@ Todas as rotas abaixo exigem o header `Authorization: Bearer <token>`,
 
 ## 🗄️ MongoDB — coleções criadas
 
-Todas as coleções usam o prefixo `doa_` para não misturar com outros projetos no mesmo cluster.
+Todas as coleções usam por padrão o prefixo `guiadoa_` para que o Guia DOA possa compartilhar o mesmo banco do AL Sistemas sem misturar documentos. O prefixo pode ser alterado por `MONGO_COLLECTION_PREFIX`.
 
 | Coleção       | Descrição                         |
 |---------------|-----------------------------------|
-| `doa_users`   | Usuários admin do painel          |
-| `doa_tropas`  | Tropas do jogo (53 registros)     |
+| `guiadoa_users`   | Usuários admin do painel          |
+| `guiadoa_tropas`  | Tropas do jogo (53 registros)     |
 
 **Campos da tropa:**
 
@@ -235,3 +235,20 @@ npm run test:smoke
 
 O smoke test não cria, altera ou apaga dados.
 
+
+
+## Compartilhar o banco com o AL Sistemas
+
+Use no Render a mesma `MONGO_URI` do AL Sistemas. Se quiser forçar explicitamente o banco, defina também `MONGO_DB_NAME` com o mesmo nome. O Guia DOA mantém suas coleções isoladas com `MONGO_COLLECTION_PREFIX=guiadoa_`.
+
+Exemplo:
+
+```env
+MONGO_URI=mongodb+srv://.../banco_compartilhado
+MONGO_DB_NAME=banco_compartilhado
+MONGO_COLLECTION_PREFIX=guiadoa_
+```
+
+Assim o mesmo banco pode conter coleções do AL Sistemas e, separadamente, `guiadoa_users`, `guiadoa_tropas`, `guiadoa_dragoes`, etc.
+
+Se estiver migrando uma instalação antiga que já possui `doa_*`, rode `npm run migrate:collections` ou ative temporariamente `MONGO_MIGRATE_LEGACY_COLLECTIONS=true`. A migração nunca sobrescreve uma coleção `guiadoa_*` já existente.

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { COLLECTIONS } from '../config/database.js';
 
 // Cada nível do dragão tem um snapshot de todos os atributos
 const NivelDragaoSchema = new mongoose.Schema({
@@ -35,6 +36,6 @@ const DragaoSchema = new mongoose.Schema({
   niveis:        { type: [NivelDragaoSchema], default: [] },
 
   atualizadoEm: { type: Date, default: Date.now },
-}, { collection: 'doa_dragoes' });
+}, { collection: COLLECTIONS.dragoes });
 
 export default mongoose.model('Dragao', DragaoSchema);

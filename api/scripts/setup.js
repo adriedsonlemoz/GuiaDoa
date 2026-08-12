@@ -11,6 +11,7 @@ import readline from 'readline';
 import User     from '../models/User.js';
 import Tropa    from '../models/Tropa.js';
 import Nivel    from '../models/Nivel.js';
+import { COLLECTION_PREFIX, mongoConnectOptions } from '../config/database.js';
 
 const C = {
   reset:'\x1b[0m', bold:'\x1b[1m', dim:'\x1b[2m',
@@ -192,9 +193,9 @@ async function setup() {
   console.log(`${b('Passo 1/3')} ${d('— Conexão MongoDB')}`);
   process.stdout.write('  Conectando...');
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI, mongoConnectOptions());
     console.log(` ${gr('OK!')}`);
-    console.log(ok('Banco: iguanews (prefixo doa_)\n'));
+    console.log(ok(`Banco: ${mongoose.connection.name} (prefixo ${COLLECTION_PREFIX})\n`));
   } catch (e) {
     console.log(`\n${erro('Falha: ' + e.message)}`);
     rl.close(); process.exit(1);

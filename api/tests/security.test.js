@@ -4,6 +4,8 @@ import { sanitizarHistorico, validarEntradaAssistente } from '../utils/assistant
 import { decidirAcessoSetup, validarSetupKey } from '../security/setupAccess.js';
 import { formatarErroApi } from '../utils/apiError.js';
 import { executarUploadLote } from '../utils/cloudinaryBatch.js';
+import { COLLECTION_PREFIX, COLLECTIONS } from '../config/database.js';
+import { migrarColecoesLegadas } from '../utils/migrateLegacyCollections.js';
 
 
 test('setup inicial é permitido sem usuários quando não há SETUP_KEY', () => {
@@ -67,4 +69,34 @@ test('entrada inválida do Assistente é rejeitada antes de chamar serviço exte
   const r = validarEntradaAssistente({ pergunta: '', historico: [] });
   assert.equal(r.ok, false);
   assert.equal(r.codigo, 'PERGUNTA_INVALIDA');
+});
+
+
+test('coleções do Guia DOA usam identificação própria no banco compartilhado', () => {
+  assert.equal(COLLECTION_PREFIX, 'guiadoa_');
+  assert.equal(COLLECTIONS.users, 'guiadoa_users');
+  assert.equal(COLLECTIONS.tropas, 'guiadoa_tropas');
+  assert.equal(COLLECTIONS.dragoes, 'guiadoa_dragoes');
+});
+
+test('migração legada renomeia doa_* sem sobrescrever destino existente', async () => {
+  const nomes = new Set(['doa_users', 'doa_tropas', 'guiadoa_tropas']);
+  const renomes = [];
+  const db = {
+    listCollections() {
+      return { toArray: async () => [...nomes].map(name => ({ name })) };
+    },
+    collection(name) {
+      return {
+        rename: async (destino) => {
+          renomes.push([name, destino]);
+          nomes.delete(name); nomes.add(destino);
+        },
+      };
+    },
+  };
+  const resultado = await migrarColecoesLegadas(db, { logger: { log() {}, warn() {} } });
+  assert.deepEqual(renomes, [['doa_users', 'guiadoa_users']]);
+  assert.equal(resultado.conflitos.length, 1);
+  assert.deepEqual(resultado.conflitos[0], { origem: 'doa_tropas', destino: 'guiadoa_tropas' });
 });

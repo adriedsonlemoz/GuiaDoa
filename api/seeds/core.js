@@ -1,18 +1,5 @@
-/**
- * tropas.js
- * Tenta buscar da API local. Se offline, usa dados locais como fallback.
- */
-
-const API_URL = 'http://localhost:3001';
-
-// Limpa qualquer cache antigo guardado em versões anteriores
-try { localStorage.removeItem('doa_cache_tropas'); } catch { /* ignore */ }
-
-// Sem cache em localStorage — cada refresh busca dados frescos da API.
-// O cache em memória (_cache) só vive dentro da mesma sessão (mesma aba aberta).
-// Assim alterações no admin aparecem imediatamente ao recarregar.
-
-export const dbTropasLocal = [
+// Dados padrão canônicos migrados da base atual do aplicativo.
+export const TODAS_TROPAS = [
   // ── ESPECIAIS ──────────────────────────────────────────────────────────────
   {nome:"Condenadores",vida:20000,def:850,atqPerto:3000,atqDist:0,alcance:0,vel:450,car:600,poder:40,gestao:0,tipo:"especial",desc:"+20% de Ataque e -20% de Dano recebido na Dominação do Dragão."},
   {nome:"Cavaleiros Espectrais",vida:15000,def:650,atqPerto:4000,atqDist:0,alcance:0,vel:1200,car:300,poder:40,gestao:0,tipo:"especial",desc:"Golpe paralisante. +20% de Ataque e -20% de Dano recebido."},
@@ -70,37 +57,18 @@ export const dbTropasLocal = [
   {nome:"Hoplitas Imortais",vida:3000,def:1200,atqPerto:1200,atqDist:800,alcance:800,vel:400,car:100,poder:10,gestao:0,tipo:"treinavel",desc:"Versão aprimorada dos Hoplitas, com armadura reforçada."},
 ];
 
-// ── Cache em memória ──────────────────────────────────────────────────────────
-let _cache = null;
+export const TROPAS_ESPECIAIS = TODAS_TROPAS.filter(t => t.tipo === 'especial');
+export const TROPAS_TREINAVEIS = TODAS_TROPAS.filter(t => t.tipo === 'treinavel');
 
-export async function carregarTropas() {
-  // 1. Cache em memória (já carregado nesta sessão)
-  if (_cache) return _cache;
-
-  // 2. Busca da API (timeout 3s para não travar se offline)
-  try {
-    const r = await fetch(`${API_URL}/api/tropas/todas`, {
-      signal: AbortSignal.timeout(3000),
-    });
-    if (r.ok) {
-      const dados = await r.json();
-      _cache = dados;
-      console.info(`[DOA] ${dados.length} tropas carregadas da API`);
-      return dados;
-    }
-  } catch {
-    console.warn('[DOA] API offline — usando dados locais');
-  }
-
-  // 4. Fallback: dados locais
-  _cache = dbTropasLocal;
-  return dbTropasLocal;
-}
-
-// Chamar após criar/editar/apagar uma tropa no admin
-export function invalidarCacheTropas() {
-  _cache = null;
-}
-
-// Compatibilidade com imports síncronos existentes
-export const dbTropas = dbTropasLocal;
+export const NIVEIS_DATA = [
+  [1, 62], [2, 76], [3, null], [4, 196], [5, 356], [6, 676], [7, 1316], [8, 2596],
+  [9, null], [10, 10276], [11, 16676], [12, 24676], [13, 34676], [14, 47176],
+  [15, 62801], [16, 82332], [17, 106690], [18, 137208], [19, 175355], [20, 223039],
+  [21, null], [22, 357149], [23, null], [24, 566697], [25, 712216], [26, 894115],
+  [27, 1121488], [28, 1405705], [29, 1760977], [30, 2205066], [31, 2760178],
+  [32, 3454067], [33, null], [34, null], [35, 6760884], [36, 8454949], [37, 10572332],
+  [38, 16528232], [39, null], [40, null], [41, null], [42, null], [43, null],
+  [44, 50471718], [45, null], [46, null], [47, null], [48, null], [49, 159059016],
+  [50, null], [51, null], [52, null], [53, null], [54, null], [55, null], [56, null],
+  [57, null], [58, null], [59, null], [60, null],
+];

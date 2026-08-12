@@ -1,230 +1,142 @@
 # 🛡️ Guia DOA — API Admin
 
-Backend local para gestão dos dados do Guia DOA.
-Corre no Termux, conecta ao MongoDB Atlas, serve o painel admin.
+Backend Express do Guia DOA. Ele conecta ao MongoDB Atlas, serve a API e o painel administrativo.
+A partir da **Beta 2.8**, o MongoDB é a única fonte de verdade para os dados públicos do jogo.
 
----
+## 📁 Estrutura principal
 
-## 📁 Estrutura
-
-```
-guiadoa-api/
-├── server.js              ← Entrada principal
-├── .env                   ← Variáveis de ambiente (não commitar)
-├── package.json
-├── models/
-│   ├── User.js            ← coleção guiadoa_users
-│   └── Tropa.js           ← coleção guiadoa_tropas
-├── routes/
-│   ├── auth.js            ← POST /api/auth/login
-│   └── tropas.js          ← CRUD /api/tropas
-├── middleware/
-│   └── auth.js            ← Validação JWT
-├── scripts/
-│   └── setup.js           ← Seed inicial (usuário + 53 tropas)
-└── admin/
-    └── index.html         ← Painel visual
+```text
+api/
+├── server.js                 # entrada do backend
+├── app.js                    # configuração Express
+├── models/                   # models MongoDB
+├── routes/                   # API/CRUD
+├── services/
+│   ├── autoMigration.js      # migração canônica automática
+│   └── bootstrapStatus.js    # estado do primeiro acesso
+├── seeds/                    # dados canônicos usados SOMENTE por migrações
+├── admin/                    # painel administrativo
+└── tests/                    # testes do backend
 ```
 
----
-
-## ⚡ Instalação e arranque (Termux)
+## ⚡ Instalação e arranque
 
 ```bash
-# 1. Entrar na pasta
-cd ~/painel/projetos/guiadoa-api
-
-# 2. Instalar dependências
-npm install
-
-# 3. Correr o setup UMA VEZ (cria usuário admin + importa tropas)
-npm run setup
-
-# 4. Iniciar o servidor
+cd api
+npm ci
 npm start
-
-# Para desenvolvimento (reinicia ao guardar)
-npm run dev
 ```
 
----
+Não existe mais `npm run setup` nem importação manual dos dados padrão.
+Ao subir uma nova versão, o backend verifica `guiadoa_config` e executa a migração canônica automaticamente quando necessário.
 
-## 🌐 Endereços
+## 🧭 Primeiro acesso
 
-| Serviço       | URL                            |
-|---------------|--------------------------------|
-| API           | http://localhost:3001          |
-| Painel Admin  | http://localhost:3001/admin    |
-| Health check  | http://localhost:3001/         |
+1. O backend conecta ao MongoDB.
+2. A migração da versão atual cria os registros canônicos que estiverem ausentes e completa somente campos vazios.
+3. A migração é registrada em `guiadoa_config`.
+4. Se ainda não houver administrador, o frontend e `/admin` exibem a criação do primeiro usuário e senha.
+5. Depois disso, o aplicativo lê os dados exclusivamente da API/MongoDB.
 
-**Login do painel:**
-- Use o administrador criado em `/admin/setup`.
-- Nunca salve senhas reais neste arquivo ou no repositório.
-
----
-
-## 📡 Endpoints da API
-
-### Auth
-
-| Método | Rota                  | Descrição              | Auth |
-|--------|-----------------------|------------------------|------|
-| POST   | `/api/auth/login`     | Fazer login            | ❌   |
-| GET    | `/api/auth/verificar` | Verificar token JWT    | ✅   |
-
-**Exemplo login:**
-```bash
-curl -X POST http://localhost:3001/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"usuario":"admin","senha":"SUA_SENHA"}'
-```
-
----
-
-### Tropas
-
-Todas as rotas abaixo exigem o header `Authorization: Bearer <token>`,
-**excepto** `/api/tropas/todas` que é pública (usada pelo app React).
-
-| Método | Rota                  | Descrição                    |
-|--------|-----------------------|------------------------------|
-| GET    | `/api/tropas/todas`   | Lista todas (sem paginação)  |
-| GET    | `/api/tropas`         | Lista com filtros e páginas  |
-| GET    | `/api/tropas/:id`     | Detalhe de uma tropa         |
-| POST   | `/api/tropas`         | Criar nova tropa             |
-| PUT    | `/api/tropas/:id`     | Atualizar tropa              |
-| DELETE | `/api/tropas/:id`     | Remover tropa                |
-
-**Parâmetros do GET `/api/tropas`:**
-
-| Parâmetro | Tipo   | Padrão | Descrição                       |
-|-----------|--------|--------|---------------------------------|
-| `busca`   | string | `""`   | Filtrar por nome (regex)        |
-| `tipo`    | string | `""`   | `treinavel` ou `especial`       |
-| `pagina`  | number | `1`    | Página atual                    |
-| `limite`  | number | `50`   | Itens por página                |
-| `ordenar` | string | `nome` | Campo de ordenação              |
-| `dir`     | string | `1`    | `1` = crescente, `-1` = decres. |
-
----
-
-## 🗄️ MongoDB — coleções criadas
-
-Todas as coleções usam por padrão o prefixo `guiadoa_` para que o Guia DOA possa compartilhar o mesmo banco do AL Sistemas sem misturar documentos. O prefixo pode ser alterado por `MONGO_COLLECTION_PREFIX`.
-
-| Coleção       | Descrição                         |
-|---------------|-----------------------------------|
-| `guiadoa_users`   | Usuários admin do painel          |
-| `guiadoa_tropas`  | Tropas do jogo (53 registros)     |
-
-**Campos da tropa:**
-
-| Campo        | Tipo   | Descrição                        |
-|--------------|--------|----------------------------------|
-| `nome`       | String | Nome único da tropa              |
-| `tipo`       | String | `treinavel` ou `especial`        |
-| `poder`      | Number | Poder base                       |
-| `vida`       | Number | Pontos de vida                   |
-| `def`        | Number | Defesa                           |
-| `atqPerto`   | Number | Ataque corpo a corpo             |
-| `atqDist`    | Number | Ataque à distância               |
-| `alcance`    | Number | Alcance do ataque                |
-| `vel`        | Number | Velocidade                       |
-| `car`        | Number | Capacidade de carga              |
-| `desc`       | String | Descrição/habilidade especial    |
-| `atualizadoEm` | Date | Data da última edição           |
-
----
-
-## 🔗 Integrar com o app React (guiadoa_tw)
-
-Quando quiser que o app busque tropas da API em vez dos ficheiros locais,
-edita `src/data/tropas.js` para fazer fetch:
-
-```js
-// src/data/tropas.js
-const API_URL = 'http://localhost:3001';
-
-export const carregarTropas = async () => {
-  const r = await fetch(`${API_URL}/api/tropas/todas`);
-  return r.json();
-};
-```
-
-> A rota `/api/tropas/todas` é pública — não precisa de token.
-
----
-
-## 🔑 Variáveis de ambiente (.env)
+Por padrão o primeiro administrador não pede chave técnica. Para exigir proteção adicional:
 
 ```env
-MONGO_URI=mongodb+srv://...    # String de conexão MongoDB Atlas
-JWT_SECRET=...                 # Chave secreta para assinar tokens
-SETUP_KEY=...                  # Recomendado: protege a criação do primeiro admin
-LOGIN_RATE_LIMIT_MAX=8         # Opcional
-AI_RATE_LIMIT_MAX=20           # Opcional
-PORT=3001                      # Porta da API
+REQUIRE_SETUP_KEY=true
+SETUP_KEY=uma-chave-longa-e-aleatoria
 ```
 
-> ⚠️ Nunca commites o `.env` para o GitHub.
+## 🗄️ MongoDB compartilhado com AL Sistemas
 
----
+Use a mesma `MONGO_URI`/database do AL Sistemas e mantenha um prefixo exclusivo:
 
-## 🐞 Problemas comuns
-
-**"ECONNREFUSED" ao iniciar:**
-→ Verifica a ligação à internet. O MongoDB Atlas é remoto.
-
-**"Token inválido" no painel:**
-→ Faz logout e login novamente. O token expira em 12h.
-
-**"Já existe uma tropa com esse nome":**
-→ O campo `nome` é único. Usa a edição (✏) em vez de criar nova.
-
-**Setup falha na metade:**
-→ Corre `npm run setup` novamente — tropas já existentes são puladas.
-
-## Beta 2.3 — diagnóstico e testes
-
-### Health check
-
-- `GET /api/health` — estado sanitizado da API e do MongoDB, além de indicar se Cloudinary e Groq estão configurados.
-- `GET /api/health/deep` — exige JWT de administrador e testa de fato a conectividade com Cloudinary e Groq.
-
-Nenhum dos endpoints retorna chaves, secrets, URI do MongoDB ou outras credenciais.
-
-### Erros padronizados
-
-Respostas HTTP de erro seguem o formato abaixo, mantendo `erro` temporariamente para compatibilidade com clientes antigos:
-
-```json
-{
-  "sucesso": false,
-  "codigo": "NAO_AUTORIZADO",
-  "mensagem": "Token não fornecido",
-  "erro": "Token não fornecido",
-  "requestId": "..."
-}
+```env
+MONGO_URI=mongodb+srv://USUARIO:SENHA@CLUSTER.mongodb.net/SEU_BANCO
+MONGO_DB_NAME=SEU_BANCO
+MONGO_COLLECTION_PREFIX=guiadoa_
 ```
 
-O header `X-Request-Id` permite correlacionar uma falha do frontend com os logs do backend.
+Principais coleções:
 
-### Testes
+```text
+guiadoa_config
+guiadoa_users
+guiadoa_tropas
+guiadoa_niveis
+guiadoa_dragoes
+guiadoa_edificios
+guiadoa_pesquisas
+guiadoa_reinos
+guiadoa_itens
+guiadoa_traducoes
+guiadoa_dicas
+guiadoa_dicas_categorias
+```
+
+`guiadoa_config` registra a versão/estado da migração. A migração canônica roda **uma vez por versão**. Quando ela já está marcada como `pronto` para a mesma versão, reiniciar o Render não reimporta seeds nem recria registros apagados: o MongoDB permanece soberano.
+
+### Recuperação avançada
+
+Se uma migração precisar ser repetida deliberadamente, configure temporariamente:
+
+```env
+FORCE_DATA_MIGRATION=true
+```
+
+Faça um deploy e depois remova/desative essa variável. Isso não é parte do fluxo normal do usuário/admin.
+
+## 🔗 Frontend e modo online
+
+O `GameDataProvider` busca tropas, níveis, dragões, edifícios, pesquisas, reinos e itens pela API com `cache: no-store`.
+Não há fallback estático ou banco offline paralelo para dados do jogo. Se API/MongoDB estiver indisponível, o aplicativo informa a indisponibilidade.
+
+O PWA ainda pode armazenar arquivos estáticos (HTML/CSS/JS/ícones) para carregamento, e preferências/calculadoras pessoais podem usar armazenamento local. Esses dados pessoais não são a base pública do jogo.
+
+## 🔑 Variáveis principais
+
+```env
+MONGO_URI=mongodb+srv://...
+MONGO_DB_NAME=...
+MONGO_COLLECTION_PREFIX=guiadoa_
+JWT_SECRET=uma-chave-longa-e-aleatoria
+ALLOWED_ORIGINS=https://guia-doa.vercel.app
+
+# opcionais
+REQUIRE_SETUP_KEY=false
+# SETUP_KEY=...
+LOGIN_RATE_LIMIT_MAX=8
+AI_RATE_LIMIT_MAX=20
+# GROQ_API_KEY=...
+# CLOUDINARY_CLOUD_NAME=...
+# CLOUDINARY_API_KEY=...
+# CLOUDINARY_API_SECRET=...
+# FORCE_DATA_MIGRATION=true  # somente recuperação de uma migração
+```
+
+Nunca envie `.env`, senhas, JWT secrets ou credenciais do MongoDB para o GitHub.
+
+## ❤️ Health e diagnóstico
+
+- `GET /api/health` — estado sanitizado da API/MongoDB e configuração dos serviços.
+- `GET /api/health/deep` — exige administrador e testa integrações externas.
+- `GET /api/setup/bootstrap-status` — estado mínimo do primeiro acesso/migração.
+
+## 🧪 Testes
 
 Na raiz do projeto:
 
 ```bash
 npm test
+npm run check
 ```
 
-Smoke test contra uma API já publicada:
+Smoke test de uma API publicada:
 
 ```bash
 cd api
 API_BASE_URL=https://sua-api.exemplo.com npm run test:smoke
 ```
 
-Para também validar login correto/incorreto e o health profundo, use uma conta de teste separada:
+Com uma conta administrativa de teste opcional:
 
 ```bash
 API_BASE_URL=https://sua-api.exemplo.com \
@@ -233,22 +145,4 @@ TEST_ADMIN_PASSWORD='senha_de_teste' \
 npm run test:smoke
 ```
 
-O smoke test não cria, altera ou apaga dados.
-
-
-
-## Compartilhar o banco com o AL Sistemas
-
-Use no Render a mesma `MONGO_URI` do AL Sistemas. Se quiser forçar explicitamente o banco, defina também `MONGO_DB_NAME` com o mesmo nome. O Guia DOA mantém suas coleções isoladas com `MONGO_COLLECTION_PREFIX=guiadoa_`.
-
-Exemplo:
-
-```env
-MONGO_URI=mongodb+srv://.../banco_compartilhado
-MONGO_DB_NAME=banco_compartilhado
-MONGO_COLLECTION_PREFIX=guiadoa_
-```
-
-Assim o mesmo banco pode conter coleções do AL Sistemas e, separadamente, `guiadoa_users`, `guiadoa_tropas`, `guiadoa_dragoes`, etc.
-
-Se estiver migrando uma instalação antiga que já possui `doa_*`, rode `npm run migrate:collections` ou ative temporariamente `MONGO_MIGRATE_LEGACY_COLLECTIONS=true`. A migração nunca sobrescreve uma coleção `guiadoa_*` já existente.
+O smoke test não cria, altera nem apaga dados.

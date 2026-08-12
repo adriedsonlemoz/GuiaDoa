@@ -60,7 +60,7 @@ app.use('/api/dicas', dicasRoutes);
 
 app.use('/admin', express.static(join(__dirname, 'admin')));
 app.get('/admin', (_, res) => res.sendFile(join(__dirname, 'admin', 'index.html')));
-app.get('/admin/setup', (_, res) => res.sendFile(join(__dirname, 'admin', 'setup.html')));
+app.get('/admin/setup', (_, res) => res.redirect(302, '/admin'));
 
 app.get('/', (_, res) => res.json({ status: 'ok', app: 'Guia DOA API', version: APP_VERSION }));
 

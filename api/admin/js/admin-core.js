@@ -12,6 +12,27 @@
       .replace(/'/g, '&#39;');
   }
 
+
+  function dataArg(value) {
+    return encodeURIComponent(JSON.stringify(value)).replace(/'/g, '%27');
+  }
+
+  function fromDataArg(value) {
+    return JSON.parse(decodeURIComponent(value));
+  }
+
+  function strArg(value) {
+    return encodeURIComponent(String(value ?? '')).replace(/'/g, '%27');
+  }
+
+  function fromStrArg(value) {
+    return decodeURIComponent(value);
+  }
+
+  function safeColor(value, fallback = '#C8A84A') {
+    return /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : fallback;
+  }
+
   function getToken() {
     const sessionToken = sessionStorage.getItem(TOKEN_KEY) || '';
     const legado = localStorage.getItem(TOKEN_KEY) || '';
@@ -65,6 +86,11 @@
 
   window.DOAAdminCore = Object.freeze({
     escapeHtml,
+    dataArg,
+    fromDataArg,
+    strArg,
+    fromStrArg,
+    safeColor,
     getToken,
     setToken,
     clearToken,

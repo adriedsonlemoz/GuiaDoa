@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import Reino from '../models/Reino.js';
 import { autenticar } from '../middleware/auth.js';
-import { dbReinos } from '../../src/data/reinos.js';
 
 const router = Router();
 
@@ -64,26 +63,6 @@ router.delete('/:slug', autenticar, async (req, res) => {
     const reino = await Reino.findOneAndDelete({ slug: req.params.slug });
     if (!reino) return res.status(404).json({ erro: 'Reino não encontrado.' });
     res.json({ mensagem: `"${reino.nome}" removido com sucesso.` });
-  } catch (err) {
-    res.status(500).json({ erro: err.message });
-  }
-});
-
-// ── POST /api/reinos/seed (admin) — importa dados estáticos ──────────────────
-router.post('/seed', autenticar, async (req, res) => {
-  try {
-    let inseridos = 0, atualizados = 0;
-    for (const r of dbReinos) {
-      const slug = r.nome.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      const existente = await Reino.exists({ $or: [{ id: r.id }, { slug }] });
-      await Reino.findOneAndUpdate(
-        { id: r.id },
-        { id: r.id, slug, nome: r.nome, fuso: r.fuso, regiao: r.regiao || '', idioma: r.idioma || '', atualizadoEm: new Date() },
-        { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
-      );
-      if (existente) atualizados++; else inseridos++;
-    }
-    res.json({ mensagem: 'Seed concluído.', inseridos, atualizados, total: dbReinos.length });
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }

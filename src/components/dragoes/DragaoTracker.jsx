@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getDragaoById } from '../../data/dragoes.js';
+import { useGameData } from '../../data/GameDataContext.jsx';
 import { C } from '../../theme.js';
 import Toast from '../../ui/Toast.jsx';
 
@@ -143,7 +143,8 @@ const HabilidadeTrackerCard = ({ hab, dados, onChange, cor }) => {
 };
 
 const DragaoTracker = ({ dragaoId, setRoute }) => {
-  const dragao = getDragaoById(dragaoId);
+  const { dragoes } = useGameData();
+  const dragao = dragoes.find(d => d.id === dragaoId) || null;
   const [dados,  setDados]  = useState(() => dragao ? carregarDados(dragao) : {});
   const [toast,  setToast]  = useState({ open:false, message:'', severity:'success' });
 

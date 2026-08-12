@@ -26,6 +26,7 @@ export const COLLECTIONS = Object.freeze({
   traducoes: collectionName('traducoes'),
   dicas: collectionName('dicas'),
   dicasCategorias: collectionName('dicas_categorias'),
+  config: collectionName('config'),
 });
 
 export const COLLECTION_SUFFIXES = Object.freeze([
@@ -40,6 +41,7 @@ export const COLLECTION_SUFFIXES = Object.freeze([
   'traducoes',
   'dicas',
   'dicas_categorias',
+  'config',
 ]);
 
 export function mongoConnectOptions() {

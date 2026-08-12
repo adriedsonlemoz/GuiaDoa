@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { getDragaoById } from '../../data/dragoes.js';
+import React from 'react';
+import { useGameData } from '../../data/GameDataContext.jsx';
 import { C } from '../../theme.js';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const ATTRS_BASE = [
   { key:'vida',           label:'Vida',          icon:'❤️',  cor:C.HEALTH  },
@@ -203,19 +202,9 @@ const AtributosSection = ({ niveis, cor }) => {
 
 // ── DragaoDetalhe ─────────────────────────────────────────────────────────────
 const DragaoDetalhe = ({ dragaoId, setRoute }) => {
-  const dragao = getDragaoById(dragaoId);
-  const [niveis, setNiveis]         = useState([]);
-  const [loadingApi, setLoadingApi] = useState(true);
-
-  useEffect(() => {
-    if (!dragaoId) return;
-    setLoadingApi(true);
-    fetch(`${API}/api/dragoes/${dragaoId}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { setNiveis(data?.niveis || []); })
-      .catch(() => { setNiveis([]); })
-      .finally(() => setLoadingApi(false));
-  }, [dragaoId]);
+  const { dragoes } = useGameData();
+  const dragao = dragoes.find(d => d.id === dragaoId) || null;
+  const niveis = dragao?.niveis || [];
 
   if (!dragao) return (
     <div className="text-center py-12 px-4">
@@ -261,17 +250,7 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
 
       {/* Atributos por nível */}
       <SectionDivider label="ATRIBUTOS POR NÍVEL" />
-      {loadingApi ? (
-        <div style={{ padding:'20px', textAlign:'center' }}>
-          <div style={{ width:26, height:26, border:`3px solid ${dragao.cor}33`,
-            borderTop:`3px solid ${dragao.cor}`, borderRadius:'50%',
-            animation:'spin 0.8s linear infinite', margin:'0 auto 8px' }} />
-          <span style={{ fontSize:'0.72rem', color:C.TEXT_MUTED }}>Carregando atributos…</span>
-          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-        </div>
-      ) : (
-        <AtributosSection niveis={niveis} cor={dragao.cor} />
-      )}
+      <AtributosSection niveis={niveis} cor={dragao.cor} />
 
       {/* Habilidades (original, abaixo de tudo) */}
       <SectionDivider label={`HABILIDADES — ${dragao.nome.toUpperCase()}`} />

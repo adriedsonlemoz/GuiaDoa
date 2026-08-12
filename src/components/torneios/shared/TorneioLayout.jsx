@@ -1,7 +1,7 @@
 import React from 'react';
 import { C } from '../../../theme.js';
 import { fmtN } from './RewardRow.jsx';
-import { dbTropas } from '../../../db.js';
+import { useGameData } from '../../../data/GameDataContext.jsx';
 import { useI18n } from '../../../hooks/useI18n.jsx';
 
 /**
@@ -27,6 +27,7 @@ const TorneioLayout = ({
   extraInfo,
 }) => {
   const { t } = useI18n();
+  const { tropas: dbTropas } = useGameData();
   const tropaObj = dbTropas.find(item => item.nome === tropaPremio);
   const poderUnit = tropaObj?.poder || 0;
 

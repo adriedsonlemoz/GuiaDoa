@@ -38,13 +38,7 @@ function uploadParaCloudinary(buffer, pasta = 'guiadoa/dicas') {
 }
 
 // ─── Categorias padrão (seed) ─────────────────────────────────────────────────
-const CATS_PADRAO = [
-  { slug:'dragoes',   label:'Dragões',   icon:'🐉', ordem:0 },
-  { slug:'tropas',    label:'Tropas',    icon:'⚔️',  ordem:1 },
-  { slug:'campanha',  label:'Campanha',  icon:'🗺️',  ordem:2 },
-  { slug:'grodz',     label:'Grodz',     icon:'🏰', ordem:3 },
-  { slug:'zyvortian', label:'Zyvortian', icon:'👽', ordem:4 },
-];
+
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CATEGORIAS
@@ -93,19 +87,6 @@ router.delete('/categorias/:id', autenticar, async (req, res) => {
   try {
     await CategoriaDica.findByIdAndDelete(req.params.id);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ erro: e.message }); }
-});
-
-// POST /api/dicas/categorias/seed — insere as categorias padrão
-router.post('/categorias/seed', autenticar, async (req, res) => {
-  try {
-    let inseridas = 0, existentes = 0;
-    for (const c of CATS_PADRAO) {
-      const existe = await CategoriaDica.findOne({ slug: c.slug });
-      if (!existe) { await CategoriaDica.create(c); inseridas++; }
-      else existentes++;
-    }
-    res.json({ ok: true, inseridas, existentes });
   } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 

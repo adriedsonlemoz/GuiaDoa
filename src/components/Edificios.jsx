@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { C } from '../theme.js';
 import GameHeader from './shared/GameHeader.jsx';
 
-import { getCachedEdificios, SYNC_KEYS, getStaticEdificios } from '../data/syncService.js';
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { useGameData } from '../data/GameDataContext.jsx';
 
 const COLUMN_LABELS = {
   desc: 'Efeito', pop: 'Pop.', prodHora: 'Prod./h', cap: 'Cap. Máx.',
@@ -17,56 +15,15 @@ const fmt = v =>
   : typeof v === 'number' ? v.toLocaleString('pt-BR') : v;
 
 const Edificios = () => {
-  const [edificios, setEdificios] = useState([]);
-  const [sel,       setSel]       = useState(null);
-  const [aba,       setAba]       = useState('tabela');
-  const [nivel,     setNivel]     = useState('1');
-  const [qtd,       setQtd]       = useState('1');
-  const [loading,   setLoading]   = useState(true);
-  const [erro,      setErro]      = useState(null);
+  const { edificios } = useGameData();
+  const [sel, setSel] = useState(null);
+  const [aba, setAba] = useState('tabela');
+  const [nivel, setNivel] = useState('1');
+  const [qtd, setQtd] = useState('1');
 
-  const carregar = useCallback(async () => {
-    setLoading(true); setErro(null);
-
-    // 1. Cache imediato (sincronizado anteriormente)
-    let cache = getCachedEdificios();
-
-    // 2. Se cache vazio, usa dados estáticos embutidos como base
-    if (cache.length === 0) {
-      cache = getStaticEdificios();
-      if (cache.length > 0) {
-        localStorage.setItem(SYNC_KEYS.EDIFICIOS, JSON.stringify(cache));
-      }
-    }
-
-    if (cache.length > 0) {
-      setEdificios(cache);
-      setSel(s => s || cache[0].slug);
-      setLoading(false);
-    }
-
-    // 3. Tenta atualizar da API (MongoDB) em background
-    try {
-      const ctrl = new AbortController();
-      const tid  = setTimeout(() => ctrl.abort(), 8000);
-      const r    = await fetch(`${API}/api/edificios`, { signal: ctrl.signal });
-      clearTimeout(tid);
-      if (!r.ok) throw new Error('falha');
-      const d     = await r.json();
-      const lista = d.edificios || [];
-      if (lista.length > 0) {
-        localStorage.setItem(SYNC_KEYS.EDIFICIOS, JSON.stringify(lista));
-        setEdificios(lista);
-        setSel(s => s || lista[0].slug);
-      }
-    } catch {
-      // Cache ou dados estáticos já cobriram — nada a fazer
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => {
+    if (!sel && edificios.length > 0) setSel(edificios[0].slug);
+  }, [edificios, sel]);
 
   const ed    = edificios.find(e => e.slug === sel);
   const dados = ed?.niveis || [];
@@ -81,30 +38,6 @@ const Edificios = () => {
   const nAtual     = dados.find(r => String(r.nivel) === String(nivelNum));
   const nFim       = dados.find(r => r.nivel === nivelFim);
 
-  if (loading) return (
-    <div className="max-w-2xl mx-auto pb-4">
-      <div style={{ background:'linear-gradient(135deg,#1C3A5E,#3B5C8C,#1C3A5E)', borderRadius:'12px 12px 0 0', padding:'10px 16px', textAlign:'center' }}>
-        <p className="font-cinzel font-bold text-sm tracking-widest uppercase m-0" style={{ color:'#F8F2E0' }}>🏗️ Construções</p>
-      </div>
-      <div style={{ background:C.BG_SECONDARY, border:`1.5px solid ${C.BORDER}`, borderTop:'none', borderRadius:'0 0 10px 10px', padding:'12px', display:'flex', gap:'8px' }}>
-        {[...Array(6)].map((_,i) => <div key={i} style={{ width:58, height:64, borderRadius:10, background:'rgba(200,168,74,0.1)', animation:'pulse 1.4s ease infinite' }} />)}
-      </div>
-      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}`}</style>
-    </div>
-  );
-
-  if (erro) return (
-    <div className="max-w-2xl mx-auto pb-4">
-      <GameHeader title="Construções" />
-      <div style={{ padding:'28px', textAlign:'center', background:C.BG_CARD, borderRadius:12, border:`1px solid ${C.BORDER}` }}>
-        <p style={{ fontSize:'2rem', marginBottom:8 }}>⚠️</p>
-        <p style={{ fontWeight:800, color:C.ERROR, marginBottom:8 }}>Erro ao carregar</p>
-        <p style={{ fontSize:'0.78rem', color:C.TEXT_MUTED, marginBottom:14 }}>{erro}</p>
-        <button onClick={carregar} style={{ padding:'7px 18px', borderRadius:8, fontWeight:800, fontSize:'0.82rem', background:`linear-gradient(180deg,${C.BORDER},${C.ACCENT_HOVER})`, color:'#FFF8EE', border:`1px solid ${C.ACCENT_DEEP}`, cursor:'pointer' }}>↺ Tentar Novamente</button>
-      </div>
-    </div>
-  );
-
   if (edificios.length === 0) return (
     <div className="max-w-2xl mx-auto pb-4">
       <GameHeader title="Construções" />
@@ -112,7 +45,7 @@ const Edificios = () => {
         <p style={{ fontSize:'2.5rem', marginBottom:10 }}>🏗️</p>
         <p className="font-cinzel font-bold" style={{ color:C.TEXT_PRIMARY, marginBottom:8 }}>Nenhum edifício cadastrado</p>
         <p style={{ fontSize:'0.78rem', color:C.TEXT_SECONDARY, lineHeight:1.6 }}>
-          Acesse o <strong>Admin → Edifícios</strong> e clique em <strong>⬇ Importar Dados</strong>.
+          Nenhum edifício foi encontrado no MongoDB. Verifique o estado da migração automática no Admin.
         </p>
       </div>
     </div>

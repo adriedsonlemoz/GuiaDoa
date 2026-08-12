@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { dbDragoes } from '../../data/dragoes.js';
+import React, { useState } from 'react';
+import { useGameData } from '../../data/GameDataContext.jsx';
 import { C } from '../../theme.js';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // ── Atributos para comparação ─────────────────────────────────────────────────
 const ATTRS_BASE = [
@@ -98,8 +97,8 @@ const DragaoCard = ({ dragao, onClick, selecionado, onToggleComparar, comparando
 );
 
 // ── Painel de Comparação ──────────────────────────────────────────────────────
-const PainelComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover }) => {
-  const dragoes = ids.map(id => dbDragoes.find(d => d.id === id)).filter(Boolean);
+const PainelComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, todosDragoes }) => {
+  const dragoes = ids.map(id => todosDragoes.find(d => d.id === id)).filter(Boolean);
   if (dragoes.length === 0) return null;
 
   // Calcula o nível máximo disponível entre os dragões selecionados
@@ -308,39 +307,28 @@ const PainelComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover })
 
 // ── Componente principal ──────────────────────────────────────────────────────
 const Dragoes = ({ setRoute }) => {
-  const [busca,      setBusca]      = useState('');
-  const [comparando, setComparando] = useState([]);   // até 3 ids
-  const [nivelIdx,   setNivelIdx]   = useState(0);
-  const [apiDataMap, setApiDataMap] = useState({});   // { [id]: { niveis: [...] } }
-  const [aba,        setAba]        = useState('lista'); // 'lista' | 'comparar'
-
-  // Carrega atributos de um dragão da API quando adicionado à comparação
-  const carregarApiDragao = async (id) => {
-    if (apiDataMap[id]) return;
-    try {
-      const r = await fetch(`${API}/api/dragoes/${id}`);
-      if (!r.ok) return;
-      const d = await r.json();
-      setApiDataMap(prev => ({ ...prev, [id]: d }));
-    } catch { /* sem dados da API, tabela mostra '—' */ }
-  };
+  const { dragoes } = useGameData();
+  const [busca, setBusca] = useState('');
+  const [comparando, setComparando] = useState([]);
+  const [nivelIdx, setNivelIdx] = useState(0);
+  const [aba, setAba] = useState('lista');
+  const apiDataMap = Object.fromEntries(dragoes.map(d => [d.id, d]));
 
   const toggleComparar = (id) => {
     setComparando(prev => {
       if (prev.includes(id)) return prev.filter(x => x !== id);
       if (prev.length >= 3) return prev;
-      carregarApiDragao(id);
       return [...prev, id];
     });
   };
 
   const removerComparacao = (id) => setComparando(prev => prev.filter(x => x !== id));
 
-  const dragoesFiltrados = dbDragoes.filter(d =>
+  const dragoesFiltrados = dragoes.filter(d =>
     d.nome.toLowerCase().includes(busca.toLowerCase()) ||
     d.elemento.toLowerCase().includes(busca.toLowerCase())
   );
-  const elementos = [...new Set(dbDragoes.map(d => d.elemento))].sort();
+  const elementos = [...new Set(dragoes.map(d => d.elemento))].sort();
 
   return (
     <div className="max-w-lg mx-auto pb-4" style={{ animation:'reveal-up 0.4s ease both' }}>
@@ -390,6 +378,7 @@ const Dragoes = ({ setRoute }) => {
               setNivelIdx={setNivelIdx}
               apiDataMap={apiDataMap}
               onRemover={removerComparacao}
+              todosDragoes={dragoes}
             />
           )}
         </>

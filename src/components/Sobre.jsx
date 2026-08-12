@@ -7,7 +7,38 @@ import { DISPLAY_VERSION } from '../version.js';
 
 const CHANGELOG = [
   {
-    ver: DISPLAY_VERSION, icon: '🌍', nome: 'Novos Reinos e Validação do MongoDB', cor: '#5A8A5C',
+    ver: DISPLAY_VERSION, icon: '🗄️', nome: 'MongoDB como Fonte Única', cor: '#5A8A5C',
+    items: [
+      'Migração automática leva os dados padrão atuais para o MongoDB antes de a API iniciar e é registrada em guiadoa_config',
+      'A migração roda uma vez por versão; depois disso reiniciar a mesma versão não repõe nem sobrescreve o MongoDB',
+      'Primeiro acesso do aplicativo agora verifica o banco e, se necessário, pede apenas usuário, senha e confirmação para criar o administrador',
+      'SETUP_KEY deixa de aparecer por padrão; a chave de instalação só é exigida quando REQUIRE_SETUP_KEY=true for ativado explicitamente no servidor',
+      'Tropas, níveis, dragões, edifícios, pesquisas, reinos e categorias padrão passam a ser carregados exclusivamente da API/MongoDB',
+      'Caches locais antigos de dados do jogo são apagados e não existe mais fallback offline para esconder falhas da API',
+      'O antigo /admin/setup, o setup CLI e os endpoints/botões manuais de seed foram aposentados; seeds existem somente para migrações versionadas',
+    ],
+  },
+  {
+    ver: 'Beta 2.7', icon: '🧭', nome: 'Bootstrap Inteligente do Admin', cor: '#5A8A5C',
+    items: [
+      'Admin passou a detectar automaticamente a ausência do primeiro usuário e dados iniciais',
+      'Foi introduzido o primeiro assistente de criação do administrador dentro do próprio painel',
+      'A versão preparou o projeto para a migração automática e definitiva implementada na Beta 2.8',
+    ],
+  },
+  {
+    ver: 'Beta 2.6', icon: '🧩', nome: 'Arquitetura Modular', cor: '#5C7FA3',
+    items: [
+      'Painel Admin reorganizado em módulos independentes por domínio, removendo a lógica concentrada do index.html',
+      'Traduções separadas em catálogo, navegação de categorias e editor; utilidades compartilhadas movidas para o núcleo do Admin',
+      'App principal dividido em roteamento, sincronização, rotas, Error Boundary e componentes visuais de status',
+      'Conselheiro Tático dividido em configuração, parser, mensagens, modal e hook de estado/comunicação',
+      'Backend do Assistente dividido em modelos, contexto, análise numérica, intenção, prompt e cliente Groq',
+      'Novos testes garantem que intenção, ranking e montagem do prompt continuam funcionando após a modularização',
+    ],
+  },
+  {
+    ver: 'Beta 2.5', icon: '🌍', nome: 'Novos Reinos e Validação do MongoDB', cor: '#5A8A5C',
     items: [
       'Adicionados os Realms 345 Corvith (UTC+0), 346 Kenorax (UTC-7), 347 Eisenhold (UTC+1) e 348 Zulanka (UTC-4)',
       'Os quatro novos reinos são gravados automaticamente em guiadoa_reinos ao iniciar o backend, usando upsert por ID e sem gerar duplicatas',
@@ -148,7 +179,7 @@ const Sobre = () => {
           </div>
 
           <p className="font-nunito font-semibold text-xs italic m-0 mb-2" style={{ color: C.TEXT_MUTED }}>
-            "Confiabilidade, diagnóstico e experiência mobile"
+            "MongoDB como fonte única de dados"
           </p>
           <div className="gold-stripe mb-3 opacity-50" />
           <p className="font-nunito font-semibold text-sm leading-relaxed text-justify m-0" style={{ color: C.TEXT_PRIMARY }}>

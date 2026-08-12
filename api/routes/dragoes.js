@@ -4,14 +4,6 @@ import { autenticar } from '../middleware/auth.js';
 
 const router = Router();
 
-// Dragões do frontend para seed
-const DRAGOES_SEED = [
-  { slug:'grande_dragao',   nome:'Grande Dragão',    elemento:'Fogo',    emoji:'🔥', emojiDragao:'🐉', cor:'#C85C2A', raridade:'Lendário' },
-  { slug:'dragao_agua',     nome:'Dragão da Água',   elemento:'Água',    emoji:'💧', emojiDragao:'🐉', cor:'#2A7CC8', raridade:'Épico'    },
-  { slug:'dragao_beladona', nome:'Dragão Beladona',  elemento:'Veneno',  emoji:'☠️', emojiDragao:'🐉', cor:'#6A2AC8', raridade:'Épico'    },
-  { slug:'dragao_terra',    nome:'Dragão da Terra',  elemento:'Terra',   emoji:'🪨', emojiDragao:'🐉', cor:'#8B6830', raridade:'Raro'     },
-];
-
 const ATTRS_BASE     = ['vida','defesa','ataquePerto','ataqueDistante','alcance','velocidade'];
 const ATTRS_ELEMENTAL= ['ataqueElemental','impulsoElemental','barreiraElemental','bombardeioElemental','confrontoElemental','bloqueioElemental','rupturaElemental'];
 const TODOS_ATTRS    = [...ATTRS_BASE, ...ATTRS_ELEMENTAL];
@@ -105,24 +97,6 @@ router.delete('/:slug', autenticar, async (req, res) => {
     const d = await Dragao.findOneAndDelete({ slug: req.params.slug });
     if (!d) return res.status(404).json({ erro: 'Dragão não encontrado.' });
     res.json({ mensagem: `"${d.nome}" removido com sucesso.` });
-  } catch (err) { res.status(500).json({ erro: err.message }); }
-});
-
-// ── POST /api/dragoes/importar (admin) ───────────────────────────────────────
-router.post('/importar', autenticar, async (req, res) => {
-  let inseridos = 0, atualizados = 0;
-  try {
-    for (const seed of DRAGOES_SEED) {
-      const existe = await Dragao.findOne({ slug: seed.slug });
-      if (existe) {
-        await Dragao.updateOne({ slug: seed.slug }, { ...seed, atualizadoEm: new Date() });
-        atualizados++;
-      } else {
-        await Dragao.create({ ...seed, niveis: [] });
-        inseridos++;
-      }
-    }
-    res.json({ ok: true, inseridos, atualizados });
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 

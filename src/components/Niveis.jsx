@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { carregarNiveis } from '../data/niveis.js';
+import React, { useEffect, useRef, useState } from 'react';
+import { useGameData } from '../data/GameDataContext.jsx';
 import { C } from '../theme.js';
 import GameHeader from './shared/GameHeader.jsx';
 import Modal from '../ui/Modal.jsx';
@@ -45,18 +45,9 @@ const Niveis = () => {
   const inputRef    = useRef(null);
   const nivelAtualRef = useRef(null);
 
-  // ── Estado dos dados ──────────────────────────────────────────────────────
-  const [todosNiveis, setTodosNiveis] = useState([]);
-  const [carregando,  setCarregando]  = useState(true);
-
-  const buscarNiveis = useCallback(async () => {
-    setCarregando(true);
-    const dados = await carregarNiveis();
-    setTodosNiveis(dados);
-    setCarregando(false);
-  }, []);
-
-  useEffect(() => { buscarNiveis(); }, [buscarNiveis]);
+  // ── Dados do jogo: fonte única MongoDB ───────────────────────────────────
+  const { niveis: niveisMongo, loading: carregando } = useGameData();
+  const todosNiveis = niveisMongo.map(d => [d.nivel, d.xp ?? null]);
 
   // ── Estado UI ─────────────────────────────────────────────────────────────
   const [promptAberto,    setPromptAberto]    = useState(true);

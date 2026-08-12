@@ -73,7 +73,6 @@ async function carregarDicas(){
 function renderGradeDicas(){
   document.getElementById('content').innerHTML = DI_CSS + `
     <div class="di-toolbar">
-      <button class="btn btn-navy btn-sm" onclick="seedCatsDicas()">↻ Importar categorias padrão</button>
       <button class="btn btn-navy btn-sm" onclick="mostrarFormCategoria()">+ Nova categoria</button>
     </div>
     <div id="di-form-cat"></div>
@@ -81,7 +80,7 @@ function renderGradeDicas(){
       ${DI_CATS.length===0
         ?`<div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--muted)">
             <p style="font-size:1.4rem;margin-bottom:8px">📭</p>
-            <p>Nenhuma categoria. Clique em <strong>↻ Importar categorias padrão</strong>.</p>
+            <p>Nenhuma categoria no MongoDB. Verifique a migração automática ou crie uma categoria manualmente.</p>
           </div>`
         :DI_CATS.map(cat=>`
           <div class="di-cat-card" onclick="abrirCatDica(fromStrArg('${strArg(cat._id)}'),fromStrArg('${strArg(cat.slug)}'),fromStrArg('${strArg(cat.label)}'),fromStrArg('${strArg(cat.icon)}'))">
@@ -120,16 +119,6 @@ async function criarCategoriaDica(){
       body:JSON.stringify({label,slug,icon}),
     });
     toast('✓ Categoria criada!','ok');
-    carregarDicas();
-  }catch(e){toast('Erro: '+e.message,'erro');}
-}
-
-async function seedCatsDicas(){
-  try{
-    const r=await fetch(`${API}/dicas/categorias/seed`,
-      {method:'POST',headers:{Authorization:`Bearer ${TOKEN}`}});
-    const res=await r.json();
-    toast(`↻ ${res.inseridas} novas, ${res.existentes} já existentes`,'ok');
     carregarDicas();
   }catch(e){toast('Erro: '+e.message,'erro');}
 }

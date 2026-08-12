@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { C } from '../../theme.js';
-import { dbTropas } from '../../data/tropas.js';
+import { useGameData } from '../../data/GameDataContext.jsx';
 import Toast from '../../ui/Toast.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
 
@@ -15,13 +15,14 @@ const BONUS_CHAVES = [
   { value: 5, chave: 'torneio.treino_tropa.bonus.x5' },
 ];
 
-const sortedTropas = [...dbTropas].sort((a, b) => a.nome.localeCompare(b.nome));
 const fmtN = n => Number(n || 0).toLocaleString('pt-BR');
 
 const emptyRow = () => ({ id: Date.now() + Math.random(), tropa: '', qtd: '', bonus: 1 });
 
 const TorneioTreinoTropa = () => {
   const { t } = useI18n();
+  const { tropas: dbTropas } = useGameData();
+  const sortedTropas = useMemo(() => [...dbTropas].sort((a, b) => a.nome.localeCompare(b.nome)), [dbTropas]);
   const [linhas, setLinhas] = useState(() => {
     try {
       const s = localStorage.getItem(STORAGE_KEY);
@@ -49,7 +50,7 @@ const TorneioTreinoTropa = () => {
       const qtd   = parseInt((l.qtd || '').replace(/\./g, '')) || 0;
       return acc + qtd * poder * (l.bonus || 1);
     }, 0),
-    [linhas]
+    [linhas, dbTropas]
   );
 
   const ptsPos     = parseInt(ptsPossuidos.replace(/\D/g, '')) || 0;

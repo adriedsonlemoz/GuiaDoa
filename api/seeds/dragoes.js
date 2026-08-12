@@ -1,18 +1,5 @@
-// ==========================================================
-// dragoes.js — Base de dados dos Dragões do DOA
-//
-// Cada dragão contém:
-//   - id, nome, elemento, emoji/cor
-//   - bonusMarcha: bônus de marcha (conforme tela do jogo)
-//   - tropasAfetadas: tropas beneficiadas na marcha
-//   - atributo: tipo de bônus (Ataque, Alcance, Vida, etc.)
-//   - porcentagemPorNivel: % de bônus por nível
-//   - descricao: texto de lore / descrição geral
-//   - habilidades: lista de habilidades passivas
-//   - dicas: dicas táticas de uso
-// ==========================================================
-
-export const dbDragoes = [
+// Base completa dos dragões migrada para o backend/MongoDB.
+export const DRAGOES_SEED = [
   {
     id: 'grande_dragao',
     nome: 'Grande Dragão',
@@ -284,6 +271,3 @@ export const dbDragoes = [
     ],
   },
 ];
-
-// Acesso rápido por id
-export const getDragaoById = (id) => dbDragoes.find((d) => d.id === id) || null;

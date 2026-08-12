@@ -93,31 +93,4 @@ router.delete('/:id', autenticar, async (req, res) => {
   }
 });
 
-// ── POST /api/niveis/importar — upsert em lote ───────────────────────────────
-// Body: { niveis: [[num, xp|null], ...] }
-router.post('/importar', autenticar, async (req, res) => {
-  try {
-    const { niveis } = req.body;
-    if (!Array.isArray(niveis) || niveis.length === 0)
-      return res.status(400).json({ erro: 'Envie um array em "niveis"' });
-
-    const ops = niveis.map(([n, xp]) => ({
-      updateOne: {
-        filter: { nivel: n },
-        update: { $set: { nivel: n, xp: xp ?? null, atualizadoEm: new Date() } },
-        upsert: true,
-      },
-    }));
-
-    const result = await Nivel.bulkWrite(ops);
-    res.json({
-      mensagem: 'Importação concluída',
-      inseridos:    result.upsertedCount,
-      atualizados:  result.modifiedCount,
-    });
-  } catch (err) {
-    res.status(500).json({ erro: err.message });
-  }
-});
-
 export default router;

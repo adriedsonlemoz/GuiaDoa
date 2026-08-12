@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { C } from '../../theme.js';
-import { getCachedPesquisas, SYNC_KEYS } from '../../data/syncService.js';
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { useGameData } from '../../data/GameDataContext.jsx';
 
 const CATEGORIAS = [
   { id: 'Corpo a Corpo',          icone: '⚔️',  cor: '#C85C5C' },
@@ -92,69 +90,7 @@ const PesquisaCard = ({ pesquisa, cor, onClick }) => (
 );
 
 const Pesquisas = ({ setRoute }) => {
-  const [pesquisas, setPesquisas] = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [erro,      setErro]      = useState(null);
-
-  const carregar = useCallback(async () => {
-    setLoading(true); setErro(null);
-
-    // 1. Cache imediato
-    const cache = getCachedPesquisas();
-    if (cache.length > 0) {
-      setPesquisas(cache);
-      setLoading(false);
-    }
-
-    // 2. Atualiza da API em background
-    try {
-      const ctrl = new AbortController();
-      const tid  = setTimeout(() => ctrl.abort(), 8000);
-      const r    = await fetch(`${API}/api/pesquisas`, { signal: ctrl.signal });
-      clearTimeout(tid);
-      if (!r.ok) throw new Error('falha');
-      const d = await r.json();
-      const arr = d.pesquisas || [];
-      if (arr.length > 0) {
-        localStorage.setItem(SYNC_KEYS.PESQUISAS, JSON.stringify(arr));
-        setPesquisas(arr);
-      }
-    } catch {
-      if (cache.length === 0) setErro('📶 Offline — sem dados de pesquisas em cache. Conecte-se à internet e reabra o módulo.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { carregar(); }, [carregar]);
-
-  if (loading) return (
-    <div style={{ padding: 20, textAlign: 'center' }}>
-      <div style={{
-        background: `linear-gradient(135deg,#1C3A5E,#3B5C8C,#1C3A5E)`,
-        borderRadius: '12px 12px 0 0', padding: '10px 16px', textAlign: 'center',
-      }}>
-        <p style={{
-          fontFamily: '"Cinzel",serif', fontWeight: 700, fontSize: '0.85rem',
-          letterSpacing: '3px', color: '#F8F2E0', margin: 0, textTransform: 'uppercase',
-        }}>
-          🔬 Centro de Ciência
-        </p>
-      </div>
-      <div style={{ padding: 24, color: C.TEXT_MUTED, fontSize: '0.8rem' }}>
-        Carregando pesquisas…
-      </div>
-    </div>
-  );
-
-  if (erro) return (
-    <div style={{ padding: 20, textAlign: 'center', color: C.ERROR }}>
-      <div style={{ marginBottom: 8, fontSize: '1.5rem' }}>⚠️</div>
-      <p style={{ fontFamily: '"Nunito",sans-serif', fontSize: '0.85rem', margin: 0 }}>
-        {erro}
-      </p>
-    </div>
-  );
+  const { pesquisas } = useGameData();
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', paddingBottom: 16 }}>

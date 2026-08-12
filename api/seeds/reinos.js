@@ -1,9 +1,5 @@
-// ==========================================================
-// Módulo: Reinos — dados estáticos de fallback
-// Campos: id (número único), nome, fuso, regiao, idioma
-// ==========================================================
-
-export const dbReinos = [
+// Dados padrão canônicos dos reinos.
+export const REINOS_SEED = [
   { id:  1, nome: 'Caelorn',     fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Inglês'     },
   { id:  2, nome: 'Dakota',      fuso: 'UTC+0',  regiao: 'América do Norte', idioma: 'Inglês'   },
   { id:  3, nome: 'Eldria',      fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Inglês'     },

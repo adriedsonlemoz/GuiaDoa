@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { C } from '../../theme.js';
-import { getCachedPesquisas } from '../../data/syncService.js';
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { useGameData } from '../../data/GameDataContext.jsx';
 
 const CATEGORIAS_COR = {
   'Corpo a Corpo':          '#C85C5C',
@@ -46,51 +44,14 @@ function formatDuracao(totalMin) {
 }
 
 const PesquisaDetalhe = ({ slug }) => {
-  const [pesquisa, setPesquisa] = useState(null);
-  const [loading,  setLoading]  = useState(true);
-  const [erro,     setErro]     = useState(null);
+  const { pesquisas } = useGameData();
+  const pesquisa = pesquisas.find(p => p.slug === slug) || null;
 
-  useEffect(() => {
-    setLoading(true); setErro(null);
-
-    // 1. Tenta cache imediato
-    const cache = getCachedPesquisas();
-    const cached = cache.find(p => p.slug === slug);
-    if (cached) {
-      setPesquisa(cached);
-      setLoading(false);
-    }
-
-    // 2. Atualiza da API em background
-    const ctrl = new AbortController();
-    const tid  = setTimeout(() => ctrl.abort(), 8000);
-    fetch(`${API}/api/pesquisas/${slug}`, { signal: ctrl.signal })
-      .then(r => {
-        clearTimeout(tid);
-        if (!r.ok) throw new Error('Pesquisa não encontrada');
-        return r.json();
-      })
-      .then(d => { setPesquisa(d); setLoading(false); })
-      .catch(() => {
-        clearTimeout(tid);
-        if (!cached) setErro('Sem conexão e pesquisa não encontrada no cache.');
-        setLoading(false);
-      });
-
-    return () => { ctrl.abort(); clearTimeout(tid); };
-  }, [slug]);
-
-  if (loading) return (
-    <div style={{ padding: 20, textAlign: 'center', color: C.TEXT_MUTED, fontSize: '0.85rem' }}>
-      Carregando…
-    </div>
-  );
-
-  if (erro || !pesquisa) return (
+  if (!pesquisa) return (
     <div style={{ padding: 20, textAlign: 'center', color: C.ERROR }}>
       <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>⚠️</div>
       <p style={{ fontFamily: '"Nunito",sans-serif', fontSize: '0.85rem', margin: 0 }}>
-        {erro || 'Pesquisa não encontrada.'}
+        Pesquisa não encontrada no MongoDB.
       </p>
     </div>
   );

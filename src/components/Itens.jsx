@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { C } from '../theme.js';
 import GameHeader from './shared/GameHeader.jsx';
 
-import { getCachedItens, SYNC_KEYS } from '../data/syncService.js';
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { useGameData } from '../data/GameDataContext.jsx';
 
 // ── Popup de detalhe ──────────────────────────────────────────────────────────
 function ItemPopup({ item, onClose }) {
@@ -184,59 +182,18 @@ function Skeleton() {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 const Itens = () => {
-  const [itens,    setItens]    = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [erro,     setErro]     = useState(null);
-  const [busca,    setBusca]    = useState('');
+  const { itens: itensMongo } = useGameData();
+  const [busca, setBusca] = useState('');
   const [selecionado, setSelecionado] = useState(null);
 
-  const carregar = useCallback(async (q = '') => {
-    setLoading(true);
-    setErro(null);
+  const termo = busca.trim().toLowerCase();
+  const itens = termo
+    ? itensMongo.filter(i =>
+        i.nome?.toLowerCase().includes(termo) ||
+        i.categoria?.toLowerCase().includes(termo)
+      )
+    : itensMongo;
 
-    // 1. Carrega cache imediatamente (sem piscar)
-    const cache = getCachedItens();
-    const filtrado = q
-      ? cache.filter(i =>
-          i.nome?.toLowerCase().includes(q.toLowerCase()) ||
-          i.categoria?.toLowerCase().includes(q.toLowerCase())
-        )
-      : cache;
-    if (filtrado.length > 0) {
-      setItens(filtrado);
-      setLoading(false);
-    }
-
-    // 2. Tenta atualizar da API em background
-    try {
-      const ctrl = new AbortController();
-      const tid  = setTimeout(() => ctrl.abort(), 8000);
-      const url  = `${API}/api/itens?limite=500${q ? `&busca=${encodeURIComponent(q)}` : ''}`;
-      const r    = await fetch(url, { signal: ctrl.signal });
-      clearTimeout(tid);
-      if (!r.ok) throw new Error('falha');
-      const d   = await r.json();
-      const arr  = d.itens || [];
-      if (arr.length > 0) {
-        // Atualiza cache global (sem busca ativa, salva tudo)
-        if (!q) localStorage.setItem(SYNC_KEYS.ITENS, JSON.stringify(arr));
-        setItens(arr);
-      }
-    } catch {
-      // Se já mostrou cache, não mostra erro — usuário vê os dados normalmente
-      if (filtrado.length === 0) setErro('📶 Offline — sem dados de itens em cache. Conecte-se à internet e reabra o módulo.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { carregar(); }, [carregar]);
-
-  // Debounce busca
-  useEffect(() => {
-    const t = setTimeout(() => carregar(busca), 300);
-    return () => clearTimeout(t);
-  }, [busca, carregar]);
 
   return (
     <div className="max-w-2xl mx-auto pb-4">
@@ -270,26 +227,8 @@ const Itens = () => {
         />
       </div>
 
-      {/* Estado: erro */}
-      {erro && (
-        <div style={{
-          padding: '12px 14px', borderRadius: '10px', marginBottom: '10px',
-          background: 'rgba(168,60,44,0.1)', border: `1px solid rgba(168,60,44,0.3)`,
-          color: C.ERROR, fontSize: '0.82rem', fontWeight: 700,
-        }}>
-          ✕ {erro}
-        </div>
-      )}
-
-      {/* Estado: carregando */}
-      {loading && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {[...Array(6)].map((_, i) => <Skeleton key={i} />)}
-        </div>
-      )}
-
       {/* Estado: vazio */}
-      {!loading && !erro && itens.length === 0 && (
+      {itens.length === 0 && (
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           textAlign: 'center', padding: '40px 16px', borderRadius: '14px',
@@ -311,7 +250,7 @@ const Itens = () => {
       )}
 
       {/* Lista de itens */}
-      {!loading && itens.length > 0 && (
+      {itens.length > 0 && (
         <>
           <p style={{ fontSize: '0.63rem', fontWeight: 800, letterSpacing: '1.5px',
                       color: C.TEXT_MUTED, textTransform: 'uppercase', marginBottom: '8px' }}>

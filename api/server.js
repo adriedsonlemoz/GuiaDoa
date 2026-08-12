@@ -3,8 +3,7 @@ import mongoose from 'mongoose';
 import app from './app.js';
 import { COLLECTION_PREFIX, mongoConnectOptions } from './config/database.js';
 import { migrarColecoesLegadas } from './utils/migrateLegacyCollections.js';
-import { garantirNovosReinos } from './utils/seedOfficialRealms.js';
-import Reino from './models/Reino.js';
+import { executarMigracaoAutomatica } from './services/autoMigration.js';
 
 if (!process.env.MONGO_URI) {
   console.error('❌  MONGO_URI não definida. Configure a variável de ambiente no Render.');
@@ -22,14 +21,25 @@ mongoose.connect(process.env.MONGO_URI, mongoConnectOptions())
       console.log(`🔄  Migração:      ${migracao.migradas.length} coleção(ões) migrada(s)`);
     }
 
-    const reinos = await garantirNovosReinos({ model: Reino });
-    console.log(`🌍  Novos reinos:  ${reinos.inseridos} inserido(s), ${reinos.atualizados} atualizado(s)`);
+    const migracao = await executarMigracaoAutomatica();
+    if (migracao.ok) {
+      if (migracao.ignorada) {
+        console.log('📦  Migração auto: já aplicada nesta versão — MongoDB preservado');
+      } else {
+        const inseridos = Object.values(migracao.relatorio).reduce((n, r) => n + (r.inseridos || 0), 0);
+        const completados = Object.values(migracao.relatorio).reduce((n, r) => n + (r.completados || 0), 0);
+        console.log(`📦  Migração auto: ${inseridos} inserido(s), ${completados} completado(s)`);
+      }
+      console.log(`👤  Primeiro admin: ${migracao.usuarioNecessario ? 'ainda precisa ser criado' : 'configurado'}`);
+    } else {
+      console.error(`⚠️   Migração automática falhou: ${migracao.erro}`);
+    }
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {
       console.log(`🛡️  API rodando em http://localhost:${PORT}`);
       console.log(`❤️   Health:       http://localhost:${PORT}/api/health`);
       console.log(`🎮  Painel Admin:  http://localhost:${PORT}/admin`);
-      console.log(`⚙️   Setup Web:    http://localhost:${PORT}/admin/setup\n`);
+      console.log(`🧭  Primeiro acesso: frontend do GUIA DOA\n`);
     });
   })
   .catch(err => {

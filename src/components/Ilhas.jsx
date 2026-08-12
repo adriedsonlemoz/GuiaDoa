@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { dbEdificios } from '../db.js';
+import { useGameData } from '../data/GameDataContext.jsx';
 import { C } from '../theme.js';
 import GameHeader from './shared/GameHeader.jsx';
 import Modal from '../ui/Modal.jsx';
@@ -24,6 +24,10 @@ const TIPO_COR = {
 const fmtN = n => Number(n).toLocaleString('pt-BR');
 
 const Ilhas = () => {
+  const { edificios } = useGameData();
+  const dbEdificios = useMemo(() => Object.fromEntries(
+    edificios.map(ed => [ed.slug, Array.isArray(ed.niveis) ? ed.niveis : []])
+  ), [edificios]);
   const ilhasNomes = ['PRINC', 'FOGO', 'ÁGUA', 'BELLA', 'TERRA'];
 
   const [expansoes, setExpansoes] = useState(() => {

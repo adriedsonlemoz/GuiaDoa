@@ -34,4 +34,10 @@ export const dbReinos = [
   { id: 28, nome: 'Solgracia',   fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Espanhol'   },
   { id: 29, nome: 'Thalric',     fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Alemão'     },
   { id: 30, nome: 'Virelia',     fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Italiano'   },
+
+  // Novos Realms anunciados para 12/08/2026
+  { id: 345, nome: 'Corvith',     fuso: 'UTC+0',  regiao: '', idioma: '' },
+  { id: 346, nome: 'Kenorax',     fuso: 'UTC-7',  regiao: '', idioma: '' },
+  { id: 347, nome: 'Eisenhold',   fuso: 'UTC+1',  regiao: '', idioma: '' },
+  { id: 348, nome: 'Zulanka',     fuso: 'UTC-4',  regiao: '', idioma: '' },
 ].sort((a, b) => a.nome.localeCompare(b.nome));

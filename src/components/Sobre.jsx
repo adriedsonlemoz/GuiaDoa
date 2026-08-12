@@ -7,7 +7,17 @@ import { DISPLAY_VERSION } from '../version.js';
 
 const CHANGELOG = [
   {
-    ver: DISPLAY_VERSION, icon: '🗄️', nome: 'Banco Compartilhado com Isolamento', cor: '#5A8A5C',
+    ver: DISPLAY_VERSION, icon: '🌍', nome: 'Novos Reinos e Validação do MongoDB', cor: '#5A8A5C',
+    items: [
+      'Adicionados os Realms 345 Corvith (UTC+0), 346 Kenorax (UTC-7), 347 Eisenhold (UTC+1) e 348 Zulanka (UTC-4)',
+      'Os quatro novos reinos são gravados automaticamente em guiadoa_reinos ao iniciar o backend, usando upsert por ID e sem gerar duplicatas',
+      'O seed automático preserva região e idioma preenchidos posteriormente no Admin',
+      'Fallback local de reinos também inclui os novos Realms para o seletor continuar funcional quando a API estiver offline',
+      'Corrigido o contador do Seed padrão do Admin para distinguir corretamente registros inseridos e atualizados',
+    ],
+  },
+  {
+    ver: 'Beta 2.4', icon: '🗄️', nome: 'Banco Compartilhado com Isolamento', cor: '#5A8A5C',
     items: [
       'MongoDB pode compartilhar exatamente o mesmo banco do AL Sistemas por MONGO_DB_NAME, sem misturar dados entre os projetos',
       'Coleções do Guia DOA agora usam prefixo centralizado guiadoa_ (configurável por MONGO_COLLECTION_PREFIX)',

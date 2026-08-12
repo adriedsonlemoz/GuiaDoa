@@ -75,11 +75,13 @@ router.post('/seed', autenticar, async (req, res) => {
     let inseridos = 0, atualizados = 0;
     for (const r of dbReinos) {
       const slug = r.nome.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const existente = await Reino.exists({ $or: [{ id: r.id }, { slug }] });
       await Reino.findOneAndUpdate(
-        { slug },
+        { id: r.id },
         { id: r.id, slug, nome: r.nome, fuso: r.fuso, regiao: r.regiao || '', idioma: r.idioma || '', atualizadoEm: new Date() },
-        { upsert: true, new: true }
-      ).then(doc => doc ? atualizados++ : inseridos++);
+        { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
+      );
+      if (existente) atualizados++; else inseridos++;
     }
     res.json({ mensagem: 'Seed concluído.', inseridos, atualizados, total: dbReinos.length });
   } catch (err) {

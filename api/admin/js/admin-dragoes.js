@@ -97,7 +97,7 @@ function renderDragoes(d) {
 function abrirModalNovoDragao() {
   DRAGAO_ED_SLUG = null;
   document.getElementById('modal-dragao-titulo').textContent = '✦ Novo Dragão';
-  ['fdr-slug','fdr-nome','fdr-elemento','fdr-emoji','fdr-emojidragao','fdr-cor','fdr-raridade'].forEach(id => {
+  ['fdr-slug','fdr-nome','fdr-elemento','fdr-emoji','fdr-emojidragao','fdr-cor','fdr-raridade','fdr-descricao','fdr-bonus','fdr-atributo','fdr-en-nome','fdr-en-elemento','fdr-en-raridade','fdr-en-descricao','fdr-en-bonus','fdr-en-atributo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = id === 'fdr-cor' ? '#C8A84A' : id === 'fdr-emojidragao' ? '🐉' : id === 'fdr-emoji' ? '🔥' : '';
   });
@@ -116,6 +116,15 @@ function editarDragao(dr) {
   document.getElementById('fdr-emojidragao').value= dr.emojiDragao || '🐉';
   document.getElementById('fdr-cor').value        = dr.cor || '#C8A84A';
   document.getElementById('fdr-raridade').value   = dr.raridade || '';
+  document.getElementById('fdr-descricao').value   = dr.descricao || '';
+  document.getElementById('fdr-bonus').value       = dr.bonusMarcha || '';
+  document.getElementById('fdr-atributo').value    = dr.atributo || '';
+  document.getElementById('fdr-en-nome').value     = dr.i18n?.['en-US']?.nome || '';
+  document.getElementById('fdr-en-elemento').value = dr.i18n?.['en-US']?.elemento || '';
+  document.getElementById('fdr-en-raridade').value = dr.i18n?.['en-US']?.raridade || '';
+  document.getElementById('fdr-en-descricao').value = dr.i18n?.['en-US']?.descricao || '';
+  document.getElementById('fdr-en-bonus').value = dr.i18n?.['en-US']?.bonusMarcha || '';
+  document.getElementById('fdr-en-atributo').value = dr.i18n?.['en-US']?.atributo || '';
   abrirModal('modal-dragao');
 }
 
@@ -127,11 +136,21 @@ async function salvarDragao() {
   const emojiDragao= document.getElementById('fdr-emojidragao').value.trim();
   const cor        = document.getElementById('fdr-cor').value;
   const raridade   = document.getElementById('fdr-raridade').value.trim();
+  const descricao  = document.getElementById('fdr-descricao').value.trim();
+  const bonusMarcha= document.getElementById('fdr-bonus').value.trim();
+  const atributo   = document.getElementById('fdr-atributo').value.trim();
 
   if (!nome) return toast('Preencha o nome!', 'warn');
   if (!DRAGAO_ED_SLUG && !slug) return toast('Preencha o slug!', 'warn');
 
-  const body = { nome, elemento, emoji, emojiDragao, cor, raridade };
+  const body = { nome, elemento, emoji, emojiDragao, cor, raridade, descricao, bonusMarcha, atributo, i18n: { 'en-US': {
+    nome: document.getElementById('fdr-en-nome').value.trim(),
+    elemento: document.getElementById('fdr-en-elemento').value.trim(),
+    raridade: document.getElementById('fdr-en-raridade').value.trim(),
+    descricao: document.getElementById('fdr-en-descricao').value.trim(),
+    bonusMarcha: document.getElementById('fdr-en-bonus').value.trim(),
+    atributo: document.getElementById('fdr-en-atributo').value.trim(),
+  } } };
   try {
     let r;
     if (DRAGAO_ED_SLUG) {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { C } from '../theme.js';
+import { useI18n } from '../hooks/useI18n.jsx';
 import Modal from '../ui/Modal.jsx';
 import Toast from '../ui/Toast.jsx';
 import useIlhasManager from './ilhas/useIlhasManager.js';
@@ -9,6 +10,7 @@ import { IlhasInfraestrutura, IlhasProducao } from './ilhas/IlhasResumo.jsx';
 
 const Ilhas = () => {
   const manager = useIlhasManager();
+  const { t } = useI18n();
   const {
     data, expansoes, niveis, territorios, isEditing, dialogConfig, toast, metricas,
     setIsEditing, setDialogConfig, closeToast, requestAction, confirmAction,
@@ -23,8 +25,8 @@ const Ilhas = () => {
           <p className="font-nunito font-black text-sm m-0 mb-1" style={{ color: dialogConfig.type === 'clear' ? C.ERROR : C.TEXT_PRIMARY }}>{dialogConfig.title}</p>
           <p className="font-nunito text-sm m-0 mb-4" style={{ color: C.TEXT_SECONDARY }}>{dialogConfig.text}</p>
           <div className="flex gap-2 justify-center">
-            <button className="btn-ghost flex-1" onClick={() => setDialogConfig(current => ({ ...current, open: false }))}>Cancelar</button>
-            <button className={dialogConfig.type === 'clear' ? 'btn-danger flex-1' : 'btn-navy flex-1'} onClick={confirmAction}>Confirmar</button>
+            <button className="btn-ghost flex-1" onClick={() => setDialogConfig(current => ({ ...current, open: false }))}>{t('common.cancel')}</button>
+            <button className={dialogConfig.type === 'clear' ? 'btn-danger flex-1' : 'btn-navy flex-1'} onClick={confirmAction}>{t('common.confirm')}</button>
           </div>
         </div>
       </Modal>

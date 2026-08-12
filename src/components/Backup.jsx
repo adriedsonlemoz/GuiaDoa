@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import GameHeader from './shared/GameHeader.jsx';
 import Toast from '../ui/Toast.jsx';
 import { C } from '../theme.js';
+import { useI18n } from '../hooks/useI18n.jsx';
 
 const Backup = () => {
   const [backupCode,  setBackupCode]  = useState('');
   const [restoreCode, setRestoreCode] = useState('');
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
+  const { t } = useI18n();
 
   const showToast  = (msg, sev = 'success') => setToast({ open: true, message: msg, severity: sev });
   const closeToast = () => setToast(t => ({ ...t, open: false }));
@@ -17,24 +19,24 @@ const Backup = () => {
     keys.forEach(k => { obj[k] = localStorage.getItem(k); });
     const encrypted = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
     setBackupCode(encrypted);
-    showToast('Cópia de segurança gerada com sucesso!', 'success');
+    showToast(t('backup.generated'), 'success');
   };
 
   const handleCopyBackup = () => {
-    if (!backupCode) return showToast('Gere o backup primeiro!', 'warning');
+    if (!backupCode) return showToast(t('backup.generate_first'), 'warning');
     navigator.clipboard.writeText(backupCode);
-    showToast('Código de backup copiado para a área de transferência.', 'info');
+    showToast(t('backup.copied'), 'info');
   };
 
   const handleRestoreBackup = () => {
-    if (!restoreCode) return showToast('Cole o código de backup primeiro!', 'warning');
+    if (!restoreCode) return showToast(t('backup.paste_first'), 'warning');
     try {
       const decoded = JSON.parse(decodeURIComponent(escape(atob(restoreCode))));
       Object.keys(decoded).forEach(k => localStorage.setItem(k, decoded[k]));
-      showToast('Sucesso! Dados restaurados. A reiniciar o sistema...', 'success');
+      showToast(t('backup.restore_success'), 'success');
       setTimeout(() => window.location.reload(), 2000);
     } catch {
-      showToast('Erro! Código de backup inválido ou corrompido.', 'error');
+      showToast(t('backup.invalid'), 'error');
     }
   };
 
@@ -43,24 +45,24 @@ const Backup = () => {
       <Toast {...toast} onClose={closeToast} />
 
       <div className="tw-card mb-3">
-        <GameHeader title="💾 Backup e Restauração" />
+        <GameHeader title={t('backup.title')} />
 
         <div className="p-4 bg-aoe-card">
 
           {/* SEÇÃO 1 */}
           <p className="font-cinzel font-bold text-xs uppercase tracking-widest mb-1 m-0" style={{ color: C.TEXT_PRIMARY }}>
-            1. Criar Cópia de Segurança
+            {t('backup.create_title')}
           </p>
           <p className="font-nunito text-[0.78rem] font-semibold leading-snug text-justify mb-3 m-0" style={{ color: C.TEXT_SECONDARY }}>
-            Gere um código criptografado com todo o seu progresso (perfil, fuso, preferências) para guardar num local seguro.
+            {t('backup.create_text')}
           </p>
 
           <div className="flex gap-2 mb-2.5">
             <button className="btn-success flex-1" onClick={handleGenerateBackup}>
-              🗄️ Gerar Backup
+              {t('backup.generate')}
             </button>
             <button className="btn-ghost flex-1" onClick={handleCopyBackup}>
-              📋 Copiar Código
+              {t('backup.copy')}
             </button>
           </div>
 
@@ -79,23 +81,23 @@ const Backup = () => {
 
           {/* SEÇÃO 2 */}
           <p className="font-cinzel font-bold text-xs uppercase tracking-widest mb-1 m-0" style={{ color: C.TEXT_PRIMARY }}>
-            2. Restaurar Dados
+            {t('backup.restore_title')}
           </p>
           <p className="font-nunito text-[0.78rem] font-semibold leading-snug text-justify mb-3 m-0" style={{ color: C.TEXT_SECONDARY }}>
-            Cole o código de backup gerado anteriormente e restaure todos os seus dados.
+            {t('backup.restore_text')}
           </p>
 
           <textarea
             rows={3}
             className="tw-input font-mono text-xs resize-none mb-2.5"
             style={{ fontSize: '0.62rem', lineHeight: 1.5 }}
-            placeholder="Cole o código de backup aqui..."
+            placeholder={t('backup.paste_placeholder')}
             value={restoreCode}
             onChange={e => setRestoreCode(e.target.value)}
           />
 
           <button className="btn-danger w-full" onClick={handleRestoreBackup}>
-            🔄 Restaurar Dados
+            {t('backup.restore')}
           </button>
 
           {/* Aviso */}
@@ -104,7 +106,7 @@ const Backup = () => {
             style={{ border: `1px dashed ${C.WARNING}`, background: `${C.WARNING}10` }}
           >
             <p className="font-nunito font-bold text-[0.7rem] m-0" style={{ color: C.WARNING }}>
-              ⚠️ Atenção: A restauração sobrescreve todos os dados actuais. Esta ação não pode ser desfeita.
+              {t('backup.warning')}
             </p>
           </div>
         </div>

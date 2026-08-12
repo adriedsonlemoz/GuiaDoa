@@ -2,7 +2,7 @@ import React from 'react';
 import { C } from '../../../theme.js';
 
 export const LISTA_QTDS = [10, 50, 100, 200, 300, 500, 1000, 2000, 5000, 10000];
-export const fmtN = n => (n === null || n === undefined ? '—' : Number(n).toLocaleString('pt-BR'));
+export const fmtN = (n, locale = 'pt-BR') => (n === null || n === undefined ? '—' : Number(n).toLocaleString(locale));
 
 /**
  * RewardRow — linha de prêmio reutilizável em todos os torneios.

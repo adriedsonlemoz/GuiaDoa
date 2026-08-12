@@ -33,7 +33,7 @@ test('primeiro acesso limpa somente caches legados de dados e cria admin antes d
   const gate = read('src/app/StartupGate.jsx');
   const sync = read('src/data/syncService.js');
   assert.match(gate, /bootstrap-status/);
-  assert.match(gate, /Acesso administrativo/);
+  assert.match(gate, /app\.setup\.admin_eyebrow/);
   assert.match(gate, /limparCachesDeDadosLegados/);
   assert.match(sync, /doa_cache_itens_v2/);
   assert.match(sync, /doa_cache_edificios_v2/);

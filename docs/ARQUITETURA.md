@@ -41,7 +41,6 @@ A partir da Beta 2.6, módulos de domínio devem manter UI, estado e serviços s
 - `admin-diagnostic.js`: diagnóstico.
 - `admin-shell.js`: home, navegação, modal e toast.
 - `admin-tropas.js`, `admin-niveis.js`, `admin-dragoes.js`, `admin-edificios.js`, `admin-itens.js`, `admin-pesquisas.js`, `admin-reinos.js`: módulos de domínio.
-- `admin-traducoes-catalogo.js`, `admin-traducoes.js`, `admin-traducoes-editor.js`: tradução.
 - `admin-dicas.js`: gestão de dicas.
 - `api/admin/css/admin.css`: estilos do painel.
 
@@ -84,3 +83,14 @@ A segunda fase de modularização prioriza fronteiras que também servirão à i
 ### Critério para parar de dividir
 
 Nem todo arquivo grande deve ser quebrado. Um módulo pode permanecer maior quando representa uma única responsabilidade coesa (por exemplo, um modo específico do Color Builder ou um editor de domínio do Admin). A divisão só deve continuar quando houver mistura clara de estado, regra de negócio, acesso a dados e apresentação, ou quando um trecho for reutilizável/testável isoladamente.
+
+## Beta 2.11 — internacionalização
+
+A internacionalização possui duas camadas independentes:
+
+- **Interface fixa:** `src/locales/pt-BR.js`, `src/locales/en-US.js` e `src/hooks/useI18n.jsx`. Componentes usam chaves com `t(...)` e não consultam serviços externos de tradução.
+- **Conteúdo administrável:** a tradução permanece no mesmo documento do domínio, em `i18n.<locale>`. Português é o conteúdo-base/fallback; inglês é opcional e pode ser editado no mesmo formulário do Admin.
+
+A localização de conteúdo é apenas de apresentação. IDs, slugs, nomes técnicos usados por regras, valores de cálculo e o registro bruto vindo de `GameDataContext` permanecem estáveis. Isso evita que uma troca de idioma altere identidade, persistência ou cálculos.
+
+O antigo módulo central de traduções e a integração automática externa foram removidos. Novos Dragões, Tropas, Itens e demais conteúdos não precisam de arquivo de tradução próprio: a tradução acompanha o próprio registro e pode ser atualizada sem redeploy do frontend.

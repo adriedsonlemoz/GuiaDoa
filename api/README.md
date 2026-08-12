@@ -67,7 +67,6 @@ guiadoa_edificios
 guiadoa_pesquisas
 guiadoa_reinos
 guiadoa_itens
-guiadoa_traducoes
 guiadoa_dicas
 guiadoa_dicas_categorias
 ```

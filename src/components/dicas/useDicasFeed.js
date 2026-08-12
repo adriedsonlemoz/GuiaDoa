@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { API_URL } from '../../config/api.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 const readJson = async response => {
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -7,6 +8,7 @@ const readJson = async response => {
 };
 
 export default function useDicasFeed() {
+  const { t } = useI18n();
   const [categorias, setCategorias] = useState([]);
   const [dicas, setDicas] = useState([]);
   const [filtroCat, setFiltroCat] = useState(null);
@@ -25,7 +27,7 @@ export default function useDicasFeed() {
       setCategorias(Array.isArray(cats) ? cats : []);
       setDicas(Array.isArray(feed) ? feed : []);
     }).catch(() => {
-      if (active) setToast({ open: true, message: 'Não foi possível carregar as dicas. Tente novamente.', severity: 'error' });
+      if (active) setToast({ open: true, message: t('tips.load_error'), severity: 'error' });
     }).finally(() => {
       if (active) setLoading(false);
     });

@@ -1,15 +1,18 @@
 import React from 'react';
 import { C } from '../../theme.js';
 import { useGameData } from '../../data/GameDataContext.jsx';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 const CATEGORIAS = [
-  { id: 'Corpo a Corpo',          icone: '⚔️',  cor: '#C85C5C' },
-  { id: 'Ataque à Distância',     icone: '🏹',  cor: '#5C7FA3' },
-  { id: 'Produção',               icone: '🌾',  cor: '#5A8A5C' },
-  { id: 'Movimento e Construção', icone: '🏃',  cor: '#8B6BAE' },
+  { id: 'Corpo a Corpo', key:'research.category.melee', icone: '⚔️', cor: '#C85C5C' },
+  { id: 'Ataque à Distância', key:'research.category.ranged', icone: '🏹', cor: '#5C7FA3' },
+  { id: 'Produção', key:'research.category.production', icone: '🌾', cor: '#5A8A5C' },
+  { id: 'Movimento e Construção', key:'research.category.movement', icone: '🏃', cor: '#8B6BAE' },
 ];
 
-const CatHeader = ({ cat }) => (
+const CatHeader = ({ cat }) => {
+  const { t } = useI18n();
+  return (
   <div style={{
     display: 'flex', alignItems: 'center', gap: 8,
     padding: '10px 0 6px',
@@ -23,16 +26,19 @@ const CatHeader = ({ cat }) => (
       fontSize: '0.6rem', letterSpacing: '2.5px',
       color: cat.cor, textTransform: 'uppercase',
     }}>
-      {cat.icone} {cat.id}
+      {cat.icone} {t(cat.key)}
     </span>
     <div style={{
       flex: 1, height: 1,
       background: `linear-gradient(270deg,transparent,${cat.cor}60)`,
     }} />
   </div>
-);
+  );
+};
 
-const PesquisaCard = ({ pesquisa, cor, onClick }) => (
+const PesquisaCard = ({ pesquisa, cor, onClick }) => {
+  const { t, content } = useI18n();
+  return (
   <button
     onClick={onClick}
     style={{
@@ -74,23 +80,25 @@ const PesquisaCard = ({ pesquisa, cor, onClick }) => (
         fontSize: '0.82rem', color: C.TEXT_PRIMARY,
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
-        {pesquisa.nome}
+        {content(pesquisa, 'nome')}
       </div>
       <div style={{
         fontFamily: '"Nunito",sans-serif', fontWeight: 600,
         fontSize: '0.62rem', color: C.TEXT_MUTED, marginTop: 2,
       }}>
-        {pesquisa.nivelMax === 1 ? 'Nível único' : `Até nível ${pesquisa.nivelMax}`}
+        {pesquisa.nivelMax === 1 ? t('research.single_level') : t('research.up_to_level',{level:pesquisa.nivelMax})}
       </div>
     </div>
 
     {/* Seta */}
     <span style={{ color: C.TEXT_FAINT, fontSize: '0.8rem' }}>›</span>
   </button>
-);
+  );
+};
 
 const Pesquisas = ({ setRoute }) => {
   const { pesquisas } = useGameData();
+  const { t } = useI18n();
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', paddingBottom: 16 }}>
@@ -105,14 +113,14 @@ const Pesquisas = ({ setRoute }) => {
           fontFamily: '"Cinzel",serif', fontWeight: 700, fontSize: '0.85rem',
           letterSpacing: '3px', color: '#F8F2E0', margin: 0,
         }}>
-          CENTRO DE CIÊNCIA
+          {t('research.subtitle').toUpperCase()}
         </p>
         <p style={{
           fontFamily: '"Nunito",sans-serif', fontWeight: 600,
           fontSize: '0.62rem', color: 'rgba(200,168,74,0.7)',
           letterSpacing: '1.5px', margin: '4px 0 0',
         }}>
-          Nível 30 · {pesquisas.length} pesquisas disponíveis
+          {t('research.available',{count:pesquisas.length})}
         </p>
       </div>
 

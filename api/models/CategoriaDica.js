@@ -7,6 +7,7 @@ const CategoriaSchema = new mongoose.Schema({
   icon:  { type: String, default: '📖' },
   ordem: { type: Number, default: 0 },
   ativo: { type: Boolean, default: true },
+  i18n:      { type: mongoose.Schema.Types.Mixed, default: {} },
 }, { collection: COLLECTIONS.dicasCategorias });
 
 export default mongoose.model('CategoriaDica', CategoriaSchema);

@@ -5,7 +5,6 @@ import { useTorneioTimer } from '../../hooks/useTorneioTimer.js';
 import { useI18n, LOCALES_DISPONIVEIS } from '../../hooks/useI18n.jsx';
 import ProfileLanguageStep from './ProfileLanguageStep.jsx';
 import ProfileDetailsStep from './ProfileDetailsStep.jsx';
-import { getProfileCopy } from './profileCopy.js';
 
 const ProfileForm = ({ onSave, perfilAtual, onCancel }) => {
   const editing = Boolean(perfilAtual);
@@ -15,8 +14,7 @@ const ProfileForm = ({ onSave, perfilAtual, onCancel }) => {
   const [fuso, setFuso] = useState(perfilAtual?.fuso || '');
   const [playerId, setPlayerId] = useState(perfilAtual?.playerId || '');
   const [toast, setToast] = useState({ open:false, message:'', severity:'success' });
-  const { locale, setLocale } = useI18n();
-  const copy = getProfileCopy(locale);
+  const { locale, setLocale, t } = useI18n();
 
   const match = fuso ? fuso.match(/UTC([+-]?\d+)/) : null;
   const offset = match ? parseInt(match[1], 10) : 0;
@@ -29,7 +27,7 @@ const ProfileForm = ({ onSave, perfilAtual, onCancel }) => {
 
   const handleSave = () => {
     if (!nome.trim() || !reino.trim() || !fuso) {
-      setToast({ open:true, message:copy.validation, severity:'warning' });
+      setToast({ open:true, message:t('profile.validation'), severity:'warning' });
       return;
     }
     const p = { nome:nome.trim(), reino, fuso, playerId:playerId.trim() };
@@ -51,7 +49,6 @@ const ProfileForm = ({ onSave, perfilAtual, onCancel }) => {
     <>
       <Toast {...toast} onClose={() => setToast(t => ({ ...t, open:false }))} />
       <ProfileDetailsStep
-        copy={copy}
         editing={editing}
         nome={nome}
         setNome={setNome}

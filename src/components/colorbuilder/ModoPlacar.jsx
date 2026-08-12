@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { T, C, safeCopy } from './styles.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 import { PLACAR_CORES_PADRAO } from './data.js';
 
 // ─── Paleta rápida de cores para os seletores ────────────────────────────────
@@ -58,6 +59,7 @@ function ColorPicker({ label, value, onChange }) {
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function ModoPlacar({ showToast }) {
+  const { t } = useI18n();
   const [timeA, setTimeA] = useState('Brasil');
   const [timeB, setTimeB] = useState('Haiti');
 
@@ -126,24 +128,24 @@ export default function ModoPlacar({ showToast }) {
 
       {/* ① Times e placar */}
       <div style={T.card}>
-        <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>①</span> Times e placar</div>
+        <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>①</span> {t('builder.score.teams')}</div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.62rem', color: C.TEXT_MUTED, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Time A</label>
-            <input value={timeA} onChange={e => setTimeA(e.target.value)} placeholder="Brasil"
+            <label style={{ display: 'block', fontSize: '0.62rem', color: C.TEXT_MUTED, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>{t('builder.score.team_a')}</label>
+            <input value={timeA} onChange={e => setTimeA(e.target.value)} placeholder={t('builder.score.placeholder_a')}
               style={{ ...T.input, minHeight: 38, fontSize: '0.85rem' }} />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.62rem', color: C.TEXT_MUTED, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Time B</label>
-            <input value={timeB} onChange={e => setTimeB(e.target.value)} placeholder="Haiti"
+            <label style={{ display: 'block', fontSize: '0.62rem', color: C.TEXT_MUTED, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>{t('builder.score.team_b')}</label>
+            <input value={timeB} onChange={e => setTimeB(e.target.value)} placeholder={t('builder.score.placeholder_b')}
               style={{ ...T.input, minHeight: 38, fontSize: '0.85rem' }} />
           </div>
         </div>
 
         <div style={T.divider} />
 
-        <div style={T.secLbl}>Placar anterior (antes do gol)</div>
+        <div style={T.secLbl}>{t('builder.score.previous')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
           <input value={placarAntA} onChange={e => setPlacarAntA(e.target.value.replace(/\D/g, ''))}
             inputMode="numeric" placeholder="0"
@@ -153,7 +155,7 @@ export default function ModoPlacar({ showToast }) {
             style={{ ...T.input, minHeight: 38, fontSize: '0.95rem', textAlign: 'center', fontFamily: 'monospace', fontWeight: 700 }} />
         </div>
 
-        <div style={T.secLbl}>Placar atual (depois do gol)</div>
+        <div style={T.secLbl}>{t('builder.score.current')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <input value={placarNovA} onChange={e => setPlacarNovA(e.target.value.replace(/\D/g, ''))}
             inputMode="numeric" placeholder="0"
@@ -167,12 +169,12 @@ export default function ModoPlacar({ showToast }) {
         <div style={{ marginTop: 10 }}>
           {quemMarcou === 'A' && (
             <div style={{ fontSize: '0.72rem', color: C.ACCENT, fontWeight: 700, textAlign: 'center' }}>
-              ⚽ Gol de {timeA || 'Time A'}! O placar dele ficará destacado.
+              {t('builder.score.goal',{team:timeA || t('builder.score.team_a')})}
             </div>
           )}
           {quemMarcou === 'B' && (
             <div style={{ fontSize: '0.72rem', color: C.ACCENT, fontWeight: 700, textAlign: 'center' }}>
-              ⚽ Gol de {timeB || 'Time B'}! O placar dele ficará destacado.
+              {t('builder.score.goal',{team:timeB || t('builder.score.team_b')})}
             </div>
           )}
           {quemMarcou === 'AMBOS' && (
@@ -190,17 +192,17 @@ export default function ModoPlacar({ showToast }) {
 
       {/* ② Cores */}
       <div style={T.card}>
-        <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>②</span> Cores do placar</div>
-        <ColorPicker label={`Cor do Time A (${timeA || 'Time A'})`} value={corTimeA} onChange={setCorTimeA} />
-        <ColorPicker label={`Cor do Time B (${timeB || 'Time B'})`} value={corTimeB} onChange={setCorTimeB} />
-        <ColorPicker label="Cor dos números (placar normal)" value={corPlacar} onChange={setCorPlacar} />
-        <ColorPicker label="Cor do separador (-)" value={corSeparador} onChange={setCorSeparador} />
-        <ColorPicker label="Cor de destaque (quem marcou o gol)" value={corDestaque} onChange={setCorDestaque} />
+        <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>②</span> {t('builder.score.colors')}</div>
+        <ColorPicker label={t('builder.score.team_color',{slot:t('builder.score.team_a'),team:timeA || t('builder.score.team_a')})} value={corTimeA} onChange={setCorTimeA} />
+        <ColorPicker label={t('builder.score.team_color',{slot:t('builder.score.team_b'),team:timeB || t('builder.score.team_b')})} value={corTimeB} onChange={setCorTimeB} />
+        <ColorPicker label={t('builder.score.number_color')} value={corPlacar} onChange={setCorPlacar} />
+        <ColorPicker label={t('builder.score.separator_color')} value={corSeparador} onChange={setCorSeparador} />
+        <ColorPicker label={t('builder.score.highlight_color')} value={corDestaque} onChange={setCorDestaque} />
       </div>
 
       {/* ③ Resultado */}
       <div style={T.card}>
-        <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>③</span> Resultado</div>
+        <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>③</span> {t('builder.score.result')}</div>
 
         <div style={{
           background: C.BG_SECONDARY, borderRadius: 10, padding: '18px 12px', marginBottom: 12,
@@ -209,7 +211,7 @@ export default function ModoPlacar({ showToast }) {
           <Preview />
         </div>
 
-        <div style={T.secLbl}>Código gerado</div>
+        <div style={T.secLbl}>{t('builder.score.generated')}</div>
         <div style={{ position: 'relative', marginBottom: 12 }}>
           <div style={T.codeBox}>{codigo}</div>
           <button
@@ -221,11 +223,11 @@ export default function ModoPlacar({ showToast }) {
               fontSize: '0.9rem', width: 28, height: 28,
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
-            title="Copiar código"
+            title={t('builder.copy_code')}
           >{codeCopied ? '✓' : '⎘'}</button>
         </div>
 
-        <button style={T.btnSolid} onClick={() => safeCopy(codigo, () => showToast('✓ Placar copiado!'))}>
+        <button style={T.btnSolid} onClick={() => safeCopy(codigo, () => showToast(t('builder.score.copied')))}>
           ⎘ Copiar placar
         </button>
       </div>

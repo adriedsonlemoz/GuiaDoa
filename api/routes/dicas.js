@@ -6,8 +6,11 @@ import Dica           from '../models/Dica.js';
 import CategoriaDica  from '../models/CategoriaDica.js';
 import { autenticar } from '../middleware/auth.js';
 import { executarUploadLote } from '../utils/cloudinaryBatch.js';
+import { sanitizeContentI18n } from '../utils/contentI18n.js';
 
 const router = express.Router();
+const I18N_DICA_FIELDS = ['titulo', 'conteudo'];
+const I18N_CAT_FIELDS = ['label'];
 
 // ─── Cloudinary config ────────────────────────────────────────────────────────
 cloudinary.config({
@@ -63,9 +66,9 @@ router.get('/categorias/todas', autenticar, async (req, res) => {
 // POST /api/dicas/categorias — cria nova categoria
 router.post('/categorias', autenticar, async (req, res) => {
   try {
-    const { slug, label, icon, ordem } = req.body;
+    const { slug, label, icon, ordem, i18n } = req.body;
     if (!slug || !label) return res.status(400).json({ erro: 'slug e label são obrigatórios' });
-    const cat = await CategoriaDica.create({ slug, label, icon: icon || '📖', ordem: ordem || 0 });
+    const cat = await CategoriaDica.create({ slug, label, icon: icon || '📖', ordem: ordem || 0, i18n: sanitizeContentI18n(i18n, I18N_CAT_FIELDS) });
     res.status(201).json(cat);
   } catch (e) {
     if (e.code === 11000) return res.status(409).json({ erro: 'Categoria já existe' });
@@ -76,7 +79,9 @@ router.post('/categorias', autenticar, async (req, res) => {
 // PATCH /api/dicas/categorias/:id
 router.patch('/categorias/:id', autenticar, async (req, res) => {
   try {
-    const cat = await CategoriaDica.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const body = { ...req.body };
+    if ('i18n' in body) body.i18n = sanitizeContentI18n(body.i18n, I18N_CAT_FIELDS);
+    const cat = await CategoriaDica.findByIdAndUpdate(req.params.id, body, { new: true });
     if (!cat) return res.status(404).json({ erro: 'Não encontrada' });
     res.json(cat);
   } catch (e) { res.status(500).json({ erro: e.message }); }
@@ -126,9 +131,9 @@ router.get('/:id', async (req, res) => {
 // POST /api/dicas — cria dica (sem imagens ainda)
 router.post('/', autenticar, async (req, res) => {
   try {
-    const { titulo, categoria, conteudo, destaque, ordem } = req.body;
+    const { titulo, categoria, conteudo, destaque, ordem, i18n } = req.body;
     if (!titulo || !categoria) return res.status(400).json({ erro: 'título e categoria são obrigatórios' });
-    const dica = await Dica.create({ titulo, categoria, conteudo, destaque, ordem });
+    const dica = await Dica.create({ titulo, categoria, conteudo, destaque, ordem, i18n: sanitizeContentI18n(i18n, I18N_DICA_FIELDS) });
     res.status(201).json(dica);
   } catch (e) { res.status(500).json({ erro: e.message }); }
 });
@@ -136,9 +141,11 @@ router.post('/', autenticar, async (req, res) => {
 // PATCH /api/dicas/:id — atualiza dados (sem imagens)
 router.patch('/:id', autenticar, async (req, res) => {
   try {
+    const body = { ...req.body };
+    if ('i18n' in body) body.i18n = sanitizeContentI18n(body.i18n, I18N_DICA_FIELDS);
     const dica = await Dica.findByIdAndUpdate(
       req.params.id,
-      { ...req.body, atualizadoEm: new Date() },
+      { ...body, atualizadoEm: new Date() },
       { new: true }
     );
     if (!dica) return res.status(404).json({ erro: 'Não encontrada' });

@@ -27,7 +27,6 @@ const MODULOS = [
   { id:'torneios',  icon:'🏆',  label:'Torneios',   desc:'Metas e configurações',            ativo:false, badge:'breve' },
   { id:'pesquisas', icon:'🔬',  label:'Pesquisas',  desc:'Centro de Ciência e pesquisas',    ativo:true,  badge:'novo'  },
   { id:'ilhas',     icon:'🏝️',  label:'Ilhas',      desc:'Produção e territórios',           ativo:false, badge:'breve' },
-  { id:'traducoes', icon:'🌐',  label:'Traduções',   desc:'Gerenciar idiomas e textos do app', ativo:true,  badge:'novo'  },
   { id:'dicas',     icon:'💡',  label:'Dicas',        desc:'Tutoriais e guias da comunidade',   ativo:true,  badge:'novo'  },
 ];
 

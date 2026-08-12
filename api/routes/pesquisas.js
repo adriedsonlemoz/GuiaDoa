@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import Pesquisa from '../models/Pesquisa.js';
 import { autenticar } from '../middleware/auth.js';
+import { sanitizeContentI18n } from '../utils/contentI18n.js';
 
 const router = Router();
+const I18N_FIELDS = ['nome', 'descricao'];
 
 function gerarNiveis(nivelMax) {
   return Array.from({ length: nivelMax }, (_, i) => ({ nivel: i + 1, tempo: '' }));
@@ -27,7 +29,7 @@ router.get('/:slug', async (req, res) => {
 
 // ── POST /api/pesquisas (admin) ───────────────────────────────────────────────
 router.post('/', autenticar, async (req, res) => {
-  const { slug, nome, icone, descricao, categoria, nivelMax, ordem } = req.body;
+  const { slug, nome, icone, descricao, categoria, nivelMax, ordem, i18n } = req.body;
   if (!slug?.trim() || !nome?.trim() || !categoria)
     return res.status(400).json({ erro: 'Slug, nome e categoria são obrigatórios.' });
   try {
@@ -36,6 +38,7 @@ router.post('/', autenticar, async (req, res) => {
       slug: slug.trim(), nome: nome.trim(), icone: icone || '🔬',
       descricao: descricao || '', categoria, nivelMax: max, ordem: ordem || 0,
       niveis: gerarNiveis(max),
+      i18n: sanitizeContentI18n(i18n, I18N_FIELDS),
     });
     res.status(201).json(p);
   } catch (err) {
@@ -65,7 +68,7 @@ router.put('/:slug/meta', autenticar, async (req, res) => {
 
     const atualizado = await Pesquisa.findOneAndUpdate(
       { slug: req.params.slug },
-      { nome, icone, descricao, categoria, nivelMax: max, ordem, niveis: novosNiveis, atualizadoEm: new Date() },
+      { nome, icone, descricao, categoria, nivelMax: max, ordem, niveis: novosNiveis, i18n: sanitizeContentI18n(i18n, I18N_FIELDS), atualizadoEm: new Date() },
       { new: true }
     );
     res.json(atualizado);

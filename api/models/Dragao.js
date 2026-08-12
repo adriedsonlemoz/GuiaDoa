@@ -44,6 +44,7 @@ const DragaoSchema = new mongoose.Schema({
   itensAlimentacao: { type: [mongoose.Schema.Types.Mixed], default: [] },
   habilidades:   { type: [mongoose.Schema.Types.Mixed], default: [] },
   dicas:         { type: [String], default: [] },
+  i18n:      { type: mongoose.Schema.Types.Mixed, default: {} },
 
   // Progressão de níveis (array ordenado por nivel)
   niveis:        { type: [NivelDragaoSchema], default: [] },

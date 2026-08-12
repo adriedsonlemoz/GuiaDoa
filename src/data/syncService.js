@@ -32,11 +32,13 @@ export const temAlgumCache = () => false;
 export const precisaSincronizar = () => true;
 export const getSyncInfo = () => ({ ts:null, tentativaTs:null, ver:null, status:null });
 
-export function formatarUltimaSyncPt(isoString) {
-  if (!isoString) return 'Nesta sessão';
+export function formatarUltimaSync(isoString, locale = 'pt-BR') {
+  if (!isoString) return locale === 'en-US' ? 'This session' : 'Nesta sessão';
   try {
-    return new Date(isoString).toLocaleString('pt-BR', {
+    return new Date(isoString).toLocaleString(locale, {
       day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit',
     });
-  } catch { return 'Agora'; }
+  } catch { return locale === 'en-US' ? 'Now' : 'Agora'; }
 }
+
+export const formatarUltimaSyncPt = (isoString) => formatarUltimaSync(isoString, 'pt-BR');

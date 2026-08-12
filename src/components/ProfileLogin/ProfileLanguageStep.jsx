@@ -1,9 +1,9 @@
 import React from 'react';
 import { C } from '../../theme.js';
-import { getProfileCopy } from './profileCopy.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 export default function ProfileLanguageStep({ locale, locales, onSelect }) {
-  const copy = getProfileCopy(locale);
+  const { t } = useI18n();
   return (
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', background:C.BG_MAIN }}>
       <header style={{
@@ -16,13 +16,13 @@ export default function ProfileLanguageStep({ locale, locales, onSelect }) {
           boxShadow:'0 12px 30px rgba(0,0,0,.22)', fontSize:36,
         }}>🛡️</div>
         <div className="font-nunito" style={{ color:C.ACCENT, fontSize:'.64rem', fontWeight:900, letterSpacing:2.5 }}>GUIA DOA</div>
-        <h1 className="font-cinzel" style={{ color:C.TEXT_HEADER, fontSize:'1.16rem', margin:'7px 0 0' }}>{copy.welcome}</h1>
+        <h1 className="font-cinzel" style={{ color:C.TEXT_HEADER, fontSize:'1.16rem', margin:'7px 0 0' }}>{t('profile.welcome')}</h1>
       </header>
 
       <main style={{ flex:1, width:'100%', maxWidth:480, margin:'0 auto', padding:'28px 18px 36px' }}>
         <div style={{ textAlign:'center', marginBottom:20 }}>
-          <h2 className="font-cinzel" style={{ color:C.TEXT_PRIMARY, fontSize:'.95rem', margin:'0 0 6px' }}>{copy.languageTitle}</h2>
-          <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.76rem', margin:0 }}>{copy.languageSubtitle}</p>
+          <h2 className="font-cinzel" style={{ color:C.TEXT_PRIMARY, fontSize:'.95rem', margin:'0 0 6px' }}>{t('profile.language.title')}</h2>
+          <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.76rem', margin:0 }}>{t('profile.language.subtitle')}</p>
         </div>
         <div style={{ display:'grid', gap:10 }}>
           {locales.map(loc => (

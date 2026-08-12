@@ -1,7 +1,10 @@
 import React from 'react';
 import { C } from '../../../theme.js';
+import { useI18n } from '../../../hooks/useI18n.jsx';
 
-const DragaoCard = ({ dragao, onClick, selecionado, onToggleComparar, comparando, noSlot }) => (
+const DragaoCard = ({ dragao, onClick, selecionado, onToggleComparar, comparando, noSlot }) => {
+  const { t, content } = useI18n();
+  return (
   <div
     className="flex items-center gap-3 rounded-xl mb-2.5 cursor-pointer transition-all relative overflow-hidden"
     style={{
@@ -24,22 +27,22 @@ const DragaoCard = ({ dragao, onClick, selecionado, onToggleComparar, comparando
     {/* Info — clicável para detalhe */}
     <div className="flex-1 min-w-0" onClick={() => onClick(dragao.id)}>
       <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-        <span className="font-nunito font-black text-[0.9rem]" style={{ color:C.TEXT_PRIMARY }}>{dragao.nome}</span>
+        <span className="font-nunito font-black text-[0.9rem]" style={{ color:C.TEXT_PRIMARY }}>{content(dragao, 'nome')}</span>
         <span className="font-nunito font-bold text-[0.58rem] px-1.5 py-0.5 rounded"
           style={{ background:`${dragao.cor}22`, border:`1px solid ${dragao.cor}55`, color:dragao.cor }}>
-          {dragao.elemento}
+          {content(dragao, 'elemento')}
         </span>
       </div>
       <p className="font-nunito text-[0.68rem] font-semibold leading-snug m-0 overflow-hidden"
         style={{ color:C.TEXT_MUTED, display:'-webkit-box', WebkitLineClamp:1, WebkitBoxOrient:'vertical' }}>
-        {dragao.descricao}
+        {content(dragao, 'descricao')}
       </p>
     </div>
 
     {/* Botão comparar */}
     <button
       onClick={e => { e.stopPropagation(); onToggleComparar(dragao.id); }}
-      title={selecionado ? 'Remover da comparação' : noSlot ? 'Máximo de 3 dragões' : 'Adicionar à comparação'}
+      title={selecionado ? t('dragons.remove_compare') : noSlot ? t('dragons.max_three') : t('dragons.add_compare')}
       style={{
         flexShrink:0, width:30, height:30, borderRadius:'50%', border:'none',
         cursor: noSlot && !selecionado ? 'not-allowed' : 'pointer',
@@ -58,7 +61,7 @@ const DragaoCard = ({ dragao, onClick, selecionado, onToggleComparar, comparando
     <span onClick={() => onClick(dragao.id)}
       className="text-xl leading-none shrink-0" style={{ color:dragao.cor, opacity:0.5 }}>›</span>
   </div>
-);
-
+  );
+};
 
 export default DragaoCard;

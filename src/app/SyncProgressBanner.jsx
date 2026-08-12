@@ -1,6 +1,8 @@
 import React from 'react';
+import { useI18n } from '../hooks/useI18n.jsx';
 
 export default function SyncProgressBanner({ status, progress }) {
+  const { t } = useI18n();
   if (status !== 'syncing') return null;
   const pct = progress.total > 0 ? Math.round((progress.step / progress.total) * 100) : 0;
 
@@ -20,7 +22,7 @@ export default function SyncProgressBanner({ status, progress }) {
           fontFamily: '"Nunito",sans-serif', fontWeight: 800,
           fontSize: '0.72rem', letterSpacing: '0.5px', color: '#F8F2E0', flex: 1,
         }}>
-          {progress.step < progress.total ? `Sincronizando: ${progress.label}…` : 'Finalizando…'}
+          {progress.step < progress.total ? t('app.sync.syncing_label', { label: progress.label }) : t('app.sync.finalizing')}
         </span>
         <span style={{
           fontFamily: '"Nunito",sans-serif', fontWeight: 900,

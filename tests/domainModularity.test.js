@@ -82,6 +82,8 @@ test('cálculo de ilhas tolera dados online incompletos sem quebrar a tela', () 
   assert.equal(result.popTotal, 0);
 });
 
-test('picker de tropas não referencia variável de tradução inexistente', () => {
-  assert.doesNotMatch(read('src/components/tropas/comparar/TropaPicker.jsx'), /getTipoAtaque\(item,\s*t\)/);
+test('picker de tropas recebe a função de tradução pela camada i18n', () => {
+  const picker = read('src/components/tropas/comparar/TropaPicker.jsx');
+  assert.match(picker, /useI18n/);
+  assert.match(picker, /getTipoAtaque\(item,\s*t\)/);
 });

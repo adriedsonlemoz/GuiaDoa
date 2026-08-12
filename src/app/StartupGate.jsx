@@ -3,6 +3,7 @@ import { C } from '../theme.js';
 import { limparCachesDeDadosLegados } from '../data/syncService.js';
 import AppErrorState from '../ui/AppErrorState.jsx';
 import { buildDiagnostic, classifyConnectionError } from '../errors/appErrors.js';
+import { useI18n } from '../hooks/useI18n.jsx';
 
 import { API_URL as API } from '../config/api.js';
 
@@ -15,6 +16,7 @@ const Tela = ({ children }) => (
 );
 
 export default function StartupGate({ children }) {
+  const { t } = useI18n();
   const [status, setStatus] = useState(null);
   const [erro, setErro] = useState(null);
   const [carregando, setCarregando] = useState(true);
@@ -33,8 +35,8 @@ export default function StartupGate({ children }) {
       if (d.migracao?.estado === 'erro') {
         setErro({
           code:'GD-START-002',
-          title:'Não foi possível concluir a configuração',
-          message:'Os dados essenciais não puderam ser preparados. Tente novamente em instantes.',
+          title:t('app.setup.migration_error_title'),
+          message:t('app.setup.migration_error_message'),
           raw:new Error(d.migracao.erro || 'Falha na preparação inicial'),
         });
       }
@@ -56,9 +58,9 @@ export default function StartupGate({ children }) {
 
   const criarAdmin = async (e) => {
     e.preventDefault();
-    if (form.usuario.trim().length < 3) return setErro({ code:'GD-SETUP-001', title:'Revise o usuário', message:'O usuário precisa ter pelo menos 3 caracteres.', raw:new Error('Usuário com menos de 3 caracteres') });
-    if (form.senha.length < 6) return setErro({ code:'GD-SETUP-002', title:'Escolha uma senha mais segura', message:'A senha precisa ter pelo menos 6 caracteres.', raw:new Error('Senha com menos de 6 caracteres') });
-    if (form.senha !== form.confirmar) return setErro({ code:'GD-SETUP-003', title:'As senhas não coincidem', message:'Digite a mesma senha nos dois campos.', raw:new Error('Confirmação de senha divergente') });
+    if (form.usuario.trim().length < 3) return setErro({ code:'GD-SETUP-001', title:t('app.setup.user_review_title'), message:t('app.setup.user_review_message'), raw:new Error('Usuário com menos de 3 caracteres') });
+    if (form.senha.length < 6) return setErro({ code:'GD-SETUP-002', title:t('app.setup.password_review_title'), message:t('app.setup.password_review_message'), raw:new Error('Senha com menos de 6 caracteres') });
+    if (form.senha !== form.confirmar) return setErro({ code:'GD-SETUP-003', title:t('app.setup.password_mismatch_title'), message:t('app.setup.password_mismatch_message'), raw:new Error('Confirmação de senha divergente') });
     setSalvando(true);
     setErro(null);
     try {
@@ -72,7 +74,7 @@ export default function StartupGate({ children }) {
       await verificar();
     } catch (e) {
       const info = classifyConnectionError(e, 'GD-SETUP-004');
-      setErro({ ...info, title:info.code.startsWith('GD-NET') ? info.title : 'Não foi possível criar o administrador', raw:e });
+      setErro({ ...info, title:info.code.startsWith('GD-NET') ? info.title : t('app.setup.admin_create_error'), raw:e });
     } finally {
       setSalvando(false);
     }
@@ -84,8 +86,8 @@ export default function StartupGate({ children }) {
     <Tela>
       <div style={{ textAlign:'center', padding:'8px 0' }}>
         <div style={{ fontSize:42 }}>🛡️</div>
-        <h1 className="font-cinzel" style={{ color:C.TEXT_PRIMARY, margin:'10px 0 6px', fontSize:'1.08rem' }}>Preparando o GUIA DOA</h1>
-        <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.8rem', margin:0 }}>Sincronizando dados online…</p>
+        <h1 className="font-cinzel" style={{ color:C.TEXT_PRIMARY, margin:'10px 0 6px', fontSize:'1.08rem' }}>{t('app.setup.preparing')}</h1>
+        <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.8rem', margin:0 }}>{t('app.setup.syncing')}</p>
       </div>
     </Tela>
   );
@@ -100,9 +102,9 @@ export default function StartupGate({ children }) {
     <Tela>
       <div style={{ textAlign:'center', padding:'8px 0' }}>
         <div style={{ fontSize:40 }}>🔄</div>
-        <h2 className="font-cinzel" style={{ color:C.TEXT_PRIMARY, margin:'9px 0 5px', fontSize:'1rem' }}>Preparando conteúdo</h2>
-        <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.78rem', lineHeight:1.5, margin:0 }}>Sincronizando os dados essenciais para o primeiro uso.</p>
-        <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.65rem', marginTop:9 }}>Esta etapa é automática.</div>
+        <h2 className="font-cinzel" style={{ color:C.TEXT_PRIMARY, margin:'9px 0 5px', fontSize:'1rem' }}>{t('app.setup.content_title')}</h2>
+        <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.78rem', lineHeight:1.5, margin:0 }}>{t('app.setup.content_text')}</p>
+        <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.65rem', marginTop:9 }}>{t('app.setup.automatic')}</div>
       </div>
     </Tela>
   );
@@ -113,8 +115,8 @@ export default function StartupGate({ children }) {
     return (
       <Tela>
         <AppErrorState
-          title="Conteúdo temporariamente indisponível"
-          message="Algumas informações essenciais ainda não estão prontas. Tente novamente em instantes."
+          title={t('app.setup.content_unavailable_title')}
+          message={t('app.setup.content_unavailable_message')}
           code="GD-START-003"
           diagnostic={buildDiagnostic({ code:'GD-START-003', error:raw, context:'Inicialização', extra:{ faltantes } })}
           onRetry={verificar}
@@ -128,29 +130,29 @@ export default function StartupGate({ children }) {
     <Tela>
       <div style={{ textAlign:'center', marginBottom:16 }}>
         <div style={{ fontSize:42 }}>🔐</div>
-        <div className="font-nunito" style={{ color:C.ACCENT, fontWeight:900, fontSize:'.62rem', letterSpacing:2 }}>CONFIGURAÇÃO INICIAL</div>
-        <h1 className="font-cinzel" style={{ color:C.TEXT_PRIMARY, fontSize:'1.08rem', margin:'6px 0' }}>Acesso administrativo</h1>
+        <div className="font-nunito" style={{ color:C.ACCENT, fontWeight:900, fontSize:'.62rem', letterSpacing:2 }}>{t('app.setup.admin_eyebrow')}</div>
+        <h1 className="font-cinzel" style={{ color:C.TEXT_PRIMARY, fontSize:'1.08rem', margin:'6px 0' }}>{t('app.setup.admin_title')}</h1>
         <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.76rem', lineHeight:1.5, margin:0 }}>
-          Defina as credenciais que serão usadas para gerenciar o conteúdo do aplicativo.
+          {t('app.setup.admin_text')}
         </p>
       </div>
       <form onSubmit={criarAdmin} style={{ display:'grid', gap:10 }}>
-        <input className="tw-input" placeholder="Usuário" autoComplete="username" value={form.usuario} onChange={e=>setForm(f=>({...f,usuario:e.target.value}))} />
-        <input className="tw-input" type="password" placeholder="Senha" autoComplete="new-password" value={form.senha} onChange={e=>setForm(f=>({...f,senha:e.target.value}))} />
-        <input className="tw-input" type="password" placeholder="Confirmar senha" autoComplete="new-password" value={form.confirmar} onChange={e=>setForm(f=>({...f,confirmar:e.target.value}))} />
+        <input className="tw-input" placeholder={t('app.setup.user')} autoComplete="username" value={form.usuario} onChange={e=>setForm(f=>({...f,usuario:e.target.value}))} />
+        <input className="tw-input" type="password" placeholder={t('app.setup.password')} autoComplete="new-password" value={form.senha} onChange={e=>setForm(f=>({...f,senha:e.target.value}))} />
+        <input className="tw-input" type="password" placeholder={t('app.setup.confirm_password')} autoComplete="new-password" value={form.confirmar} onChange={e=>setForm(f=>({...f,confirmar:e.target.value}))} />
         {status.usuario?.setupKeyObrigatoria && (
           <>
-            <input className="tw-input" type="password" placeholder="Código de segurança" value={form.setupKey} onChange={e=>setForm(f=>({...f,setupKey:e.target.value}))} />
-            <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.62rem', lineHeight:1.4 }}>Este código é solicitado apenas quando a instalação foi protegida pelo administrador do servidor.</div>
+            <input className="tw-input" type="password" placeholder={t('app.setup.security_code')} value={form.setupKey} onChange={e=>setForm(f=>({...f,setupKey:e.target.value}))} />
+            <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.62rem', lineHeight:1.4 }}>{t('app.setup.security_help')}</div>
           </>
         )}
         {erro && <div style={{ padding:'8px 10px', borderRadius:8, background:'rgba(168,60,44,.07)', border:'1px solid rgba(168,60,44,.18)' }}>
           <div className="font-nunito" style={{ color:C.ERROR, fontSize:'.72rem', fontWeight:800 }}>{erro.message}</div>
           <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.58rem', marginTop:2 }}>Código: {erro.code}</div>
         </div>}
-        <button className="btn-gold" type="submit" disabled={salvando}>{salvando ? 'Configurando…' : 'Criar acesso e continuar'}</button>
+        <button className="btn-gold" type="submit" disabled={salvando}>{salvando ? t('app.setup.creating') : t('app.setup.create')}</button>
       </form>
-      <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.62rem', marginTop:14, textAlign:'center' }}>Os dados do aplicativo são sincronizados com segurança pela internet.</div>
+      <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.62rem', marginTop:14, textAlign:'center' }}>{t('app.setup.online_note')}</div>
     </Tela>
   );
 

@@ -30,7 +30,8 @@ router.post('/', assistenteRateLimit, async (req, res) => {
 
   const perguntaLimpa = entrada.pergunta;
   const historicoSeguro = entrada.historico;
-  const contexto = await buildContext();
+  const locale = entrada.locale;
+  const contexto = await buildContext(locale);
   const intencao = detectarIntencao(perguntaLimpa);
   const analise = detectarAnalise(perguntaLimpa);
   const contextoAnalitico = analise && contexto.tropasDados.length
@@ -41,6 +42,7 @@ router.post('/', assistenteRateLimit, async (req, res) => {
     intencao,
     contextoAnalitico,
     ...contexto,
+    locale,
   });
 
   const mensagens = [

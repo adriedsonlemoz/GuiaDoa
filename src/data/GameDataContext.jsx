@@ -2,39 +2,41 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { C } from '../theme.js';
 import AppErrorState from '../ui/AppErrorState.jsx';
 import { buildDiagnostic, classifyConnectionError } from '../errors/appErrors.js';
+import { useI18n } from '../hooks/useI18n.jsx';
 
 import { API_URL as API } from '../config/api.js';
 const GameDataContext = createContext(null);
 
 const ENDPOINTS = [
-  ['tropas', 'Tropas', '/api/tropas/todas', d => Array.isArray(d) ? d : []],
-  ['niveis', 'Níveis', '/api/niveis/todas', d => Array.isArray(d) ? d : []],
-  ['dragoes', 'Dragões', '/api/dragoes', d => (d.dragoes || []).map(x => ({ ...x, id:x.slug }))],
-  ['edificios', 'Edifícios', '/api/edificios', d => d.edificios || []],
-  ['reinos', 'Reinos', '/api/reinos', d => d.reinos || []],
-  ['pesquisas', 'Pesquisas', '/api/pesquisas', d => d.pesquisas || []],
-  ['itens', 'Itens', '/api/itens?limite=500', d => d.itens || []],
+  ['tropas', 'troops.title', '/api/tropas/todas', d => Array.isArray(d) ? d : []],
+  ['niveis', 'levels.title', '/api/niveis/todas', d => Array.isArray(d) ? d : []],
+  ['dragoes', 'dragons.title', '/api/dragoes', d => (d.dragoes || []).map(x => ({ ...x, id:x.slug }))],
+  ['edificios', 'buildings.title', '/api/edificios', d => d.edificios || []],
+  ['reinos', 'realms.title', '/api/reinos', d => d.reinos || []],
+  ['pesquisas', 'research.title', '/api/pesquisas', d => d.pesquisas || []],
+  ['itens', 'items.title', '/api/itens?limite=500', d => d.itens || []],
 ];
 
 export function GameDataProvider({ children }) {
+  const { t } = useI18n();
   const [dados, setDados] = useState({ tropas:[], niveis:[], dragoes:[], edificios:[], reinos:[], pesquisas:[], itens:[] });
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(null);
-  const [progress, setProgress] = useState({ step:0, total:ENDPOINTS.length, label:'Conectando' });
+  const [progress, setProgress] = useState({ step:0, total:ENDPOINTS.length, label:t('app.sync.connecting') });
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     setErro(null);
-    setProgress({ step:0, total:ENDPOINTS.length, label:'Conectando' });
+    setProgress({ step:0, total:ENDPOINTS.length, label:t('app.sync.connecting') });
     try {
       let concluidos = 0;
-      const entries = await Promise.all(ENDPOINTS.map(async ([key,label,path,parse]) => {
+      const entries = await Promise.all(ENDPOINTS.map(async ([key,labelKey,path,parse]) => {
         const r = await fetch(`${API}${path}`, { signal:AbortSignal.timeout(12000), cache:'no-store' });
-        if (!r.ok) throw new Error(`${label}: HTTP ${r.status}`);
+        if (!r.ok) throw new Error(`${t(labelKey)}: HTTP ${r.status}`);
         const json = await r.json();
         concluidos += 1;
-        setProgress({ step:concluidos, total:ENDPOINTS.length, label });
+        setProgress({ step:concluidos, total:ENDPOINTS.length, label:t(labelKey) });
         return [key, parse(json)];
       }));
       const novo = Object.fromEntries(entries);
@@ -48,9 +50,10 @@ export function GameDataProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { refresh().catch(()=>{}); }, [refresh]);
+
 
   const value = useMemo(() => ({ ...dados, loading, erro, progress, lastUpdated, refresh }), [dados, loading, erro, progress, lastUpdated, refresh]);
 
@@ -58,7 +61,7 @@ export function GameDataProvider({ children }) {
     <div style={{ minHeight:'100vh', display:'grid', placeItems:'center', background:C.BG_PRIMARY, padding:20 }}>
       <div style={{ textAlign:'center' }}>
         <div style={{ fontSize:40 }}>🔄</div>
-        <div className="font-cinzel" style={{ color:C.TEXT_PRIMARY, marginTop:8 }}>Sincronizando dados</div>
+        <div className="font-cinzel" style={{ color:C.TEXT_PRIMARY, marginTop:8 }}>{t('app.sync.title')}</div>
         <div className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.75rem', marginTop:5 }}>{progress.label} · {progress.step}/{progress.total}</div>
       </div>
     </div>

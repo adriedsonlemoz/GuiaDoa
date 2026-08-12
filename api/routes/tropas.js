@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import Tropa       from '../models/Tropa.js';
 import { autenticar } from '../middleware/auth.js';
+import { sanitizeContentI18n } from '../utils/contentI18n.js';
 
 const router = Router();
+const I18N_FIELDS = ['nome', 'desc'];
 
 // GET /api/tropas — lista (com busca, paginação e ordenação)
 router.get('/', autenticar, async (req, res) => {
@@ -49,7 +51,7 @@ router.get('/:id', autenticar, async (req, res) => {
 // POST /api/tropas — criar
 router.post('/', autenticar, async (req, res) => {
   try {
-    const tropa = new Tropa({ ...req.body, atualizadoEm: new Date() });
+    const tropa = new Tropa({ ...req.body, i18n: sanitizeContentI18n(req.body.i18n, I18N_FIELDS), atualizadoEm: new Date() });
     await tropa.save();
     res.status(201).json(tropa);
   } catch (err) {
@@ -64,7 +66,7 @@ router.put('/:id', autenticar, async (req, res) => {
   try {
     const tropa = await Tropa.findByIdAndUpdate(
       req.params.id,
-      { ...req.body, atualizadoEm: new Date() },
+      { ...req.body, i18n: sanitizeContentI18n(req.body.i18n, I18N_FIELDS), atualizadoEm: new Date() },
       { new: true, runValidators: true }
     );
     if (!tropa) return res.status(404).json({ erro: 'Tropa não encontrada' });

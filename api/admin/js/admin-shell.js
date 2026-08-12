@@ -15,7 +15,6 @@ function irModulo(id) {
   if (id === 'dragoes')   { carregarDragoes(); }
   if (id === 'pesquisas') { carregarPesquisas(); }
   if (id === 'reinos')    { carregarReinos(); }
-  if (id === 'traducoes') { carregarTraducoes(); }
   if (id === 'dicas')     { carregarDicas(); }
 }
 

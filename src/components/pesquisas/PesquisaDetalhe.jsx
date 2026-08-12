@@ -1,6 +1,7 @@
 import React from 'react';
 import { C } from '../../theme.js';
 import { useGameData } from '../../data/GameDataContext.jsx';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 const CATEGORIAS_COR = {
   'Corpo a Corpo':          '#C85C5C',
@@ -44,6 +45,7 @@ function formatDuracao(totalMin) {
 }
 
 const PesquisaDetalhe = ({ slug }) => {
+  const { t, content } = useI18n();
   const { pesquisas } = useGameData();
   const pesquisa = pesquisas.find(p => p.slug === slug) || null;
 
@@ -51,7 +53,7 @@ const PesquisaDetalhe = ({ slug }) => {
     <div style={{ padding: 20, textAlign: 'center', color: C.ERROR }}>
       <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>⚠️</div>
       <p style={{ fontFamily: '"Nunito",sans-serif', fontSize: '0.85rem', margin: 0 }}>
-        Pesquisa não encontrada nos dados disponíveis.
+        {t('research.not_found')}
       </p>
     </div>
   );
@@ -96,7 +98,7 @@ const PesquisaDetalhe = ({ slug }) => {
           fontSize: '1.1rem', color: C.TEXT_PRIMARY,
           margin: '0 0 8px', lineHeight: 1.3,
         }}>
-          {pesquisa.nome}
+          {content(pesquisa, 'nome')}
         </h1>
 
         {/* Badge categoria */}
@@ -108,7 +110,7 @@ const PesquisaDetalhe = ({ slug }) => {
           background: `${cor}18`, border: `1px solid ${cor}50`,
           color: cor,
         }}>
-          {catIcone} {pesquisa.categoria.toUpperCase()}
+          {catIcone} {t(({ 'Corpo a Corpo':'research.category.melee','Ataque à Distância':'research.category.ranged','Produção':'research.category.production','Movimento e Construção':'research.category.movement' })[pesquisa.categoria] || 'research.title').toUpperCase()}
         </span>
       </div>
 
@@ -125,7 +127,7 @@ const PesquisaDetalhe = ({ slug }) => {
           fontSize: '0.83rem', color: C.TEXT_SECONDARY,
           lineHeight: 1.6, margin: 0,
         }}>
-          {pesquisa.descricao || 'Descrição não disponível.'}
+          {content(pesquisa, 'descricao') || t('research.no_description')}
         </p>
       </div>
 
@@ -160,7 +162,7 @@ const PesquisaDetalhe = ({ slug }) => {
               color: `${C.ACCENT}99`, textTransform: 'uppercase',
               margin: '0 0 2px',
             }}>
-              Duração Total da Pesquisa
+              {t('research.total_duration')}
             </p>
             <p style={{
               fontFamily: '"Cinzel",serif', fontWeight: 700,
@@ -175,7 +177,7 @@ const PesquisaDetalhe = ({ slug }) => {
                 fontSize: '0.6rem', color: `${C.ACCENT}66`,
                 margin: '3px 0 0', fontStyle: 'italic',
               }}>
-                {niveisComTempo} de {pesquisa.nivelMax} níveis com tempo informado
+                {t('research.levels_with_time',{shown:niveisComTempo,total:pesquisa.nivelMax})}
               </p>
             )}
           </div>
@@ -186,9 +188,9 @@ const PesquisaDetalhe = ({ slug }) => {
             const h = Math.floor((totalMinutos % (24 * 60)) / 60);
             const m = totalMinutos % 60;
             return [
-              { v: d, l: 'dias' },
-              { v: h, l: 'horas' },
-              { v: m, l: 'min' },
+              { v: d, l: t('research.days') },
+              { v: h, l: t('research.hours') },
+              { v: m, l: t('research.minutes_short') },
             ].filter(x => x.v > 0).map(x => (
               <div key={x.l} style={{ textAlign: 'center', flexShrink: 0 }}>
                 <p style={{
@@ -231,13 +233,13 @@ const PesquisaDetalhe = ({ slug }) => {
             fontSize: '0.7rem', color: C.TEXT_PRIMARY,
             letterSpacing: '1px',
           }}>
-            {nivelUnico ? 'APRIMORAMENTO' : `NÍVEIS (1 – ${pesquisa.nivelMax})`}
+            {nivelUnico ? t('research.upgrade').toUpperCase() : `${t('common.levels').toUpperCase()} (1 – ${pesquisa.nivelMax})`}
           </span>
           <span style={{
             fontFamily: '"Nunito",sans-serif', fontWeight: 700,
             fontSize: '0.6rem', color: C.TEXT_MUTED,
           }}>
-            ⏱ TEMPO
+            ⏱ {t('research.time').toUpperCase()}
           </span>
         </div>
 
@@ -274,7 +276,7 @@ const PesquisaDetalhe = ({ slug }) => {
                 fontFamily: '"Nunito",sans-serif', fontWeight: 600,
                 fontSize: '0.78rem', color: C.TEXT_SECONDARY,
               }}>
-                {nivelUnico ? 'Aprimoramento único' : `Nível ${nv.nivel}`}
+                {nivelUnico ? t('research.single_upgrade') : `${t('common.level')} ${nv.nivel}`}
               </span>
 
               {/* Tempo */}
@@ -312,7 +314,7 @@ const PesquisaDetalhe = ({ slug }) => {
               fontFamily: '"Nunito",sans-serif', fontWeight: 600,
               fontSize: '0.65rem', color: C.TEXT_FAINT, fontStyle: 'italic',
             }}>
-              Tempos serão adicionados em uma próxima atualização
+              {t('research.times_later')}
             </span>
           </div>
         )}

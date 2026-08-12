@@ -2,9 +2,14 @@ import React, { useState } from 'react';
 import { C } from '../../theme.js';
 import { fmtData } from './dicasUtils.js';
 import ImagemLightbox from './ImagemLightbox.jsx';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 const DicaArtigo = ({ dica, catInfo, onClose }) => {
   const [lightboxIdx, setLightboxIdx] = useState(null);
+  const { t, content, locale } = useI18n();
+  const titulo = content(dica, 'titulo');
+  const conteudo = content(dica, 'conteudo');
+  const categoria = catInfo ? content(catInfo, 'label') : '';
 
   return (
     <div style={{
@@ -32,7 +37,7 @@ const DicaArtigo = ({ dica, catInfo, onClose }) => {
           letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0, flex: 1,
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         }}>
-          {catInfo ? `${catInfo.icon} ${catInfo.label}` : '💡 Dica'}
+          {catInfo ? `${catInfo.icon} ${categoria}` : `💡 ${t('tips.title')}`}
         </p>
       </div>
       <div style={{ height: 2, background: `linear-gradient(90deg,transparent,${C.ACCENT},transparent)`, opacity: 0.5 }} />
@@ -43,7 +48,7 @@ const DicaArtigo = ({ dica, catInfo, onClose }) => {
         {dica.imagens?.length > 0 && (
           <div style={{ position: 'relative', background: C.BG_SECONDARY, cursor: 'zoom-in' }}
             onClick={() => setLightboxIdx(0)}>
-            <img src={dica.imagens[0].url} alt={dica.titulo}
+            <img src={dica.imagens[0].url} alt={titulo}
               style={{ width: '100%', maxHeight: 300, objectFit: 'cover', display: 'block' }}
               onError={e => { e.target.style.display = 'none'; }}
             />
@@ -52,7 +57,7 @@ const DicaArtigo = ({ dica, catInfo, onClose }) => {
               background: 'rgba(0,0,0,0.6)', color: '#fff',
               fontSize: '0.68rem', padding: '3px 10px', borderRadius: 100,
               display: 'flex', alignItems: 'center', gap: 4,
-            }}>🔍 Ver imagem{dica.imagens.length > 1 ? `s (${dica.imagens.length})` : ''}</span>
+            }}>🔍 {t('tips.view_image')}{dica.imagens.length > 1 ? ` (${dica.imagens.length})` : ''}</span>
           </div>
         )}
 
@@ -64,34 +69,34 @@ const DicaArtigo = ({ dica, catInfo, onClose }) => {
               textTransform: 'uppercase', letterSpacing: '0.07em',
               display: 'inline-block', marginBottom: 8,
               background: 'rgba(200,168,74,0.12)', padding: '2px 10px', borderRadius: 100,
-            }}>⭐ Destaque</span>
+            }}>{`⭐ ${t('tips.featured')}`}</span>
           )}
 
           <h1 className="font-cinzel font-bold"
             style={{ fontSize: '1.25rem', color: C.TEXT_PRIMARY, margin: '0 0 8px', lineHeight: 1.3 }}>
-            {dica.titulo}
+            {titulo}
           </h1>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
             {catInfo && (
               <span style={{ fontSize: '0.7rem', fontWeight: 700, color: C.TEXT_SECONDARY }}>
-                {catInfo.icon} {catInfo.label}
+                {catInfo.icon} {categoria}
               </span>
             )}
             {dica.criadoEm && (
               <>
                 <span style={{ color: C.TEXT_FAINT, fontSize: '0.65rem' }}>•</span>
-                <span style={{ fontSize: '0.7rem', color: C.TEXT_FAINT }}>{fmtData(dica.criadoEm)}</span>
+                <span style={{ fontSize: '0.7rem', color: C.TEXT_FAINT }}>{fmtData(dica.criadoEm, locale)}</span>
               </>
             )}
           </div>
 
-          {dica.conteudo && (
+          {conteudo && (
             <p className="font-nunito" style={{
               fontSize: '0.9rem', color: C.TEXT_SECONDARY, lineHeight: 1.8,
               margin: 0, whiteSpace: 'pre-wrap',
             }}>
-              {dica.conteudo}
+              {conteudo}
             </p>
           )}
         </div>
@@ -102,7 +107,7 @@ const DicaArtigo = ({ dica, catInfo, onClose }) => {
             <p style={{
               fontSize: '0.66rem', fontWeight: 700, color: C.TEXT_MUTED,
               textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10,
-            }}>📷 Galeria</p>
+            }}>{`📷 ${t('tips.gallery')}`}</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
               {dica.imagens.map((img, i) => (
                 <div key={i}

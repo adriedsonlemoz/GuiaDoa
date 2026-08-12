@@ -2,11 +2,13 @@ import React from 'react';
 import { C } from '../../theme.js';
 import Field from './ProfileField.jsx';
 import ReinoSelector from './ReinoSelector.jsx';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 export default function ProfileDetailsStep({
-  copy, editing, nome, setNome, playerId, setPlayerId, reino, onReino, fuso, horaLocal,
+  editing, nome, setNome, playerId, setPlayerId, reino, onReino, fuso, horaLocal,
   onSave, onBack, onCancel,
 }) {
+  const { t } = useI18n();
   return (
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', background:C.BG_MAIN }}>
       <header style={{
@@ -19,9 +21,9 @@ export default function ProfileDetailsStep({
             background:'rgba(248,242,224,.06)', border:'1.5px solid rgba(200,168,74,.5)', fontSize:27,
           }}>🎖️</div>
           <div>
-            <div className="font-nunito" style={{ color:C.ACCENT, fontWeight:900, fontSize:'.6rem', letterSpacing:2 }}>{copy.profileEyebrow}</div>
-            <h1 className="font-cinzel" style={{ color:C.TEXT_HEADER, fontSize:'1.02rem', margin:'4px 0 4px' }}>{copy.profileTitle}</h1>
-            <p className="font-nunito" style={{ color:'rgba(248,242,224,.66)', fontSize:'.7rem', lineHeight:1.4, margin:0 }}>{copy.profileSubtitle}</p>
+            <div className="font-nunito" style={{ color:C.ACCENT, fontWeight:900, fontSize:'.6rem', letterSpacing:2 }}>{t('profile.eyebrow')}</div>
+            <h1 className="font-cinzel" style={{ color:C.TEXT_HEADER, fontSize:'1.02rem', margin:'4px 0 4px' }}>{t('profile.title')}</h1>
+            <p className="font-nunito" style={{ color:'rgba(248,242,224,.66)', fontSize:'.7rem', lineHeight:1.4, margin:0 }}>{t('profile.subtitle')}</p>
           </div>
         </div>
       </header>
@@ -33,8 +35,8 @@ export default function ProfileDetailsStep({
         }}>
           <span aria-hidden="true">ℹ️</span>
           <div>
-            <strong className="font-nunito" style={{ color:C.TEXT_SECONDARY, fontSize:'.68rem' }}>{copy.unofficialTitle}</strong>
-            <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.64rem', lineHeight:1.45, margin:'2px 0 0' }}>{copy.unofficialText}</p>
+            <strong className="font-nunito" style={{ color:C.TEXT_SECONDARY, fontSize:'.68rem' }}>{t('profile.unofficial.title')}</strong>
+            <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.64rem', lineHeight:1.45, margin:'2px 0 0' }}>{t('profile.unofficial.text')}</p>
           </div>
         </section>
 
@@ -43,24 +45,24 @@ export default function ProfileDetailsStep({
           boxShadow:'0 5px 18px rgba(62,47,28,.09)', overflow:'visible',
         }}>
           <div style={{ padding:'11px 16px', background:C.BG_CARD_TOP, borderBottom:`1px solid ${C.BORDER_SOFT}`, borderRadius:'14px 14px 0 0' }}>
-            <span className="font-cinzel" style={{ color:C.TEXT_PRIMARY, fontWeight:700, fontSize:'.75rem', letterSpacing:1.6 }}>{copy.identity}</span>
+            <span className="font-cinzel" style={{ color:C.TEXT_PRIMARY, fontWeight:700, fontSize:'.75rem', letterSpacing:1.6 }}>{t('profile.identity')}</span>
           </div>
           <div style={{ padding:'16px 16px 18px' }}>
-            <Field label={copy.name}>
-              <input className="tw-input" autoComplete="nickname" maxLength={40} placeholder={copy.namePlaceholder} value={nome} onChange={e => setNome(e.target.value)} />
+            <Field label={t('profile.commander_name')}>
+              <input className="tw-input" autoComplete="nickname" maxLength={40} placeholder={t('profile.commander_placeholder')} value={nome} onChange={e => setNome(e.target.value)} />
             </Field>
 
-            <Field label={copy.playerId} hint={copy.playerIdHint}>
-              <input className="tw-input font-mono" inputMode="numeric" maxLength={20} placeholder={copy.playerIdPlaceholder} value={playerId} onChange={e => setPlayerId(e.target.value.replace(/\D/g, ''))} style={{ letterSpacing:'.08em' }} />
+            <Field label={t('profile.player_id')} hint={t('common.optional')}>
+              <input className="tw-input font-mono" inputMode="numeric" maxLength={20} placeholder={t('profile.player_id_placeholder')} value={playerId} onChange={e => setPlayerId(e.target.value.replace(/\D/g, ''))} style={{ letterSpacing:'.08em' }} />
             </Field>
 
             <div style={{ display:'flex', alignItems:'center', gap:8, margin:'16px 0 14px' }}>
               <div style={{ flex:1, height:1, background:C.BORDER_SOFT }} />
-              <span className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.62rem', fontWeight:900, letterSpacing:1.6, textTransform:'uppercase' }}>{copy.realmSection}</span>
+              <span className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.62rem', fontWeight:900, letterSpacing:1.6, textTransform:'uppercase' }}>{t('profile.realm_section')}</span>
               <div style={{ flex:1, height:1, background:C.BORDER_SOFT }} />
             </div>
 
-            <Field label={copy.realm}>
+            <Field label={t('profile.realm')}>
               <ReinoSelector value={reino} onChange={onReino} />
             </Field>
 
@@ -69,7 +71,7 @@ export default function ProfileDetailsStep({
                 marginTop:4, padding:'10px 12px', borderRadius:9, display:'flex', alignItems:'center', justifyContent:'space-between',
                 background:'rgba(28,58,94,.055)', border:'1px solid rgba(28,58,94,.14)',
               }}>
-                <span className="font-nunito" style={{ color:C.TEXT_MUTED, fontWeight:800, fontSize:'.68rem' }}>🕐 {copy.realmClock}</span>
+                <span className="font-nunito" style={{ color:C.TEXT_MUTED, fontWeight:800, fontSize:'.68rem' }}>🕐 {t('profile.realm_clock')}</span>
                 <div style={{ textAlign:'right' }}>
                   <strong className="font-nunito" style={{ display:'block', color:C.BLUE_DARK, fontSize:'.92rem', fontVariantNumeric:'tabular-nums' }}>{horaLocal}</strong>
                   <span className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.6rem' }}>{fuso}</span>
@@ -77,15 +79,15 @@ export default function ProfileDetailsStep({
               </div>
             )}
 
-            <p className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.62rem', lineHeight:1.45, margin:'13px 0 0' }}>🔒 {copy.privacy}</p>
+            <p className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.62rem', lineHeight:1.45, margin:'13px 0 0' }}>🔒 {t('profile.privacy')}</p>
           </div>
         </section>
 
         <div style={{ display:'grid', gap:8, marginTop:12 }}>
-          <button className="btn-navy btn-lg" type="button" onClick={onSave}>{editing ? copy.save : copy.continue}</button>
+          <button className="btn-navy btn-lg" type="button" onClick={onSave}>{editing ? t('profile.save') : t('profile.continue')}</button>
           <div style={{ display:'flex', gap:8 }}>
-            {!editing && <button className="btn-ghost" style={{ flex:1 }} type="button" onClick={onBack}>← {copy.back}</button>}
-            {editing && onCancel && <button className="btn-ghost" style={{ flex:1 }} type="button" onClick={onCancel}>{copy.back}</button>}
+            {!editing && <button className="btn-ghost" style={{ flex:1 }} type="button" onClick={onBack}>← {t('common.back')}</button>}
+            {editing && onCancel && <button className="btn-ghost" style={{ flex:1 }} type="button" onClick={onCancel}>{t('common.back')}</button>}
           </div>
         </div>
       </main>

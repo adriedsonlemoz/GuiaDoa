@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameData } from '../../data/GameDataContext.jsx';
+import { useI18n } from '../../hooks/useI18n.jsx';
 import { calcularProgresso, formatNumber, formatSufixo, unformat } from './niveisUtils.js';
 
 export default function useNivelProgress() {
@@ -7,6 +8,7 @@ export default function useNivelProgress() {
   const inputRef = useRef(null);
   const nivelAtualRef = useRef(null);
   const { niveis: niveisOnline, loading: carregando } = useGameData();
+  const { t, locale } = useI18n();
   const todosNiveis = useMemo(() => niveisOnline.map(item => [item.nivel, item.xp ?? null]), [niveisOnline]);
 
   const [promptAberto, setPromptAberto] = useState(true);
@@ -15,11 +17,11 @@ export default function useNivelProgress() {
   const [isDirty, setIsDirty] = useState(false);
   const [poderAtualText, setPoderAtualText] = useState(() => {
     const saved = localStorage.getItem('doa_poder_niveis');
-    return saved ? formatNumber(saved) : '';
+    return saved ? formatNumber(saved, locale) : '';
   });
   const [poderAntigoText, setPoderAntigoText] = useState(() => {
     const saved = localStorage.getItem('doa_poder_antigo');
-    return saved ? formatNumber(saved) : '';
+    return saved ? formatNumber(saved, locale) : '';
   });
 
   useEffect(() => {
@@ -37,6 +39,15 @@ export default function useNivelProgress() {
     };
   }, [isDirty]);
 
+  useEffect(() => {
+    const current = unformat(poderAtualText);
+    const old = unformat(poderAntigoText);
+    if (current) setPoderAtualText(formatNumber(current, locale));
+    if (old) setPoderAntigoText(formatNumber(old, locale));
+  // Reformat only when the display locale changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
+
   const currentPowerNum = unformat(poderAtualText);
   const oldPowerNum = unformat(poderAntigoText);
   const diferencaPoder = currentPowerNum - oldPowerNum;
@@ -53,12 +64,12 @@ export default function useNivelProgress() {
   const closeToast = () => setToast(current => ({ ...current, open: false }));
   const handleInputPower = event => {
     const number = unformat(event.target.value);
-    setPoderAtualText(number === 0 ? '' : formatNumber(number));
+    setPoderAtualText(number === 0 ? '' : formatNumber(number, locale));
     setIsDirty(true);
   };
   const handleInputAntigo = event => {
     const number = unformat(event.target.value);
-    setPoderAntigoText(number === 0 ? '' : formatNumber(number));
+    setPoderAntigoText(number === 0 ? '' : formatNumber(number, locale));
     setIsDirty(true);
   };
 
@@ -67,11 +78,21 @@ export default function useNivelProgress() {
     localStorage.setItem('doa_poder_antigo', oldPowerNum);
     setIsDirty(false);
     if (diferencaPoder > 0 && oldPowerNum > 0) {
-      setResultadoDialog({ open: true, titulo: '🎖️ Relatório de Progresso', mensagem: `Parabéns, Comandante! O seu poder aumentou ${formatSufixo(diferencaPoder)}!`, tipo: 'success' });
+      setResultadoDialog({
+        open: true,
+        titulo: t('levels.report_up_title'),
+        mensagem: t('levels.report_up', { amount: formatSufixo(diferencaPoder, locale) }),
+        tipo: 'success',
+      });
     } else if (diferencaPoder < 0 && oldPowerNum > 0) {
-      setResultadoDialog({ open: true, titulo: '⚠️ Alerta de Baixas', mensagem: `Atenção: O seu poder diminuiu ${formatSufixo(Math.abs(diferencaPoder))}. Reorganize as suas defesas!`, tipo: 'warning' });
+      setResultadoDialog({
+        open: true,
+        titulo: t('levels.report_down_title'),
+        mensagem: t('levels.report_down', { amount: formatSufixo(Math.abs(diferencaPoder), locale) }),
+        tipo: 'warning',
+      });
     } else {
-      setToast({ open: true, message: 'Progresso salvo com sucesso!', severity: 'success' });
+      setToast({ open: true, message: t('levels.saved'), severity: 'success' });
     }
   };
 

@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { C } from '../../theme.js';
 import { getIcone, getTipoAtaque, fmtFull, ATRIBUTOS } from './tropaUtils.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 /* ── Barra de atributo ───────────────────────────────────────────────────── */
-const StatRow = ({ icon, label, value, color, max }) => {
+const StatRow = ({ icon, label, value, color, max, locale }) => {
   const empty = !value || value === 0;
   const pct   = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
@@ -15,7 +16,7 @@ const StatRow = ({ icon, label, value, color, max }) => {
         </span>
         <span className="font-nunito font-bold"
           style={{ fontSize: '0.78rem', color: empty ? C.TEXT_FAINT : color }}>
-          {empty ? '—' : fmtFull(value)}
+          {empty ? '—' : fmtFull(value, locale)}
         </span>
       </div>
       <div style={{
@@ -35,6 +36,7 @@ const StatRow = ({ icon, label, value, color, max }) => {
 
 /* ── Modal ───────────────────────────────────────────────────────────────── */
 const TropaModal = ({ tropa, onFechar }) => {
+  const { t, content, locale } = useI18n();
   // Fecha com ESC no desktop
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onFechar(); };
@@ -50,7 +52,9 @@ const TropaModal = ({ tropa, onFechar }) => {
 
   if (!tropa) return null;
 
-  const tipo = getTipoAtaque(tropa);
+  const tipo = getTipoAtaque(tropa, t);
+  const nome = content(tropa, 'nome');
+  const descricao = content(tropa, 'desc');
 
   return (
     /* Backdrop */
@@ -108,7 +112,7 @@ const TropaModal = ({ tropa, onFechar }) => {
             <div style={{ flex: 1, minWidth: 0 }}>
               <h2 className="font-cinzel font-bold m-0"
                 style={{ fontSize: '1rem', color: '#F8F2E0', lineHeight: 1.2, marginBottom: 5 }}>
-                {tropa.nome}
+                {nome}
               </h2>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="font-nunito font-black"
@@ -125,7 +129,7 @@ const TropaModal = ({ tropa, onFechar }) => {
                     background: 'rgba(124,58,237,0.18)', border: '1px solid rgba(124,58,237,0.4)',
                     color: '#a78bfa',
                   }}>
-                  ⭐ {tropa.poder} poder
+                  ⭐ {tropa.poder} {t('common.power').toLowerCase()}
                 </span>
               </div>
             </div>
@@ -149,7 +153,7 @@ const TropaModal = ({ tropa, onFechar }) => {
         <div style={{ overflowY: 'auto', flex: 1, padding: '14px 16px 24px' }}>
 
           {/* Descrição */}
-          {tropa.desc && (
+          {descricao && (
             <div style={{
               background: 'rgba(200,168,74,0.08)',
               border: `1px solid rgba(200,168,74,0.22)`,
@@ -157,7 +161,7 @@ const TropaModal = ({ tropa, onFechar }) => {
             }}>
               <p className="font-nunito font-semibold m-0"
                 style={{ fontSize: '0.8rem', color: C.TEXT_SECONDARY, lineHeight: 1.6, fontStyle: 'italic' }}>
-                {tropa.desc}
+                {descricao}
               </p>
             </div>
           )}
@@ -168,7 +172,7 @@ const TropaModal = ({ tropa, onFechar }) => {
               <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,transparent,${C.BORDER_SOFT})` }} />
               <span className="font-nunito font-black uppercase tracking-widest"
                 style={{ fontSize: '0.6rem', color: C.TEXT_MUTED }}>
-                Atributos
+                {t('troops.attributes')}
               </span>
               <div style={{ flex: 1, height: 1, background: `linear-gradient(270deg,transparent,${C.BORDER_SOFT})` }} />
             </div>
@@ -176,8 +180,8 @@ const TropaModal = ({ tropa, onFechar }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {ATRIBUTOS.map(attr => (
                 <StatRow key={attr.id}
-                  icon={attr.icon} label={attr.label}
-                  value={tropa[attr.id]} color={attr.color} max={attr.max}
+                  icon={attr.icon} label={attr.labelKey ? t(attr.labelKey) : attr.label}
+                  value={tropa[attr.id]} color={attr.color} max={attr.max} locale={locale}
                 />
               ))}
             </div>
@@ -185,7 +189,7 @@ const TropaModal = ({ tropa, onFechar }) => {
 
           {/* Seções futuras */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {[{ icon: '📋', title: 'REQUISITOS' }, { icon: '🔮', title: 'AMULETOS' }].map(sec => (
+            {[{ icon: '📋', title: t('troops.requirements').toUpperCase() }, { icon: '🔮', title: t('troops.amulets').toUpperCase() }].map(sec => (
               <div key={sec.title} style={{
                 padding: '10px 8px', borderRadius: 8, textAlign: 'center',
                 border: `1px dashed ${C.BORDER_SOFT}`,
@@ -197,7 +201,7 @@ const TropaModal = ({ tropa, onFechar }) => {
                 </span>
                 <span className="font-nunito"
                   style={{ fontSize: '0.65rem', color: C.TEXT_FAINT, fontStyle: 'italic' }}>
-                  Em breve
+                  {t('common.coming_soon')}
                 </span>
               </div>
             ))}

@@ -91,6 +91,8 @@ function abrirModalPesquisa(slug) {
     document.getElementById('pe-nivel-max').value     = p.nivelMax || 10;
     document.getElementById('pe-ordem').value         = p.ordem || 0;
     document.getElementById('pe-descricao').value     = p.descricao || '';
+    document.getElementById('pe-en-nome').value = p.i18n?.['en-US']?.nome || '';
+    document.getElementById('pe-en-descricao').value = p.i18n?.['en-US']?.descricao || '';
     PE_ICONE = p.icone || '🔬';
   } else {
     document.getElementById('pe-slug-original').value = '';
@@ -101,6 +103,8 @@ function abrirModalPesquisa(slug) {
     document.getElementById('pe-nivel-max').value     = 10;
     document.getElementById('pe-ordem').value         = 0;
     document.getElementById('pe-descricao').value     = '';
+    document.getElementById('pe-en-nome').value = '';
+    document.getElementById('pe-en-descricao').value = '';
     PE_ICONE = '🔬';
   }
   document.getElementById('emoji-preview-pe').textContent = PE_ICONE;
@@ -131,13 +135,13 @@ async function salvarPesquisa() {
       r = await fetch(`${API}/pesquisas/${PE_SLUG}/meta`,{
         method:'PUT',
         headers:{'Content-Type':'application/json',Authorization:`Bearer ${TOKEN}`},
-        body:JSON.stringify({nome,icone:PE_ICONE,descricao,nivelMax,ordem}),
+        body:JSON.stringify({nome,icone:PE_ICONE,descricao,nivelMax,ordem,i18n:{'en-US':{nome:document.getElementById('pe-en-nome').value.trim(),descricao:document.getElementById('pe-en-descricao').value.trim()}}}),
       });
     } else {
       r = await fetch(`${API}/pesquisas`,{
         method:'POST',
         headers:{'Content-Type':'application/json',Authorization:`Bearer ${TOKEN}`},
-        body:JSON.stringify({slug,nome,icone:PE_ICONE,descricao,nivelMax,ordem}),
+        body:JSON.stringify({slug,nome,icone:PE_ICONE,descricao,nivelMax,ordem,i18n:{'en-US':{nome:document.getElementById('pe-en-nome').value.trim(),descricao:document.getElementById('pe-en-descricao').value.trim()}}}),
       });
     }
     const d = await r.json();

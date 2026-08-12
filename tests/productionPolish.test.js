@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getProfileCopy } from '../src/components/ProfileLogin/profileCopy.js';
 
 const root = fileURLToPath(new URL('../src', import.meta.url));
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -31,12 +30,14 @@ test('regressão do perfil: ProfileField importa a paleta usada no componente', 
   assert.match(field, /C\.TEXT_MUTED/);
 });
 
-test('perfil foi dividido em etapas e possui textos próprios para pt-BR e en-US', () => {
+test('perfil foi dividido em etapas e usa a camada central de idiomas', () => {
   const form = read('src/components/ProfileLogin/ProfileForm.jsx');
+  const language = read('src/components/ProfileLogin/ProfileLanguageStep.jsx');
+  const details = read('src/components/ProfileLogin/ProfileDetailsStep.jsx');
   assert.match(form, /ProfileLanguageStep/);
   assert.match(form, /ProfileDetailsStep/);
-  assert.equal(getProfileCopy('pt-BR').continue, 'Entrar no GUIA DOA');
-  assert.equal(getProfileCopy('en-US').continue, 'Open GUIA DOA');
+  assert.match(language, /useI18n/);
+  assert.match(details, /t\('profile\.continue'\)/);
 });
 
 test('detalhes de dragão importam o hook de estado usado pelo módulo', () => {
@@ -53,6 +54,6 @@ test('erros públicos possuem código de suporte e diagnóstico copiável', () =
   const boundary = read('src/app/ErrorBoundary.jsx');
   const state = read('src/ui/AppErrorState.jsx');
   assert.match(boundary, /GD-UI-001/);
-  assert.match(state, /Código de suporte/);
-  assert.match(state, /Copiar diagnóstico/);
+  assert.match(state, /errors\.support_code/);
+  assert.match(state, /errors\.copy/);
 });

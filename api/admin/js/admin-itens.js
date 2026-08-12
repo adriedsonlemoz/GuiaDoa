@@ -77,6 +77,9 @@ function editarItem(item) {
   document.getElementById('fi-nome').value      = item.nome || '';
   document.getElementById('fi-descricao').value = item.descricao || '';
   document.getElementById('fi-onde').value      = item.onde || '';
+  document.getElementById('fi-en-nome').value = item.i18n?.['en-US']?.nome || '';
+  document.getElementById('fi-en-descricao').value = item.i18n?.['en-US']?.descricao || '';
+  document.getElementById('fi-en-onde').value = item.i18n?.['en-US']?.onde || '';
   renderEmojiPicker();
   abrirModal('modal-item');
 }
@@ -104,7 +107,11 @@ async function salvarItem() {
   const onde      = document.getElementById('fi-onde').value.trim();
   if (!nome) return toast('Preencha o nome do item!', 'warn');
 
-  const body = { nome, icone: ICONE_SELECIONADO, descricao, onde };
+  const body = { nome, icone: ICONE_SELECIONADO, descricao, onde, i18n: { 'en-US': {
+    nome: document.getElementById('fi-en-nome').value.trim(),
+    descricao: document.getElementById('fi-en-descricao').value.trim(),
+    onde: document.getElementById('fi-en-onde').value.trim(),
+  } } };
   try {
     const url    = EDITANDO_ITEM_ID ? `${API}/itens/${EDITANDO_ITEM_ID}` : `${API}/itens`;
     const method = EDITANDO_ITEM_ID ? 'PUT' : 'POST';

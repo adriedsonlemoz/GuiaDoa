@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { T, C, safeCopy } from './styles.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 // ─── Helper: itera por code points (resolve surrogate pairs) ─────────────────
 const chars  = str => [...str];
@@ -156,6 +157,7 @@ const EXEMPLO = 'Shadow Warriors';
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function ModoFontes({ showToast }) {
+  const { t } = useI18n();
   const [texto,     setTexto]     = useState('');
   const [grupo,     setGrupo]     = useState(GRUPOS[0]);
   const [busca,     setBusca]     = useState('');
@@ -174,7 +176,7 @@ export default function ModoFontes({ showToast }) {
 
   const copiar = (fonte, textoBase) => {
     const t = textoBase || texto;
-    if (!t.trim()) { showToast('Digite um texto primeiro!'); inputRef.current?.focus(); return; }
+    if (!t.trim()) { showToast(t('builder.fonts.enter_first')); inputRef.current?.focus(); return; }
     const resultado = fonte.fn(t);
     safeCopy(resultado, () => {
       setCopiedId(fonte.id);
@@ -182,7 +184,7 @@ export default function ModoFontes({ showToast }) {
         { id: fonte.id, nome: fonte.nome, resultado },
         ...prev.filter(h => h.id !== fonte.id),
       ].slice(0, 5));
-      showToast('✓ ' + fonte.nome + ' copiado!');
+      showToast(t('builder.fonts.copied',{name:fonte.nome}));
       setTimeout(() => setCopiedId(null), 1800);
     });
   };
@@ -197,7 +199,7 @@ export default function ModoFontes({ showToast }) {
 
       <div style={T.card}>
         <div style={{ ...T.cardTitle, justifyContent: 'space-between' }}>
-          <span><span style={{ color: C.ACCENT }}>✏️</span> Seu texto</span>
+          <span><span style={{ color: C.ACCENT }}>✏️</span> {t('builder.fonts.your_text')}</span>
           <span style={{ fontSize: '0.65rem', color: charCount > 0 ? C.ACCENT : C.TEXT_FAINT, textTransform: 'none', letterSpacing: 0 }}>
             {charCount} {charCount === 1 ? 'char' : 'chars'}
           </span>
@@ -215,18 +217,18 @@ export default function ModoFontes({ showToast }) {
             <button
               onClick={() => setTexto('')}
               style={{ ...T.btnOutline, height: 44, padding: '0 10px', alignSelf: 'flex-start', fontSize: '0.8rem' }}
-              title="Limpar"
+              title={t('builder.fonts.clear')}
             >✕</button>
           )}
         </div>
         <p style={{ fontSize: '0.63rem', color: C.TEXT_FAINT, marginTop: 5 }}>
-          Clique em qualquer estilo para copiar. Sem texto: mostra preview com exemplo.
+          {t('builder.fonts.help')}
         </p>
       </div>
 
       {historico.length > 0 && (
         <div style={{ ...T.card, marginBottom: 8 }}>
-          <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>⏱</span> Últimos copiados</div>
+          <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>⏱</span> {t('builder.fonts.recent')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {historico.map(h => (
               <div key={h.id} style={{
@@ -242,7 +244,7 @@ export default function ModoFontes({ showToast }) {
                   </div>
                 </div>
                 <button
-                  onClick={() => safeCopy(h.resultado, () => showToast('✓ Recopiado!'))}
+                  onClick={() => safeCopy(h.resultado, () => showToast(t('builder.fonts.recopied')))}
                   style={{ ...T.btnOutline, height: 28, padding: '0 8px', fontSize: '0.65rem' }}
                 >⎘</button>
               </div>
@@ -255,7 +257,7 @@ export default function ModoFontes({ showToast }) {
         <input
           value={busca}
           onChange={e => setBusca(e.target.value)}
-          placeholder="🔍 Buscar estilo…"
+          placeholder={t('builder.fonts.search')}
           style={{ ...T.input, flex: 1, minHeight: 34, fontSize: '0.78rem', padding: '6px 10px' }}
         />
         {busca && (
@@ -311,7 +313,7 @@ export default function ModoFontes({ showToast }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '0.58rem', color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 3 }}>
                   {fonte.nome}
-                  {isEmpty && <span style={{ marginLeft: 6, color: C.TEXT_FAINT, fontStyle: 'italic', textTransform: 'none', letterSpacing: 0 }}>exemplo</span>}
+                  {isEmpty && <span style={{ marginLeft: 6, color: C.TEXT_FAINT, fontStyle: 'italic', textTransform: 'none', letterSpacing: 0 }}>{t('builder.fonts.example')}</span>}
                 </div>
                 <div style={{
                   fontSize: '0.95rem', color: isEmpty ? C.TEXT_MUTED : C.TEXT_PRIMARY,
@@ -332,7 +334,7 @@ export default function ModoFontes({ showToast }) {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.15s', fontFamily: 'inherit', fontWeight: 700,
                 }}
-                title="Copiar"
+                title={t('builder.fonts.copy')}
               >
                 {isCopied ? '✓' : '⎘'}
               </button>

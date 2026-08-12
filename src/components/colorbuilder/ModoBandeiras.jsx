@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { FLAGS, FLAG_REGIOES, flagCode } from './data.js';
 import { T, C, safeCopy } from './styles.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 export default function ModoBandeiras({ showToast }) {
+  const { t } = useI18n();
   const [regiao, setRegiao] = useState(0);
 
   const flagsRegiao = FLAGS.slice(...FLAG_REGIOES[regiao].range);
@@ -11,11 +13,10 @@ export default function ModoBandeiras({ showToast }) {
     <div style={T.body}>
       <div style={T.card}>
         <div style={T.cardTitle}>
-          <span style={{ color: C.ACCENT }}>🏳</span> Bandeiras com listras verticais
+          <span style={{ color: C.ACCENT }}>🏳</span> {t('builder.flags.title')}
         </div>
         <p style={{ fontSize: '0.67rem', color: C.TEXT_MUTED, marginBottom: 12, lineHeight: 1.6 }}>
-          Clique no card ou em <strong style={{ color: C.TEXT_SECONDARY }}>⎘</strong> para copiar o código pronto para colar no chat.
-          Bandeiras com emblemas ou brasões estão simplificadas (somente listras).
+          {t('builder.flags.help')}
         </p>
 
         {/* Tabs de região */}
@@ -33,7 +34,7 @@ export default function ModoBandeiras({ showToast }) {
             const code = flagCode(flag);
             return (
               <div key={i}
-                onClick={() => safeCopy(code, () => showToast(`${flag.emoji} ${flag.name} copiado!`))}
+                onClick={() => safeCopy(code, () => showToast(t('builder.copied',{name:`${flag.emoji} ${flag.name}`})))}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   background: C.BG_SECONDARY,
@@ -84,9 +85,9 @@ export default function ModoBandeiras({ showToast }) {
                 <button
                   onClick={e => {
                     e.stopPropagation();
-                    safeCopy(code, () => showToast(`${flag.emoji} ${flag.name} copiado!`));
+                    safeCopy(code, () => showToast(t('builder.copied',{name:`${flag.emoji} ${flag.name}`})));
                   }}
-                  title="Copiar código"
+                  title={t('builder.copy_code')}
                   style={{
                     background: C.BG_CARD, border: `1.5px solid rgba(200,168,74,0.25)`,
                     borderRadius: 6, color: C.TEXT_MUTED,

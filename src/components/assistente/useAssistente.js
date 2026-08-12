@@ -1,18 +1,21 @@
-import { useCallback, useState } from 'react';
-import { API_URL, PENSANDO_MSGS, shuffleSugestoes } from './config.js';
+import { useCallback, useMemo, useState } from 'react';
+import { useI18n } from '../../hooks/useI18n.jsx';
+import { API_URL, PENSANDO_KEYS, shuffleSugestoes } from './config.js';
 import { fmtHora } from './markdown.jsx';
 
 export default function useAssistente() {
+  const { t, locale } = useI18n();
   const [mensagens, setMensagens] = useState([]);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
   const [intencao, setIntencao] = useState('');
   const [pensando, setPensando] = useState('');
-  const [sugestoes] = useState(() => shuffleSugestoes());
+  const sugestoes = useMemo(() => shuffleSugestoes(t), [t, locale]);
 
   const enviar = useCallback(async (pergunta) => {
     setErro('');
-    setPensando(PENSANDO_MSGS[Math.floor(Math.random() * PENSANDO_MSGS.length)]);
+    const thinkingKey = PENSANDO_KEYS[Math.floor(Math.random() * PENSANDO_KEYS.length)];
+    setPensando(t(thinkingKey));
     const novaMsg = { role: 'user', content: pergunta, hora: fmtHora() };
     setMensagens((m) => [...m, novaMsg]);
     setLoading(true);
@@ -23,7 +26,7 @@ export default function useAssistente() {
       const res = await fetch(`${API_URL}/api/assistente`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pergunta, historico }),
+        body: JSON.stringify({ pergunta, historico, locale }),
       });
       const data = await res.json();
       if (!res.ok || data.erro) throw new Error(data.mensagem || data.erro || `Erro ${res.status}`);
@@ -33,12 +36,12 @@ export default function useAssistente() {
         { role: 'assistant', content: data.resposta, hora: fmtHora(), intencao: data.intencao },
       ]);
     } catch (e) {
-      setErro(e.message || 'Erro ao contatar o assistente.');
+      setErro(e.message || t('assistant.error_contact'));
     } finally {
       setLoading(false);
       setPensando('');
     }
-  }, [mensagens]);
+  }, [mensagens, locale, t]);
 
   const reenviar = useCallback(() => {
     const ultima = [...mensagens].reverse().find((m) => m.role === 'user');

@@ -5,6 +5,7 @@ import ModoTexto     from './ModoTexto.jsx';
 import ModoBandeiras from './ModoBandeiras.jsx';
 import ModoFontes    from './ModoFontes.jsx';
 import ModoPlacar    from './ModoPlacar.jsx';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function Toast({ msg, visible }) {
@@ -30,49 +31,22 @@ function Toast({ msg, visible }) {
 
 // ─── Modos da tela inicial ────────────────────────────────────────────────────
 const MODOS = [
-  {
-    id:    'texto',
-    icon:  '🎨',
-    title: 'Personalizar Texto',
-    desc:  'Digite, insira emoticons e símbolos, depois pinte cada caractere com a cor que quiser.',
-    cor:   '#9B59B6',
-    tags:  ['texto', 'emoticons', 'símbolos', 'cores'],
-  },
-  {
-    id:    'bandeiras',
-    icon:  '🏳',
-    title: 'Bandeiras',
-    desc:  'Bandeiras coloridas com listras verticais prontas para copiar no chat.',
-    cor:   '#2980B9',
-    tags:  ['bandeiras', 'países', 'listras'],
-  },
-  {
-    id:    'fontes',
-    icon:  '𝓐',
-    title: 'Fontes & Estilos',
-    desc:  'Converta seu texto em 38+ estilos Unicode: gótico, cursivo, duplo contorno, circulado, leet e muito mais.',
-    cor:   '#C0392B',
-    tags:  ['gótico', 'cursivo', 'unicode', 'leet', 'estilos'],
-  },
-  {
-    id:    'placar',
-    icon:  '🏆',
-    title: 'Placar de Jogos',
-    desc:  'Monte o placar de uma partida com cores por time e destaque automático de quem marcou.',
-    cor:   '#16A085',
-    tags:  ['placar', 'futebol', 'gol', 'times'],
-  },
+  { id:'texto', icon:'🎨', key:'builder.mode.text', cor:'#9B59B6', tags:['text','emoticons','symbols','colors'] },
+  { id:'bandeiras', icon:'🏳', key:'builder.mode.flags', cor:'#2980B9', tags:['flags','countries','stripes'] },
+  { id:'fontes', icon:'𝓐', key:'builder.mode.fonts', cor:'#C0392B', tags:['gothic','script','unicode','leet','styles'] },
+  { id:'placar', icon:'🏆', key:'builder.mode.score', cor:'#16A085', tags:['score','football','goal','teams'] },
 ];
 
 const MODO_HEADERS = {
-  texto:     { icon: '🎨', title: 'Personalizar Texto' },
-  bandeiras: { icon: '🏳', title: 'Bandeiras'          },
-  fontes:    { icon: '𝓐',  title: 'Fontes & Estilos'  },
-  placar:    { icon: '🏆', title: 'Placar de Jogos'    },
+  texto: { icon:'🎨', key:'builder.mode.text.title' },
+  bandeiras: { icon:'🏳', key:'builder.mode.flags.title' },
+  fontes: { icon:'𝓐', key:'builder.mode.fonts.title' },
+  placar: { icon:'🏆', key:'builder.mode.score.title' },
 };
 
 // ─── Tela de boas-vindas ──────────────────────────────────────────────────────
 function TelaBoas({ onEscolher }) {
+  const { t } = useI18n();
   return (
     <div style={T.body}>
 
@@ -84,10 +58,10 @@ function TelaBoas({ onEscolher }) {
       }}>
         <div style={{ fontSize: '2.2rem', marginBottom: 8 }}>✦</div>
         <p style={{ fontSize: '0.85rem', color: C.TEXT_PRIMARY, fontWeight: 600, marginBottom: 4, fontFamily: "'Cinzel', serif" }}>
-          O que você quer fazer hoje?
+          {t('builder.welcome.title')}
         </p>
         <p style={{ fontSize: '0.72rem', color: C.TEXT_MUTED, lineHeight: 1.6 }}>
-          Escolha uma das opções abaixo para começar
+          {t('builder.welcome.subtitle')}
         </p>
       </div>
 
@@ -144,23 +118,12 @@ function TelaBoas({ onEscolher }) {
                 fontSize: '0.85rem', color: C.TEXT_PRIMARY,
                 marginBottom: 5, letterSpacing: '0.3px',
               }}>
-                {modo.title}
+                {t(`${modo.key}.title`)}
               </div>
               <div style={{ fontSize: '0.7rem', color: C.TEXT_MUTED, lineHeight: 1.6 }}>
-                {modo.desc}
+                {t(`${modo.key}.desc`)}
               </div>
-              {/* Tags */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
-                {modo.tags.map(tag => (
-                  <span key={tag} style={{
-                    fontSize: '0.58rem', padding: '2px 7px',
-                    background: `${modo.cor}15`,
-                    border: `1px solid ${modo.cor}30`,
-                    borderRadius: 100, color: C.TEXT_MUTED,
-                    letterSpacing: '0.05em', textTransform: 'uppercase',
-                  }}>{tag}</span>
-                ))}
-              </div>
+
             </div>
 
             {/* Seta */}
@@ -176,6 +139,7 @@ function TelaBoas({ onEscolher }) {
 // RAIZ
 // ═════════════════════════════════════════════════════════════════════════════
 export default function ColorTextBuilder({ onClose }) {
+  const { t } = useI18n();
   const [modo, setModo] = useState(null);
 
   const {
@@ -203,14 +167,14 @@ export default function ColorTextBuilder({ onClose }) {
         <div style={T.header}>
           <div style={T.headerLeft}>
             {modo && (
-              <button style={T.backBtn} onClick={() => setModo(null)} title="Voltar (ESC)">←</button>
+              <button style={T.backBtn} onClick={() => setModo(null)} title={t('builder.back_title')}>←</button>
             )}
             <span style={{ fontSize: '1.1rem' }}>{header ? header.icon : '🎨'}</span>
             <span style={T.headerTitle}>
-              {header ? `◆ ${header.title} ◆` : '◆ Construtor de Texto ◆'}
+              {header ? `◆ ${t(header.key)} ◆` : `◆ ${t('builder.title')} ◆`}
             </span>
           </div>
-          <button style={T.closeBtn} onClick={onClose} title="Fechar (ESC)">✕</button>
+          <button style={T.closeBtn} onClick={onClose} title={t('builder.close_title')}>✕</button>
         </div>
         <div style={T.goldLine} />
 

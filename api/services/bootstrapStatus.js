@@ -7,7 +7,6 @@ const MODULOS_BOOTSTRAP = [
   { id: 'reinos', label: 'Reinos', icon: '🌍', model: 'Reino', essencial: true },
   { id: 'categoriasDicas', label: 'Categorias de dicas', icon: '💡', model: 'CategoriaDica', essencial: true },
   { id: 'itens', label: 'Itens', icon: '🎒', model: 'Item', essencial: false },
-  { id: 'traducoes', label: 'Traduções', icon: '🌐', model: 'Traducao', essencial: false },
   { id: 'dicas', label: 'Dicas', icon: '📖', model: 'Dica', essencial: false },
 ];
 

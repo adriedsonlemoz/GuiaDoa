@@ -1,7 +1,10 @@
 import React from 'react';
 import Modal from '../../ui/Modal.jsx';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
-const AlertaModal = ({ open, message, onClose }) => (
+const AlertaModal = ({ open, message, onClose }) => {
+  const { t } = useI18n();
+  return (
   <Modal open={open} onClose={onClose} maxWidth={320}>
     {/* Faixa ornamental */}
     <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, transparent, #C87A2C, transparent)' }} />
@@ -16,7 +19,7 @@ const AlertaModal = ({ open, message, onClose }) => (
       </div>
 
       <p className="font-nunito font-black text-base text-aoe-dark mb-2 tracking-wide m-0">
-        Atenção, Comandante!
+        {t('alert.commander')}
       </p>
       <p className="font-nunito font-semibold text-sm text-aoe-mid leading-relaxed mb-4 m-0">
         {message}
@@ -29,10 +32,11 @@ const AlertaModal = ({ open, message, onClose }) => (
         onClick={onClose}
         className="btn-gold btn-lg w-full uppercase tracking-widest"
       >
-        Entendido
+        {t('alert.understood')}
       </button>
     </div>
   </Modal>
-);
+  );
+};
 
 export default AlertaModal;

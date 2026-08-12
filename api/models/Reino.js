@@ -8,6 +8,7 @@ const ReinoSchema = new mongoose.Schema({
   fuso:     { type: String, required: true, trim: true },    // ex: 'UTC-3'
   regiao:   { type: String, default: '' },                   // ex: 'América do Sul'
   idioma:   { type: String, default: '' },                   // ex: 'Português'
+  i18n:      { type: mongoose.Schema.Types.Mixed, default: {} },
   atualizadoEm: { type: Date, default: Date.now },
 }, { collection: COLLECTIONS.reinos });
 

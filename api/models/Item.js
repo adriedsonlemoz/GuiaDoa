@@ -6,6 +6,7 @@ const ItemSchema = new mongoose.Schema({
   icone:     { type: String, default: '🎒' },
   descricao: { type: String, default: '' },
   onde:      { type: String, default: '' },
+  i18n:      { type: mongoose.Schema.Types.Mixed, default: {} },
   criadoEm:     { type: Date, default: Date.now },
   atualizadoEm: { type: Date, default: Date.now },
 }, { collection: COLLECTIONS.itens });

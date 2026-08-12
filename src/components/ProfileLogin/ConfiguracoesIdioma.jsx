@@ -3,7 +3,7 @@ import { C } from '../../theme.js';
 import { useI18n, LOCALES_DISPONIVEIS } from '../../hooks/useI18n.jsx';
 
 export default function ConfiguracoesIdioma({ onVoltar }) {
-  const { locale, setLocale, carregando } = useI18n();
+  const { locale, setLocale, t } = useI18n();
 
   const handleEscolher = (code) => {
     setLocale(code);
@@ -35,7 +35,7 @@ export default function ConfiguracoesIdioma({ onVoltar }) {
             fontFamily: '"Cinzel",serif', fontWeight: 700,
             fontSize: '0.82rem', letterSpacing: '2px',
             color: 'rgba(200,168,74,0.9)', textTransform: 'uppercase', margin: 0,
-          }}>◆ Idioma / Language ◆</p>
+          }}>◆ {t('language.title')} ◆</p>
         </div>
         <span style={{ fontSize: '1.4rem' }}>🌐</span>
       </div>
@@ -60,7 +60,7 @@ export default function ConfiguracoesIdioma({ onVoltar }) {
               fontFamily: '"Nunito",sans-serif', fontWeight: 900,
               fontSize: '0.65rem', color: C.TEXT_MUTED,
               textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 2px',
-            }}>Idioma atual / Current language</p>
+            }}>{t('language.current')}</p>
             <p style={{
               fontFamily: '"Nunito",sans-serif', fontWeight: 700,
               fontSize: '0.88rem', color: C.TEXT_PRIMARY, margin: 0,
@@ -68,12 +68,6 @@ export default function ConfiguracoesIdioma({ onVoltar }) {
               {LOCALES_DISPONIVEIS.find(l => l.code === locale)?.nativo || locale}
             </p>
           </div>
-          {carregando && (
-            <span style={{
-              marginLeft: 'auto', fontSize: '0.68rem', color: C.TEXT_MUTED,
-              fontFamily: '"Nunito",sans-serif',
-            }}>carregando…</span>
-          )}
         </div>
 
         {/* Lista de idiomas */}
@@ -132,7 +126,7 @@ export default function ConfiguracoesIdioma({ onVoltar }) {
                       borderRadius: 100, color: C.ACCENT,
                       fontFamily: '"Nunito",sans-serif', fontWeight: 700,
                       textTransform: 'uppercase', letterSpacing: '0.05em',
-                    }}>Ativo</span>
+                    }}>{t('language.active')}</span>
                     <span style={{ color: C.ACCENT, fontSize: '1.1rem' }}>✓</span>
                   </div>
                 ) : (
@@ -155,8 +149,7 @@ export default function ConfiguracoesIdioma({ onVoltar }) {
             fontSize: '0.68rem', color: C.TEXT_MUTED,
             lineHeight: 1.6, margin: 0,
           }}>
-            💡 Traduções em inglês são atualizadas e revisadas continuamente.
-            Alguns termos específicos do jogo podem aparecer em português.
+            💡 {t('language.note')}
           </p>
         </div>
 

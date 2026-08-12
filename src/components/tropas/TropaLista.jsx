@@ -3,10 +3,13 @@ import { C } from '../../theme.js';
 import { useTropas } from '../../hooks/useTropas.js';
 import { getIcone, getTipoAtaque, fmt, FILTROS } from './tropaUtils.js';
 import TropaModal from './TropaModal.jsx';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 /* ── Linha de tropa (sem campos de quantidade, sem expandir) ─────────────── */
 const TropaRow = ({ tropa, onClick }) => {
-  const tipo = getTipoAtaque(tropa);
+  const { t, content } = useI18n();
+  const tipo = getTipoAtaque(tropa, t);
+  const nome = content(tropa, 'nome');
 
   return (
     <button
@@ -46,7 +49,7 @@ const TropaRow = ({ tropa, onClick }) => {
               fontSize: '0.82rem', color: C.TEXT_PRIMARY,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
-            {tropa.nome}
+            {nome}
           </span>
           <span className="font-nunito font-bold shrink-0"
             style={{
@@ -83,7 +86,7 @@ const TropaRow = ({ tropa, onClick }) => {
         </p>
         <p className="font-nunito font-bold m-0"
           style={{ fontSize: '0.5rem', color: C.TEXT_FAINT, letterSpacing: '1.5px', marginTop: 2 }}>
-          PODER
+          {t('common.power').toUpperCase()}
         </p>
       </div>
 
@@ -96,6 +99,7 @@ const TropaRow = ({ tropa, onClick }) => {
 /* ── Tela de listagem ────────────────────────────────────────────────────── */
 const TropaLista = () => {
   const { tropas, carregando } = useTropas();
+  const { t, content } = useI18n();
 
   const [busca,       setBusca]       = useState('');
   const [filtroAtivo, setFiltroAtivo] = useState('Todas');
@@ -122,7 +126,7 @@ const TropaLista = () => {
     if (filtroAtivo === 'Mais Rápidas')  base = base.filter(tropa => tropa.vel    >= 1_000);
 
     const textFiltrado = base.filter(tropa =>
-      tropa.nome.toLowerCase().includes(busca.toLowerCase())
+      content(tropa, 'nome').toLowerCase().includes(busca.toLowerCase())
     );
 
     const sortAttr  = SORT_MAP[filtroAtivo] || 'poder';
@@ -130,11 +134,11 @@ const TropaLista = () => {
     const temFiltro = filtroAtivo !== 'Todas';
 
     return textFiltrado.sort((a, b) => {
-      if (!temFiltro && !temBusca) return a.nome.localeCompare(b.nome);  // tudo → A-Z
-      if (sortAttr === 'nome')     return a.nome.localeCompare(b.nome);  // busca sem filtro → A-Z
+      if (!temFiltro && !temBusca) return content(a, 'nome').localeCompare(content(b, 'nome'));  // tudo → A-Z
+      if (sortAttr === 'nome')     return content(a, 'nome').localeCompare(content(b, 'nome'));  // busca sem filtro → A-Z
       return (b[sortAttr] || 0) - (a[sortAttr] || 0);                   // filtro → maior primeiro
     });
-  }, [busca, filtroAtivo, tropas]);
+  }, [busca, filtroAtivo, tropas, content]);
 
   return (
     <>
@@ -156,11 +160,11 @@ const TropaLista = () => {
           <div>
             <p className="font-cinzel font-bold m-0"
               style={{ fontSize: '0.75rem', letterSpacing: '2.5px', color: '#F8F2E0' }}>
-              📖 ENCICLOPÉDIA
+              📖 {t('troops.encyclopedia').toUpperCase()}
             </p>
             <p className="font-nunito font-semibold m-0"
               style={{ fontSize: '0.6rem', color: 'rgba(200,168,74,0.65)', marginTop: 2 }}>
-              {carregando ? '⟳ Sincronizando…' : `${tropasFiltradas.length} de ${tropas.length} unidades`}
+              {carregando ? `⟳ ${t('app.sync.syncing_short')}` : t('troops.list_count',{shown:tropasFiltradas.length,total:tropas.length})}
             </p>
           </div>
         </div>
@@ -175,7 +179,7 @@ const TropaLista = () => {
           {/* Busca */}
           <input
             className="tw-input"
-            placeholder="🔍  Buscar unidade..."
+            placeholder={`🔍  ${t('troops.search')}`}
             value={busca}
             onChange={e => setBusca(e.target.value)}
             style={{ marginBottom: 8 }}
@@ -186,7 +190,7 @@ const TropaLista = () => {
             display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2,
             scrollbarWidth: 'none',
           }}>
-            {FILTROS.map(({ id, label }) => {
+            {FILTROS.map(({ id, label, labelKey }) => {
               const ativo = filtroAtivo === id;
               return (
                 <button
@@ -202,7 +206,7 @@ const TropaLista = () => {
                     cursor: 'pointer', transition: 'all 0.15s',
                   }}
                 >
-                  {label}
+                  {labelKey ? t(labelKey) : label}
                 </button>
               );
             })}
@@ -219,7 +223,7 @@ const TropaLista = () => {
               <p style={{ fontSize: '2rem', marginBottom: 8 }}>⚔️</p>
               <p className="font-nunito italic"
                 style={{ fontSize: '0.8rem', color: C.TEXT_MUTED, margin: 0 }}>
-                Nenhuma unidade encontrada
+                {t('troops.no_results')}
               </p>
             </div>
           ) : (

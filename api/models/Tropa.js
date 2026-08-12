@@ -16,6 +16,7 @@ const TropaSchema = new mongoose.Schema({
   tipo:      { type: String, enum: ['treinavel', 'especial'], default: 'treinavel' },
   combate:   { type: String, enum: ['corpo_a_corpo', 'distancia'], default: 'corpo_a_corpo' },
   rapida:    { type: Boolean, default: false },
+  i18n:      { type: mongoose.Schema.Types.Mixed, default: {} },
   atualizadoEm: { type: Date, default: Date.now },
 }, { collection: COLLECTIONS.tropas });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { C } from './theme.js';
-import { I18nProvider } from './hooks/useI18n.jsx';
+import { I18nProvider, useI18n } from './hooks/useI18n.jsx';
 import Modal from './ui/Modal.jsx';
 import { DISPLAY_VERSION } from './version.js';
 import useHashRouter from './app/useHashRouter.js';
@@ -18,7 +18,8 @@ const GuiaApp = () => {
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
   const { syncStatus, syncProgress, syncInfo, isOffline, sincronizarAgora } = useAppSync();
   const { dragoes } = useGameData();
-  const currentRoute = getRouteLabel(route, dragoes);
+  const { t, content } = useI18n();
+  const currentRoute = getRouteLabel(route, dragoes, t, content);
 
   const handleGoHome = () => {
     if (window.temAlteracoesNaoSalvas) setExitDialogOpen(true);
@@ -33,21 +34,19 @@ const GuiaApp = () => {
   };
 
   return (
-    <I18nProvider>
-      <>
+    <>
         <SyncProgressBanner status={syncStatus} progress={syncProgress} />
 
         <Modal open={exitDialogOpen} onClose={() => setExitDialogOpen(false)} maxWidth={320}>
           <div className="p-4 text-center">
             <p className="font-cinzel font-bold text-base tracking-wide text-aoe-dark mb-2 m-0">
-              ⚠️ Aviso de Saída
+              ⚠️ {t('app.exit.title')}
             </p>
             <p className="font-nunito text-sm text-aoe-mid leading-relaxed mb-4 m-0">
-              A tabela possui alterações não salvas.<br />
-              Deseja sair e perder o progresso?
+              {t('app.exit.message')}
             </p>
             <div className="flex gap-2 justify-center">
-              <button className="btn-ghost" onClick={() => setExitDialogOpen(false)}>Ficar</button>
+              <button className="btn-ghost" onClick={() => setExitDialogOpen(false)}>{t('app.exit.stay')}</button>
               <button
                 className="btn-danger"
                 onClick={() => {
@@ -56,7 +55,7 @@ const GuiaApp = () => {
                   setRoute('home');
                 }}
               >
-                Sair sem Salvar
+                {t('app.exit.leave')}
               </button>
             </div>
           </div>
@@ -112,7 +111,7 @@ const GuiaApp = () => {
                 }}
               >
                 <span className="text-xs">←</span>
-                <span className="font-nunito font-bold text-xs" style={{ color: C.TEXT_HEADER }}>Voltar</span>
+                <span className="font-nunito font-bold text-xs" style={{ color: C.TEXT_HEADER }}>{t('common.back')}</span>
               </button>
             )}
           </div>
@@ -145,17 +144,18 @@ const GuiaApp = () => {
 
           </div>
         </footer>
-      </>
-    </I18nProvider>
+    </>
   );
 };
 
 const App = () => (
-  <StartupGate>
-    <GameDataProvider>
-      <GuiaApp />
-    </GameDataProvider>
-  </StartupGate>
+  <I18nProvider>
+    <StartupGate>
+      <GameDataProvider>
+        <GuiaApp />
+      </GameDataProvider>
+    </StartupGate>
+  </I18nProvider>
 );
 
 export default App;

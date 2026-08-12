@@ -3,43 +3,46 @@ export const COR = '#5C7FA3';
 export const COR_DRK = '#1A3050';
 
 export const SUGESTOES = [
-  { emoji: '⚡', texto: 'Qual é a tropa mais rápida?' },
-  { emoji: '❤️', texto: 'Qual tropa possui mais vida?' },
-  { emoji: '🛡️', texto: 'Qual tem a maior defesa?' },
-  { emoji: '📦', texto: 'Qual tropa carrega mais recursos?' },
-  { emoji: '🏹', texto: 'Qual tem o maior ataque à distância?' },
-  { emoji: '⚔️', texto: 'Qual causa mais dano?' },
-  { emoji: '🏆', texto: 'Quais são as 5 tropas mais rápidas?' },
-  { emoji: '🔄', texto: 'Compare o Minotauro com o Arqueiro' },
-  { emoji: '🐉', texto: 'Qual dragão é mais forte?' },
-  { emoji: '🏆', texto: 'Qual carne vale mais no torneio?' },
-  { emoji: '🧿', texto: 'Como funciona o torneio de talismã?' },
-  { emoji: '🎖️', texto: 'Como treinar meus generais?' },
-  { emoji: '☠️', texto: 'Estratégia para matar tropas?' },
-  { emoji: '🔬', texto: 'Quais pesquisas aumentam meu ataque?' },
-  { emoji: '⏩', texto: 'Qual aceleração dá mais pontos no torneio?' },
-  { emoji: '🔮', texto: 'Quanto custa aprimorar uma tropa Épica?' },
+  { emoji: '⚡', key: 'assistant.suggestion.fastest' },
+  { emoji: '❤️', key: 'assistant.suggestion.health' },
+  { emoji: '🛡️', key: 'assistant.suggestion.defense' },
+  { emoji: '📦', key: 'assistant.suggestion.load' },
+  { emoji: '🏹', key: 'assistant.suggestion.ranged' },
+  { emoji: '⚔️', key: 'assistant.suggestion.damage' },
+  { emoji: '🏆', key: 'assistant.suggestion.topfast' },
+  { emoji: '🔄', key: 'assistant.suggestion.compare' },
+  { emoji: '🐉', key: 'assistant.suggestion.dragon' },
+  { emoji: '🏆', key: 'assistant.suggestion.meat' },
+  { emoji: '🧿', key: 'assistant.suggestion.talisman' },
+  { emoji: '🎖️', key: 'assistant.suggestion.generals' },
+  { emoji: '☠️', key: 'assistant.suggestion.kill' },
+  { emoji: '🔬', key: 'assistant.suggestion.research' },
+  { emoji: '⏩', key: 'assistant.suggestion.speedup' },
+  { emoji: '🔮', key: 'assistant.suggestion.enhance' },
 ];
 
-export const shuffleSugestoes = () => [...SUGESTOES].sort(() => Math.random() - 0.5).slice(0, 8);
+export const shuffleSugestoes = (t) => [...SUGESTOES]
+  .sort(() => Math.random() - 0.5)
+  .slice(0, 8)
+  .map(item => ({ ...item, texto: t(item.key) }));
 
 export const INTENCAO_LABEL = {
-  tropa: { emoji: '⚔️', label: 'Tropas' },
-  dragao: { emoji: '🐉', label: 'Dragões' },
-  edificio: { emoji: '🏗️', label: 'Edifícios' },
-  pesquisa: { emoji: '🔬', label: 'Pesquisas' },
-  nivel: { emoji: '🏰', label: 'Níveis' },
-  reino: { emoji: '🌍', label: 'Reinos' },
-  aprimoramento: { emoji: '🔮', label: 'Aprimoramento' },
-  torneio: { emoji: '🏆', label: 'Torneio' },
-  ilha: { emoji: '🏝️', label: 'Ilhas' },
-  geral: { emoji: '💬', label: 'Geral' },
+  tropa: { emoji: '⚔️', key: 'assistant.intent.tropa' },
+  dragao: { emoji: '🐉', key: 'assistant.intent.dragao' },
+  edificio: { emoji: '🏗️', key: 'assistant.intent.edificio' },
+  pesquisa: { emoji: '🔬', key: 'assistant.intent.pesquisa' },
+  nivel: { emoji: '🏰', key: 'assistant.intent.nivel' },
+  reino: { emoji: '🌍', key: 'assistant.intent.reino' },
+  aprimoramento: { emoji: '🔮', key: 'assistant.intent.aprimoramento' },
+  torneio: { emoji: '🏆', key: 'assistant.intent.torneio' },
+  ilha: { emoji: '🏝️', key: 'assistant.intent.ilha' },
+  geral: { emoji: '💬', key: 'assistant.intent.geral' },
 };
 
-export const PENSANDO_MSGS = [
-  'Consultando os dados do jogo…',
-  'Analisando estratégias…',
-  'Verificando os dados online…',
-  'Calculando pontos…',
-  'Buscando informações…',
+export const PENSANDO_KEYS = [
+  'assistant.thinking.data',
+  'assistant.thinking.strategy',
+  'assistant.thinking.online',
+  'assistant.thinking.points',
+  'assistant.thinking.info',
 ];

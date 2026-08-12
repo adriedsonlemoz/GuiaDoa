@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useTropas } from '../../../hooks/useTropas.js';
+import { useI18n } from '../../../hooks/useI18n.jsx';
 
 export default function useBattleSimulator({ setRoute }) {
   const { tropas } = useTropas();
+  const { t, content } = useI18n();
   const [aba, setAba] = useState('marcha');
   const [tropaA, setTropaA] = useState(null);
   const [tropaB, setTropaB] = useState(null);
@@ -13,8 +15,8 @@ export default function useBattleSimulator({ setRoute }) {
 
   const tropasFiltradas = useMemo(() => {
     const term = busca.toLowerCase();
-    return [...tropas].filter(tropa => tropa.nome.toLowerCase().includes(term)).sort((a, b) => a.nome.localeCompare(b.nome));
-  }, [busca, tropas]);
+    return [...tropas].filter(tropa => content(tropa, 'nome').toLowerCase().includes(term)).sort((a, b) => content(a, 'nome').localeCompare(content(b, 'nome')));
+  }, [busca, tropas, content]);
 
   const calcMarcha = useMemo(() => {
     let totTropas = 0;
@@ -45,16 +47,16 @@ export default function useBattleSimulator({ setRoute }) {
     setEsquadroes(current => current.map((item, currentIndex) => currentIndex === index ? { ...item, qtd: number || '' } : item));
   };
 
-  const confirmarRemocao = (index, nome) => setConfirmDialog({
+  const confirmarRemocao = (index, tropa) => setConfirmDialog({
     open: true,
-    title: 'Remover unidade',
-    text: `Retirar ${nome} da formação?`,
+    title: t('troops.simulator.remove_title'),
+    text: t('troops.simulator.remove_text', { name: content(tropa, 'nome') }),
     acao: () => setEsquadroes(current => current.filter((_, currentIndex) => currentIndex !== index)),
   });
 
   const solicitarSaida = () => {
     if (esquadroes.length > 0 || tropaA || tropaB) {
-      setConfirmDialog({ open: true, title: 'Sair do simulador', text: 'Os dados da simulação serão perdidos. Confirma a saída?', acao: () => setRoute('tropas') });
+      setConfirmDialog({ open: true, title: t('troops.simulator.exit_title'), text: t('troops.simulator.exit_text'), acao: () => setRoute('tropas') });
     } else setRoute('tropas');
   };
 

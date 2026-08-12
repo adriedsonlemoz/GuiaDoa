@@ -17,6 +17,7 @@ const EdificioSchema = new mongoose.Schema({
   ordem:     { type: Number, default: 0 },     // ordem no seletor
   colunas:   [ColunaSchema],                   // define as colunas da tabela de níveis
   niveis:    { type: mongoose.Schema.Types.Mixed, default: [] }, // [{nivel:1, pop:5, prodHora:100, ...}]
+  i18n:      { type: mongoose.Schema.Types.Mixed, default: {} },
   atualizadoEm: { type: Date, default: Date.now },
 }, { collection: COLLECTIONS.edificios });
 

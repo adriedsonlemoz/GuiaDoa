@@ -1,37 +1,47 @@
 import { carregarDadosAssistente } from './models.js';
 import { APRIMORAMENTO, calcCustoApr } from './aprimoramento.js';
 
-export const buildContext = async () => {
+const localizedValue = (record, field, locale) => (
+  locale === 'pt-BR' ? record?.[field] : record?.i18n?.[locale]?.[field] ?? record?.[field]
+);
+
+export const buildContext = async (locale = 'pt-BR') => {
   try {
     const { tropas, itens, edificios, dragoes, pesquisas, niveis, reinos } = await carregarDadosAssistente();
 
     // ── TROPAS ────────────────────────────────────────────────────────────────
     const tropasTxt = tropas.length
       ? [...tropas].sort((a, b) => (b.poder || 0) - (a.poder || 0)).map((t, i) => {
+          const nome = localizedValue(t, 'nome', locale);
+          const desc = localizedValue(t, 'desc', locale);
           const combate = t.combate === 'distancia' ? 'Distância' : 'Corpo a Corpo';
           const flags   = [t.rapida && 'Rápida', t.tipo === 'especial' && 'Especial'].filter(Boolean).join(' · ');
           return (
-            `${i + 1}. **${t.nome}** [${combate}${flags ? ' · ' + flags : ''}]\n` +
+            `${i + 1}. **${nome}** [${combate}${flags ? ' · ' + flags : ''}]\n` +
             `   Poder:${t.poder ?? 0} | Vida:${t.vida ?? 0} | Def:${t.def ?? 0} | ` +
             `AtqPerto:${t.atqPerto ?? 0} | AtqDist:${t.atqDist ?? 0}\n` +
             `   Alcance:${t.alcance ?? 0} | Vel:${t.vel ?? 0} | Carga:${t.car ?? 0} | Gestão:${t.gestao ?? 0}` +
-            (t.desc ? `\n   Habilidade: ${t.desc}` : '')
+            (desc ? `\n   Habilidade: ${desc}` : '')
           );
         }).join('\n\n')
       : 'Nenhuma tropa cadastrada.';
 
     // ── ITENS ─────────────────────────────────────────────────────────────────
     const itensTxt = itens.length
-      ? itens.map(i =>
-          `• **${i.nome}**` +
-          (i.descricao ? `: ${i.descricao}` : '') +
-          (i.onde      ? ` | Onde obter: ${i.onde}` : '')
-        ).join('\n')
+      ? itens.map(i => {
+          const nome = localizedValue(i, 'nome', locale);
+          const descricao = localizedValue(i, 'descricao', locale);
+          const onde = localizedValue(i, 'onde', locale);
+          return `• **${nome}**` + (descricao ? `: ${descricao}` : '') + (onde ? ` | Onde obter: ${onde}` : '');
+        }).join('\n')
       : 'Nenhum item cadastrado.';
 
     // ── EDIFÍCIOS — tabela completa de níveis ─────────────────────────────────
     const edificiosTxt = edificios.length
       ? edificios.map(e => {
+          const nome = localizedValue(e, 'nome', locale);
+          const tag = localizedValue(e, 'tag', locale);
+          const descricao = localizedValue(e, 'descricao', locale);
           const niveisArr = Array.isArray(e.niveis) ? e.niveis : [];
           const cols      = e.colunas || [];
           const tabelaNiveis = niveisArr.length && cols.length
@@ -40,8 +50,8 @@ export const buildContext = async () => {
               ).join('\n')
             : '';
           return (
-            `• **${e.nome}**${e.tag ? ` [${e.tag}]` : ''}` +
-            (e.descricao ? ` — ${e.descricao}` : '') +
+            `• **${nome}**${tag ? ` [${tag}]` : ''}` +
+            (descricao ? ` — ${descricao}` : '') +
             tabelaNiveis
           );
         }).join('\n\n')
@@ -50,19 +60,22 @@ export const buildContext = async () => {
     // ── DRAGÕES — todos os níveis ─────────────────────────────────────────────
     const dragoesTxt = dragoes.length
       ? dragoes.map(d => {
+          const nome = localizedValue(d, 'nome', locale);
+          const elemento = localizedValue(d, 'elemento', locale);
+          const raridade = localizedValue(d, 'raridade', locale);
           const nArr = Array.isArray(d.niveis) ? d.niveis : [];
           const tabelaNiveis = nArr.length
             ? '\n  Níveis:\n' + nArr.map(n =>
                 `    Nv${n.nivel}` +
-                (n.xpNecessaria ? ` (XP:${n.xpNecessaria.toLocaleString('pt-BR')})` : '') +
+                (n.xpNecessaria ? ` (XP:${n.xpNecessaria.toLocaleString(locale)})` : '') +
                 ` | Vida:${n.vida ?? 0} | Def:${n.defesa ?? 0} | AtqPerto:${n.ataquePerto ?? 0}` +
                 ` | AtqDist:${n.ataqueDistante ?? 0} | Elemental:${n.ataqueElemental ?? 0}`
               ).join('\n')
             : '';
           return (
-            `• **${d.nome}**` +
-            (d.elemento ? ` [${d.elemento}]` : '') +
-            (d.raridade ? ` — ${d.raridade}` : '') +
+            `• **${nome}**` +
+            (elemento ? ` [${elemento}]` : '') +
+            (raridade ? ` — ${raridade}` : '') +
             tabelaNiveis
           );
         }).join('\n\n')
@@ -73,12 +86,13 @@ export const buildContext = async () => {
       ? (() => {
           const grupos = {};
           pesquisas.forEach(p => {
+            const nome = localizedValue(p, 'nome', locale);
             const cat = p.categoria || 'Geral';
             if (!grupos[cat]) grupos[cat] = [];
             const niveisInfo = (p.niveis || []).length
               ? ` | Tempos: ${p.niveis.map(n => `Nv${n.nivel}=${n.tempo || '?'}`).join(', ')}`
               : '';
-            grupos[cat].push(`  • **${p.nome}** (máx Nv${p.nivelMax ?? '?'})${niveisInfo}`);
+            grupos[cat].push(`  • **${nome}** (máx Nv${p.nivelMax ?? '?'})${niveisInfo}`);
           });
           return Object.entries(grupos)
             .map(([cat, lista]) => `[${cat}]\n${lista.join('\n')}`)
@@ -89,18 +103,18 @@ export const buildContext = async () => {
     // ── NÍVEIS DO CASTELO ─────────────────────────────────────────────────────
     const niveisTxt = niveis.length
       ? niveis.map(n =>
-          `  Nv${n.nivel}: ${n.xp != null ? n.xp.toLocaleString('pt-BR') + ' XP' : 'desconhecido'}`
+          `  Nv${n.nivel}: ${n.xp != null ? n.xp.toLocaleString(locale) + ' XP' : 'desconhecido'}`
         ).join('\n')
       : 'Tabela de níveis não cadastrada.';
 
     // ── REINOS ────────────────────────────────────────────────────────────────
     const reinosTxt = reinos.length
-      ? reinos.map(r =>
-          `  Reino ${r.id} — ${r.nome}` +
-          (r.regiao ? ` | ${r.regiao}` : '') +
-          (r.fuso   ? ` | ${r.fuso}` : '') +
-          (r.idioma ? ` | ${r.idioma}` : '')
-        ).join('\n')
+      ? reinos.map(r => {
+          const nome = localizedValue(r, 'nome', locale);
+          const regiao = localizedValue(r, 'regiao', locale);
+          const idioma = localizedValue(r, 'idioma', locale);
+          return `  Reino ${r.id} — ${nome}` + (regiao ? ` | ${regiao}` : '') + (r.fuso ? ` | ${r.fuso}` : '') + (idioma ? ` | ${idioma}` : '');
+        }).join('\n')
       : 'Nenhum reino cadastrado.';
 
     // ── APRIMORAMENTO ─────────────────────────────────────────────────────────

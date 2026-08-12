@@ -1,27 +1,28 @@
 import React, { useState } from 'react';
 import { useGameData } from '../../data/GameDataContext.jsx';
 import { C } from '../../theme.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 
 const ATTRS_BASE = [
-  { key:'vida',           label:'Vida',          icon:'❤️',  cor:C.HEALTH  },
-  { key:'defesa',         label:'Defesa',        icon:'🛡️',  cor:C.DEFENSE },
-  { key:'ataquePerto',    label:'Atq. Perto',    icon:'⚔️',  cor:C.ATTACK  },
-  { key:'ataqueDistante', label:'Atq. Distante', icon:'🏹',  cor:C.POWER   },
-  { key:'alcance',        label:'Alcance',       icon:'🎯',  cor:C.ENERGY  },
-  { key:'velocidade',     label:'Velocidade',    icon:'⚡',  cor:C.ACCENT  },
+  { key:'vida',           label:'Vida', labelKey:'common.health',          icon:'❤️',  cor:C.HEALTH  },
+  { key:'defesa',         label:'Defesa', labelKey:'common.defense',        icon:'🛡️',  cor:C.DEFENSE },
+  { key:'ataquePerto',    label:'Atq. Perto', labelKey:'troops.attack_near',    icon:'⚔️',  cor:C.ATTACK  },
+  { key:'ataqueDistante', label:'Atq. Distante', labelKey:'troops.attack_range', icon:'🏹',  cor:C.POWER   },
+  { key:'alcance',        label:'Alcance', labelKey:'common.range',       icon:'🎯',  cor:C.ENERGY  },
+  { key:'velocidade',     label:'Velocidade', labelKey:'common.speed',    icon:'⚡',  cor:C.ACCENT  },
 ];
 const ATTRS_ELEM = [
-  { key:'ataqueElemental',     label:'Ataque Elem.',     icon:'🔥', cor:'#E05C30' },
-  { key:'impulsoElemental',    label:'Impulso Elem.',    icon:'💥', cor:'#E0803A' },
-  { key:'barreiraElemental',   label:'Barreira Elem.',   icon:'🔰', cor:C.DEFENSE },
-  { key:'bombardeioElemental', label:'Bombardeio Elem.', icon:'💣', cor:C.ERROR   },
-  { key:'confrontoElemental',  label:'Confronto Elem.',  icon:'⚡', cor:C.ACCENT  },
-  { key:'bloqueioElemental',   label:'Bloqueio Elem.',   icon:'🛡', cor:C.BLUE    },
-  { key:'rupturaElemental',    label:'Ruptura Elem.',    icon:'💢', cor:C.POWER   },
+  { key:'ataqueElemental',     label:'Ataque Elem.', labelKey:'dragons.attr.elemental_attack',     icon:'🔥', cor:'#E05C30' },
+  { key:'impulsoElemental',    label:'Impulso Elem.', labelKey:'dragons.attr.elemental_boost',    icon:'💥', cor:'#E0803A' },
+  { key:'barreiraElemental',   label:'Barreira Elem.', labelKey:'dragons.attr.elemental_barrier',   icon:'🔰', cor:C.DEFENSE },
+  { key:'bombardeioElemental', label:'Bombardeio Elem.', labelKey:'dragons.attr.bombardment', icon:'💣', cor:C.ERROR   },
+  { key:'confrontoElemental',  label:'Confronto Elem.', labelKey:'dragons.attr.confrontation',  icon:'⚡', cor:C.ACCENT  },
+  { key:'bloqueioElemental',   label:'Bloqueio Elem.', labelKey:'dragons.attr.block',   icon:'🛡', cor:C.BLUE    },
+  { key:'rupturaElemental',    label:'Ruptura Elem.', labelKey:'dragons.attr.rupture',    icon:'💢', cor:C.POWER   },
 ];
 
-const fmt = v => (v == null || v === 0) ? '0' : v.toLocaleString('pt-BR');
+const fmt = (v, locale='pt-BR') => (v == null || v === 0) ? '0' : v.toLocaleString(locale);
 const pct = (v, max) => max > 0 ? Math.min(100, (v / max) * 100) : 0;
 
 const SectionDivider = ({ label }) => (
@@ -34,14 +35,18 @@ const SectionDivider = ({ label }) => (
   </div>
 );
 
-const TipoBadge = ({ campo }) => (
-  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.58rem] font-nunito font-black tracking-wide leading-tight"
-    style={{ background:campo?'#7B1C1C':'#1B5E20', border:`1px solid ${campo?'#A52020':'#2E7D32'}`, color:campo?'#FFCDD2':'#C8E6C9' }}>
-    {campo?'🏅':'⚔️'} {campo?'Efeito em Campo':'Efeito de Batalha'}
-  </span>
-);
+const TipoBadge = ({ campo }) => {
+  const { t } = useI18n();
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.58rem] font-nunito font-black tracking-wide leading-tight"
+      style={{ background:campo?'#7B1C1C':'#1B5E20', border:`1px solid ${campo?'#A52020':'#2E7D32'}`, color:campo?'#FFCDD2':'#C8E6C9' }}>
+      {campo?'🏅':'⚔️'} {campo?t('dragons.field_effect'):t('dragons.battle_effect')}
+    </span>
+  );
+};
 
 const HabilidadeCard = ({ hab, cor, index }) => {
+  const { t } = useI18n();
   const [expandido, setExpandido] = useState(false);
   const isCampo = hab.tipo?.toLowerCase().includes('campo');
   const xpPercent = (() => {
@@ -84,7 +89,7 @@ const HabilidadeCard = ({ hab, cor, index }) => {
       </div>
       <div className="grid grid-cols-2">
         <div className="p-3" style={{ background:C.BG_CARD, borderRight:`1px solid ${C.BORDER_SOFT}` }}>
-          <p className="font-nunito font-black text-[0.68rem] m-0 mb-1.5" style={{ color:C.TEXT_PRIMARY }}>Nível atual</p>
+          <p className="font-nunito font-black text-[0.68rem] m-0 mb-1.5" style={{ color:C.TEXT_PRIMARY }}>{t('levels.current')}</p>
           {hab.nivelAtual?.defesa && <p className="font-nunito font-bold text-[0.65rem] m-0 mb-1.5" style={{ color:C.DEFENSE }}>🛡 {hab.nivelAtual.defesa}</p>}
           <TipoBadge campo={isCampo} />
           <p className="font-nunito font-semibold text-[0.73rem] leading-relaxed mt-1.5 m-0"
@@ -94,7 +99,7 @@ const HabilidadeCard = ({ hab, cor, index }) => {
         </div>
         <div className="p-3 relative" style={{ background:`linear-gradient(180deg,${C.BG_CARD_TOP} 0%,${C.BG_CARD} 100%)` }}>
           <span className="absolute left-[-8px] top-1/2 -translate-y-1/2 text-base" style={{ color:cor, opacity:0.5 }}>›</span>
-          <p className="font-nunito font-black text-[0.68rem] m-0 mb-1.5" style={{ color:'#A05820' }}>Nível máx.</p>
+          <p className="font-nunito font-black text-[0.68rem] m-0 mb-1.5" style={{ color:'#A05820' }}>{t('research.max_level')}</p>
           {hab.nivelMax?.defesa && <p className="font-nunito font-bold text-[0.65rem] m-0 mb-1.5" style={{ color:C.ENERGY }}>🛡 {hab.nivelMax.defesa}</p>}
           <TipoBadge campo={isCampo} />
           <p className="font-nunito font-semibold text-[0.73rem] leading-relaxed mt-1.5 m-0"
@@ -105,7 +110,7 @@ const HabilidadeCard = ({ hab, cor, index }) => {
       </div>
       {!expandido && (
         <div className="text-center py-1.5" style={{ background:'rgba(184,150,90,0.06)', borderTop:`1px solid ${C.BORDER_SOFT}` }}>
-          <span className="font-nunito font-bold text-[0.62rem] tracking-widest" style={{ color:C.TEXT_FAINT }}>VER COMPLETO ▸</span>
+          <span className="font-nunito font-bold text-[0.62rem] tracking-widest" style={{ color:C.TEXT_FAINT }}>{t('dragons.view_full').toUpperCase()} ▸</span>
         </div>
       )}
     </div>
@@ -114,14 +119,15 @@ const HabilidadeCard = ({ hab, cor, index }) => {
 
 // ── Atributos por nível (Design 2) ────────────────────────────────────────────
 const AtributosSection = ({ niveis, cor }) => {
+  const { t, locale } = useI18n();
   const [niv, setNiv] = useState(0);
 
   if (!niveis || niveis.length === 0) return (
     <div className="py-6 text-center rounded-xl mb-3"
       style={{ border:`1px dashed ${C.BORDER}`, background:C.BG_CARD }}>
       <p className="font-nunito text-sm m-0" style={{ color:C.TEXT_MUTED }}>
-        Atributos ainda não cadastrados para este dragão.<br/>
-        <span style={{ fontSize:'0.72rem', fontStyle:'italic' }}>Dados de atributos ainda não disponíveis</span>
+        {t('dragons.attributes_unavailable')}<br/>
+        <span style={{ fontSize:'0.72rem', fontStyle:'italic' }}>{t('dragons.attributes_unavailable_help')}</span>
       </p>
     </div>
   );
@@ -137,15 +143,15 @@ const AtributosSection = ({ niveis, cor }) => {
     return (
       <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 0', borderBottom:`1px solid rgba(200,168,74,0.1)` }}>
         <span style={{ width:20, textAlign:'center', fontSize:'0.9rem', flexShrink:0 }}>{attr.icon}</span>
-        <span style={{ flex:'0 0 98px', fontSize:'0.65rem', fontWeight:700, color:C.TEXT_MUTED, letterSpacing:'0.3px' }}>{attr.label}</span>
+        <span style={{ flex:'0 0 98px', fontSize:'0.65rem', fontWeight:700, color:C.TEXT_MUTED, letterSpacing:'0.3px' }}>{attr.labelKey ? t(attr.labelKey) : attr.label}</span>
         <div style={{ flex:1, height:5, background:C.BG_SECONDARY, borderRadius:3, overflow:'hidden' }}>
           <div style={{ height:'100%', borderRadius:3, transition:'width 0.4s ease',
             width:`${pct(v, max)}%`, background:`linear-gradient(90deg,${attr.cor}88,${attr.cor})` }} />
         </div>
         <div style={{ width:82, textAlign:'right', display:'flex', alignItems:'center', justifyContent:'flex-end', gap:4 }}>
-          <span style={{ fontSize:'0.78rem', fontWeight:900, color:C.TEXT_PRIMARY, fontFamily:'monospace' }}>{fmt(v)}</span>
-          {proximo && diff > 0 && <span style={{ fontSize:'0.6rem', color:C.SUCCESS, fontWeight:800 }}>+{fmt(diff)}</span>}
-          {proximo && diff < 0 && <span style={{ fontSize:'0.6rem', color:C.ERROR,   fontWeight:800 }}>{fmt(diff)}</span>}
+          <span style={{ fontSize:'0.78rem', fontWeight:900, color:C.TEXT_PRIMARY, fontFamily:'monospace' }}>{fmt(v, locale)}</span>
+          {proximo && diff > 0 && <span style={{ fontSize:'0.6rem', color:C.SUCCESS, fontWeight:800 }}>+{fmt(diff, locale)}</span>}
+          {proximo && diff < 0 && <span style={{ fontSize:'0.6rem', color:C.ERROR,   fontWeight:800 }}>{fmt(diff, locale)}</span>}
         </div>
       </div>
     );
@@ -172,20 +178,20 @@ const AtributosSection = ({ niveis, cor }) => {
       {/* Pill de info do nível */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
         background:`${cor}0F`, border:`1px solid ${cor}30`, borderRadius:10, padding:'7px 12px', marginBottom:12 }}>
-        <span style={{ fontSize:'0.72rem', fontWeight:900, color:cor }}>◆ Nível {atual.nivel}</span>
+        <span style={{ fontSize:'0.72rem', fontWeight:900, color:cor }}>◆ {t('common.level')} {atual.nivel}</span>
         <span style={{ fontSize:'0.65rem', color:C.TEXT_MUTED }}>
-          {atual.xpNecessaria > 0 ? `${fmt(atual.xpNecessaria)} XP` : 'Nível base'}
+          {atual.xpNecessaria > 0 ? `${fmt(atual.xpNecessaria, locale)} XP` : t('dragons.base_level')}
         </span>
         {proximo
-          ? <span style={{ fontSize:'0.65rem', color:C.SUCCESS, fontWeight:800 }}>→ Nível {proximo.nivel}</span>
-          : <span style={{ fontSize:'0.65rem', color:C.TEXT_FAINT }}>Nível máximo</span>}
+          ? <span style={{ fontSize:'0.65rem', color:C.SUCCESS, fontWeight:800 }}>→ {t('common.level')} {proximo.nivel}</span>
+          : <span style={{ fontSize:'0.65rem', color:C.TEXT_FAINT }}>{t('research.max_level')}</span>}
       </div>
 
       {/* Atributos Base */}
       <div style={{ background:C.BG_CARD, border:`1px solid ${C.BORDER_SOFT}`,
         borderRadius:12, padding:'10px 14px', marginBottom:10 }}>
         <div style={{ fontSize:'0.55rem', letterSpacing:'2.5px', color:C.ACCENT_DEEP,
-          textTransform:'uppercase', fontWeight:900, marginBottom:6 }}>⚔ Atributos Base</div>
+          textTransform:'uppercase', fontWeight:900, marginBottom:6 }}>⚔ {t('dragons.base_attributes')}</div>
         {ATTRS_BASE.map(a => <StatRow key={a.key} attr={a} />)}
       </div>
 
@@ -193,7 +199,7 @@ const AtributosSection = ({ niveis, cor }) => {
       <div style={{ background:C.BG_CARD, border:'1px solid rgba(139,107,174,0.3)',
         borderRadius:12, padding:'10px 14px', marginBottom:4 }}>
         <div style={{ fontSize:'0.55rem', letterSpacing:'2.5px', color:'#8B6BAE',
-          textTransform:'uppercase', fontWeight:900, marginBottom:6 }}>✨ Elementais</div>
+          textTransform:'uppercase', fontWeight:900, marginBottom:6 }}>✨ {t('dragons.elemental_attributes')}</div>
         {ATTRS_ELEM.map(a => <StatRow key={a.key} attr={a} />)}
       </div>
     </div>
@@ -202,6 +208,7 @@ const AtributosSection = ({ niveis, cor }) => {
 
 // ── DragaoDetalhe ─────────────────────────────────────────────────────────────
 const DragaoDetalhe = ({ dragaoId, setRoute }) => {
+  const { t, content } = useI18n();
   const { dragoes } = useGameData();
   const dragao = dragoes.find(d => d.id === dragaoId) || null;
   const niveis = dragao?.niveis || [];
@@ -209,8 +216,8 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
   if (!dragao) return (
     <div className="text-center py-12 px-4">
       <p className="text-5xl mb-3 m-0">🐉</p>
-      <p className="font-nunito font-black text-base m-0 mb-2" style={{ color:C.ERROR }}>Dragão não encontrado</p>
-      <button className="btn-ghost" onClick={() => setRoute?.('dragoes')}>← Voltar</button>
+      <p className="font-nunito font-black text-base m-0 mb-2" style={{ color:C.ERROR }}>{t('dragons.not_found')}</p>
+      <button className="btn-ghost" onClick={() => setRoute?.('dragoes')}>← {t('common.back')}</button>
     </div>
   );
 
@@ -230,30 +237,30 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <p className="font-cinzel font-bold text-xl m-0 leading-tight"
-                style={{ color:'#FFF8EE', textShadow:`0 2px 8px ${dragao.cor}88` }}>{dragao.nome}</p>
+                style={{ color:'#FFF8EE', textShadow:`0 2px 8px ${dragao.cor}88` }}>{content(dragao, 'nome')}</p>
               <span className="font-nunito font-black text-[0.62rem] px-2 py-0.5 rounded-full"
                 style={{ background:`${dragao.cor}44`, border:`1px solid ${dragao.cor}88`, color:'#FFF8EE' }}>
-                {dragao.elemento}
+                {content(dragao, 'elemento')}
               </span>
             </div>
             <p className="font-nunito font-semibold text-[0.75rem] leading-snug m-0"
-              style={{ color:'rgba(255,248,238,0.7)' }}>{dragao.descricao}</p>
+              style={{ color:'rgba(255,248,238,0.7)' }}>{content(dragao, 'descricao')}</p>
             <button
               className="mt-2 font-nunito font-black text-[0.65rem] px-3 py-1 rounded-md tracking-widest uppercase border-none cursor-pointer"
               style={{ background:`${dragao.cor}44`, border:`1.5px solid ${dragao.cor}88`, color:'#FFF8EE' }}
               onClick={() => setRoute?.(`dragao_tracker_${dragao.id}`)}>
-              📊 Tracker de Progresso
+              📊 {t('dragons.tracker')}
             </button>
           </div>
         </div>
       </div>
 
       {/* Atributos por nível */}
-      <SectionDivider label="ATRIBUTOS POR NÍVEL" />
+      <SectionDivider label={t('dragons.attributes_by_level').toUpperCase()} />
       <AtributosSection niveis={niveis} cor={dragao.cor} />
 
       {/* Habilidades (original, abaixo de tudo) */}
-      <SectionDivider label={`HABILIDADES — ${dragao.nome.toUpperCase()}`} />
+      <SectionDivider label={`${t('dragons.skills').toUpperCase()} — ${content(dragao, 'nome').toUpperCase()}`} />
       {dragao.habilidades?.length > 0 ? (
         dragao.habilidades.map((hab, i) => (
           <HabilidadeCard key={hab.id || i} hab={hab} cor={dragao.cor} index={i} />
@@ -261,7 +268,7 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
       ) : (
         <div className="py-8 text-center rounded-xl" style={{ border:`1px dashed ${C.BORDER}`, background:C.BG_CARD }}>
           <p className="font-nunito italic text-sm m-0" style={{ color:C.TEXT_MUTED }}>
-            Habilidades ainda não registadas para este dragão.
+            {t('dragons.no_skills')}
           </p>
         </div>
       )}

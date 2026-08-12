@@ -1,10 +1,10 @@
 const ATTR_MAP = {
   // velocidade
-  vel: ['velocidade','veloc','vel','veloz','rápid','rapida','rapido','corre','corr','ágil','agil','mais rápida','mais veloz','maior velocidade','que corre mais','que é mais rápid'],
+  vel: ['speed','fast','fastest','velocity','velocidade','veloc','vel','veloz','rápid','rapida','rapido','corre','corr','ágil','agil','mais rápida','mais veloz','maior velocidade','que corre mais','que é mais rápid'],
   // vida / HP
   vida: ['vida','hp','life','aguenta','resiste','dura mais','mais vida','maior vida','mais hp','com mais vida'],
   // defesa
-  def: ['defes','defen','resist','blindagem','mais defesa','maior defesa','mais resistente','tankea','tanka'],
+  def: ['defense','defence','armor','resistance','defes','defen','resist','blindagem','mais defesa','maior defesa','mais resistente','tankea','tanka'],
   // ataque perto
   atqPerto: ['ataque perto','atq perto','corpo a corpo','melee','cac','dano perto','ataque corpo','bate mais perto','mais dano corpo'],
   // ataque distância
@@ -12,13 +12,13 @@ const ATTR_MAP = {
   // dano geral (max entre perto e dist)
   dano: ['dano','causa mais dano','mais dano','maior dano','ataque total','mais destrutiv','mais forte no ataque','ataca mais','bate mais'],
   // carga
-  car: ['carga','car','carrega','capacidade','coleta','loot','recursos','pilhagem','mais carga','maior carga','mais recursos'],
+  car: ['load','carry','capacity','resources','loot','carga','car','carrega','capacidade','coleta','loot','recursos','pilhagem','mais carga','maior carga','mais recursos'],
   // alcance
   alcance: ['alcance','range','atirar mais longe','maior alcance','mais longe'],
   // gestão
   gestao: ['gestão','gestao','liderança','lideranca','comanda','mais tropas','maior gestão'],
   // poder
-  poder: ['poder','mais poder','maior poder','mais poderosa','mais forte'],
+  poder: ['power','strongest','most powerful','poder','mais poder','maior poder','mais poderosa','mais forte'],
 };
 
 // Detecta qual atributo e que tipo de análise o usuário quer
@@ -36,19 +36,19 @@ export const detectarAnalise = (pergunta) => {
   if (!attrId) return null;
 
   // Detecta intenção analítica
-  const top = p.match(/top\s*(\d+)|(\d+)\s*(mais|tropas?|melhores?|primeiras?)/i);
+  const top = p.match(/top\s*(\d+)|(\d+)\s*(mais|tropas?|melhores?|primeiras?|best|troops?)/i);
   const topN = top ? parseInt(top[1] || top[2]) : null;
   const isRanking  = /ordena|ranking|lista|classifica|rank/.test(p);
-  const isComp     = /compara|versus|vs\b|melhor.*(x|ou)|diferenca|diferença/.test(p);
+  const isComp     = /compara|compare|versus|vs\b|melhor.*(x|ou)|better.*(x|or)|diferenca|diferença|difference/.test(p);
   const isFiltro   = /acima de|abaixo de|maior que|menor que|mais de|menos de|com\s+(\d+)|superior|inferior/.test(p);
-  const isMin      = /menor|mais lenta?|pior|menos|minimo|mínimo|mais fraca?/.test(p);
+  const isMin      = /menor|mais lenta?|pior|menos|minimo|mínimo|mais fraca?|lowest|slowest|worst|least|minimum|weakest/.test(p);
 
   // Extrai nomes de tropas para comparação
   const nomesTropas = [];
-  const compMatch = pergunta.match(/compar[ae]\s+(.+)/i) || pergunta.match(/(.+)\s+(?:versus?|vs\.?|x)\s+(.+)/i);
+  const compMatch = pergunta.match(/(?:compar[ae]|compare)\s+(.+)/i) || pergunta.match(/(.+)\s+(?:versus?|vs\.?|x)\s+(.+)/i);
   if (compMatch) {
     const partes = compMatch[0].split(/versus?|vs\.?|\bx\b|,|\be\b/i).map(s =>
-      s.replace(/compar[ae]/i, '').trim()
+      s.replace(/compar[ae]|compare/i, '').trim()
     ).filter(s => s.length > 1);
     nomesTropas.push(...partes);
   }

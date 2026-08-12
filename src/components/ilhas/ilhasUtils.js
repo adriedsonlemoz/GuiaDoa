@@ -3,7 +3,7 @@ import {
   LIMITES,
 } from './constants.js';
 
-export const fmtN = n => Number(n || 0).toLocaleString('pt-BR');
+export const fmtN = (n, locale = 'pt-BR') => Number(n || 0).toLocaleString(locale);
 export const asNumber = value => Number.parseInt(value, 10) || 0;
 
 export function isAllowed(type, colIndex) {
@@ -129,31 +129,31 @@ export function validarDistribuicao({ data, rowIndex, colIndex, valNum, expansoe
       data.forEach((row, index) => {
         if (TIPOS_RECURSO_TERRESTRE.includes(row.type)) total += index === rowIndex ? valNum : asNumber(row.values[0]);
       });
-      if (total > limiteSipioPrinc) return { ok: false, message: `SÍTIO CHEIO: Limite de ${limiteSipioPrinc} atingido.`, severity: 'warning' };
+      if (total > limiteSipioPrinc) return { ok: false, messageKey: 'islands.error.field_full', params: { count: limiteSipioPrinc }, severity: 'warning' };
     } else if (isCid) {
       total = 5;
       data.forEach((row, index) => {
         if (TIPOS_CIDADE.includes(row.type)) total += index === rowIndex ? valNum : asNumber(row.values[0]);
       });
-      if (total > LIMITES.cidadePrincipal) return { ok: false, message: `CIDADE PRINCIPAL LOTADA: Máx ${LIMITES.cidadePrincipal}.`, severity: 'error' };
+      if (total > LIMITES.cidadePrincipal) return { ok: false, messageKey: 'islands.error.main_city_full', params: { count: LIMITES.cidadePrincipal }, severity: 'error' };
     }
   } else if (colIndex === 2) {
     if (isRA) {
       data.forEach((row, index) => {
         if (row.type === 'perolas') total += index === rowIndex ? valNum : asNumber(row.values[2]);
       });
-      if (total > LIMITES.sitioAgua) return { ok: false, message: `ILHA DE ÁGUA LOTADA: Máx ${LIMITES.sitioAgua} Pérolas.`, severity: 'error' };
+      if (total > LIMITES.sitioAgua) return { ok: false, messageKey: 'islands.error.water_field_full', params: { count: LIMITES.sitioAgua }, severity: 'error' };
     } else if (isCid) {
       data.forEach((row, index) => {
         if (TIPOS_CIDADE.includes(row.type)) total += index === rowIndex ? valNum : asNumber(row.values[2]);
       });
-      if (total > LIMITES.cidadeAgua) return { ok: false, message: `CIDADE NA ÁGUA LOTADA: Máx ${LIMITES.cidadeAgua}.`, severity: 'error' };
+      if (total > LIMITES.cidadeAgua) return { ok: false, messageKey: 'islands.error.water_city_full', params: { count: LIMITES.cidadeAgua }, severity: 'error' };
     }
   } else {
     const limite = limiteIlhaSecundaria(colIndex, expansoes);
     data.forEach((row, index) => { total += index === rowIndex ? valNum : asNumber(row.values[colIndex]); });
     if (limite !== null && total > limite) {
-      return { ok: false, message: `LIMITE ILHA ${ILHAS_NOMES[colIndex]} ATINGIDO: ${limite}.`, severity: 'error' };
+      return { ok: false, messageKey: 'islands.error.secondary_full', params: { name: ILHAS_NOMES[colIndex], count: limite }, severity: 'error' };
     }
   }
 

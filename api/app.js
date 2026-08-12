@@ -12,7 +12,6 @@ import dragaoRoutes from './routes/dragoes.js';
 import pesquisaRoutes from './routes/pesquisas.js';
 import reinoRoutes from './routes/reinos.js';
 import assistenteRoutes from './routes/assistente.js';
-import traducoesRoutes from './routes/traducoes.js';
 import dicasRoutes from './routes/dicas.js';
 import healthRoutes from './routes/health.js';
 import { APP_VERSION } from './version.js';
@@ -55,7 +54,6 @@ app.use('/api/dragoes', dragaoRoutes);
 app.use('/api/pesquisas', pesquisaRoutes);
 app.use('/api/reinos', reinoRoutes);
 app.use('/api/assistente', assistenteRoutes);
-app.use('/api/traducoes', traducoesRoutes);
 app.use('/api/dicas', dicasRoutes);
 
 app.use('/admin', express.static(join(__dirname, 'admin')));

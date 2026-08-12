@@ -1,8 +1,14 @@
 import React from 'react';
 import { C } from '../../theme.js';
 import { fmtData } from './dicasUtils.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
-const DicaCard = ({ dica, catInfo, onClick }) => (
+const DicaCard = ({ dica, catInfo, onClick }) => {
+  const { t, content, locale } = useI18n();
+  const titulo = content(dica, 'titulo');
+  const conteudo = content(dica, 'conteudo');
+  const categoria = catInfo ? content(catInfo, 'label') : '';
+  return (
   <div onClick={onClick}
     style={{
       background: C.BG_CARD,
@@ -17,7 +23,7 @@ const DicaCard = ({ dica, catInfo, onClick }) => (
     {/* Capa */}
     {dica.imagens?.length > 0 && (
       <div style={{ position: 'relative', height: 170, overflow: 'hidden', background: C.BG_SECONDARY }}>
-        <img src={dica.imagens[0].url} alt={dica.titulo}
+        <img src={dica.imagens[0].url} alt={titulo}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           onError={e => { e.target.style.display = 'none'; }}
         />
@@ -36,7 +42,7 @@ const DicaCard = ({ dica, catInfo, onClick }) => (
             background: C.ACCENT, color: C.BG_HEADER,
             fontSize: '0.6rem', fontWeight: 700, padding: '2px 9px',
             borderRadius: 100, letterSpacing: '0.05em', textTransform: 'uppercase',
-          }}>⭐ Destaque</span>
+          }}>{`⭐ ${t('tips.featured')}`}</span>
         )}
       </div>
     )}
@@ -50,13 +56,13 @@ const DicaCard = ({ dica, catInfo, onClick }) => (
             fontSize: '0.62rem', fontWeight: 700, color: C.ACCENT,
             textTransform: 'uppercase', letterSpacing: '0.06em',
           }}>
-            {catInfo.icon} {catInfo.label}
+            {catInfo.icon} {categoria}
           </span>
         )}
         {dica.criadoEm && (
           <>
             <span style={{ color: C.TEXT_FAINT, fontSize: '0.6rem' }}>•</span>
-            <span style={{ fontSize: '0.62rem', color: C.TEXT_FAINT }}>{fmtData(dica.criadoEm)}</span>
+            <span style={{ fontSize: '0.62rem', color: C.TEXT_FAINT }}>{fmtData(dica.criadoEm, locale)}</span>
           </>
         )}
         {dica.destaque && !dica.imagens?.length && (
@@ -66,26 +72,26 @@ const DicaCard = ({ dica, catInfo, onClick }) => (
 
       <p className="font-cinzel font-bold"
         style={{ fontSize: '0.92rem', color: C.TEXT_PRIMARY, margin: 0, lineHeight: 1.35 }}>
-        {dica.titulo}
+        {titulo}
       </p>
 
-      {dica.conteudo && (
+      {conteudo && (
         <p className="font-nunito"
           style={{
             fontSize: '0.76rem', color: C.TEXT_SECONDARY, margin: '6px 0 0',
             lineHeight: 1.55, display: '-webkit-box',
             WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}>
-          {dica.conteudo}
+          {conteudo}
         </p>
       )}
 
       <p style={{ fontSize: '0.68rem', color: C.ACCENT, fontWeight: 700, margin: '8px 0 0' }}>
-        Ler mais →
+        {t('tips.read')} →
       </p>
     </div>
   </div>
-);
-
+  );
+};
 
 export default DicaCard;

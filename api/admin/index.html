@@ -131,6 +131,11 @@
         <div class="field"><label>Carga 📦</label><input id="f-car" type="number" min="0" placeholder="0"></div>
       </div>
       <div class="field"><label>Descrição</label><textarea id="f-desc" placeholder="Descrição da tropa..."></textarea></div>
+      <div class="i18n-section">
+        <div class="i18n-title">🌐 English <span>opcional</span></div>
+        <div class="field"><label>Name</label><input id="f-en-nome" placeholder="Troop name in English"></div>
+        <div class="field"><label>Description</label><textarea id="f-en-desc" placeholder="Troop description in English..."></textarea></div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="fecharModal('modal-tropa')">Cancelar</button>
@@ -222,6 +227,15 @@
           </div>
         </div>
 
+        <div class="field">
+          <label>Descrição</label>
+          <textarea id="fdr-descricao" rows="2" placeholder="Descrição do dragão..."></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Bônus de Marcha</label><input id="fdr-bonus" placeholder="Ex: +5% ataque"></div>
+          <div class="field"><label>Atributo</label><input id="fdr-atributo" placeholder="Ex: Ataque de tropas"></div>
+        </div>
+
         <div class="field-row">
           <div class="field">
             <label>Emoji Elemento</label>
@@ -235,6 +249,20 @@
             <label>Cor</label>
             <input id="fdr-cor" type="color" value="#C8A84A"
               style="width:100%;height:38px;padding:3px;border:1.5px solid var(--gold);border-radius:8px;cursor:pointer;background:#F8F4E8">
+          </div>
+        </div>
+
+        <div class="i18n-section">
+          <div class="i18n-title">🌐 English <span>opcional</span></div>
+          <div class="field-row">
+            <div class="field"><label>Name</label><input id="fdr-en-nome" placeholder="e.g. Great Dragon"></div>
+            <div class="field"><label>Element</label><input id="fdr-en-elemento" placeholder="e.g. Fire, Water, Earth"></div>
+          </div>
+          <div class="field"><label>Rarity</label><input id="fdr-en-raridade" placeholder="e.g. Legendary, Epic"></div>
+          <div class="field"><label>Description</label><textarea id="fdr-en-descricao" rows="2" placeholder="Dragon description in English..."></textarea></div>
+          <div class="field-row">
+            <div class="field"><label>March bonus</label><input id="fdr-en-bonus" placeholder="e.g. +5% attack"></div>
+            <div class="field"><label>Attribute</label><input id="fdr-en-atributo" placeholder="e.g. Troop attack"></div>
           </div>
         </div>
 
@@ -315,6 +343,15 @@
                    color:var(--dark);border:1.5px solid var(--gold);border-radius:8px;padding:8px 12px;
                    outline:none;resize:vertical;min-height:60px;"
             onfocus="this.style.borderColor='var(--gold3)'" onblur="this.style.borderColor='var(--gold)'"></textarea>
+        </div>
+
+        <div class="i18n-section">
+          <div class="i18n-title">🌐 English <span>opcional</span></div>
+          <div class="field-row">
+            <div class="field"><label>Name</label><input id="fed-en-nome" placeholder="Building name in English"></div>
+            <div class="field"><label>Tag</label><input id="fed-en-tag" placeholder="e.g. Pop., Food, Gold"></div>
+          </div>
+          <div class="field"><label>Description</label><textarea id="fed-en-descricao" rows="2" placeholder="Building description in English..."></textarea></div>
         </div>
 
         <div class="field">
@@ -422,6 +459,13 @@
             onfocus="this.style.borderColor='var(--gold3)'"
             onblur="this.style.borderColor='var(--gold)'"></textarea>
         </div>
+
+        <div class="i18n-section">
+          <div class="i18n-title">🌐 English <span>opcional</span></div>
+          <div class="field"><label>Name</label><input id="fi-en-nome" type="text" placeholder="Item name in English"></div>
+          <div class="field"><label>Description</label><textarea id="fi-en-descricao" rows="2" placeholder="Item description in English..."></textarea></div>
+          <div class="field"><label>Where to get it</label><textarea id="fi-en-onde" rows="2" placeholder="Where to obtain this item..."></textarea></div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="fecharModal('modal-item')">Cancelar</button>
@@ -474,6 +518,11 @@
       <div class="field">
         <label>Descrição</label>
         <textarea id="pe-descricao" rows="3" placeholder="Descreva o efeito desta pesquisa…"></textarea>
+      </div>
+      <div class="i18n-section">
+        <div class="i18n-title">🌐 English <span>opcional</span></div>
+        <div class="field"><label>Name</label><input type="text" id="pe-en-nome" placeholder="Research name in English"></div>
+        <div class="field"><label>Description</label><textarea id="pe-en-descricao" rows="2" placeholder="Research description in English..."></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -541,6 +590,13 @@
           </select>
         </div>
       </div>
+      <div class="i18n-section">
+        <div class="i18n-title">🌐 English <span>opcional</span></div>
+        <div class="grid2">
+          <div class="field"><label>Region</label><input id="mr-en-regiao" placeholder="e.g. South America"></div>
+          <div class="field"><label>Primary language</label><input id="mr-en-idioma" placeholder="e.g. Portuguese"></div>
+        </div>
+      </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
         <button class="btn btn-ghost" onclick="fecharModal('modal-reino')">Cancelar</button>
         <button class="btn btn-gold" onclick="salvarReino()">💾 Salvar</button>
@@ -551,9 +607,6 @@
 
 <script src="/admin/js/admin-pesquisas.js"></script>
 <script src="/admin/js/admin-reinos.js"></script>
-<script src="/admin/js/admin-traducoes-catalogo.js"></script>
-<script src="/admin/js/admin-traducoes.js"></script>
-<script src="/admin/js/admin-traducoes-editor.js"></script>
 <script src="/admin/js/admin-dicas.js"></script>
 
 </body>

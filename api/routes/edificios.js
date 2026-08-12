@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import Edificio from '../models/Edificio.js';
 import { autenticar } from '../middleware/auth.js';
+import { sanitizeContentI18n } from '../utils/contentI18n.js';
 
 const router = Router();
+const I18N_FIELDS = ['nome', 'tag', 'descricao'];
 
 
 // ── GET /api/edificios (público) ─────────────────────────────────────────────
@@ -28,11 +30,11 @@ router.get('/:slug', async (req, res) => {
 
 // ── POST /api/edificios (admin) ──────────────────────────────────────────────
 router.post('/', autenticar, async (req, res) => {
-  const { slug, nome, icone, tag, descricao, colunas, ordem } = req.body;
+  const { slug, nome, icone, tag, descricao, colunas, ordem, i18n } = req.body;
   if (!slug?.trim() || !nome?.trim())
     return res.status(400).json({ erro: 'Slug e nome são obrigatórios.' });
   try {
-    const ed = await Edificio.create({ slug: slug.trim(), nome: nome.trim(), icone, tag, descricao, colunas: colunas || [], ordem: ordem || 0, niveis: [] });
+    const ed = await Edificio.create({ slug: slug.trim(), nome: nome.trim(), icone, tag, descricao, colunas: colunas || [], ordem: ordem || 0, niveis: [], i18n: sanitizeContentI18n(i18n, I18N_FIELDS) });
     res.status(201).json(ed);
   } catch (err) {
     if (err.code === 11000) return res.status(409).json({ erro: `Já existe um edifício com o slug "${slug}".` });
@@ -46,7 +48,7 @@ router.put('/:slug/meta', autenticar, async (req, res) => {
   try {
     const ed = await Edificio.findOneAndUpdate(
       { slug: req.params.slug },
-      { nome, icone, tag, descricao, colunas: colunas || [], ordem: ordem ?? 0, atualizadoEm: new Date() },
+      { nome, icone, tag, descricao, colunas: colunas || [], ordem: ordem ?? 0, i18n: sanitizeContentI18n(i18n, I18N_FIELDS), atualizadoEm: new Date() },
       { new: true, runValidators: true }
     );
     if (!ed) return res.status(404).json({ erro: 'Edifício não encontrado.' });

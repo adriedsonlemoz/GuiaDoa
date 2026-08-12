@@ -12,8 +12,7 @@ test('Admin permanece sem lógica ou CSS inline concentrados', () => {
   const modulos = [
     'admin-auth.js', 'admin-diagnostic.js', 'admin-bootstrap.js', 'admin-shell.js', 'admin-tropas.js',
     'admin-niveis.js', 'admin-dragoes.js', 'admin-edificios.js', 'admin-itens.js',
-    'admin-pesquisas.js', 'admin-reinos.js', 'admin-traducoes-catalogo.js',
-    'admin-traducoes.js', 'admin-traducoes-editor.js', 'admin-dicas.js',
+    'admin-pesquisas.js', 'admin-reinos.js', 'admin-dicas.js',
   ];
   for (const modulo of modulos) {
     assert.ok(existsSync(new URL(`../api/admin/js/${modulo}`, import.meta.url)), `${modulo} deve existir`);

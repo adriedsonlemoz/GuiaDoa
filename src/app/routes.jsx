@@ -32,33 +32,33 @@ import PesquisaDetalhe from '../components/pesquisas/PesquisaDetalhe.jsx';
 import TorneioPocoes from '../components/torneios/TorneioPocoes.jsx';
 
 const BASE_LABELS = {
-  torneios: { label: 'Torneios', icon: '🏆' },
-  tropas: { label: 'Tropas', icon: '⚔️' },
-  tropas_lista: { label: 'Enciclopédia', icon: '📖' },
-  tropas_comparar: { label: 'Comparar Tropas', icon: '⚖️' },
-  calculostropas: { label: 'Cálculo de Tropas', icon: '🧮' },
-  edificios: { label: 'Edifícios', icon: '🏰' },
-  itens: { label: 'Itens', icon: '🎒' },
-  niveis: { label: 'Níveis', icon: '📈' },
-  ilhas: { label: 'Ilhas', icon: '🏝️' },
-  sobre: { label: 'Sobre', icon: 'ℹ️' },
-  backup: { label: 'Backup', icon: '💾' },
-  evolucao_tropas: { label: 'Evolução de Tropas', icon: '⬆️' },
-  talisma: { label: 'Pontos Talismã', icon: '🔮' },
-  poder: { label: 'Torneio de Poder', icon: '⚡' },
-  alianca: { label: 'Aliança', icon: '🤝' },
-  matar_tropas: { label: 'Matar Tropas', icon: '💀' },
-  treino_tropa: { label: 'Treino de Tropa', icon: '🎯' },
-  habilidade_dragao: { label: 'Habilidade do Dragão', icon: '🐉' },
-  torneio_general: { label: 'General', icon: '🎖️' },
-  aprimoramento_tropa: { label: 'Aprimoramento de Tropa', icon: '🔧' },
-  aprimoramento_tropas: { label: 'Aprimoramento de Tropas', icon: '⚗️' },
-  conhecimento: { label: 'Conhecimento', icon: '📚' },
-  treinamento_dragao: { label: 'Treinamento do Dragão', icon: '🔥' },
-  dragoes: { label: 'Dragões', icon: '🐉' },
-  pesquisas: { label: 'Pesquisas', icon: '🔬' },
-  dicas: { label: 'Dicas', icon: '💡' },
-  pocoes_antigas: { label: 'Poções Antigas', icon: '🧪' },
+  torneios: { key: 'home.botao.torneios', icon: '🏆' },
+  tropas: { key: 'home.botao.tropas', icon: '⚔️' },
+  tropas_lista: { key: 'home.botao.tropas.sub', icon: '📖' },
+  tropas_comparar: { key: 'troops.compare', icon: '⚖️' },
+  calculostropas: { key: 'troops.simulator', icon: '🧮' },
+  edificios: { key: 'home.botao.edificios', icon: '🏰' },
+  itens: { key: 'home.botao.itens', icon: '🎒' },
+  niveis: { key: 'home.botao.niveis', icon: '📈' },
+  ilhas: { key: 'home.botao.ilhas', icon: '🏝️' },
+  sobre: { key: 'home.botao.sobre.sub', icon: 'ℹ️' },
+  backup: { key: 'backup.nav', icon: '💾' },
+  evolucao_tropas: { key: 'torneio.titulo.evolucao_tropas', icon: '⬆️' },
+  talisma: { key: 'torneio.titulo.talisma', icon: '🔮' },
+  poder: { key: 'torneio.titulo.poder', icon: '⚡' },
+  alianca: { key: 'torneio.cat.alianca', icon: '🤝' },
+  matar_tropas: { key: 'torneio.titulo.matar_tropas', icon: '💀' },
+  treino_tropa: { key: 'torneio.titulo.treino_tropa', icon: '🎯' },
+  habilidade_dragao: { key: 'torneio.titulo.habilidade_dragao', icon: '🐉' },
+  torneio_general: { key: 'torneio.titulo.general', icon: '🎖️' },
+  aprimoramento_tropa: { key: 'torneio.titulo.aprimoramento_tropa', icon: '🔧' },
+  aprimoramento_tropas: { key: 'torneio.titulo.aprimoramento_tropa', icon: '⚗️' },
+  conhecimento: { key: 'torneio.titulo.pocoes_antigas', icon: '📚' },
+  treinamento_dragao: { key: 'torneio.titulo.treinamento_dragao', icon: '🔥' },
+  dragoes: { key: 'home.botao.dragoes', icon: '🐉' },
+  pesquisas: { key: 'home.botao.pesquisas', icon: '🔬' },
+  dicas: { key: 'home.botao.dicas', icon: '💡' },
+  pocoes_antigas: { key: 'torneio.titulo.pocoes_antigas', icon: '🧪' },
 };
 
 export function renderRoute(route, setRoute) {
@@ -105,12 +105,15 @@ export function renderRoute(route, setRoute) {
   }
 }
 
-export function getRouteLabel(route, dragoes = []) {
-  if (BASE_LABELS[route]) return BASE_LABELS[route];
+export function getRouteLabel(route, dragoes = [], t = (key) => key, content = (record, field) => record?.[field]) {
+  if (BASE_LABELS[route]) {
+    const item = BASE_LABELS[route];
+    return { ...item, label: item.key ? t(item.key) : item.label };
+  }
   if (route.startsWith('dragao_tracker_')) {
     const id = route.replace('dragao_tracker_', '');
     const d = dragoes.find((item) => item.id === id);
-    if (d) return { label: `${d.nome} — Progresso`, icon: '📊' };
+    if (d) return { label: `${content(d, 'nome')} — ${t('levels.progress')}`, icon: '📊' };
   }
   if (route.startsWith('pesquisa_')) {
     return { label: route.replace('pesquisa_', '').replace(/-/g, ' '), icon: '🔬' };
@@ -118,7 +121,7 @@ export function getRouteLabel(route, dragoes = []) {
   if (route.startsWith('dragao_')) {
     const id = route.replace('dragao_', '');
     const d = dragoes.find((item) => item.id === id);
-    if (d) return { label: d.nome, icon: d.emojiDragao };
+    if (d) return { label: content(d, 'nome'), icon: d.emojiDragao };
   }
   return null;
 }

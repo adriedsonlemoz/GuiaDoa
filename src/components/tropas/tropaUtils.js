@@ -41,11 +41,12 @@ export const getIcone = (nome) => {
 };
 
 // ─── Tipo de ataque ───────────────────────────────────────────────────────
-export const getTipoAtaque = (t) => {
-  if (t.atqPerto > 0 && t.atqDist > 0) return { label: 'Híbrido',      color: '#B8965A' };
-  if (t.atqDist  > t.atqPerto)          return { label: 'Dist.',        color: '#0369a1' };
-  if (t.atqPerto > 0)                   return { label: 'C. a Corpo',   color: '#b91c1c' };
-  return                                        { label: 'Suporte',     color: '#6a5018' };
+export const getTipoAtaque = (t, tr = null) => {
+  const label = (key, fallback) => tr ? tr(key) : fallback;
+  if (t.atqPerto > 0 && t.atqDist > 0) return { label: label('troops.hybrid', 'Híbrido'), color: '#B8965A' };
+  if (t.atqDist  > t.atqPerto)          return { label: label('troops.ranged_short', 'Dist.'), color: '#0369a1' };
+  if (t.atqPerto > 0)                   return { label: label('troops.melee_short', 'C. a Corpo'), color: '#b91c1c' };
+  return { label: label('troops.support', 'Suporte'), color: '#6a5018' };
 };
 
 // ─── Formatação numérica ──────────────────────────────────────────────────
@@ -56,21 +57,21 @@ export const fmt = (v) => {
   return String(v);
 };
 
-export const fmtFull = (v) =>
-  (v === null || v === undefined || v === 0) ? '—' : v.toLocaleString('pt-BR');
+export const fmtFull = (v, locale = 'pt-BR') =>
+  (v === null || v === undefined || v === 0) ? '—' : v.toLocaleString(locale);
 
 // ─── Todos os atributos com maxes calibrados nos dados reais ──────────────
 export const ATRIBUTOS = [
-  { id: 'vida',     label: 'VIDA',      icon: '❤️',  color: '#e05030', max: 32_000 },
-  { id: 'def',      label: 'DEFESA',    icon: '🛡️',  color: '#1e6b8a', max: 5_000  },
-  { id: 'atqPerto', label: 'ATQ PERTO', icon: '⚔️',  color: '#b91c1c', max: 6_000  },
-  { id: 'atqDist',  label: 'ATQ DIST',  icon: '🏹',  color: '#B8965A', max: 6_000  },
-  { id: 'alcance',  label: 'ALCANCE',   icon: '🎯',  color: '#0f766e', max: 3_500  },
-  { id: 'vel',      label: 'VELOCIDADE',icon: '⚡',  color: '#0369a1', max: 3_000  },
-  { id: 'car',      label: 'CARGA',     icon: '📦',  color: '#b08a30', max: 5_000  },
-  { id: 'gestao',   label: 'GESTÃO',    icon: '👥',  color: '#6a5018', max: 200    },
-  { id: 'poder',    label: 'PODER',     icon: '⭐',  color: '#7c3aed', max: 50     },
-  { id: 'efi',      label: 'EFICIÊNCIA',icon: '🚀',  color: '#0d7c5e', max: 15_000 },
+  { id: 'vida',     label: 'VIDA', labelKey:'common.health', icon: '❤️',  color: '#e05030', max: 32_000 },
+  { id: 'def',      label: 'DEFESA', labelKey:'common.defense', icon: '🛡️',  color: '#1e6b8a', max: 5_000  },
+  { id: 'atqPerto', label: 'ATQ PERTO', labelKey:'troops.attack_near', icon: '⚔️',  color: '#b91c1c', max: 6_000  },
+  { id: 'atqDist',  label: 'ATQ DIST', labelKey:'troops.attack_range', icon: '🏹',  color: '#B8965A', max: 6_000  },
+  { id: 'alcance',  label: 'ALCANCE', labelKey:'common.range', icon: '🎯',  color: '#0f766e', max: 3_500  },
+  { id: 'vel',      label: 'VELOCIDADE', labelKey:'common.speed',icon: '⚡',  color: '#0369a1', max: 3_000  },
+  { id: 'car',      label: 'CARGA', labelKey:'troops.load', icon: '📦',  color: '#b08a30', max: 5_000  },
+  { id: 'gestao',   label: 'GESTÃO', labelKey:'troops.management', icon: '👥',  color: '#6a5018', max: 200    },
+  { id: 'poder',    label: 'PODER', labelKey:'common.power', icon: '⭐',  color: '#7c3aed', max: 50     },
+  { id: 'efi',      label: 'EFICIÊNCIA', labelKey:'troops.efficiency',icon: '🚀',  color: '#0d7c5e', max: 15_000 },
 ];
 
 // ─── Atributos que ficam no resumo inline do card (linha de preview) ──────
@@ -84,11 +85,11 @@ export const getAtributosResumo = (t) => [
 
 // ─── Filtros ──────────────────────────────────────────────────────────────
 export const FILTROS = [
-  { id: 'Todas',         label: 'Todas'      },
-  { id: 'Corpo a Corpo', label: 'C. a Corpo' },
-  { id: 'Longo Alcance', label: 'Dist.'      },
-  { id: 'Maior Vida',    label: '+ Vida'     },
-  { id: 'Maior Defesa',  label: '+ Defesa'   },
-  { id: 'Alta Carga',    label: '+ Carga'    },
-  { id: 'Mais Rápidas',  label: '+ Rápidas'  },
+  { id: 'Todas',         label: 'Todas', labelKey:'common.all' },
+  { id: 'Corpo a Corpo', label: 'C. a Corpo', labelKey:'troops.melee_short' },
+  { id: 'Longo Alcance', label: 'Dist.', labelKey:'troops.ranged_short' },
+  { id: 'Maior Vida',    label: '+ Vida', labelKey:'troops.filter.health' },
+  { id: 'Maior Defesa',  label: '+ Defesa', labelKey:'troops.filter.defense' },
+  { id: 'Alta Carga',    label: '+ Carga', labelKey:'troops.filter.load' },
+  { id: 'Mais Rápidas',  label: '+ Rápidas', labelKey:'troops.filter.speed' },
 ];

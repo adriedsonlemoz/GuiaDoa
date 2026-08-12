@@ -1,12 +1,14 @@
 import React from 'react';
 import { C } from '../theme.js';
 import { descreverSyncStatus } from '../data/syncStatus.js';
-import { formatarUltimaSyncPt } from '../data/syncService.js';
+import { formatarUltimaSync } from '../data/syncService.js';
+import { useI18n } from '../hooks/useI18n.jsx';
 
 export default function SyncStatusBar({ status, isOffline, syncInfo, onSync }) {
+  const { t, locale } = useI18n();
   if (!status || status === 'syncing') return null;
   const visual = descreverSyncStatus(status, !isOffline);
-  const ultima = formatarUltimaSyncPt(syncInfo.ts);
+  const ultima = formatarUltimaSync(syncInfo.ts, locale);
   const bg = visual.nivel === 'ok' ? 'rgba(55,105,65,0.28)'
     : visual.nivel === 'erro' ? 'rgba(130,45,35,0.30)'
     : 'rgba(150,110,25,0.28)';
@@ -22,7 +24,7 @@ export default function SyncStatusBar({ status, isOffline, syncInfo, onSync }) {
           {visual.emoji} {visual.label}
         </div>
         <div className="font-nunito text-[0.56rem] truncate" style={{ color: '#B9B0A0' }}>
-          Dados carregados: {ultima}
+          {t('app.sync.data_loaded', { time: ultima })}
         </div>
       </div>
       <button
@@ -35,7 +37,7 @@ export default function SyncStatusBar({ status, isOffline, syncInfo, onSync }) {
           whiteSpace: 'nowrap',
         }}
       >
-        ↻ Sincronizar
+        ↻ {t('app.sync.retry')}
       </button>
     </div>
   );

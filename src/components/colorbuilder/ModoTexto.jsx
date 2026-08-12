@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { PRESETS, SUGGEST_PALETTES, SUGGEST_NAMES, KAOMOJI, ASCII_EM, SYM_CATS, FRASES_PRONTAS } from './data.js';
 import { T, C, safeCopy } from './styles.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 const ABAS = [
-  { id: 'texto',     label: '✏️ Texto'      },
-  { id: 'emoticons', label: '😄 Emoticons'  },
-  { id: 'simbolos',  label: '✦ Símbolos'   },
+  { id:'texto', key:'builder.text.tab.text' },
+  { id:'emoticons', key:'builder.text.tab.emoticons' },
+  { id:'simbolos', key:'builder.text.tab.symbols' },
 ];
 
 export default function ModoTexto({
@@ -15,6 +16,7 @@ export default function ModoTexto({
   savedColors, saveColor, removeColor,
   showToast,
 }) {
+  const { t } = useI18n();
   const [tokens,     setTokens]     = useState([]);
   const [selected,   setSelected]   = useState(new Set());
   const [paintMode,  setPaintMode]  = useState('select');
@@ -51,7 +53,7 @@ export default function ModoTexto({
     const temCores = tokens.some(t => t.color);
     const textoAtual = tokens.map(t => t.char).join('');
     if (temCores && textoAtual !== inputVal) {
-      if (!window.confirm('Remontar vai apagar as cores já aplicadas. Continuar?')) return;
+      if (!window.confirm(t('builder.text.remount_confirm'))) return;
     }
     setTokens([...inputVal].map(c => ({ char: c, color: null })));
     setSelected(new Set());
@@ -71,12 +73,12 @@ export default function ModoTexto({
 
   const aplicarFrasePronta = (frase) => {
     const temCoresManuais = tokens.some(t => t.color) && tokens.map(t => t.char).join('') !== '';
-    if (temCoresManuais && !window.confirm('Isso vai substituir o texto e as cores atuais. Continuar?')) return;
+    if (temCoresManuais && !window.confirm(t('builder.text.replace_confirm'))) return;
     const novosTokens = parseCodigo(frase.codigo);
     setTokens(novosTokens);
     setInputVal(novosTokens.map(t => t.char).join(''));
     setSelected(new Set());
-    showToast(`"${frase.label}" aplicado!`);
+    showToast(t('builder.text.style_applied',{name:frase.label}));
   };
 
   const getCode = () => {
@@ -103,9 +105,9 @@ export default function ModoTexto({
   const paintToken = (i) => setTokens(prev => prev.map((tk, j) => j === i ? { ...tk, color: activeColor } : tk));
 
   const applyColor = () => {
-    if (!selected.size) { showToast('Selecione ao menos um caractere'); return; }
+    if (!selected.size) { showToast(t('builder.text.select_one')); return; }
     setTokens(prev => prev.map((tk, i) => selected.has(i) ? { ...tk, color: activeColor } : tk));
-    showToast(`#${activeColor} aplicado a ${selected.size} caractere(s)`);
+    showToast(t('builder.text.applied',{color:activeColor,count:selected.size}));
     setSelected(new Set());
   };
 
@@ -113,7 +115,7 @@ export default function ModoTexto({
     const pal = SUGGEST_PALETTES[pi];
     if (!tokens.length) {
       if (!inputVal.trim()) {
-        showToast('Digite um texto primeiro!');
+        showToast(t('builder.text.enter_first'));
         inputRef.current?.focus();
         return;
       }
@@ -122,7 +124,7 @@ export default function ModoTexto({
       setTokens(prev => prev.map((tk, i) => ({ ...tk, color: pal[i % pal.length] })));
     }
     setSelected(new Set());
-    showToast(`Estilo "${SUGGEST_NAMES[pi]}" aplicado!`);
+    showToast(t('builder.text.style_applied',{name:SUGGEST_NAMES[pi]}));
   };
 
   const code = getCode();
@@ -136,7 +138,7 @@ export default function ModoTexto({
       <div style={{ ...T.modeTabs, marginBottom: 12 }}>
         {ABAS.map(a => (
           <button key={a.id} style={T.modeTab(aba === a.id)} onClick={() => setAba(a.id)}>
-            {a.label}
+            {t(a.key)}
           </button>
         ))}
       </div>
@@ -144,10 +146,10 @@ export default function ModoTexto({
       {/* ── PAINEL: TEXTO ────────────────────────────────────────────────── */}
       {aba === 'texto' && (
         <div style={T.card}>
-          <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>✏️</span> Digite ou cole seu texto</div>
+          <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>✏️</span> {t('builder.text.input_title')}</div>
 
           {/* Sugestões */}
-          <div style={T.secLbl}>Sugestões de cor automática</div>
+          <div style={T.secLbl}>{t('builder.text.auto_colors')}</div>
           <p style={{ fontSize: '0.62rem', color: C.TEXT_FAINT, margin: '0 0 8px' }}>
             Digite seu texto abaixo e clique num estilo para colorir automaticamente
           </p>
@@ -166,7 +168,7 @@ export default function ModoTexto({
           </div>
 
           {/* Frases prontas */}
-          <div style={T.secLbl}>Frases prontas</div>
+          <div style={T.secLbl}>{t('builder.text.ready_phrases')}</div>
           <p style={{ fontSize: '0.62rem', color: C.TEXT_FAINT, margin: '0 0 8px' }}>
             Textos já coloridos para comemorações e general — clique para usar
           </p>
@@ -206,7 +208,7 @@ export default function ModoTexto({
             <textarea ref={inputRef} value={inputVal}
               onChange={e => setInputVal(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); parseText(); } }}
-              placeholder="Digite aqui — ou insira emoticons e símbolos pelas abas acima..."
+              placeholder={t('builder.text.placeholder')}
               rows={2} style={T.input}
             />
             <button style={{ ...T.btnSolid, height: 44, padding: '0 16px' }} onClick={parseText}>
@@ -214,7 +216,7 @@ export default function ModoTexto({
             </button>
           </div>
           <p style={{ fontSize: '0.67rem', color: C.TEXT_MUTED, marginTop: 6 }}>
-            Use as abas <strong>Emoticons</strong> e <strong>Símbolos</strong> para inserir caracteres aqui. Enter também monta.
+            {t('builder.text.input_help')}
           </p>
         </div>
       )}
@@ -222,25 +224,25 @@ export default function ModoTexto({
       {/* ── PAINEL: EMOTICONS ────────────────────────────────────────────── */}
       {aba === 'emoticons' && (
         <div style={T.card}>
-          <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>ʕ•ᴥ•ʔ</span> Kaomoji japoneses</div>
+          <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>ʕ•ᴥ•ʔ</span> {t('builder.kaomoji.title')}</div>
           <p style={{ fontSize: '0.67rem', color: C.TEXT_MUTED, marginBottom: 10, lineHeight: 1.6 }}>
             Clique para inserir no campo de texto e depois monte para colorir.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 16 }}>
             {KAOMOJI.map((k, i) => (
               <button key={i} style={T.exBtn}
-                onClick={() => { insertInInput(k, true); showToast(`${k} inserido!`); }}
+                onClick={() => { insertInInput(k, true); showToast(t('builder.inserted',{value:k})); }}
               >{k}</button>
             ))}
           </div>
 
           <div style={T.divider} />
 
-          <div style={{ ...T.cardTitle, marginTop: 10 }}><span style={{ color: C.ACCENT }}>:-)</span> ASCII Emoticons</div>
+          <div style={{ ...T.cardTitle, marginTop: 10 }}><span style={{ color: C.ACCENT }}>:-)</span> {t('builder.ascii.title')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {ASCII_EM.map((e, i) => (
               <button key={i} style={T.exBtn}
-                onClick={() => { insertInInput(e, true); showToast(`${e} inserido!`); }}
+                onClick={() => { insertInInput(e, true); showToast(t('builder.inserted',{value:e})); }}
               >{e}</button>
             ))}
           </div>
@@ -250,7 +252,7 @@ export default function ModoTexto({
       {/* ── PAINEL: SÍMBOLOS ─────────────────────────────────────────────── */}
       {aba === 'simbolos' && (
         <div style={T.card}>
-          <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>✦</span> Símbolos por categoria</div>
+          <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>✦</span> {t('builder.symbols.title')}</div>
           <p style={{ fontSize: '0.67rem', color: C.TEXT_MUTED, marginBottom: 10, lineHeight: 1.6 }}>
             Clique para inserir no campo de texto e depois monte para colorir.
           </p>
@@ -268,13 +270,13 @@ export default function ModoTexto({
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {SYM_CATS[symCat].s.map((s, i) => (
               <button key={i} style={T.exSym}
-                onClick={() => { insertInInput(s, true); showToast(`"${s}" inserido!`); }}
-                title={`Inserir: ${s}`}
+                onClick={() => { insertInInput(s, true); showToast(t('builder.inserted',{value:s})); }}
+                title={t('builder.symbols.copy_title',{value:s})}
               >{s}</button>
             ))}
           </div>
           <p style={{ fontSize: '0.62rem', color: C.TEXT_FAINT, marginTop: 10, textAlign: 'right' }}>
-            {SYM_CATS[symCat].s.length} símbolos nesta categoria
+            {t('builder.symbols.count',{count:SYM_CATS[symCat].s.length})}
           </p>
         </div>
       )}
@@ -283,7 +285,7 @@ export default function ModoTexto({
       {tokens.length > 0 && (
         <div style={T.card}>
           <div style={{ ...T.cardTitle, justifyContent: 'space-between' }}>
-            <span><span style={{ color: C.ACCENT }}>🎨</span> Pinte os caracteres</span>
+            <span><span style={{ color: C.ACCENT }}>🎨</span> {t('builder.text.paint_title')}</span>
             <span style={{ fontSize: '0.65rem', color: C.TEXT_MUTED, textTransform: 'none', letterSpacing: 0 }}>
               {tokens.length} chars · {coloredCount} coloridos
             </span>
@@ -291,15 +293,15 @@ export default function ModoTexto({
 
           {/* Modo pintura */}
           <div style={T.modeTabs}>
-            <button style={T.modeTab(paintMode === 'select')} onClick={() => setPaintMode('select')}>✦ Selecionar & aplicar</button>
-            <button style={T.modeTab(paintMode === 'paint')}  onClick={() => setPaintMode('paint')}>🖌 Pintar letra a letra</button>
+            <button style={T.modeTab(paintMode === 'select')} onClick={() => setPaintMode('select')}>{t('builder.text.select_apply')}</button>
+            <button style={T.modeTab(paintMode === 'paint')}  onClick={() => setPaintMode('paint')}>{t('builder.text.paint_letter')}</button>
           </div>
 
           {paintMode === 'select' && (
             <div style={{ display: 'flex', gap: 5, marginBottom: 10, flexWrap: 'wrap' }}>
-              <button style={T.btnOutline} onClick={selectAll}>Todos</button>
-              <button style={T.btnOutline} onClick={selectNone}>Nenhum</button>
-              <button style={T.btnOutline} onClick={invertSel}>Inverter</button>
+              <button style={T.btnOutline} onClick={selectAll}>{t('builder.text.all')}</button>
+              <button style={T.btnOutline} onClick={selectNone}>{t('builder.text.none')}</button>
+              <button style={T.btnOutline} onClick={invertSel}>{t('builder.text.invert')}</button>
             </div>
           )}
 
@@ -311,7 +313,7 @@ export default function ModoTexto({
             }}>
               <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#' + activeColor, border: '2px solid rgba(200,168,74,0.3)', flexShrink: 0 }} />
               <span style={{ fontWeight: 600 }}>#{activeColor}</span>
-              <span style={{ opacity: 0.7 }}>— clique em qualquer caractere para pintar</span>
+              <span style={{ opacity: 0.7 }}>{t('builder.text.click_paint')}</span>
             </div>
           )}
 
@@ -361,18 +363,18 @@ export default function ModoTexto({
             <div style={{ width: 24, height: 24, borderRadius: 6, background: '#' + activeColor, border: '2px solid rgba(200,168,74,0.4)', flexShrink: 0 }} />
             <span style={{ fontSize: '0.83rem', color: C.TEXT_PRIMARY, fontWeight: 500, flex: 1 }}>#{activeColor}</span>
             {paintMode === 'select' && (
-              <button style={T.btnSolid} onClick={applyColor}>Aplicar selecionados</button>
+              <button style={T.btnSolid} onClick={applyColor}>{t('builder.text.apply_selected')}</button>
             )}
           </div>
 
           {/* Paleta de cores */}
-          <div style={T.secLbl}>Paleta de cores — clique para ativar</div>
+          <div style={T.secLbl}>{t('builder.text.palette')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 12 }}>
             {PRESETS.map((hex, i) => {
               const isActive = hex.replace('#', '').toUpperCase() === activeColor;
               return (
                 <div key={'preset-' + i}
-                  onClick={() => { setActive(hex); showToast('Cor ' + hex.toUpperCase() + ' ativa'); }}
+                  onClick={() => { setActive(hex); showToast(t('builder.text.color_active',{color:hex.toUpperCase()})); }}
                   title={hex}
                   style={{
                     width: 24, height: 24, borderRadius: 6, background: hex,
@@ -389,7 +391,7 @@ export default function ModoTexto({
 
           {savedColors.length > 0 && (
             <>
-              <div style={T.secLbl}>Cores salvas — toque em ✕ para remover</div>
+              <div style={T.secLbl}>{t('builder.text.saved_colors')}</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 12 }}>
                 {savedColors.map((hex, i) => {
                   const isActive = hex.replace('#', '').toUpperCase() === activeColor;
@@ -398,7 +400,7 @@ export default function ModoTexto({
                       style={{ position: 'relative', flexShrink: 0 }}
                     >
                       <div
-                        onClick={() => { setActive(hex); showToast('Cor ' + hex.toUpperCase() + ' ativa'); }}
+                        onClick={() => { setActive(hex); showToast(t('builder.text.color_active',{color:hex.toUpperCase()})); }}
                         title={hex}
                         style={{
                           width: 24, height: 24, borderRadius: 6, background: hex,
@@ -411,8 +413,8 @@ export default function ModoTexto({
                         }}
                       />
                       <button
-                        onClick={(e) => { e.stopPropagation(); removeColor(hex); showToast('Cor removida'); }}
-                        title="Remover cor salva"
+                        onClick={(e) => { e.stopPropagation(); removeColor(hex); showToast(t('builder.text.color_removed')); }}
+                        title={t('builder.text.remove_saved')}
                         style={{
                           position: 'absolute', top: -7, right: -7,
                           width: 15, height: 15, borderRadius: '50%',
@@ -430,7 +432,7 @@ export default function ModoTexto({
           )}
 
           {/* Cor personalizada */}
-          <div style={T.secLbl}>Cor personalizada</div>
+          <div style={T.secLbl}>{t('builder.text.custom_color')}</div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <input type="color" value={cpicker}
               onChange={e => setActive(e.target.value.replace('#', ''))}
@@ -444,14 +446,14 @@ export default function ModoTexto({
               style={{ ...T.input, width: 100, minHeight: 32, fontSize: '0.82rem', flex: 'none' }}
             />
             <button style={T.btnOutline}
-              onClick={() => { if (hexInput.length === 6) { setActive(hexInput); showToast('Cor #' + hexInput + ' ativa'); } else showToast('Hex inválido — 6 dígitos'); }}
-            >Definir</button>
-            <button title="Salvar na paleta"
+              onClick={() => { if (hexInput.length === 6) { setActive(hexInput); showToast(t('builder.text.color_active',{color:'#'+hexInput})); } else showToast(t('builder.text.invalid_hex')); }}
+            >{t('builder.text.define')}</button>
+            <button title={t('builder.text.save_palette')}
               onClick={() => {
                 const r = saveColor('#' + activeColor);
-                if (r === 'existe') showToast('Já está na paleta!');
-                else if (r === 'cheio') showToast('Máximo 20 cores salvas');
-                else showToast('Cor salva ✦');
+                if (r === 'existe') showToast(t('builder.text.already_saved'));
+                else if (r === 'cheio') showToast(t('builder.text.palette_full'));
+                else showToast(t('builder.text.color_saved'));
               }}
               style={{ ...T.btnOutline, width: 32, padding: 0, fontSize: '1.1rem' }}
             >+</button>
@@ -462,7 +464,7 @@ export default function ModoTexto({
       {/* ── RESULTADO ────────────────────────────────────────────────────── */}
       {tokens.length > 0 && (
         <div style={T.card}>
-          <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>③</span> Resultado</div>
+          <div style={T.cardTitle}><span style={{ color: C.ACCENT }}>③</span> {t('builder.text.result')}</div>
 
           {/* Preview colorido */}
           <div style={{ fontSize: '1.3rem', lineHeight: 2, wordBreak: 'break-all', padding: '2px 0 4px' }}>
@@ -475,7 +477,7 @@ export default function ModoTexto({
 
           <div style={T.divider} />
 
-          <div style={T.secLbl}>Código gerado</div>
+          <div style={T.secLbl}>{t('builder.text.generated_code')}</div>
           <div style={{ position: 'relative', marginBottom: 12 }}>
             <div style={T.codeBox}>{code}</div>
             <button
@@ -487,27 +489,27 @@ export default function ModoTexto({
                 fontSize: '0.9rem', width: 28, height: 28,
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
-              title="Copiar código"
+              title={t('builder.copy_code')}
             >{codeCopied ? '✓' : '⎘'}</button>
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-            <button style={T.btnSolid} onClick={() => safeCopy(code, () => showToast('Código copiado!'))}>⎘ Copiar código</button>
-            <button style={T.btnOutline} onClick={() => safeCopy(tokens.map(t => t.char).join(''), () => showToast('Texto puro copiado!'))}>⎘ Texto puro</button>
+            <button style={T.btnSolid} onClick={() => safeCopy(code, () => showToast(t('builder.text.code_copied')))}>{t('builder.text.copy_code')}</button>
+            <button style={T.btnOutline} onClick={() => safeCopy(tokens.map(t => t.char).join(''), () => showToast(t('builder.text.plain_copied')))}>{t('builder.text.plain')}</button>
             <button style={T.btnOutline} onClick={() => {
-              if (!window.confirm('Remover todas as cores aplicadas?')) return;
+              if (!window.confirm(t('builder.text.remove_colors_confirm'))) return;
               setTokens(prev => prev.map(tk => ({ ...tk, color: null })));
               setSelected(new Set());
-              showToast('Cores removidas');
-            }}>✦ Limpar cores</button>
+              showToast(t('builder.text.colors_removed'));
+            }}>{t('builder.text.clear_colors')}</button>
             <button style={T.btnOutline} onClick={() => {
               // Volta para a aba de digitação, mantendo o progresso atual intacto
               setAba('texto');
-            }}>✏️ Editar texto</button>
+            }}>{t('builder.text.edit')}</button>
             <button style={{ ...T.btnOutline, color: C.ERROR, borderColor: 'rgba(168,60,44,0.35)' }}
               onClick={() => {
-                if (!window.confirm('Apagar tudo e recomeçar do zero?')) return;
-                setTokens([]); setSelected(new Set()); setInputVal(''); showToast('Recomeçado');
+                if (!window.confirm(t('builder.text.restart_confirm'))) return;
+                setTokens([]); setSelected(new Set()); setInputVal(''); showToast(t('builder.text.restarted'));
               }}>
               ✕ Recomeçar
             </button>

@@ -1,12 +1,14 @@
 import React from 'react';
 import { C } from '../../theme.js';
 import { fmt } from './tropaUtils.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 const ExercitoBanner = ({ totTropas, totPoder, totalFiltradas }) => {
+  const { t } = useI18n();
   const cols = [
-    { label: 'EXÉRCITO', value: fmt(totTropas), color: C.TEXT_PRIMARY, icon: '⚔️' },
-    { label: 'PODER',    value: fmt(totPoder),  color: C.POWER,        icon: '✦'  },
-    { label: 'UNIDADES', value: totalFiltradas, color: C.ACCENT_DEEP,  icon: '📋' },
+    { label: t('troops.army').toUpperCase(), value: fmt(totTropas), color: C.TEXT_PRIMARY, icon: '⚔️' },
+    { label: t('common.power').toUpperCase(), value: fmt(totPoder),  color: C.POWER,        icon: '✦'  },
+    { label: t('troops.units').toUpperCase(), value: totalFiltradas, color: C.ACCENT_DEEP,  icon: '📋' },
   ];
 
   return (

@@ -14,7 +14,7 @@ const CARD_STYLES = `
   }
 `;
 
-const TorneioStatusCard = ({ horaLocal, countdown, isUrgente, faseTexto, fuso, reino, compact = false }) => {
+const TorneioStatusCard = ({ horaLocal, horaSomente, countdown, isUrgente, faseTexto, fuso, reino, compact = false }) => {
   const { t } = useI18n();
   return (
   <div className="tw-card mb-3">
@@ -59,7 +59,7 @@ const TorneioStatusCard = ({ horaLocal, countdown, isUrgente, faseTexto, fuso, r
       >
         <span className="font-nunito font-semibold text-xs overflow-hidden text-ellipsis whitespace-nowrap"
           style={{ color: isUrgente ? C.ERROR : C.TEXT_MUTED }}>
-          {faseTexto.split('—')[1]?.trim() ?? faseTexto}
+          {faseTexto}
         </span>
         <span className="text-aoe-gold shrink-0 text-xs">·</span>
         <span className="font-nunito font-bold text-[0.65rem] tracking-wider text-aoe-muted whitespace-nowrap shrink-0">
@@ -67,7 +67,7 @@ const TorneioStatusCard = ({ horaLocal, countdown, isUrgente, faseTexto, fuso, r
         </span>
         <span className="text-aoe-gold shrink-0 text-xs">·</span>
         <span className="font-nunito text-[0.7rem] text-aoe-muted whitespace-nowrap tracking-widest shrink-0">
-          {horaLocal?.split(' às ')[1] ?? horaLocal}
+          {horaSomente || horaLocal}
         </span>
       </div>
     </div>

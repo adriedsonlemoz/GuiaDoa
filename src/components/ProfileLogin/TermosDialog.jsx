@@ -1,8 +1,10 @@
 import React from 'react';
 import Modal from '../../ui/Modal.jsx';
 import { setTermoAceito } from '../../utils/storage.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 const TermosDialog = ({ open, onAceitar }) => {
+  const { t } = useI18n();
   const handleAceitar = () => {
     setTermoAceito();
     onAceitar();
@@ -14,20 +16,16 @@ const TermosDialog = ({ open, onAceitar }) => {
         <p className="text-4xl leading-none mb-2 m-0">📜</p>
         <p className="font-cinzel font-bold text-lg uppercase tracking-wide text-aoe-red mb-3 pb-2 m-0"
           style={{ borderBottom: '2px solid #C8A84A' }}>
-          Contrato de Acesso
+          {t('terms.title')}
         </p>
         <p className="font-nunito font-bold text-sm text-aoe-dark mb-2 text-justify leading-relaxed m-0">
-          Bem-vindo ao Guia Tático DOA. Este aplicativo é uma ferramenta{' '}
-          <strong>não oficial</strong> criada pela comunidade de fãs e não possui qualquer vínculo
-          com a desenvolvedora <strong>Deca Games</strong>.
+          {t('terms.p1')}
         </p>
         <p className="font-nunito text-sm text-aoe-mid mb-4 text-justify leading-relaxed m-0">
-          Os resultados das calculadoras são baseados em lógicas estudadas por jogadores. Pequenas
-          variações nos cálculos podem ocorrer. Ao entrar, você concorda que o uso desta ferramenta
-          é apenas para auxílio estratégico.
+          {t('terms.p2')}
         </p>
         <button onClick={handleAceitar} className="btn-success btn-lg w-full uppercase tracking-wider">
-          Li e Aceito os Termos
+          {t('terms.accept')}
         </button>
       </div>
     </Modal>

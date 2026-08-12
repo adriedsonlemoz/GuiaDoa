@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import Item from '../models/Item.js';
 import { autenticar } from '../middleware/auth.js';
+import { sanitizeContentI18n } from '../utils/contentI18n.js';
 
 const router = Router();
+const I18N_FIELDS = ['nome', 'descricao', 'onde'];
 
 // ── GET /api/itens  (público — usado pelo frontend) ──────────────────────────
 router.get('/', async (req, res) => {
@@ -46,7 +48,7 @@ router.get('/:id', async (req, res) => {
 
 // ── POST /api/itens  (admin) ──────────────────────────────────────────────────
 router.post('/', autenticar, async (req, res) => {
-  const { nome, icone, descricao, onde } = req.body;
+  const { nome, icone, descricao, onde, i18n } = req.body;
   if (!nome?.trim()) return res.status(400).json({ erro: 'O nome do item é obrigatório.' });
   try {
     const item = await Item.create({
@@ -54,6 +56,7 @@ router.post('/', autenticar, async (req, res) => {
       icone: icone || '🎒',
       descricao: descricao?.trim() || '',
       onde: onde?.trim() || '',
+      i18n: sanitizeContentI18n(i18n, I18N_FIELDS),
     });
     res.status(201).json(item);
   } catch (err) {
@@ -64,12 +67,12 @@ router.post('/', autenticar, async (req, res) => {
 
 // ── PUT /api/itens/:id  (admin) ───────────────────────────────────────────────
 router.put('/:id', autenticar, async (req, res) => {
-  const { nome, icone, descricao, onde } = req.body;
+  const { nome, icone, descricao, onde, i18n } = req.body;
   if (!nome?.trim()) return res.status(400).json({ erro: 'O nome do item é obrigatório.' });
   try {
     const item = await Item.findByIdAndUpdate(
       req.params.id,
-      { nome: nome.trim(), icone: icone || '🎒', descricao: descricao?.trim() || '', onde: onde?.trim() || '', atualizadoEm: new Date() },
+      { nome: nome.trim(), icone: icone || '🎒', descricao: descricao?.trim() || '', onde: onde?.trim() || '', i18n: sanitizeContentI18n(i18n, I18N_FIELDS), atualizadoEm: new Date() },
       { new: true, runValidators: true }
     );
     if (!item) return res.status(404).json({ erro: 'Item não encontrado.' });

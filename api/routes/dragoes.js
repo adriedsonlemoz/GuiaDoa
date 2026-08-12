@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import Dragao from '../models/Dragao.js';
 import { autenticar } from '../middleware/auth.js';
+import { sanitizeContentI18n } from '../utils/contentI18n.js';
 
 const router = Router();
 
 const ATTRS_BASE     = ['vida','defesa','ataquePerto','ataqueDistante','alcance','velocidade'];
 const ATTRS_ELEMENTAL= ['ataqueElemental','impulsoElemental','barreiraElemental','bombardeioElemental','confrontoElemental','bloqueioElemental','rupturaElemental'];
 const TODOS_ATTRS    = [...ATTRS_BASE, ...ATTRS_ELEMENTAL];
+const I18N_FIELDS = ['nome', 'elemento', 'raridade', 'bonusMarcha', 'atributo', 'descricao', 'dicas'];
 
 // ── GET /api/dragoes ─────────────────────────────────────────────────────────
 router.get('/', async (req, res) => {
@@ -27,11 +29,11 @@ router.get('/:slug', async (req, res) => {
 
 // ── POST /api/dragoes (admin) ────────────────────────────────────────────────
 router.post('/', autenticar, async (req, res) => {
-  const { slug, nome, elemento, emoji, emojiDragao, cor, raridade } = req.body;
+  const { slug, nome, elemento, emoji, emojiDragao, cor, raridade, bonusMarcha, atributo, descricao, i18n } = req.body;
   if (!slug?.trim() || !nome?.trim())
     return res.status(400).json({ erro: 'Slug e nome são obrigatórios.' });
   try {
-    const d = await Dragao.create({ slug: slug.trim(), nome: nome.trim(), elemento, emoji, emojiDragao, cor, raridade, niveis:[] });
+    const d = await Dragao.create({ slug: slug.trim(), nome: nome.trim(), elemento, emoji, emojiDragao, cor, raridade, bonusMarcha, atributo, descricao, i18n: sanitizeContentI18n(i18n, I18N_FIELDS), niveis:[] });
     res.status(201).json(d);
   } catch (err) {
     if (err.code === 11000) return res.status(409).json({ erro: `Slug "${slug}" já existe.` });
@@ -41,11 +43,11 @@ router.post('/', autenticar, async (req, res) => {
 
 // ── PUT /api/dragoes/:slug/meta (admin) ──────────────────────────────────────
 router.put('/:slug/meta', autenticar, async (req, res) => {
-  const { nome, elemento, emoji, emojiDragao, cor, raridade } = req.body;
+  const { nome, elemento, emoji, emojiDragao, cor, raridade, bonusMarcha, atributo, descricao, i18n } = req.body;
   try {
     const d = await Dragao.findOneAndUpdate(
       { slug: req.params.slug },
-      { nome, elemento, emoji, emojiDragao, cor, raridade, atualizadoEm: new Date() },
+      { nome, elemento, emoji, emojiDragao, cor, raridade, bonusMarcha, atributo, descricao, i18n: sanitizeContentI18n(i18n, I18N_FIELDS), atualizadoEm: new Date() },
       { new: true }
     );
     if (!d) return res.status(404).json({ erro: 'Dragão não encontrado.' });

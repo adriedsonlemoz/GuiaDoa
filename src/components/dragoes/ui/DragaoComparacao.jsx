@@ -1,8 +1,10 @@
 import React from 'react';
 import { C } from '../../../theme.js';
+import { useI18n } from '../../../hooks/useI18n.jsx';
 import { ATTRS_BASE, ATTRS_ELEM, fmtDragaoValor as fmt } from '../dragaoCompareConfig.js';
 
 const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, todosDragoes }) => {
+  const { t, content, locale } = useI18n();
   const dragoes = ids.map(id => todosDragoes.find(d => d.id === id)).filter(Boolean);
   if (dragoes.length === 0) return null;
 
@@ -41,10 +43,10 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
         display:'flex', alignItems:'center', justifyContent:'space-between',
       }}>
         <span className="font-cinzel font-bold text-sm tracking-wider" style={{ color:'#F8F2E0' }}>
-          ⚔️ Comparação
+          ⚔️ {t('dragons.comparison_title')}
         </span>
         <span className="font-nunito font-bold text-xs" style={{ color:'rgba(248,242,224,0.5)' }}>
-          {dragoes.length}/3 dragões
+          {t('dragons.count_selected', { count: dragoes.length })}
         </span>
       </div>
 
@@ -56,7 +58,7 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
             background:`${d.cor}15`, border:`1.5px solid ${d.cor}44`, borderRadius:20,
           }}>
             <span style={{ fontSize:'1rem' }}>{d.emojiDragao}</span>
-            <span className="font-nunito font-bold text-xs" style={{ color:d.cor }}>{d.nome}</span>
+            <span className="font-nunito font-bold text-xs" style={{ color:d.cor }}>{content(d, 'nome')}</span>
             <button onClick={() => onRemover(d.id)} style={{
               background:'none', border:'none', cursor:'pointer',
               color:`${d.cor}99`, fontSize:'0.75rem', padding:'0 2px', lineHeight:1,
@@ -68,7 +70,7 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
             display:'flex', alignItems:'center', gap:4, padding:'5px 10px',
             border:`1.5px dashed ${C.BORDER}`, borderRadius:20,
           }}>
-            <span className="font-nunito text-xs" style={{ color:C.TEXT_FAINT }}>+ até {3 - ids.length} dragão{3 - ids.length > 1 ? 'ões' : ''}</span>
+            <span className="font-nunito text-xs" style={{ color:C.TEXT_FAINT }}>{3 - ids.length === 1 ? t('dragons.add_more_one') : t('dragons.add_more_many', { count: 3 - ids.length })}</span>
           </div>
         )}
       </div>
@@ -76,8 +78,8 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
       {!temDados ? (
         <div style={{ padding:'20px', textAlign:'center' }}>
           <p className="font-nunito text-xs italic m-0" style={{ color:C.TEXT_MUTED }}>
-            Nenhum atributo cadastrado nos dragões selecionados.<br/>
-            <span style={{ fontSize:'0.65rem' }}>Dados de atributos ainda não disponíveis.</span>
+            {t('dragons.none_attributes_selected')}<br/>
+            <span style={{ fontSize:'0.65rem' }}>{t('dragons.attributes_unavailable_help')}</span>
           </p>
         </div>
       ) : (
@@ -87,7 +89,7 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
             <div style={{ padding:'10px 14px', borderBottom:`1px solid ${C.BORDER_SOFT}`,
               display:'flex', alignItems:'center', gap:10 }}>
               <span className="font-nunito font-bold text-xs" style={{ color:C.TEXT_MUTED, whiteSpace:'nowrap' }}>
-                Nível:
+                {t('common.level')}:
               </span>
               <div style={{ display:'flex', gap:4, overflowX:'auto', scrollbarWidth:'none', flex:1 }}>
                 {Array.from({ length: maxNiveis }, (_, i) => {
@@ -117,12 +119,12 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
                 <tr style={{ background:C.BG_SECONDARY }}>
                   <th style={{ padding:'7px 10px', textAlign:'left', fontSize:'0.58rem',
                     letterSpacing:'1px', color:C.TEXT_MUTED, fontWeight:900, whiteSpace:'nowrap' }}>
-                    ATRIBUTO
+                    {t('dragons.attribute_column')}
                   </th>
                   {dragoes.map(d => (
                     <th key={d.id} style={{ padding:'7px 10px', textAlign:'center',
                       fontSize:'0.65rem', color:d.cor, fontWeight:900, whiteSpace:'nowrap' }}>
-                      {d.emojiDragao} {d.nome.split(' ')[0]}
+                      {d.emojiDragao} {String(content(d, 'nome')).split(' ')[0]}
                     </th>
                   ))}
                 </tr>
@@ -132,7 +134,7 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
                 <tr><td colSpan={dragoes.length + 1} style={{ padding:'4px 10px',
                   fontSize:'0.55rem', fontWeight:900, letterSpacing:'2px', color:C.ACCENT_DEEP,
                   textTransform:'uppercase', background:`${C.ACCENT}08` }}>
-                  ⚔ Base
+                  {t('dragons.base_section')}
                 </td></tr>
 
                 {ATTRS_BASE.map((a, i) => {
@@ -141,7 +143,7 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
                     <tr key={a.key} style={{ borderBottom:`1px solid ${C.BORDER_SOFT}`,
                       background: i%2===0 ? C.BG_CARD : C.BG_SECONDARY }}>
                       <td style={{ padding:'7px 10px', color:C.TEXT_MUTED, fontWeight:700, whiteSpace:'nowrap' }}>
-                        {a.icon} {a.label}
+                        {a.icon} {t(a.labelKey)}
                       </td>
                       {ids.map(id => {
                         const v = getVal(id, a.key);
@@ -154,8 +156,8 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
                           }}>
                             {v === null ? '—' : (
                               <span style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:1 }}>
-                                <span>{fmt(v)}</span>
-                                {isBest && <span style={{ fontSize:'0.5rem', color:dragao.cor, fontFamily:'sans-serif' }}>▲ melhor</span>}
+                                <span>{fmt(v, locale)}</span>
+                                {isBest && <span style={{ fontSize:'0.5rem', color:dragao.cor, fontFamily:'sans-serif' }}>{t('dragons.best')}</span>}
                               </span>
                             )}
                           </td>
@@ -169,7 +171,7 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
                 <tr><td colSpan={dragoes.length + 1} style={{ padding:'4px 10px',
                   fontSize:'0.55rem', fontWeight:900, letterSpacing:'2px', color:'#8B6BAE',
                   textTransform:'uppercase', background:'rgba(139,107,174,0.08)' }}>
-                  ✨ Elementais
+                  {t('dragons.elemental_section')}
                 </td></tr>
 
                 {ATTRS_ELEM.map((a, i) => {
@@ -178,7 +180,7 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
                     <tr key={a.key} style={{ borderBottom:`1px solid ${C.BORDER_SOFT}`,
                       background: i%2===0 ? C.BG_CARD : C.BG_SECONDARY }}>
                       <td style={{ padding:'7px 10px', color:'#8B6BAE', fontWeight:700, whiteSpace:'nowrap' }}>
-                        {a.icon} {a.label}
+                        {a.icon} {t(a.labelKey)}
                       </td>
                       {ids.map(id => {
                         const v = getVal(id, a.key);
@@ -191,8 +193,8 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
                           }}>
                             {v === null ? '—' : (
                               <span style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:1 }}>
-                                <span>{fmt(v)}</span>
-                                {isBest && <span style={{ fontSize:'0.5rem', color:dragao.cor, fontFamily:'sans-serif' }}>▲ melhor</span>}
+                                <span>{fmt(v, locale)}</span>
+                                {isBest && <span style={{ fontSize:'0.5rem', color:dragao.cor, fontFamily:'sans-serif' }}>{t('dragons.best')}</span>}
                               </span>
                             )}
                           </td>

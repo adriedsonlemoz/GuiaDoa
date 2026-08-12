@@ -30,8 +30,6 @@ export default class ErrorBoundary extends Component {
       return (
         <div style={{ padding:'24px 10px' }}>
           <AppErrorState
-            title="Não foi possível abrir esta seção"
-            message="Ocorreu uma falha inesperada na interface. Você pode tentar novamente ou voltar ao início."
             code="GD-UI-001"
             diagnostic={diagnostic}
             onRetry={this.reset}

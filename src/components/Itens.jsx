@@ -3,9 +3,14 @@ import { C } from '../theme.js';
 import GameHeader from './shared/GameHeader.jsx';
 
 import { useGameData } from '../data/GameDataContext.jsx';
+import { useI18n } from '../hooks/useI18n.jsx';
 
 // ── Popup de detalhe ──────────────────────────────────────────────────────────
 function ItemPopup({ item, onClose }) {
+  const { t, content } = useI18n();
+  const nome = content(item, 'nome');
+  const descricao = content(item, 'descricao');
+  const onde = content(item, 'onde');
   // Fecha com ESC
   useEffect(() => {
     const fn = (e) => { if (e.key === 'Escape') onClose(); };
@@ -84,7 +89,7 @@ function ItemPopup({ item, onClose }) {
           letterSpacing: '1px',
           marginBottom: '12px',
         }}>
-          {item.nome}
+          {nome}
         </h2>
 
         {/* Divisor */}
@@ -103,13 +108,13 @@ function ItemPopup({ item, onClose }) {
           lineHeight: 1.7,
           textAlign: 'center',
           fontWeight: 600,
-          marginBottom: item.onde ? '14px' : '18px',
+          marginBottom: onde ? '14px' : '18px',
         }}>
-          {item.descricao || 'Sem descrição disponível.'}
+          {descricao || t('items.no_description')}
         </p>
 
         {/* Onde conseguir */}
-        {item.onde && (
+        {onde && (
           <div style={{
             background: `rgba(200,168,74,0.08)`,
             border: `1px solid rgba(200,168,74,0.3)`,
@@ -121,13 +126,13 @@ function ItemPopup({ item, onClose }) {
               fontSize: '0.6rem', fontWeight: 900, letterSpacing: '1.5px',
               textTransform: 'uppercase', color: C.TEXT_MUTED, marginBottom: '5px',
             }}>
-              📍 Onde Conseguir
+              📍 {t('items.where')}
             </p>
             <p style={{
               fontSize: '0.8rem', fontWeight: 600, color: C.TEXT_SECONDARY,
               lineHeight: 1.6, margin: 0,
             }}>
-              {item.onde}
+              {onde}
             </p>
           </div>
         )}
@@ -149,7 +154,7 @@ function ItemPopup({ item, onClose }) {
             fontFamily: 'inherit',
           }}
         >
-          Fechar
+          {t('common.close')}
         </button>
       </div>
 
@@ -183,13 +188,14 @@ function Skeleton() {
 // ── Componente principal ──────────────────────────────────────────────────────
 const Itens = () => {
   const { itens: itensOnline } = useGameData();
+  const { t, content } = useI18n();
   const [busca, setBusca] = useState('');
   const [selecionado, setSelecionado] = useState(null);
 
   const termo = busca.trim().toLowerCase();
   const itens = termo
     ? itensOnline.filter(i =>
-        i.nome?.toLowerCase().includes(termo) ||
+        content(i, 'nome')?.toLowerCase().includes(termo) ||
         i.categoria?.toLowerCase().includes(termo)
       )
     : itensOnline;
@@ -197,7 +203,7 @@ const Itens = () => {
 
   return (
     <div className="max-w-2xl mx-auto pb-4">
-      <GameHeader title="Armazém de Itens" />
+      <GameHeader title={t('items.title')} subtitle={t('items.subtitle')} />
 
       {/* Barra de busca */}
       <div style={{ margin: '12px 0 10px', position: 'relative' }}>
@@ -209,7 +215,7 @@ const Itens = () => {
           type="text"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar item..."
+          placeholder={t('items.search')}
           style={{
             width: '100%',
             background: C.BG_INPUT,
@@ -238,13 +244,13 @@ const Itens = () => {
           <p style={{ fontSize: '3rem', marginBottom: '10px', filter: 'drop-shadow(1px 2px 2px rgba(62,47,28,0.2))' }}>🎒</p>
           <p className="font-cinzel font-bold text-base uppercase tracking-wider"
              style={{ color: C.TEXT_PRIMARY, marginBottom: '6px' }}>
-            {busca ? 'Nenhum item encontrado' : 'Armazém Vazio'}
+            {busca ? t('items.no_results') : t('items.empty')}
           </p>
           <p className="font-nunito font-semibold text-sm leading-relaxed"
              style={{ color: C.TEXT_SECONDARY, maxWidth: '260px' }}>
             {busca
-              ? `Nenhum item corresponde a "${busca}".`
-              : 'Os itens disponíveis aparecerão aqui assim que forem publicados.'}
+              ? t('items.no_match',{query:busca})
+              : t('items.empty_help')}
           </p>
         </div>
       )}
@@ -254,7 +260,7 @@ const Itens = () => {
         <>
           <p style={{ fontSize: '0.63rem', fontWeight: 800, letterSpacing: '1.5px',
                       color: C.TEXT_MUTED, textTransform: 'uppercase', marginBottom: '8px' }}>
-            {itens.length} {itens.length === 1 ? 'item' : 'itens'}
+            {t('items.count',{count:itens.length})}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
             {itens.map((item) => (
@@ -304,7 +310,7 @@ const Itens = () => {
                   color: C.TEXT_PRIMARY,
                   flex: 1,
                 }}>
-                  {item.nome}
+                  {content(item, 'nome')}
                 </span>
 
                 {/* Seta */}

@@ -15,14 +15,14 @@ const BONUS_CHAVES = [
   { value: 5, chave: 'torneio.treino_tropa.bonus.x5' },
 ];
 
-const fmtN = n => Number(n || 0).toLocaleString('pt-BR');
+const fmtN = (n, locale = 'pt-BR') => Number(n || 0).toLocaleString(locale);
 
 const emptyRow = () => ({ id: Date.now() + Math.random(), tropa: '', qtd: '', bonus: 1 });
 
 const TorneioTreinoTropa = () => {
-  const { t } = useI18n();
+  const { t, content, locale } = useI18n();
   const { tropas: dbTropas } = useGameData();
-  const sortedTropas = useMemo(() => [...dbTropas].sort((a, b) => a.nome.localeCompare(b.nome)), [dbTropas]);
+  const sortedTropas = useMemo(() => [...dbTropas].sort((a, b) => content(a, 'nome').localeCompare(content(b, 'nome'))), [dbTropas, content]);
   const [linhas, setLinhas] = useState(() => {
     try {
       const s = localStorage.getItem(STORAGE_KEY);
@@ -87,12 +87,12 @@ const TorneioTreinoTropa = () => {
                 color: '#F0A090',
                 textShadow: '0 2px 18px rgba(200,60,40,0.55)',
               }}>
-              {fmtN(totalFinal)}
+              {fmtN(totalFinal, locale)}
             </p>
             {ptsPos > 0 && (
               <p className="font-nunito font-semibold text-[0.6rem] m-0 mt-1"
                 style={{ color: 'rgba(220,160,140,0.55)' }}>
-                {fmtN(ptsDasLinhas)} {t('torneio.treino_tropa.detalhe_treino')} + {fmtN(ptsPos)} {t('torneio.aceleracoes.detalhe_possuidos')}
+                {fmtN(ptsDasLinhas, locale)} {t('torneio.treino_tropa.detalhe_treino')} + {fmtN(ptsPos, locale)} {t('torneio.aceleracoes.detalhe_possuidos')}
               </p>
             )}
           </div>
@@ -167,7 +167,7 @@ const TorneioTreinoTropa = () => {
                   >
                     <option value="">{t('torneio.layout.selecionar_tropa')}</option>
                     {sortedTropas.map(item => (
-                      <option key={item.nome} value={item.nome}>{item.nome}</option>
+                      <option key={item.nome} value={item.nome}>{content(item, 'nome')}</option>
                     ))}
                   </select>
                   <button
@@ -190,7 +190,7 @@ const TorneioTreinoTropa = () => {
                       value={l.qtd}
                       onChange={e => {
                         const n = e.target.value.replace(/\D/g, '');
-                        setLinha(l.id, 'qtd', n ? parseInt(n).toLocaleString('pt-BR') : '');
+                        setLinha(l.id, 'qtd', n ? parseInt(n).toLocaleString(locale) : '');
                       }}
                       inputMode="numeric"
                     />
@@ -218,7 +218,7 @@ const TorneioTreinoTropa = () => {
                       style={{ color: C.TEXT_FAINT }}>{t('torneio.label.pontos')}</p>
                     <p className="font-nunito font-black text-[0.9rem] leading-none m-0"
                       style={{ color: ativo ? COR : C.TEXT_FAINT }}>
-                      {fmtN(sub)}
+                      {fmtN(sub, locale)}
                     </p>
                   </div>
                 </div>
@@ -227,7 +227,7 @@ const TorneioTreinoTropa = () => {
                 {tropa && (
                   <p className="font-nunito font-semibold text-[0.6rem] m-0 mt-1"
                     style={{ color: C.TEXT_FAINT }}>
-                    {tropa.nome} · {fmtN(poder)} {t('torneio.treino_tropa.poder_por_un')}
+                    {content(tropa, 'nome')} · {fmtN(poder, locale)} {t('torneio.treino_tropa.poder_por_un')}
                     {l.bonus > 1 && <span style={{ color: COR }}> · {t('torneio.treino_tropa.bonus_x')} {l.bonus}×</span>}
                   </p>
                 )}

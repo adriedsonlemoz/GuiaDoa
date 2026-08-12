@@ -129,6 +129,8 @@ function abrirModalReino(r) {
   document.getElementById('mr-fuso').value   = r?.fuso   || '';
   document.getElementById('mr-regiao').value = r?.regiao || '';
   document.getElementById('mr-idioma').value = r?.idioma || '';
+  document.getElementById('mr-en-regiao').value = r?.i18n?.['en-US']?.regiao || '';
+  document.getElementById('mr-en-idioma').value = r?.i18n?.['en-US']?.idioma || '';
   abrirModal('modal-reino');
 }
 
@@ -138,11 +140,12 @@ async function salvarReino() {
   const fuso   = document.getElementById('mr-fuso').value;
   const regiao = document.getElementById('mr-regiao').value;
   const idioma = document.getElementById('mr-idioma').value;
+  const i18n = { 'en-US': { regiao: document.getElementById('mr-en-regiao').value.trim(), idioma: document.getElementById('mr-en-idioma').value.trim() } };
   if (!id || !nome || !fuso) return toast('ID, nome e fuso são obrigatórios.','erro');
   try {
     const r = REINO_EDITANDO
-      ? await fetch(`${API}/reinos/${REINO_EDITANDO}`,{ method:'PUT', headers:{'Content-Type':'application/json',Authorization:`Bearer ${TOKEN}`}, body:JSON.stringify({id,nome,fuso,regiao,idioma}) })
-      : await fetch(`${API}/reinos`,                  { method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${TOKEN}`}, body:JSON.stringify({id,nome,fuso,regiao,idioma}) });
+      ? await fetch(`${API}/reinos/${REINO_EDITANDO}`,{ method:'PUT', headers:{'Content-Type':'application/json',Authorization:`Bearer ${TOKEN}`}, body:JSON.stringify({id,nome,fuso,regiao,idioma,i18n}) })
+      : await fetch(`${API}/reinos`,                  { method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${TOKEN}`}, body:JSON.stringify({id,nome,fuso,regiao,idioma,i18n}) });
     const d = await r.json();
     if (!r.ok) return toast(d.erro||'Erro ao salvar','erro');
     toast(REINO_EDITANDO ? 'Reino atualizado!' : 'Reino criado!','ok');

@@ -2,13 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { C } from '../../theme.js';
 import { useGameData } from '../../data/GameDataContext.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
-import { getProfileCopy } from './profileCopy.js';
 
 /* ─── helpers ───────────────────────────────────────────────────────────────── */
 // REGIOES agora é calculado dinamicamente dentro do ReinoSelector, a partir dos reinos carregados da API.
 
 const ReinoCard = ({ reino, selecionado, onClick }) => {
-  const meta = [reino.regiao, reino.idioma].filter(Boolean).join(' · ');
+  const { content } = useI18n();
+  const meta = [content(reino, 'regiao'), content(reino, 'idioma')].filter(Boolean).join(' · ');
   return (
   <button
     type="button"
@@ -45,7 +45,7 @@ const ReinoCard = ({ reino, selecionado, onClick }) => {
         color: selecionado ? C.TEXT_PRIMARY : C.TEXT_SECONDARY,
         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
       }}>
-        {reino.nome}
+        {content(reino, 'nome')}
       </span>
       {meta && <span style={{
         fontFamily: '"Nunito",sans-serif', fontWeight: 600,
@@ -74,12 +74,11 @@ const ReinoSelector = ({ value, onChange }) => {
   const [aberto,   setAberto]   = useState(false);
   const [regiao,   setRegiao]   = useState('');
   const { reinos, loading: carregando } = useGameData();
-  const { locale } = useI18n();
-  const copy = getProfileCopy(locale);
+  const { t, content } = useI18n();
   const painelRef = useRef(null);
 
   const selecionado = reinos.find(r => r.nome === value) || null;
-  const metaSelecionado = selecionado ? [selecionado.regiao, selecionado.idioma].filter(Boolean).join(' · ') : '';
+  const metaSelecionado = selecionado ? [content(selecionado, 'regiao'), content(selecionado, 'idioma')].filter(Boolean).join(' · ') : '';
   const REGIOES = [...new Set(reinos.map(r => r.regiao).filter(Boolean))].sort();
 
   // Fecha ao clicar fora — sem foco automático em nenhum input (evita abrir teclado)
@@ -129,7 +128,7 @@ const ReinoSelector = ({ value, onChange }) => {
                 display: 'block', fontFamily: '"Nunito",sans-serif',
                 fontWeight: 900, fontSize: '0.85rem', color: C.TEXT_PRIMARY,
               }}>
-                {selecionado.nome}
+                {content(selecionado, 'nome')}
               </span>
               {metaSelecionado && <span style={{
                 fontFamily: '"Nunito",sans-serif', fontWeight: 600,
@@ -150,7 +149,7 @@ const ReinoSelector = ({ value, onChange }) => {
             fontFamily: '"Nunito",sans-serif', fontWeight: 700,
             fontSize: '0.82rem', color: C.TEXT_FAINT, flex: 1,
           }}>
-            — {copy.selectRealm} —
+            — {t('profile.select_realm')} —
           </span>
         )}
         <span style={{
@@ -179,7 +178,7 @@ const ReinoSelector = ({ value, onChange }) => {
             <span style={{
               fontFamily: '"Nunito",sans-serif', fontWeight: 700,
               fontSize: '0.7rem', color: C.TEXT_SECONDARY, flexShrink: 0,
-            }}>{copy.filter}:</span>
+            }}>{t('profile.filter')}:</span>
             <select
               value={regiao}
               onChange={e => setRegiao(e.target.value)}
@@ -190,8 +189,8 @@ const ReinoSelector = ({ value, onChange }) => {
                 padding: '6px 8px', color: C.TEXT_SECONDARY, cursor: 'pointer',
               }}
             >
-              <option value="">{copy.allRegions}</option>
-              {REGIOES.map(r => <option key={r} value={r}>{r}</option>)}
+              <option value="">{t('profile.all_regions')}</option>
+              {REGIOES.map(r => { const ex = reinos.find(item => item.regiao === r); return <option key={r} value={r}>{ex ? content(ex, 'regiao') : r}</option>; })}
             </select>
           </div>
 
@@ -203,7 +202,7 @@ const ReinoSelector = ({ value, onChange }) => {
                 fontFamily: '"Nunito",sans-serif', fontWeight: 700,
                 fontSize: '0.78rem', color: C.TEXT_FAINT,
               }}>
-                {copy.loadingRealms}
+                {t('profile.loading_realms')}
               </div>
             ) : filtrados.length === 0 ? (
               <div style={{
@@ -211,7 +210,7 @@ const ReinoSelector = ({ value, onChange }) => {
                 fontFamily: '"Nunito",sans-serif', fontWeight: 700,
                 fontSize: '0.78rem', color: C.TEXT_FAINT,
               }}>
-                {copy.noRealms}
+                {t('profile.no_realms')}
               </div>
             ) : filtrados.map(r => (
               <ReinoCard
@@ -230,7 +229,7 @@ const ReinoSelector = ({ value, onChange }) => {
             fontFamily: '"Nunito",sans-serif', fontWeight: 700,
             fontSize: '0.62rem', color: C.TEXT_FAINT,
           }}>
-            {copy.realmCount(filtrados.length, reinos.length)}
+            {t('profile.realm_count', { shown: filtrados.length, total: reinos.length })}
           </div>
         </div>
       )}

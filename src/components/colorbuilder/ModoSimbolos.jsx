@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { SYM_CATS } from './data.js';
 import { T, C } from './styles.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 export default function ModoSimbolos({ onInsert, showToast }) {
+  const { t } = useI18n();
   const [catIdx, setCatIdx] = useState(0);
 
   return (
     <div style={T.body}>
       <div style={T.card}>
         <div style={T.cardTitle}>
-          <span style={{ color: C.ACCENT }}>✦</span> Símbolos por categoria
+          <span style={{ color: C.ACCENT }}>✦</span> {t('builder.symbols.title')}
         </div>
         <p style={{ fontSize: '0.67rem', color: C.TEXT_MUTED, marginBottom: 12, lineHeight: 1.6 }}>
-          Clique em qualquer símbolo para copiar.
+          {t('builder.symbols.help')}
         </p>
 
         {/* Tabs de categoria */}
@@ -30,9 +32,9 @@ export default function ModoSimbolos({ onInsert, showToast }) {
             <button key={i} style={T.exSym}
               onClick={() => {
                 onInsert(s);
-                showToast(`"${s}" copiado!`);
+                showToast(t('builder.copied',{name:s}));
               }}
-              title={`Copiar: ${s}`}
+              title={t('builder.symbols.copy_title',{value:s})}
             >
               {s}
             </button>
@@ -41,7 +43,7 @@ export default function ModoSimbolos({ onInsert, showToast }) {
 
         {/* Contador */}
         <p style={{ fontSize: '0.62rem', color: C.TEXT_FAINT, marginTop: 10, textAlign: 'right' }}>
-          {SYM_CATS[catIdx].s.length} símbolos nesta categoria
+          {t('builder.symbols.count',{count:SYM_CATS[catIdx].s.length})}
         </p>
       </div>
     </div>

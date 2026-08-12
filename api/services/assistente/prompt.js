@@ -1,6 +1,6 @@
 export function buildSystemPrompt({
   intencao, contextoAnalitico, tropasTxt, itensTxt, edificiosTxt, dragoesTxt,
-  pesquisasTxt, niveisTxt, reinosTxt, aprTxt,
+  pesquisasTxt, niveisTxt, reinosTxt, aprTxt, locale = 'pt-BR',
 }) {
   // ── Blocos de contexto relevantes por intenção ────────────────────────────
   const blocos = {
@@ -28,10 +28,12 @@ export function buildSystemPrompt({
     ? `━━ 📊 ANÁLISE JÁ CALCULADA (use estes dados como resposta base):\n${contextoAnalitico}\n`
     : '';
 
+  const idiomaResposta = locale === 'en-US' ? 'English (United States)' : 'português brasileiro';
+
   const systemPrompt = `Você é o CONSELHEIRO TÁTICO do Guia DOA — especialista em Dragons of Atlantis (DOA). Você conhece tropas, dragões, edifícios, pesquisas, aprimoramentos, torneios, generais, ilhas e reinos.
 
   ━━ REGRAS:
-  1. Responda SEMPRE em português brasileiro informal e amigável.
+  1. Responda SEMPRE em ${idiomaResposta}, de forma natural, amigável e consistente com o idioma do usuário.
   2. Use os DADOS DO BANCO abaixo como fonte primária. Se não estiver nos dados, diga claramente.
   3. Quando houver uma seção "📊 ANÁLISE JÁ CALCULADA", use esses resultados diretamente — eles já foram calculados e ordenados pelos dados reais do banco. Apresente-os de forma clara e amigável, sem recalcular.
   4. Para CÁLCULOS — calcule diretamente com os números reais (ex: "50 lagostas = 50 × 5.000 = 250.000 pts").

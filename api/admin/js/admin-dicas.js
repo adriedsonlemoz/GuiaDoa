@@ -97,9 +97,13 @@ function mostrarFormCategoria(){
     <div class="di-form" style="margin-bottom:14px">
       <p style="font-family:'Cinzel',serif;font-weight:700;font-size:0.82rem;color:var(--text);margin-bottom:12px">Nova Categoria</p>
       <div style="display:grid;grid-template-columns:1fr 1fr 60px;gap:8px">
-        <div class="di-field" style="margin:0"><label>Label</label><input id="di-cat-label" placeholder="Ex: Grodz"/></div>
-        <div class="di-field" style="margin:0"><label>Slug</label><input id="di-cat-slug" placeholder="Ex: grodz"/></div>
-        <div class="di-field" style="margin:0"><label>Ícone</label><input id="di-cat-icon" placeholder="🏰" value="📖"/></div>
+        <div class="di-field" style="margin:0"><label>Label (Português)</label><input id="di-cat-label" placeholder="Ex: Dragões"/></div>
+        <div class="di-field" style="margin:0"><label>Slug</label><input id="di-cat-slug" placeholder="Ex: dragoes"/></div>
+        <div class="di-field" style="margin:0"><label>Ícone</label><input id="di-cat-icon" placeholder="🐉" value="📖"/></div>
+      </div>
+      <div class="i18n-section" style="margin-top:12px">
+        <div class="i18n-title">🇺🇸 English <span style="font-weight:500;opacity:.7">(opcional)</span></div>
+        <div class="di-field" style="margin:0"><label>Label</label><input id="di-cat-en-label" placeholder="e.g. Dragons"/></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:10px">
         <button class="di-btn di-btn-pri" onclick="criarCategoriaDica()">Criar</button>
@@ -112,11 +116,12 @@ async function criarCategoriaDica(){
   const label=document.getElementById('di-cat-label')?.value.trim();
   const slug =document.getElementById('di-cat-slug')?.value.trim().toLowerCase().replace(/\s+/g,'-');
   const icon =document.getElementById('di-cat-icon')?.value.trim()||'📖';
+  const enLabel=document.getElementById('di-cat-en-label')?.value.trim()||'';
   if(!label||!slug){toast('Label e slug são obrigatórios','aviso');return;}
   try{
     await fetch(`${API}/dicas/categorias`,{
       method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${TOKEN}`},
-      body:JSON.stringify({label,slug,icon}),
+      body:JSON.stringify({label,slug,icon,i18n:{'en-US':{label:enLabel}}}),
     });
     toast('✓ Categoria criada!','ok');
     carregarDicas();
@@ -208,6 +213,18 @@ function mostrarFormDica(dica){
         <textarea id="di-conteudo" placeholder="Descreva a dica ou tutorial aqui…">${isEdit?esc(dica.conteudo||''):''}</textarea>
       </div>
 
+      <div class="i18n-section" style="margin:14px 0">
+        <div class="i18n-title">🇺🇸 English <span style="font-weight:500;opacity:.7">(opcional)</span></div>
+        <div class="di-field">
+          <label>Title</label>
+          <input id="di-en-titulo" value="${isEdit?esc(dica.i18n?.['en-US']?.titulo||''):''}" placeholder="e.g. How to level Dragons quickly" />
+        </div>
+        <div class="di-field" style="margin-bottom:0">
+          <label>Content / Description</label>
+          <textarea id="di-en-conteudo" placeholder="Write the tip or tutorial in English…">${isEdit?esc(dica.i18n?.['en-US']?.conteudo||''):''}</textarea>
+        </div>
+      </div>
+
       <div class="di-field">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
           <input type="checkbox" id="di-destaque" ${isEdit&&dica.destaque?'checked':''} style="width:auto;accent-color:var(--gold)"/>
@@ -277,6 +294,10 @@ async function salvarDica(){
   const conteudo = document.getElementById('di-conteudo')?.value.trim();
   const destaque = document.getElementById('di-destaque')?.checked;
   const ativo    = document.getElementById('di-ativo')?.checked;
+  const i18n     = { 'en-US': {
+    titulo: document.getElementById('di-en-titulo')?.value.trim() || '',
+    conteudo: document.getElementById('di-en-conteudo')?.value.trim() || '',
+  } };
 
   if(!titulo){toast('Título é obrigatório','aviso');return;}
 
@@ -285,13 +306,13 @@ async function salvarDica(){
     if(DI_EDITANDO){
       const r=await fetch(`${API}/dicas/${DI_EDITANDO._id}`,{
         method:'PATCH',headers:{'Content-Type':'application/json',Authorization:`Bearer ${TOKEN}`},
-        body:JSON.stringify({titulo,categoria,conteudo,destaque,ativo}),
+        body:JSON.stringify({titulo,categoria,conteudo,destaque,ativo,i18n}),
       });
       dica=await r.json();
     } else {
       const r=await fetch(`${API}/dicas`,{
         method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${TOKEN}`},
-        body:JSON.stringify({titulo,categoria,conteudo,destaque,ativo}),
+        body:JSON.stringify({titulo,categoria,conteudo,destaque,ativo,i18n}),
       });
       dica=await r.json();
     }

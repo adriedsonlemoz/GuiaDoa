@@ -9,7 +9,7 @@ function model(total) {
 function models(overrides = {}) {
   const base = {
     User: model(1), Tropa: model(10), Nivel: model(10), Dragao: model(5), Edificio: model(12),
-    Item: model(0), Pesquisa: model(29), Reino: model(4), Traducao: model(0), CategoriaDica: model(5), Dica: model(0),
+    Item: model(0), Pesquisa: model(29), Reino: model(4), CategoriaDica: model(5), Dica: model(0),
   };
   return { ...base, ...overrides };
 }

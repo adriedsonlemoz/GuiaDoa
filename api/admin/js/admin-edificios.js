@@ -91,6 +91,9 @@ function abrirModalNovoEdificio() {
   document.getElementById('fed-tag').value       = '';
   document.getElementById('fed-descricao').value = '';
   document.getElementById('fed-ordem').value     = '0';
+  document.getElementById('fed-en-nome').value = '';
+  document.getElementById('fed-en-tag').value = '';
+  document.getElementById('fed-en-descricao').value = '';
   renderEmojiPickerEd();
   renderColunasEditor([]);
   abrirModal('modal-edificio');
@@ -106,6 +109,9 @@ function editarEdificio(ed) {
   document.getElementById('fed-tag').value       = ed.tag || '';
   document.getElementById('fed-descricao').value = ed.descricao || '';
   document.getElementById('fed-ordem').value     = ed.ordem ?? 0;
+  document.getElementById('fed-en-nome').value = ed.i18n?.['en-US']?.nome || '';
+  document.getElementById('fed-en-tag').value = ed.i18n?.['en-US']?.tag || '';
+  document.getElementById('fed-en-descricao').value = ed.i18n?.['en-US']?.descricao || '';
   renderEmojiPickerEd();
   renderColunasEditor(ed.colunas || []);
   abrirModal('modal-edificio');
@@ -192,13 +198,13 @@ async function salvarEdificio() {
       r = await fetch(`${API}/edificios/${EDIFICIO_ED_SLUG}/meta`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
-        body: JSON.stringify({ nome, icone: EDIFICIO_ICONE, tag, descricao, colunas, ordem }),
+        body: JSON.stringify({ nome, icone: EDIFICIO_ICONE, tag, descricao, colunas, ordem, i18n: { 'en-US': { nome: document.getElementById('fed-en-nome').value.trim(), tag: document.getElementById('fed-en-tag').value.trim(), descricao: document.getElementById('fed-en-descricao').value.trim() } } }),
       });
     } else {
       r = await fetch(`${API}/edificios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
-        body: JSON.stringify({ slug, nome, icone: EDIFICIO_ICONE, tag, descricao, colunas, ordem }),
+        body: JSON.stringify({ slug, nome, icone: EDIFICIO_ICONE, tag, descricao, colunas, ordem, i18n: { 'en-US': { nome: document.getElementById('fed-en-nome').value.trim(), tag: document.getElementById('fed-en-tag').value.trim(), descricao: document.getElementById('fed-en-descricao').value.trim() } } }),
       });
     }
     const d = await r.json();

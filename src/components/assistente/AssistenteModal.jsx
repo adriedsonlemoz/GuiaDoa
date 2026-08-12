@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { C } from '../../theme.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 import { COR, COR_DRK, SUGESTOES } from './config.js';
 import { MessageBubble as Bolha, TypingBubble as Digitando } from './MessageBubble.jsx';
 
 const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, erro, onEnviar, onLimpar, onReenviar }) => {
+  const { t } = useI18n();
   const [input, setInput]   = useState('');
   const bottomRef           = useRef(null);
   const inputRef            = useRef(null);
@@ -79,7 +81,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
               <p style={{
                 fontFamily:'"Cinzel",serif', fontWeight:700,
                 fontSize:'0.9rem', color:'#C0D8F0', margin:0, lineHeight:1.2,
-              }}>Conselheiro Tático</p>
+              }}>{t('assistant.title')}</p>
               <div style={{ display:'flex', alignItems:'center', gap:5, marginTop:3 }}>
                 <span style={{
                   width:7, height:7, borderRadius:'50%',
@@ -90,7 +92,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
                 <p style={{
                   fontFamily:'"Nunito",sans-serif', fontWeight:600,
                   fontSize:'0.62rem', color:'rgba(140,180,210,0.7)', margin:0,
-                }}>Online · Alimentado pelos dados do jogo</p>
+                }}>{t('assistant.online_data')}</p>
               </div>
             </div>
 
@@ -103,7 +105,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
                     border:'1px solid rgba(168,60,44,0.4)',
                     color:'#E08878', cursor:'pointer', fontSize:'0.85rem',
                     display:'flex', alignItems:'center', justifyContent:'center',
-                  }} title="Limpar conversa">🗑</button>
+                  }} title={t('assistant.clear')}>🗑</button>
               )}
               <button onClick={onClose}
                 style={{
@@ -131,20 +133,20 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
                 <p style={{
                   fontFamily:'"Cinzel",serif', fontWeight:700,
                   fontSize:'0.85rem', color:C.TEXT_PRIMARY, margin:0, marginBottom:4,
-                }}>Quartel-General</p>
+                }}>{t('assistant.headquarters')}</p>
                 <p style={{
                   fontFamily:'"Nunito",sans-serif', fontWeight:600,
                   fontSize:'0.72rem', color:C.TEXT_MUTED, margin:0, lineHeight:1.5,
                 }}>
-                  Olá, Comandante! Sou seu conselheiro tático.<br/>
-                  Pode me perguntar sobre tropas, torneios, dragões e muito mais.
+                  {t('assistant.welcome_line1')}<br/>
+                  {t('assistant.welcome_line2')}
                 </p>
               </div>
 
               {/* Divisor */}
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
                 <div style={{ flex:1, height:1, background:`linear-gradient(90deg,transparent,${C.BORDER})` }}/>
-                <span style={{ fontFamily:'"Nunito",sans-serif', fontWeight:700, fontSize:'0.6rem', color:C.TEXT_FAINT, letterSpacing:'2px', textTransform:'uppercase' }}>Sugestões</span>
+                <span style={{ fontFamily:'"Nunito",sans-serif', fontWeight:700, fontSize:'0.6rem', color:C.TEXT_FAINT, letterSpacing:'2px', textTransform:'uppercase' }}>{t('assistant.suggestions')}</span>
                 <div style={{ flex:1, height:1, background:`linear-gradient(270deg,transparent,${C.BORDER})` }}/>
               </div>
 
@@ -197,7 +199,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
                   fontSize:'0.72rem', letterSpacing:'0.5px',
                   display:'flex', alignItems:'center', justifyContent:'center', gap:6,
                 }}>
-                🔄 Reenviar última mensagem
+                {t('assistant.retry_last')}
               </button>
             </div>
           )}
@@ -215,7 +217,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
             <textarea
               ref={inputRef}
               rows={1}
-              placeholder="Faça uma pergunta sobre o jogo…"
+              placeholder={t('assistant.input_placeholder')}
               value={input}
               onChange={e => {
                 setInput(e.target.value);
@@ -259,7 +261,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
             fontSize:'0.58rem', color:C.TEXT_FAINT,
             textAlign:'center', margin:'6px 0 0',
           }}>
-            Enter para enviar · Shift+Enter para quebrar linha
+            {t('assistant.input_hint')}
           </p>
         </div>
       </div>

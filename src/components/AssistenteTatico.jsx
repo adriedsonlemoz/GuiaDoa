@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { C } from '../theme.js';
+import { useI18n } from '../hooks/useI18n.jsx';
 import { COR, COR_DRK } from './assistente/config.js';
 import AssistenteModal from './assistente/AssistenteModal.jsx';
 import useAssistente from './assistente/useAssistente.js';
@@ -7,11 +8,15 @@ import useAssistente from './assistente/useAssistente.js';
 const AssistenteTatico = () => {
   const [aberto, setAberto] = useState(false);
   const assistente = useAssistente();
+  const { t, locale } = useI18n();
 
   useEffect(() => {
     document.body.style.overflow = aberto ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [aberto]);
+
+  const count = assistente.mensagens.length;
+  const pluralSuffix = locale === 'pt-BR' ? (count > 1 ? 's' : '') : (count === 1 ? '' : 's');
 
   return (
     <>
@@ -56,14 +61,14 @@ const AssistenteTatico = () => {
           <p style={{
             fontFamily:'"Cinzel",serif', fontWeight:700,
             fontSize:'0.8rem', color:C.TEXT_PRIMARY, margin:0, lineHeight:1.2,
-          }}>Conselheiro Tático</p>
+          }}>{t('assistant.title')}</p>
           <p style={{
             fontFamily:'"Nunito",sans-serif', fontWeight:600,
             fontSize:'0.64rem', color:C.TEXT_MUTED, margin:'3px 0 0',
           }}>
-            {assistente.mensagens.length > 0
-              ? `${assistente.mensagens.length} mensagem${assistente.mensagens.length > 1 ? 's' : ''} · Toque para continuar`
-              : 'Tire dúvidas sobre o jogo com IA'}
+            {count > 0
+              ? t('assistant.subtitle_messages', { count, suffix: pluralSuffix })
+              : t('assistant.subtitle_empty')}
           </p>
         </div>
 
@@ -74,13 +79,13 @@ const AssistenteTatico = () => {
             background:`linear-gradient(135deg,${COR},#3A5A8A)`,
             color:'#fff', letterSpacing:'0.5px', boxShadow:`0 2px 8px ${COR}40`,
           }}>
-            {assistente.mensagens.length > 0 ? 'CONTINUAR ▸' : 'CONSULTAR ▸'}
+            {count > 0 ? t('assistant.continue') : t('assistant.ask')}
           </span>
-          {assistente.mensagens.length > 0 && (
+          {count > 0 && (
             <span style={{
               fontFamily:'"Nunito",sans-serif', fontWeight:700,
               fontSize:'0.55rem', color: COR,
-            }}>● ativo</span>
+            }}>{t('assistant.active')}</span>
           )}
         </div>
       </button>

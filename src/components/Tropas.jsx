@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { C } from '../theme.js';
 import { useTropas } from '../hooks/useTropas.js';
+import { useI18n } from '../hooks/useI18n.jsx';
 
 /* ── Classifica tropa como corpo a corpo ou distância ────────────────────── */
 const classificar = (t) => {
@@ -114,6 +115,7 @@ const Div = ({ label }) => (
 /* ── Tela principal ──────────────────────────────────────────────────────── */
 const Tropas = ({ setRoute }) => {
   const { tropas, carregando } = useTropas();
+  const { t } = useI18n();
 
   const tipos = useMemo(() => contarTipos(tropas), [tropas]);
   const poderMax = useMemo(() =>
@@ -138,11 +140,11 @@ const Tropas = ({ setRoute }) => {
         <div style={{ fontSize: '2rem', marginBottom: 6 }}>⚔️</div>
         <p className="font-cinzel font-bold uppercase m-0"
           style={{ fontSize: '0.85rem', letterSpacing: '3px', color: '#F8F2E0' }}>
-          Central de Unidades
+          {t('troops.hub_title')}
         </p>
         <p className="font-nunito font-semibold m-0"
           style={{ fontSize: '0.63rem', color: 'rgba(200,168,74,0.7)', letterSpacing: '1.5px', marginTop: 4 }}>
-          {carregando ? '⟳ Sincronizando…' : tropas.length > 0 ? `${tropas.length} unidades disponíveis` : 'Carregando unidades…'}
+          {carregando ? `⟳ ${t('app.sync.syncing_short')}` : tropas.length > 0 ? t('troops.available_count',{count:tropas.length}) : t('troops.loading_units')}
         </p>
       </div>
 
@@ -156,10 +158,10 @@ const Tropas = ({ setRoute }) => {
           marginBottom: 16, overflow: 'hidden',
         }}>
           {[
-            { icon: '⚔️', val: tipos.cc,       label: 'C. a Corpo', cor: '#b91c1c' },
-            { icon: '🏹', val: tipos.dist,      label: 'Distância',  cor: '#0369a1' },
-            { icon: '⚡', val: tipos.rapidas,   label: 'Rápidas',    cor: '#C87A2C' },
-            { icon: '⭐', val: poderMax,         label: 'Poder Máx.', cor: '#7c3aed' },
+            { icon: '⚔️', val: tipos.cc,       label: t('troops.melee_short'), cor: '#b91c1c' },
+            { icon: '🏹', val: tipos.dist,      label: t('troops.ranged'),  cor: '#0369a1' },
+            { icon: '⚡', val: tipos.rapidas,   label: t('troops.fast_plural'),    cor: '#C87A2C' },
+            { icon: '⭐', val: poderMax,         label: t('troops.max_power'), cor: '#7c3aed' },
           ].map((s, i) => (
             <div key={s.label} style={{
               textAlign: 'center', padding: '8px 4px',
@@ -183,24 +185,24 @@ const Tropas = ({ setRoute }) => {
 
         <HubCard
           icon="📖"
-          title="Enciclopédia"
-          desc="Veja todas as unidades com atributos detalhados, tipo de combate e poder."
+          title={t('troops.encyclopedia')}
+          desc={t('troops.encyclopedia_desc')}
           cor="#5C7FA3"
-          badge={tropas.length > 0 ? `${tropas.length} tropas` : undefined}
+          badge={tropas.length > 0 ? t('troops.count_badge',{count:tropas.length}) : undefined}
           meta={tropas.length > 0 ? [
-            { icon: '⚔️', valor: tipos.cc,   label: 'corpo a corpo', cor: '#b91c1c' },
-            { icon: '🏹', valor: tipos.dist,  label: 'distância',    cor: '#0369a1' },
-            { icon: '⭐', valor: poderMedio,  label: 'poder médio',  cor: '#8B6BAE' },
+            { icon: '⚔️', valor: tipos.cc,   label: t('troops.melee').toLowerCase(), cor: '#b91c1c' },
+            { icon: '🏹', valor: tipos.dist,  label: t('troops.ranged').toLowerCase(),    cor: '#0369a1' },
+            { icon: '⭐', valor: poderMedio,  label: t('troops.avg_power').toLowerCase(),  cor: '#8B6BAE' },
           ] : undefined}
           onClick={() => setRoute('tropas_lista')}
         />
 
         <HubCard
           icon="⚖️"
-          title="Comparar Tropas"
-          desc="Selecione até 3 unidades e compare seus atributos lado a lado."
+          title={t('troops.compare')}
+          desc={t('troops.compare_desc')}
           cor="#8B6BAE"
-          badge="novo"
+          badge={t('about.new')}
           onClick={() => setRoute('tropas_comparar')}
         />
       </div>

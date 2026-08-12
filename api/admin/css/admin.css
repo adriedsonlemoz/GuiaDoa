@@ -198,3 +198,14 @@
 .bootstrap-footnote { margin-top:10px; color:var(--muted); font-size:.64rem; }
 @media (max-width:640px) { .bootstrap-grid{grid-template-columns:1fr 1fr}.bootstrap-actions .btn{flex:1 1 100%} }
 @media (max-width:430px) { .bootstrap-grid{grid-template-columns:1fr} }
+
+/* Traduções de conteúdo ficam junto do próprio registro. */
+.i18n-section{
+  margin-top:16px;padding:12px 12px 4px;border-radius:10px;
+  background:rgba(28,58,94,.045);border:1px solid rgba(28,58,94,.16);
+}
+.i18n-title{
+  font-size:.66rem;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--navy2);margin-bottom:9px;
+}
+.i18n-title span{font-size:.58rem;font-weight:700;color:var(--muted);text-transform:none;letter-spacing:.2px}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useGameData } from '../../data/GameDataContext.jsx';
 import { C } from '../../theme.js';
 import Toast from '../../ui/Toast.jsx';
+import { useI18n } from '../../hooks/useI18n.jsx';
 
 const STORAGE_KEY = (id) => `tracker_dragao_${id}`;
 
@@ -28,13 +29,13 @@ const getXpParaNivel = (hab, nivel) => {
 };
 
 // ── Sub-componentes ─────────────────────────────────────────────────────────
-const XPBar = ({ atual, total, cor }) => {
+const XPBar = ({ atual, total, cor, locale = 'pt-BR' }) => {
   const pct = total > 0 ? Math.min(100, Math.round((atual / total) * 100)) : 0;
   return (
     <div>
       <div className="flex justify-between mb-1">
         <span className="font-nunito font-bold text-[0.67rem]" style={{ color: C.TEXT_MUTED }}>
-          {atual.toLocaleString('pt-BR')} / {total > 0 ? total.toLocaleString('pt-BR') : '?'} XP
+          {atual.toLocaleString(locale)} / {total > 0 ? total.toLocaleString(locale) : '?'} XP
         </span>
         <span className="font-nunito font-black text-[0.67rem]" style={{ color: cor }}>
           {total > 0 ? `${pct}%` : '?%'}
@@ -78,7 +79,7 @@ const NumInput = ({ value, onChange, placeholder='0', label }) => (
   </div>
 );
 
-const HabilidadeTrackerCard = ({ hab, dados, onChange, cor }) => {
+const HabilidadeTrackerCard = ({ hab, dados, onChange, cor, t, locale }) => {
   const xpTotal = getXpParaNivel(hab, dados.nivel) ?? dados.xpTotal;
   const isCampo = hab.tipo?.toLowerCase().includes('campo');
 
@@ -102,7 +103,7 @@ const HabilidadeTrackerCard = ({ hab, dados, onChange, cor }) => {
           <p className="font-nunito font-black text-[0.88rem] m-0 leading-tight" style={{ color:'#FFF8EE' }}>{hab.nome}</p>
           <span className="font-nunito text-[0.6rem] px-1.5 py-0.5 rounded"
             style={{ background: isCampo?'#7B1C1C':'#1B5E20', color: isCampo?'#FFCDD2':'#C8E6C9', border:`1px solid ${isCampo?'#A52020':'#2E7D32'}` }}>
-            {isCampo?'🏅 Em Campo':'⚔️ Batalha'}
+            {isCampo ? t('dragon_tracker.field') : t('dragon_tracker.battle')}
           </span>
         </div>
         <NivelControl value={dados.nivel} onChange={handleNivel} cor={cor} />
@@ -110,10 +111,10 @@ const HabilidadeTrackerCard = ({ hab, dados, onChange, cor }) => {
 
       {/* XP Controls */}
       <div className="px-3.5 py-3" style={{ background:C.BG_CARD, borderTop:`1px solid ${C.BORDER_SOFT}` }}>
-        <XPBar atual={dados.xpAtual} total={xpTotal} cor={cor} />
+        <XPBar atual={dados.xpAtual} total={xpTotal} cor={cor} locale={locale} />
         <div className="flex gap-2 mt-2.5">
-          <NumInput value={dados.xpAtual} onChange={handleXpAtual} label="XP Atual" placeholder="0" />
-          <NumInput value={xpTotal > 0 ? xpTotal : dados.xpTotal} onChange={handleXpTotal} label={getXpParaNivel(hab,dados.nivel)!=null ? 'XP Necessária ✓' : 'XP Necessária'} placeholder="?" />
+          <NumInput value={dados.xpAtual} onChange={handleXpAtual} label={t('dragon_tracker.current_xp')} placeholder="0" />
+          <NumInput value={xpTotal > 0 ? xpTotal : dados.xpTotal} onChange={handleXpTotal} label={getXpParaNivel(hab,dados.nivel)!=null ? t('dragon_tracker.required_xp_known') : t('dragon_tracker.required_xp')} placeholder="?" />
         </div>
         {/* Sessão rápida */}
         <div className="flex items-center gap-2 mt-2">
@@ -121,7 +122,7 @@ const HabilidadeTrackerCard = ({ hab, dados, onChange, cor }) => {
             type="number"
             className="tw-input text-center text-xs"
             style={{ padding:'4px 8px', flex:1 }}
-            placeholder="XP por sessão"
+            placeholder={t('dragon_tracker.xp_per_session')}
             id={`sess_${hab.id}`}
           />
           <button
@@ -134,7 +135,7 @@ const HabilidadeTrackerCard = ({ hab, dados, onChange, cor }) => {
               if (inp) inp.value = '';
             }}
           >
-            + Sessão
+            {t('dragon_tracker.add_session')}
           </button>
         </div>
       </div>
@@ -144,6 +145,7 @@ const HabilidadeTrackerCard = ({ hab, dados, onChange, cor }) => {
 
 const DragaoTracker = ({ dragaoId, setRoute }) => {
   const { dragoes } = useGameData();
+  const { t, content, locale } = useI18n();
   const dragao = dragoes.find(d => d.id === dragaoId) || null;
   const [dados,  setDados]  = useState(() => dragao ? carregarDados(dragao) : {});
   const [toast,  setToast]  = useState({ open:false, message:'', severity:'success' });
@@ -154,8 +156,8 @@ const DragaoTracker = ({ dragaoId, setRoute }) => {
   const salvar = useCallback(() => {
     if (!dragao) return;
     localStorage.setItem(STORAGE_KEY(dragao.id), JSON.stringify(dados));
-    showToast('Progresso salvo com sucesso! ⚔️');
-  }, [dragao, dados]);
+    showToast(t('dragon_tracker.saved'));
+  }, [dragao, dados, t]);
 
   const handleHabChange = (habId, novosDados) => {
     setDados(d => ({ ...d, habilidades: { ...d.habilidades, [habId]: novosDados } }));
@@ -165,12 +167,13 @@ const DragaoTracker = ({ dragaoId, setRoute }) => {
     return (
       <div className="text-center py-12">
         <p className="text-5xl mb-3 m-0">🐉</p>
-        <p className="font-nunito font-black text-sm m-0" style={{ color:C.ERROR }}>Dragão não encontrado</p>
+        <p className="font-nunito font-black text-sm m-0" style={{ color:C.ERROR }}>{t('dragon_tracker.not_found')}</p>
       </div>
     );
   }
 
   const cor = dragao.cor;
+  const nomeDragao = content(dragao, 'nome');
 
   return (
     <div className="max-w-lg mx-auto pb-4" style={{ animation:'reveal-up 0.4s ease both' }}>
@@ -186,11 +189,11 @@ const DragaoTracker = ({ dragaoId, setRoute }) => {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-cinzel font-bold text-base m-0 mb-1" style={{ color:'#FFF8EE' }}>
-              {dragao.nome} — Progresso
+              {t('dragon_tracker.progress', { name:nomeDragao })}
             </p>
             {/* Nível dragão */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-nunito font-bold text-[0.68rem]" style={{ color:'rgba(255,248,238,0.6)' }}>Nível:</span>
+              <span className="font-nunito font-bold text-[0.68rem]" style={{ color:'rgba(255,248,238,0.6)' }}>{t('dragon_tracker.level')}</span>
               <NivelControl
                 value={dados.nivelDragao || 1}
                 onChange={v => setDados(d => ({ ...d, nivelDragao:v }))}
@@ -202,11 +205,11 @@ const DragaoTracker = ({ dragaoId, setRoute }) => {
 
         {/* XP dragão */}
         <div className="px-4 py-3" style={{ background:C.BG_CARD, borderTop:`1px solid ${cor}44` }}>
-          <p className="font-nunito font-black text-[0.68rem] uppercase tracking-widest m-0 mb-2" style={{ color:C.TEXT_MUTED }}>XP do Dragão</p>
-          <XPBar atual={dados.xpDragaoAtual || 0} total={dados.xpDragaoTotal || 0} cor={cor} />
+          <p className="font-nunito font-black text-[0.68rem] uppercase tracking-widest m-0 mb-2" style={{ color:C.TEXT_MUTED }}>{t('dragon_tracker.dragon_xp')}</p>
+          <XPBar atual={dados.xpDragaoAtual || 0} total={dados.xpDragaoTotal || 0} cor={cor} locale={locale} />
           <div className="flex gap-2 mt-2">
-            <NumInput value={dados.xpDragaoAtual} onChange={v => setDados(d=>({...d,xpDragaoAtual:v}))} label="XP Atual" placeholder="0" />
-            <NumInput value={dados.xpDragaoTotal} onChange={v => setDados(d=>({...d,xpDragaoTotal:v}))} label="XP Necessária" placeholder="?" />
+            <NumInput value={dados.xpDragaoAtual} onChange={v => setDados(d=>({...d,xpDragaoAtual:v}))} label={t('dragon_tracker.current_xp')} placeholder="0" />
+            <NumInput value={dados.xpDragaoTotal} onChange={v => setDados(d=>({...d,xpDragaoTotal:v}))} label={t('dragon_tracker.required_xp')} placeholder="?" />
           </div>
         </div>
       </div>
@@ -219,15 +222,17 @@ const DragaoTracker = ({ dragaoId, setRoute }) => {
           dados={dados.habilidades?.[hab.id] || { nivel:1, xpAtual:0, xpTotal:0 }}
           onChange={nd => handleHabChange(hab.id, nd)}
           cor={cor}
+          t={t}
+          locale={locale}
         />
       ))}
 
       {/* Salvar */}
       <button className="btn-gold btn-lg w-full" onClick={salvar}>
-        💾 Salvar Progresso
+        {t('dragon_tracker.save')}
       </button>
       <p className="font-nunito text-[0.68rem] text-center mt-1.5 m-0" style={{ color:C.TEXT_MUTED }}>
-        Os dados são guardados localmente no seu dispositivo.
+        {t('dragon_tracker.local_note')}
       </p>
     </div>
   );

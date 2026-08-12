@@ -19,6 +19,7 @@ const PesquisaSchema = new mongoose.Schema({
   nivelMax:  { type: Number, default: 10, min: 1, max: 15 },
   ordem:     { type: Number, default: 0 },
   niveis:    [NivelPesquisaSchema],
+  i18n:      { type: mongoose.Schema.Types.Mixed, default: {} },
   atualizadoEm: { type: Date, default: Date.now },
 }, { collection: COLLECTIONS.pesquisas });
 

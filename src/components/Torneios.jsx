@@ -79,7 +79,7 @@ const Torneios = () => {
   const torneioAtual = LISTA_TORNEIOS.find(item => item.id === torneioAtivo);
   const profile = getProfile() || {};
   const offset  = getFusoOffset();
-  const { horaLocal, countdown, isUrgente, faseTexto } = useTorneioTimer(offset);
+  const { horaLocal, horaSomente, countdown, isUrgente, faseTexto } = useTorneioTimer(offset);
 
   const catsPresentes = ORDEM_CATEGORIAS.filter(catKey =>
     LISTA_TORNEIOS.some(item => item.catKey === catKey)
@@ -89,7 +89,7 @@ const Torneios = () => {
     <div className="max-w-2xl mx-auto pb-4">
       {!torneioAtivo && (
         <TorneioStatusCard
-          horaLocal={horaLocal} countdown={countdown}
+          horaLocal={horaLocal} horaSomente={horaSomente} countdown={countdown}
           isUrgente={isUrgente} faseTexto={faseTexto}
           fuso={profile.fuso} reino={profile.reino}
         />

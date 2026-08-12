@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { C } from '../../theme.js';
+import { useI18n } from '../../hooks/useI18n.jsx';
 import { COR, COR_DRK, INTENCAO_LABEL } from './config.js';
 import { parseMarkdown } from './markdown.jsx';
 
 const BotaoCopiar = ({ texto }) => {
+  const { t } = useI18n();
   const [copiado, setCopiado] = useState(false);
   const copiar = () => {
     navigator.clipboard?.writeText(texto).catch(() => {});
@@ -21,12 +23,13 @@ const BotaoCopiar = ({ texto }) => {
         letterSpacing: '0.3px', transition: 'all 0.2s',
         display: 'flex', alignItems: 'center', gap: 4,
       }}>
-      {copiado ? '✓ Copiado' : '⎘ Copiar'}
+      {copiado ? t('assistant.copied') : t('assistant.copy')}
     </button>
   );
 };
 
 export function MessageBubble({ msg }) {
+  const { t } = useI18n();
   const isUser = msg.role === 'user';
   return (
     <div style={{ display:'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: 10 }}>
@@ -51,14 +54,14 @@ export function MessageBubble({ msg }) {
               <p style={{
                 fontFamily:'"Nunito",sans-serif', fontWeight:900, fontSize:'0.6rem', letterSpacing:'2px',
                 textTransform:'uppercase', color: COR, margin:0,
-              }}>Conselheiro</p>
+              }}>{t('assistant.advisor')}</p>
               {msg.intencao && INTENCAO_LABEL[msg.intencao] && (
                 <span style={{
                   fontFamily:'"Nunito",sans-serif', fontWeight:700, fontSize:'0.55rem', padding:'1px 6px',
                   borderRadius:4, background:`${COR}20`, border:`1px solid ${COR}40`, color: COR,
                   letterSpacing:'0.3px',
                 }}>
-                  {INTENCAO_LABEL[msg.intencao].emoji} {INTENCAO_LABEL[msg.intencao].label}
+                  {INTENCAO_LABEL[msg.intencao].emoji} {t(INTENCAO_LABEL[msg.intencao].key)}
                 </span>
               )}
             </div>

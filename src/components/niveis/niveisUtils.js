@@ -1,16 +1,17 @@
 export const unformat = value => Number(String(value ?? '').replace(/\D/g, '')) || 0;
 
-export const formatNumber = number => (
+export const formatNumber = (number, locale = 'pt-BR') => (
   number === null || number === undefined || number === ''
     ? '—'
-    : Number(number).toLocaleString('pt-BR')
+    : Number(number).toLocaleString(locale)
 );
 
-export const formatSufixo = number => {
+export const formatSufixo = (number, locale = 'pt-BR') => {
   const value = Number(number || 0);
-  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1).replace('.0', '')}B`;
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace('.0', '')}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1).replace('.0', '')}K`;
+  const fmt = (n) => Number(n).toLocaleString(locale, { maximumFractionDigits: 1 });
+  if (value >= 1_000_000_000) return `${fmt(value / 1_000_000_000)}B`;
+  if (value >= 1_000_000) return `${fmt(value / 1_000_000)}M`;
+  if (value >= 1_000) return `${fmt(value / 1_000)}K`;
   return String(value);
 };
 

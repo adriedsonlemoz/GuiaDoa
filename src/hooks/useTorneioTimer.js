@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useI18n } from './useI18n.jsx';
 
 /**
  * Hook: lógica central do cronômetro de torneio.
@@ -9,7 +10,9 @@ import { useEffect, useState } from 'react';
  * @returns {{ horaLocal, countdown, isAtivo, isUrgente, faseTexto }}
  */
 export function useTorneioTimer(offset = 0) {
+  const { t, locale } = useI18n();
   const [horaLocal, setHoraLocal]   = useState('--/-- - --:--:--');
+  const [horaSomente, setHoraSomente] = useState('--:--:--');
   const [countdown, setCountdown]   = useState('00:00:00');
   const [isAtivo,   setIsAtivo]     = useState(false);
   const [isUrgente, setIsUrgente]   = useState(false);
@@ -24,14 +27,17 @@ export function useTorneioTimer(offset = 0) {
       const mm = serverDate.getUTCMinutes();
       const ss = serverDate.getUTCSeconds();
 
-      // Hora formatada
-      const dd     = serverDate.getUTCDate();
-      const mo     = serverDate.getUTCMonth() + 1;
-      const meses  = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-      const moNome = meses[serverDate.getUTCMonth()];
-      setHoraLocal(
-        `${String(dd).padStart(2,'0')} de ${moNome} às ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`
-      );
+      // Hora formatada conforme o idioma escolhido. A data já foi deslocada
+      // pelo fuso do realm e é formatada em UTC para não aplicar o fuso do aparelho.
+      const formatDate = new Intl.DateTimeFormat(locale, {
+        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false, timeZone: 'UTC',
+      });
+      const formatTime = new Intl.DateTimeFormat(locale, {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'UTC',
+      });
+      setHoraLocal(formatDate.format(serverDate));
+      setHoraSomente(formatTime.format(serverDate));
 
       // Cálculo do tempo restante até a próxima virada (21:00)
       const totalSeg = hh * 3600 + mm * 60 + ss;
@@ -42,11 +48,7 @@ export function useTorneioTimer(offset = 0) {
 
       setIsAtivo(true); // torneio é sempre ativo (24h contínuas)
       setIsUrgente(tempoRestante <= 300);
-      setFaseTexto(
-        hh >= 21
-          ? '🔥 Torneio iniciado — encerra às 21:00 de amanhã'
-          : '⚔️ Torneio em andamento — encerra às 21:00 de hoje'
-      );
+      setFaseTexto(hh >= 21 ? t('torneio.status.ends_tomorrow') : t('torneio.status.ends_today'));
 
       const h = Math.floor(tempoRestante / 3600);
       const m = Math.floor((tempoRestante % 3600) / 60);
@@ -57,7 +59,7 @@ export function useTorneioTimer(offset = 0) {
     }, 1000);
 
     return () => clearInterval(tick);
-  }, [offset]);
+  }, [offset, locale, t]);
 
-  return { horaLocal, countdown, isAtivo, isUrgente, faseTexto };
+  return { horaLocal, horaSomente, countdown, isAtivo, isUrgente, faseTexto };
 }

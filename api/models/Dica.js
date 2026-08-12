@@ -9,6 +9,7 @@ const DicaSchema = new mongoose.Schema({
   destaque:  { type: Boolean, default: false },
   ativo:     { type: Boolean, default: true },
   ordem:     { type: Number, default: 0 },
+  i18n:      { type: mongoose.Schema.Types.Mixed, default: {} },
   criadoEm:  { type: Date, default: Date.now },
   atualizadoEm: { type: Date, default: Date.now },
 }, { collection: COLLECTIONS.dicas });

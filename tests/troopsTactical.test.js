@@ -20,17 +20,22 @@ test('catálogo simples separa apenas filtros essenciais de alcance e especiais'
   assert.equal(matchesTroopFilter(troops[1], 'ranged'), false);
 });
 
-test('Tropas usa lista vertical simples e não exibe simulador/comparador na tela principal', () => {
+test('Tropas mantém lista simples e adiciona comparação rápida sem trazer o simulador para a tela principal', () => {
   for (const file of ['SimpleTroopFilters.jsx','TroopListRow.jsx','TropaModal.jsx','troopCatalogUtils.js']) {
     assert.ok(existsSync(new URL(`../src/components/tropas/${file}`, import.meta.url)), file);
   }
   const main = read('src/components/Tropas.jsx');
+  const row = read('src/components/tropas/TroopListRow.jsx');
   assert.match(main, /SimpleTroopFilters/);
   assert.match(main, /TroopListRow/);
+  assert.match(main, /QUICK_COMPARE_MAX = 2/);
+  assert.match(main, /guiadoa_troop_compare/);
+  assert.match(main, /tropas_comparar/);
+  assert.match(row, /common\.power/);
+  assert.match(row, /game-power-value/);
   assert.doesNotMatch(main, /calculostropas/);
-  assert.doesNotMatch(main, /tropas_comparar/);
   assert.doesNotMatch(main, /TacticalSummary|UnlockProgressPanel|CompareDock/);
-  assert.ok(main.split('\n').length < 120);
+  assert.ok(main.split('\n').length < 150);
 });
 
 test('detalhe mantém atributos, requisito e dicas relacionadas', () => {

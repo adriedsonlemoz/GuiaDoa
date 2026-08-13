@@ -21,7 +21,7 @@ const LanguageOption = ({ locale, active, onSelect, selectedLabel }) => (
   >
     <span style={{
       width: 54, height: 54, borderRadius: 16, display: 'grid', placeItems: 'center', fontSize: 28,
-      background: active ? 'linear-gradient(145deg,#31484A,#58727D)' : 'rgba(49,72,74,.06)',
+      background: active ? 'linear-gradient(145deg,#3C6863,#2F5652)' : 'rgba(49,72,74,.06)',
       border: `1px solid ${active ? 'rgba(200,168,74,.55)' : 'rgba(49,72,74,.10)'}`,
       boxShadow: active ? '0 7px 18px rgba(49,72,74,.22)' : 'none',
     }}>{locale.flag}</span>
@@ -42,7 +42,7 @@ const LanguageOption = ({ locale, active, onSelect, selectedLabel }) => (
       width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', flexShrink: 0,
       background: active ? C.ACCENT : 'transparent',
       border: `1.5px solid ${active ? C.ACCENT : 'rgba(154,125,86,.28)'}`,
-      color: active ? '#31484A' : C.TEXT_FAINT, fontSize: 14, fontWeight: 900,
+      color: active ? '#213F3C' : C.TEXT_FAINT, fontSize: 14, fontWeight: 900,
     }} aria-label={active ? selectedLabel : undefined}>
       {active ? '✓' : ''}
     </span>
@@ -56,7 +56,7 @@ export default function LanguageChooser({ onBack, onDone, setup = false }) {
     <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: C.BG_MAIN }}>
       <header style={{
         position: 'relative', overflow: 'hidden',
-        background: 'linear-gradient(150deg,#263C3E 0%,#31484A 52%,#58727D 100%)',
+        background: 'linear-gradient(150deg,#213F3C 0%,#2F5652 52%,#3C6863 100%)',
         borderBottom: '1px solid rgba(200,168,74,.55)',
         padding: setup ? '38px 18px 34px' : '18px 18px 28px',
       }}>
@@ -77,7 +77,7 @@ export default function LanguageChooser({ onBack, onDone, setup = false }) {
               width: 50, height: 50, borderRadius: 15, display: 'grid', placeItems: 'center', flexShrink: 0,
               border: '1px solid rgba(200,168,74,.55)', background: 'rgba(248,242,224,.055)',
               boxShadow: '0 10px 26px rgba(0,0,0,.20)', color: C.ACCENT,
-              fontFamily: '"Cinzel",serif', fontWeight: 900, fontSize: '.86rem', letterSpacing: 1,
+              fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 900, fontSize: '.86rem', letterSpacing: 1,
             }}>DOA</div>
             <div>
               <p className="font-nunito" style={{ margin: 0, color: C.ACCENT, fontSize: '.6rem', fontWeight: 900, letterSpacing: 2.2, textTransform: 'uppercase' }}>

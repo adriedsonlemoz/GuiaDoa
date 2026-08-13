@@ -31,3 +31,14 @@ As classes globais correspondentes vivem em `src/index.css`.
 ### Build
 
 A Beta 2.20 também adiciona `scripts/check-frontend.mjs`, que usa o TypeScript para analisar todos os arquivos `.js` e `.jsx` do frontend. O objetivo é detectar erros sintáticos de JSX antes do deploy, incluindo a regressão que interrompeu o build do Armazém na Beta 2.19.
+
+## Beta 2.21
+
+- Tipografia visual unificada na fonte nativa do sistema para melhorar legibilidade em telas pequenas.
+- Marrom estrutural substituído por verde-petróleo nas abas e cabeçalhos de módulos.
+- Ícones da grade da Home deixam de usar círculos decorativos.
+- Botões compactos do perfil usam a mesma família verde do cabeçalho; o idioma passa a usar símbolo monocromático.
+- Lista de Tropas mostra Poder sem abrir o detalhe.
+- Comparação rápida de Tropas: ativar Comparar, escolher duas unidades e abrir a comparação existente.
+- Cores de comparação e seletores alinhadas à nova paleta verde/pergaminho.
+

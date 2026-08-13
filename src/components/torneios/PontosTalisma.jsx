@@ -89,7 +89,7 @@ const PontosTalisma = () => {
               color: '#EEF6FF',
               border: '1px solid #0A2A5A',
               borderRadius: 8, cursor: 'pointer', fontWeight: 800,
-              fontFamily: '"Nunito",sans-serif',
+              fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif",
             }}>
             💾 {t('torneio.label.salvar')}
           </button>

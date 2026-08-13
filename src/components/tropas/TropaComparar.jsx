@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { C } from '../../theme.js';
 import { useI18n } from '../../hooks/useI18n.jsx';
 import { useTropas } from '../../hooks/useTropas.js';
+import GameHeader from '../shared/GameHeader.jsx';
 import TropaSlot from './comparar/TropaSlot.jsx';
 import TropaPicker from './comparar/TropaPicker.jsx';
 import TropaComparisonTable from './comparar/TropaComparisonTable.jsx';
@@ -21,6 +21,7 @@ const TropaComparar = () => {
   });
   const [pickerSlot, setPickerSlot] = useState(null);
   const tropasAtivas = slots.filter(Boolean);
+
   const adicionarTropa = tropa => {
     if (pickerSlot === null) return;
     setSlots(current => current.map((value, index) => (index === pickerSlot ? tropa : value)));
@@ -31,24 +32,34 @@ const TropaComparar = () => {
   return (
     <>
       {pickerSlot !== null && <TropaPicker tropas={tropas} selecionadas={slots} onEscolher={adicionarTropa} onFechar={() => setPickerSlot(null)} />}
-      <div style={{ maxWidth: 480, margin: '0 auto', paddingBottom: 16 }}>
-        <div style={{ background: 'linear-gradient(135deg,#2A1A4A,#4A2A7A)', borderRadius: '12px 12px 0 0', padding: '12px 16px 10px', textAlign: 'center' }}>
-          <p className="font-cinzel font-bold uppercase m-0" style={{ fontSize: '0.8rem', letterSpacing: '3px', color: '#F0E8FF' }}>{t('troops.compare_title')}</p>
-          <p className="font-nunito font-semibold m-0" style={{ fontSize: '0.62rem', color: 'rgba(180,150,230,0.7)', marginTop: 3 }}>{t('troops.compare_desc')}</p>
-        </div>
-        <div style={{ background: C.BG_SECONDARY, border: `1.5px solid ${C.BORDER}`, borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '12px 10px 14px', marginBottom: 14 }}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-            {slots.map((tropa, index) => <TropaSlot key={index} index={index} tropa={tropa} cor={SLOT_CORES[index]} onSelecionar={() => setPickerSlot(index)} onRemover={() => removerTropa(index)} />)}
+      <div style={{ maxWidth:620, margin:'0 auto', paddingBottom:16 }}>
+        <GameHeader title={t('troops.compare_title').replace('⚖️ ', '')} subtitle={t('troops.compare_desc')} />
+
+        <section className="game-panel" style={{ padding:'10px', marginBottom:10 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,minmax(0,1fr))', gap:7 }}>
+            {slots.map((tropa, index) => (
+              <TropaSlot
+                key={index}
+                index={index}
+                tropa={tropa}
+                cor={SLOT_CORES[index]}
+                onSelecionar={() => setPickerSlot(index)}
+                onRemover={() => removerTropa(index)}
+              />
+            ))}
           </div>
-          {tropasAtivas.length === 0 && <p className="font-nunito text-center m-0" style={{ fontSize: '0.7rem', color: C.TEXT_FAINT, marginTop: 8, fontStyle: 'italic' }}>{t('troops.compare_add')}</p>}
-        </div>
+          {tropasAtivas.length === 0 ? (
+            <p style={{ textAlign:'center', margin:'9px 0 0', color:'#687064', fontSize:'.68rem', fontWeight:650 }}>{t('troops.compare_add')}</p>
+          ) : null}
+        </section>
+
         <TropaComparisonTable slots={slots} />
-        {tropasAtivas.length === 1 && (
-          <div style={{ textAlign: 'center', padding: '20px 16px', border: '1px dashed rgba(200,168,74,0.25)', borderRadius: 12, background: C.BG_CARD }}>
-            <p style={{ fontSize: '1.5rem', marginBottom: 6 }}>⚖️</p>
-            <p className="font-nunito font-semibold m-0" style={{ fontSize: '0.78rem', color: C.TEXT_MUTED }}>{t('troops.compare_add_second')}</p>
+
+        {tropasAtivas.length === 1 ? (
+          <div className="game-panel" style={{ textAlign:'center', padding:'18px 14px', color:'#687064', fontSize:'.7rem', fontWeight:650 }}>
+            ⚖ {t('troops.compare_add_second')}
           </div>
-        )}
+        ) : null}
       </div>
     </>
   );

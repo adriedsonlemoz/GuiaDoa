@@ -31,7 +31,7 @@ const ReinoCard = ({ reino, selecionado, onClick }) => {
     <span style={{ flex: 1, minWidth: 0 }}>
       <span style={{
         display: 'block',
-        fontFamily: '"Nunito",sans-serif', fontWeight: 900,
+        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 900,
         fontSize: '0.82rem',
         color: selecionado ? C.TEXT_PRIMARY : C.TEXT_SECONDARY,
         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -39,7 +39,7 @@ const ReinoCard = ({ reino, selecionado, onClick }) => {
         {content(reino, 'nome')}
       </span>
       {meta && <span style={{
-        fontFamily: '"Nunito",sans-serif', fontWeight: 600,
+        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 600,
         fontSize: '0.62rem', color: C.TEXT_FAINT,
       }}>
         {meta}
@@ -112,13 +112,13 @@ const ReinoSelector = ({ value, onChange }) => {
           <>
             <span style={{ flex: 1 }}>
               <span style={{
-                display: 'block', fontFamily: '"Nunito",sans-serif',
+                display: 'block', fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif",
                 fontWeight: 900, fontSize: '0.85rem', color: C.TEXT_PRIMARY,
               }}>
                 {content(selecionado, 'nome')}
               </span>
               {metaSelecionado && <span style={{
-                fontFamily: '"Nunito",sans-serif', fontWeight: 600,
+                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 600,
                 fontSize: '0.62rem', color: C.TEXT_FAINT,
               }}>
                 {metaSelecionado}
@@ -133,7 +133,7 @@ const ReinoSelector = ({ value, onChange }) => {
           </>
         ) : (
           <span style={{
-            fontFamily: '"Nunito",sans-serif', fontWeight: 700,
+            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 700,
             fontSize: '0.82rem', color: C.TEXT_FAINT, flex: 1,
           }}>
             — {t('profile.select_realm')} —
@@ -163,14 +163,14 @@ const ReinoSelector = ({ value, onChange }) => {
             background: '#EAE0C8', display: 'flex', gap: 6, alignItems: 'center',
           }}>
             <span style={{
-              fontFamily: '"Nunito",sans-serif', fontWeight: 700,
+              fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 700,
               fontSize: '0.7rem', color: C.TEXT_SECONDARY, flexShrink: 0,
             }}>{t('profile.filter')}:</span>
             <select
               value={regiao}
               onChange={e => setRegiao(e.target.value)}
               style={{
-                flex: 1, fontFamily: '"Nunito",sans-serif', fontWeight: 700,
+                flex: 1, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 700,
                 fontSize: '0.74rem', background: '#F8F4E8',
                 border: `1.5px solid ${C.BORDER}`, borderRadius: 6,
                 padding: '6px 8px', color: C.TEXT_SECONDARY, cursor: 'pointer',
@@ -186,7 +186,7 @@ const ReinoSelector = ({ value, onChange }) => {
             {carregando ? (
               <div style={{
                 padding: '18px', textAlign: 'center',
-                fontFamily: '"Nunito",sans-serif', fontWeight: 700,
+                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 700,
                 fontSize: '0.78rem', color: C.TEXT_FAINT,
               }}>
                 {t('profile.loading_realms')}
@@ -194,7 +194,7 @@ const ReinoSelector = ({ value, onChange }) => {
             ) : filtrados.length === 0 ? (
               <div style={{
                 padding: '18px', textAlign: 'center',
-                fontFamily: '"Nunito",sans-serif', fontWeight: 700,
+                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 700,
                 fontSize: '0.78rem', color: C.TEXT_FAINT,
               }}>
                 {t('profile.no_realms')}
@@ -213,7 +213,7 @@ const ReinoSelector = ({ value, onChange }) => {
           <div style={{
             padding: '5px 12px', background: '#EAE0C8',
             borderTop: `1px solid rgba(200,168,74,0.2)`,
-            fontFamily: '"Nunito",sans-serif', fontWeight: 700,
+            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 700,
             fontSize: '0.62rem', color: C.TEXT_FAINT,
           }}>
             {t('profile.realm_count', { shown: filtrados.length, total: reinos.length })}

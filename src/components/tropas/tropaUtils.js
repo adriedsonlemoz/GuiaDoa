@@ -70,7 +70,7 @@ export const ATRIBUTOS = [
   { id: 'vel',      label: 'VELOCIDADE', labelKey:'common.speed',icon: '⚡',  color: '#0369a1', max: 3_000  },
   { id: 'car',      label: 'CARGA', labelKey:'troops.load', icon: '📦',  color: '#b08a30', max: 5_000  },
   { id: 'gestao',   label: 'GESTÃO', labelKey:'troops.management', icon: '👥',  color: '#6a5018', max: 200    },
-  { id: 'poder',    label: 'PODER', labelKey:'common.power', icon: '⭐',  color: '#7c3aed', max: 50     },
+  { id: 'poder',    label: 'PODER', labelKey:'common.power', icon: '⭐',  color: '#315B56', max: 50     },
   { id: 'efi',      label: 'EFICIÊNCIA', labelKey:'troops.efficiency',icon: '🚀',  color: '#0d7c5e', max: 15_000 },
 ];
 

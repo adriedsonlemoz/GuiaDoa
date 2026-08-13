@@ -12,7 +12,7 @@ export default function HomeProfileCard({ profile, onLanguage, onEdit }) {
         <RealmClock realm={profile.reino} fuso={profile.fuso} compact />
       </div>
       <div className="game-profile-actions">
-        <button className="game-icon-button" onClick={onLanguage} title={t('language.title')} aria-label={t('language.title')}>🌐</button>
+        <button className="game-icon-button" onClick={onLanguage} title={t('language.title')} aria-label={t('language.title')}>文</button>
         <button className="game-icon-button" onClick={onEdit} title={t('home.perfil.editar')} aria-label={t('home.perfil.editar')}>✎</button>
       </div>
     </section>

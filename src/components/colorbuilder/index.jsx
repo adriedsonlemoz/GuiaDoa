@@ -13,7 +13,7 @@ function Toast({ msg, visible }) {
     <div style={{
       position: 'fixed', bottom: 28, left: '50%',
       transform: `translateX(-50%) translateY(${visible ? '0' : '12px'})`,
-      background: 'linear-gradient(135deg,#31484A,#3A5456)',
+      background: 'linear-gradient(135deg,#2F5652,#3C6863)',
       color: 'rgba(200,168,74,0.95)',
       border: '1px solid rgba(200,168,74,0.4)',
       fontFamily: 'inherit', fontSize: '0.75rem',
@@ -57,7 +57,7 @@ function TelaBoas({ onEscolher }) {
         marginBottom: 20,
       }}>
         <div style={{ fontSize: '2.2rem', marginBottom: 8 }}>✦</div>
-        <p style={{ fontSize: '0.85rem', color: C.TEXT_PRIMARY, fontWeight: 600, marginBottom: 4, fontFamily: "'Cinzel', serif" }}>
+        <p style={{ fontSize: '0.85rem', color: C.TEXT_PRIMARY, fontWeight: 600, marginBottom: 4, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif" }}>
           {t('builder.welcome.title')}
         </p>
         <p style={{ fontSize: '0.72rem', color: C.TEXT_MUTED, lineHeight: 1.6 }}>
@@ -114,7 +114,7 @@ function TelaBoas({ onEscolher }) {
             {/* Texto */}
             <div style={{ flex: 1 }}>
               <div style={{
-                fontFamily: "'Cinzel', serif", fontWeight: 700,
+                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 700,
                 fontSize: '0.85rem', color: C.TEXT_PRIMARY,
                 marginBottom: 5, letterSpacing: '0.3px',
               }}>

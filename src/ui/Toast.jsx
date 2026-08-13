@@ -5,7 +5,7 @@ const SEV_COLORS = {
   success: { bg: '#5A8A5C', border: '#3A6A3C' },
   error:   { bg: '#A83C2C', border: '#6A1C0C' },
   warning: { bg: '#C87A2C', border: '#8A5010' },
-  info:    { bg: '#58727D', border: '#31484A' },
+  info:    { bg: '#58727D', border: '#2F5652' },
 };
 
 const SEV_ICONS = {

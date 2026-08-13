@@ -95,7 +95,7 @@ const TreinamentoDoDragao = () => {
               color: '#F4ECFF',
               border: '1px solid #3A0A60',
               borderRadius: 8, cursor: 'pointer', fontWeight: 800,
-              fontFamily: '"Nunito",sans-serif',
+              fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif",
             }}>
             💾 {t('torneio.label.salvar')}
           </button>

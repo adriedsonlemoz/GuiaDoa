@@ -27,3 +27,16 @@ test('regressão Vercel: Armazém não contém mais o JSX malformado que quebrav
   assert.doesNotMatch(itens, /flexShrink:\s*0,\s*\}>\{item\.imagem/);
   assert.match(itens, /function ItemVisual/);
 });
+
+test('Beta 2.21 usa tipografia nativa, verde estrutural e ícones da Home sem círculos', () => {
+  const css = read('src/index.css');
+  const tailwind = read('tailwind.config.js');
+  const profile = read('src/components/home/HomeProfileCard.jsx');
+  assert.match(css, /--ui-font:\s*system-ui/);
+  assert.doesNotMatch(css, /font-family:\s*Georgia/);
+  assert.match(css, /\.game-tab[\s\S]*#47736E/);
+  assert.match(css, /\.game-home-tool-icon\s*\{[\s\S]*font-size:\s*2\.05rem/);
+  assert.doesNotMatch(css, /\.game-home-tool-icon\s*\{[\s\S]{0,260}border-radius:50%/);
+  assert.match(tailwind, /cinzel:\s*\['system-ui'/);
+  assert.match(profile, />文<\/button>/);
+});

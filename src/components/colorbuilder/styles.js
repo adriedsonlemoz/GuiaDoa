@@ -19,14 +19,14 @@ export const T = {
     position: 'relative',
   },
   header: {
-    background: 'linear-gradient(135deg,#31484A,#3A5456)',
+    background: 'linear-gradient(135deg,#2F5652,#3C6863)',
     borderBottom: `1px solid rgba(200,168,74,0.4)`,
     padding: '10px 16px',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     position: 'sticky', top: 0, zIndex: 10,
   },
   headerTitle: {
-    fontFamily: "'Cinzel', serif", fontWeight: 700,
+    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 700,
     fontSize: '0.82rem', color: 'rgba(200,168,74,0.9)',
     letterSpacing: '2px', textTransform: 'uppercase',
   },
@@ -86,7 +86,7 @@ export const T = {
 
   // ── Botões ────────────────────────────────────────────────────────────────
   btnSolid: {
-    background: 'linear-gradient(135deg,#3A5456,#31484A)',
+    background: 'linear-gradient(135deg,#3C6863,#2F5652)',
     color: 'rgba(200,168,74,0.95)',
     border: '1.5px solid rgba(200,168,74,0.45)',
     borderRadius: 8, cursor: 'pointer',
@@ -107,7 +107,7 @@ export const T = {
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
   catTab: (active) => ({
-    background: active ? 'linear-gradient(135deg,#3A5456,#31484A)' : 'transparent',
+    background: active ? 'linear-gradient(135deg,#3C6863,#2F5652)' : 'transparent',
     border: active ? '1.5px solid rgba(200,168,74,0.5)' : `1.5px solid rgba(200,168,74,0.2)`,
     borderRadius: 5, color: active ? 'rgba(200,168,74,0.95)' : C.TEXT_MUTED,
     fontSize: '0.6rem', padding: '3px 9px', cursor: 'pointer',
@@ -120,7 +120,7 @@ export const T = {
     border: `1.5px solid rgba(200,168,74,0.2)`,
   },
   modeTab: (active) => ({
-    flex: 1, background: active ? 'linear-gradient(135deg,#3A5456,#31484A)' : 'none',
+    flex: 1, background: active ? 'linear-gradient(135deg,#3C6863,#2F5652)' : 'none',
     border: 'none', borderRadius: 6,
     color: active ? 'rgba(200,168,74,0.9)' : C.TEXT_MUTED,
     fontFamily: 'inherit', fontSize: '0.7rem', padding: '8px 6px',

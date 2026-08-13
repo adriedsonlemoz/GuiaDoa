@@ -37,7 +37,7 @@ const Dicas = ({ setRoute }) => {
         {!feed.loading && !feed.dicasFiltradas.length ? (
           <div className="game-panel" style={{ textAlign:'center', padding:'42px 18px', color:'#806d4d' }}>
             <div style={{ fontSize:'2rem' }}>📚</div>
-            <div style={{ marginTop:8, fontFamily:'Georgia,serif', fontWeight:700 }}>{t('tips.no_data')}</div>
+            <div style={{ marginTop:8, fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700 }}>{t('tips.no_data')}</div>
             <div style={{ marginTop:4, fontSize:'.68rem' }}>{t('tips.no_data_hint')}</div>
           </div>
         ) : null}

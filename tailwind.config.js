@@ -6,15 +6,15 @@ export default {
       colors: {
         aoe: {
           // ── Fundos ──────────────────────────────────────────────────────
-          bg:      '#D8CDA9',   // pergaminho base
-          bg2:     '#CFC19B',   // alternativo
-          card:    '#E2D5AD',   // superfície dos cards
-          card2:   '#E8DCB9',   // gradiente topo do card
-          input:   '#F6F0DA',   // campos de entrada
+          bg:      '#D9CEAA',   // pergaminho base
+          bg2:     '#D0C39C',   // alternativo
+          card:    '#E4D8B4',   // superfície dos cards
+          card2:   '#EADFC0',   // gradiente topo do card
+          input:   '#F7F1DC',   // campos de entrada
           // ── Navy colonial (AoE3) ────────────────────────────────────────
-          navy:    '#304946',   // cabeçalho — azul colonial escuro
-          navy2:   '#3A5754',   // hover
-          navy3:   '#223B39',   // dark active
+          navy:    '#2F5652',   // cabeçalho — azul colonial escuro
+          navy2:   '#3C6863',   // hover
+          navy3:   '#213F3C',   // dark active
           navylt:  '#D7E2DE',   // navy bem claro (bg suave)
           // ── Dourado ─────────────────────────────────────────────────────
           gold:    '#A48955',   // borda padrão
@@ -22,15 +22,15 @@ export default {
           gold3:   '#6F5128',   // borda activa
           gold4:   '#C1AE7C',   // borda suave
           // ── Texto castanho ───────────────────────────────────────────────
-          dark:    '#40331F',   // texto principal
-          mid:     '#665235',   // secundário
-          muted:   '#7E6948',   // label/mutado
-          faint:   '#9F8B67',   // placeholder
-          cream:   '#FFF7DF',   // texto sobre fundo escuro
+          dark:    '#2E342F',   // texto principal
+          mid:     '#4F574D',   // secundário
+          muted:   '#687064',   // label/mutado
+          faint:   '#8B8E7D',   // placeholder
+          cream:   '#FFF8E7',   // texto sobre fundo escuro
           // ── Azul (AoE3 colonial) ─────────────────────────────────────────
-          blue:    '#1B91B2',   // azul primário
-          blue2:   '#176E86',   // escuro
-          blue3:   '#4CB4CA',   // claro
+          blue:    '#258EAA',   // azul primário
+          blue2:   '#1D6F83',   // escuro
+          blue3:   '#55B3C4',   // claro
           // ── Status ───────────────────────────────────────────────────────
           red:     '#A83C2C',
           redlt:   '#C85050',
@@ -46,8 +46,8 @@ export default {
         },
       },
       fontFamily: {
-        cinzel:  ['"Cinzel"', 'Georgia', 'serif'],
-        nunito:  ['"Nunito"', '"Segoe UI"', 'sans-serif'],
+        cinzel:  ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Arial', 'sans-serif'],
+        nunito:  ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Arial', 'sans-serif'],
       },
       borderWidth: {
         '1.5': '1.5px',

@@ -26,7 +26,7 @@ const DragaoCard = ({ dragao, onClick, selecionado, onToggleComparar, noSlot }) 
         style={{
           alignSelf:'center', width:34, height:34, borderRadius:4, cursor:'pointer', fontWeight:900,
           border:`1px solid ${selecionado ? dragao.cor : '#8e7344'}`,
-          background:selecionado ? dragao.cor : 'linear-gradient(180deg,#806143,#5f472f)',
+          background:selecionado ? dragao.cor : 'linear-gradient(180deg,#47736E,#315B56)',
           color:'#fff4d8', opacity:noSlot && !selecionado ? .35 : 1,
         }}
       >{selecionado ? '✓' : '+'}</button>

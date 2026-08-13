@@ -150,7 +150,7 @@ export default function Itens() {
       {!filtrados.length ? (
         <section className="game-panel" style={{ padding:'34px 16px', textAlign:'center', color:'#745f40' }}>
           <div style={{ fontSize:'2.5rem' }}>🎒</div>
-          <div style={{ marginTop:7, fontFamily:'Georgia,serif', fontWeight:700 }}>{busca ? t('items.no_results') : t('items.empty')}</div>
+          <div style={{ marginTop:7, fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700 }}>{busca ? t('items.no_results') : t('items.empty')}</div>
           <div style={{ marginTop:5, fontSize:'.7rem' }}>{busca ? t('items.no_match',{query:busca}) : t('items.empty_help')}</div>
         </section>
       ) : modo === 'list' ? (

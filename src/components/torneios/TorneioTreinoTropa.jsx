@@ -102,7 +102,7 @@ const TorneioTreinoTropa = () => {
               background: 'linear-gradient(180deg,#C04030,#8A1A10)',
               color: '#FFF4F0', border: '1px solid #6A0A0A',
               borderRadius: 8, cursor: 'pointer', fontWeight: 800,
-              fontFamily: '"Nunito",sans-serif',
+              fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif",
             }}>
             💾 {t('torneio.label.salvar')}
           </button>

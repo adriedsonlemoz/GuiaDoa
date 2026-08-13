@@ -91,7 +91,7 @@ const TorneioPocoes = () => {
               color: '#FFF0FF',
               border: '1px solid #6A1A7A',
               borderRadius: 8, cursor: 'pointer', fontWeight: 800,
-              fontFamily: '"Nunito",sans-serif',
+              fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif",
             }}>
             💾 {t('torneio.label.salvar')}
           </button>

@@ -83,7 +83,7 @@ const EvolucaoTropas = () => {
               background: 'linear-gradient(180deg,#D08030,#904010)',
               color: '#FFF4E0', border: '1px solid #6A2A00',
               borderRadius: 8, cursor: 'pointer', fontWeight: 800,
-              fontFamily: '"Nunito",sans-serif',
+              fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif",
             }}>
             💾 {t('torneio.label.salvar')}
           </button>

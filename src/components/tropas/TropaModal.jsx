@@ -63,7 +63,7 @@ export default function TropaModal({ tropa, onFechar, onOpenTips }) {
 
           <section className="game-panel" style={{ marginTop:10 }}>
             <GameSectionTitle>{t('troops.training_requirement')}</GameSectionTitle>
-            <div style={{ padding:'11px 12px', fontFamily:'Georgia, serif', color:'#58462c' }}>
+            <div style={{ padding:'11px 12px', fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", color:'#58462c' }}>
               {unlockSource ? (
                 <>
                   <div style={{ fontSize:'.78rem', fontWeight:700 }}>{unlockSource}{unlock.nivel ? ` • ${t('common.level_short')} ${unlock.nivel}` : ''}</div>

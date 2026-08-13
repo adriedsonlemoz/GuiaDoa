@@ -79,7 +79,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
 
             <div style={{ flex:1, minWidth:0 }}>
               <p style={{
-                fontFamily:'"Cinzel",serif', fontWeight:700,
+                fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700,
                 fontSize:'0.9rem', color:'#C0D8F0', margin:0, lineHeight:1.2,
               }}>{t('assistant.title')}</p>
               <div style={{ display:'flex', alignItems:'center', gap:5, marginTop:3 }}>
@@ -90,7 +90,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
                   flexShrink:0,
                 }}/>
                 <p style={{
-                  fontFamily:'"Nunito",sans-serif', fontWeight:600,
+                  fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:600,
                   fontSize:'0.62rem', color:'rgba(140,180,210,0.7)', margin:0,
                 }}>{t('assistant.online_data')}</p>
               </div>
@@ -131,11 +131,11 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
               <div style={{ textAlign:'center', padding:'16px 0 20px' }}>
                 <div style={{ fontSize:'2.8rem', marginBottom:8 }}>🛡️</div>
                 <p style={{
-                  fontFamily:'"Cinzel",serif', fontWeight:700,
+                  fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700,
                   fontSize:'0.85rem', color:C.TEXT_PRIMARY, margin:0, marginBottom:4,
                 }}>{t('assistant.headquarters')}</p>
                 <p style={{
-                  fontFamily:'"Nunito",sans-serif', fontWeight:600,
+                  fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:600,
                   fontSize:'0.72rem', color:C.TEXT_MUTED, margin:0, lineHeight:1.5,
                 }}>
                   {t('assistant.welcome_line1')}<br/>
@@ -146,7 +146,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
               {/* Divisor */}
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
                 <div style={{ flex:1, height:1, background:`linear-gradient(90deg,transparent,${C.BORDER})` }}/>
-                <span style={{ fontFamily:'"Nunito",sans-serif', fontWeight:700, fontSize:'0.6rem', color:C.TEXT_FAINT, letterSpacing:'2px', textTransform:'uppercase' }}>{t('assistant.suggestions')}</span>
+                <span style={{ fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700, fontSize:'0.6rem', color:C.TEXT_FAINT, letterSpacing:'2px', textTransform:'uppercase' }}>{t('assistant.suggestions')}</span>
                 <div style={{ flex:1, height:1, background:`linear-gradient(270deg,transparent,${C.BORDER})` }}/>
               </div>
 
@@ -165,7 +165,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
                   >
                     <span style={{ fontSize:'1.1rem', flexShrink:0 }}>{s.emoji}</span>
                     <span style={{
-                      fontFamily:'"Nunito",sans-serif', fontWeight:700,
+                      fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700,
                       fontSize:'0.68rem', color:C.TEXT_SECONDARY, lineHeight:1.3,
                     }}>{s.texto}</span>
                   </button>
@@ -186,7 +186,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
               borderRadius:10, padding:'10px 12px', margin:'4px 0',
             }}>
               <p style={{
-                fontFamily:'"Nunito",sans-serif', fontWeight:600,
+                fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:600,
                 fontSize:'0.72rem', color:'#E07060', margin:0, marginBottom:8,
               }}>⚠️ {erro}</p>
               <button onClick={onReenviar} disabled={loading}
@@ -195,7 +195,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
                   background:'linear-gradient(135deg,#C04030,#8A1A10)',
                   border:'1px solid rgba(168,60,44,0.5)',
                   color:'#FFF4F0',
-                  fontFamily:'"Nunito",sans-serif', fontWeight:800,
+                  fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:800,
                   fontSize:'0.72rem', letterSpacing:'0.5px',
                   display:'flex', alignItems:'center', justifyContent:'center', gap:6,
                 }}>
@@ -228,7 +228,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
               disabled={loading}
               style={{
                 flex:1, resize:'none', overflow:'hidden',
-                fontFamily:'"Nunito",sans-serif', fontWeight:600,
+                fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:600,
                 fontSize:'0.8rem', lineHeight:1.4,
                 padding:'9px 12px', borderRadius:12,
                 background: C.BG_SECONDARY,
@@ -257,7 +257,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
             >{loading ? '…' : '➤'}</button>
           </div>
           <p style={{
-            fontFamily:'"Nunito",sans-serif', fontWeight:600,
+            fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:600,
             fontSize:'0.58rem', color:C.TEXT_FAINT,
             textAlign:'center', margin:'6px 0 0',
           }}>

@@ -64,7 +64,7 @@ const TorneioAceleracoes = () => {
 
         {/* Contador principal + botão salvar lado a lado */}
         <div className="px-4 py-3 flex items-center gap-3"
-          style={{ background: `linear-gradient(135deg, ${C.NAVY} 0%, #3A5456 100%)` }}>
+          style={{ background: `linear-gradient(135deg, ${C.NAVY} 0%, #3C6863 100%)` }}>
 
           {/* Número total */}
           <div className="flex-1 min-w-0">

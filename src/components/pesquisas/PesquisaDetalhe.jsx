@@ -51,7 +51,7 @@ export default function PesquisaDetalhe({ slug }) {
           </div>
           <div>
             <div className="game-thumb" style={{ width:92, height:92, fontSize:'2.6rem' }}>{pesquisa.icone || '🔬'}</div>
-            <div style={{ marginTop:4, textAlign:'center', fontFamily:'Georgia,serif', fontWeight:700, color:'#4e3d26', fontSize:'.72rem' }}>
+            <div style={{ marginTop:4, textAlign:'center', fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700, color:'#4e3d26', fontSize:'.72rem' }}>
               {t('research.max_level')} {pesquisa.nivelMax}
             </div>
           </div>
@@ -59,7 +59,7 @@ export default function PesquisaDetalhe({ slug }) {
 
         {duracaoTotal ? (
           <div style={{ padding:'10px 12px', display:'flex', justifyContent:'space-between', gap:12, alignItems:'center', borderTop:'1px solid rgba(117,91,51,.22)' }}>
-            <span style={{ color:'#6a5434', fontFamily:'Georgia,serif', fontSize:'.72rem', fontWeight:700 }}>⏱ {t('research.total_duration')}</span>
+            <span style={{ color:'#6a5434', fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontSize:'.72rem', fontWeight:700 }}>⏱ {t('research.total_duration')}</span>
             <strong style={{ color:'#315d5b', fontSize:'.8rem' }}>{duracaoTotal}</strong>
           </div>
         ) : null}

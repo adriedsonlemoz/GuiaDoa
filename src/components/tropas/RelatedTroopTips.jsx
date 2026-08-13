@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { API_URL } from '../../config/api.js';
-import { C } from '../../theme.js';
 import { useI18n } from '../../hooks/useI18n.jsx';
+import { GameSectionTitle } from '../shared/GameChrome.jsx';
 
 export default function RelatedTroopTips({ troopName, onOpenTips }) {
   const { t, content } = useI18n();
@@ -22,13 +22,19 @@ export default function RelatedTroopTips({ troopName, onOpenTips }) {
     onOpenTips?.();
   };
 
-  return <section style={{ border:`1px solid ${C.BORDER_SOFT}`, background:C.BG_CARD, borderRadius:10, padding:'10px 11px', marginTop:8 }}>
-    <div className="font-nunito font-black" style={{ fontSize:'.62rem', color:C.TEXT_MUTED, letterSpacing:'1px', textTransform:'uppercase' }}>📚 {t('troops.related_tips')}</div>
-    <div style={{ display:'flex', flexDirection:'column', gap:5, marginTop:7 }}>
-      {tips.map(tip => <button key={tip._id || tip.slug} onClick={() => open(tip)} style={{ border:`1px solid ${C.BORDER_SOFT}`, background:'rgba(200,168,74,.05)', borderRadius:8, padding:'7px 8px', textAlign:'left', cursor:'pointer' }}>
-        <div className="font-nunito font-bold" style={{ fontSize:'.65rem', color:C.TEXT_PRIMARY }}>{content(tip,'titulo')}</div>
-        <div className="font-nunito" style={{ fontSize:'.54rem', color:'#7a5a1f', marginTop:2 }}>{t('troops.open_tip')} →</div>
-      </button>)}
-    </div>
-  </section>;
+  return (
+    <section className="game-panel" style={{ marginTop:10 }}>
+      <GameSectionTitle>📚 {t('troops.related_tips')}</GameSectionTitle>
+      <div>
+        {tips.map(tip => (
+          <button key={tip._id || tip.slug} onClick={() => open(tip)} className="game-list-row" style={{ padding:'9px 11px' }}>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div className="game-list-name" style={{ fontSize:'.76rem' }}>{content(tip,'titulo')}</div>
+              <div className="game-list-meta">{t('troops.open_tip')} →</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
 }

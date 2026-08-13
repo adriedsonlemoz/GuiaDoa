@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { useGameData } from '../../data/GameDataContext.jsx';
-import { C } from '../../theme.js';
 import DragaoCard from './ui/DragaoCard.jsx';
 import DragaoComparacao from './ui/DragaoComparacao.jsx';
-import SectionDivider from './ui/SectionDivider.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
+import GameHeader from '../shared/GameHeader.jsx';
+import { GameSectionTitle, GameTabs } from '../shared/GameChrome.jsx';
 
 const Dragoes = ({ setRoute }) => {
   const { dragoes } = useGameData();
@@ -13,85 +13,38 @@ const Dragoes = ({ setRoute }) => {
   const [comparando, setComparando] = useState([]);
   const [nivelIdx, setNivelIdx] = useState(0);
   const [aba, setAba] = useState('lista');
-  const apiDataMap = useMemo(() => Object.fromEntries(dragoes.map(dragao => [dragao.id, dragao])), [dragoes]);
-  const dragoesFiltrados = useMemo(() => {
+  const apiDataMap = useMemo(() => Object.fromEntries(dragoes.map(d => [d.id,d])), [dragoes]);
+  const filtrados = useMemo(() => {
     const term = busca.trim().toLowerCase();
-    return dragoes.filter(dragao => content(dragao, 'nome')?.toLowerCase().includes(term) || content(dragao, 'elemento')?.toLowerCase().includes(term));
-  }, [dragoes, busca, content]);
-  const elementos = useMemo(() => [...new Set(dragoes.map(dragao => dragao.elemento).filter(Boolean))].sort(), [dragoes]);
+    return dragoes.filter(d => content(d,'nome')?.toLowerCase().includes(term) || content(d,'elemento')?.toLowerCase().includes(term));
+  }, [dragoes,busca,content]);
+  const elementos = useMemo(() => [...new Set(dragoes.map(d => d.elemento).filter(Boolean))].sort(), [dragoes]);
 
-  const toggleComparar = id => {
-    setComparando(current => {
-      if (current.includes(id)) return current.filter(value => value !== id);
-      if (current.length >= 3) return current;
-      return [...current, id];
-    });
-  };
-  const removerComparacao = id => setComparando(current => current.filter(value => value !== id));
+  const toggleComparar = id => setComparando(current => current.includes(id) ? current.filter(v => v !== id) : current.length >= 3 ? current : [...current,id]);
+  const removerComparacao = id => setComparando(current => current.filter(v => v !== id));
 
   return (
-    <div className="max-w-lg mx-auto pb-4" style={{ animation: 'reveal-up 0.4s ease both' }}>
-      <div className="text-center px-4 py-3 rounded-xl mb-3 relative overflow-hidden" style={{ background: 'linear-gradient(135deg,#31484A 0%,#58727D 60%,#31484A 100%)' }}>
-        <p className="font-cinzel font-bold text-base tracking-widest uppercase text-aoe-cream m-0">🐉 {t('dragons.title')}</p>
-        <p className="font-nunito text-[0.65rem] tracking-widest text-aoe-cream/50 m-0 mt-0.5">{t('dragons.subtitle')}</p>
-      </div>
+    <div style={{ maxWidth:620, margin:'0 auto', paddingBottom:18, animation:'reveal-up .3s ease both' }}>
+      <GameHeader title={t('dragons.subtitle')} subtitle={t('dragons.compare_help')} />
+      <GameTabs tabs={[
+        { id:'lista', label:t('dragons.list'), icon:'📋' },
+        { id:'comparar', label:`${t('dragons.compare')}${comparando.length ? ` (${comparando.length})` : ''}`, icon:'⚔️' },
+      ]} value={aba} onChange={setAba} />
 
-      <div className="flex gap-2 mb-3" style={{ borderBottom: `1.5px solid ${C.BORDER_SOFT}`, paddingBottom: 0 }}>
-        {[
-          { id: 'lista', label: `📋 ${t('dragons.list')}` },
-          { id: 'comparar', label: `⚔️ ${t('dragons.compare')}${comparando.length > 0 ? ` (${comparando.length})` : ''}` },
-        ].map(item => (
-          <button key={item.id} onClick={() => setAba(item.id)} style={{
-            flex: 1, padding: '8px 4px', fontFamily: 'inherit', fontWeight: 800,
-            fontSize: '0.75rem', border: 'none', cursor: 'pointer', background: 'transparent',
-            color: aba === item.id ? C.ACCENT_DEEP : C.TEXT_MUTED,
-            borderBottom: aba === item.id ? `2.5px solid ${C.ACCENT}` : '2.5px solid transparent', transition: 'all 0.15s',
-          }}>{item.label}</button>
-        ))}
-      </div>
-
-      {aba === 'comparar' && (
-        comparando.length === 0 ? (
-          <div style={{ padding: '32px 20px', textAlign: 'center', borderRadius: 12, border: `2px dashed ${C.BORDER}`, background: C.BG_CARD }}>
-            <p style={{ fontSize: '2.5rem', marginBottom: 10 }}>⚔️</p>
-            <p className="font-cinzel font-bold text-sm m-0 mb-2" style={{ color: C.TEXT_PRIMARY }}>{t('dragons.none_selected')}</p>
-            <p className="font-nunito text-xs m-0" style={{ color: C.TEXT_MUTED, lineHeight: 1.6 }}>
-              {t('dragons.compare_help')}
-            </p>
-          </div>
-        ) : (
-          <DragaoComparacao ids={comparando} nivelIdx={nivelIdx} setNivelIdx={setNivelIdx} apiDataMap={apiDataMap}
-            onRemover={removerComparacao} todosDragoes={dragoes} />
-        )
-      )}
-
-      {aba === 'lista' && (
+      {aba === 'comparar' ? (
+        comparando.length ? <div style={{ marginTop:8 }}><DragaoComparacao ids={comparando} nivelIdx={nivelIdx} setNivelIdx={setNivelIdx} apiDataMap={apiDataMap} onRemover={removerComparacao} todosDragoes={dragoes} /></div>
+          : <div className="game-panel" style={{ marginTop:8, padding:30, textAlign:'center', color:'#806d4d' }}>🐉<div style={{ marginTop:7 }}>{t('dragons.none_selected')}</div></div>
+      ) : (
         <>
-          <input className="tw-input mb-3" placeholder={`🔍  ${t('dragons.search')}`} value={busca} onChange={event => setBusca(event.target.value)} />
-          {comparando.length > 0 && (
-            <div style={{ padding: '8px 12px', borderRadius: 10, marginBottom: 10, background: `${C.ACCENT}0F`, border: `1px solid ${C.ACCENT}30`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <span className="font-nunito font-bold text-xs" style={{ color: C.ACCENT_DEEP }}>⚔️ {t('dragons.selected_count',{count:comparando.length})}</span>
-              <button onClick={() => setAba('comparar')} style={{ padding: '4px 10px', borderRadius: 6, border: `1px solid ${C.ACCENT}44`, background: `${C.ACCENT}22`, color: C.ACCENT_DEEP, fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>{t('dragons.view_comparison')} →</button>
-            </div>
-          )}
-          {elementos.map(elemento => {
-            const lista = dragoesFiltrados.filter(dragao => dragao.elemento === elemento);
-            if (lista.length === 0) return null;
-            return (
-              <div key={elemento}>
-                <SectionDivider label={(content(lista[0], 'elemento') || elemento).toUpperCase()} />
-                {lista.map(dragao => (
-                  <DragaoCard key={dragao.id} dragao={dragao} onClick={id => setRoute(`dragao_${id}`)}
-                    selecionado={comparando.includes(dragao.id)} onToggleComparar={toggleComparar} noSlot={comparando.length >= 3} />
-                ))}
-              </div>
-            );
-          })}
-          {dragoesFiltrados.length === 0 && (
-            <div className="py-10 text-center rounded-xl" style={{ border: `1px dashed ${C.BORDER}`, background: C.BG_CARD }}>
-              <p className="text-4xl mb-2 m-0">🐉</p><p className="font-nunito italic text-xs m-0" style={{ color: C.TEXT_MUTED }}>{t('dragons.no_results')}</p>
-            </div>
-          )}
+          <div className="game-filter-row" style={{ marginTop:8 }}><span>⌕</span><input className="game-field" placeholder={t('dragons.search')} value={busca} onChange={e => setBusca(e.target.value)} /></div>
+          <div style={{ display:'grid', gap:9, marginTop:8 }}>
+            {elementos.map(elemento => {
+              const lista = filtrados.filter(d => d.elemento === elemento);
+              if (!lista.length) return null;
+              return <section className="game-panel" key={elemento}><GameSectionTitle>{content(lista[0],'elemento') || elemento}</GameSectionTitle>{lista.map(d => <DragaoCard key={d.id} dragao={d} onClick={id => setRoute(`dragao_${id}`)} selecionado={comparando.includes(d.id)} onToggleComparar={toggleComparar} noSlot={comparando.length >= 3} />)}</section>;
+            })}
+            {!filtrados.length ? <div className="game-panel" style={{ padding:30, textAlign:'center', color:'#806d4d' }}>{t('dragons.no_results')}</div> : null}
+          </div>
         </>
       )}
     </div>

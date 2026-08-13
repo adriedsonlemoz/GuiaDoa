@@ -6,37 +6,37 @@ export default {
       colors: {
         aoe: {
           // ── Fundos ──────────────────────────────────────────────────────
-          bg:      '#E6DED0',   // pergaminho base
-          bg2:     '#D8CFBE',   // alternativo
-          card:    '#F4ECDF',   // superfície dos cards
-          card2:   '#EBE1CF',   // gradiente topo do card
-          input:   '#FAF5EC',   // campos de entrada
+          bg:      '#D8CDA9',   // pergaminho base
+          bg2:     '#CFC19B',   // alternativo
+          card:    '#E2D5AD',   // superfície dos cards
+          card2:   '#E8DCB9',   // gradiente topo do card
+          input:   '#F6F0DA',   // campos de entrada
           // ── Navy colonial (AoE3) ────────────────────────────────────────
-          navy:    '#31484A',   // cabeçalho — azul colonial escuro
-          navy2:   '#3A5456',   // hover
-          navy3:   '#25393B',   // dark active
-          navylt:  '#D4E2F0',   // navy bem claro (bg suave)
+          navy:    '#304946',   // cabeçalho — azul colonial escuro
+          navy2:   '#3A5754',   // hover
+          navy3:   '#223B39',   // dark active
+          navylt:  '#D7E2DE',   // navy bem claro (bg suave)
           // ── Dourado ─────────────────────────────────────────────────────
-          gold:    '#B8954D',   // borda padrão
-          gold2:   '#987433',   // borda forte
-          gold3:   '#7C5E25',   // borda activa
-          gold4:   '#D3C39A',   // borda suave
+          gold:    '#A48955',   // borda padrão
+          gold2:   '#806033',   // borda forte
+          gold3:   '#6F5128',   // borda activa
+          gold4:   '#C1AE7C',   // borda suave
           // ── Texto castanho ───────────────────────────────────────────────
-          dark:    '#443321',   // texto principal
-          mid:     '#6C5940',   // secundário
-          muted:   '#8D7758',   // label/mutado
-          faint:   '#B6A182',   // placeholder
-          cream:   '#F4EBDD',   // texto sobre fundo escuro
+          dark:    '#40331F',   // texto principal
+          mid:     '#665235',   // secundário
+          muted:   '#7E6948',   // label/mutado
+          faint:   '#9F8B67',   // placeholder
+          cream:   '#FFF7DF',   // texto sobre fundo escuro
           // ── Azul (AoE3 colonial) ─────────────────────────────────────────
-          blue:    '#58727D',   // azul primário
-          blue2:   '#3F5963',   // escuro
-          blue3:   '#7A9198',   // claro
+          blue:    '#1B91B2',   // azul primário
+          blue2:   '#176E86',   // escuro
+          blue3:   '#4CB4CA',   // claro
           // ── Status ───────────────────────────────────────────────────────
           red:     '#A83C2C',
           redlt:   '#C85050',
-          green:   '#5A8A5C',
-          greenlt: '#78AA7A',
-          orange:  '#C87A2C',
+          green:   '#2EA53A',
+          greenlt: '#52B85B',
+          orange:  '#BF853B',
           purple:  '#8B6BAE',
           // ── Stats de tropa ───────────────────────────────────────────────
           health:  '#C85C5C',

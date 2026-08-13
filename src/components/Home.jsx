@@ -34,11 +34,11 @@ const Home = ({ setRoute }) => {
   };
 
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', paddingBottom: 16 }}>
+    <div style={{ maxWidth:520, margin:'0 auto', paddingBottom:16 }}>
       <Toast {...toast} onClose={closeToast} />
       <AlertaModal open={alertaModal.open} message={alertaModal.msg} onClose={() => setAlertaModal({ open: false, msg: '' })} />
       <HomeProfileCard profile={profile} onLanguage={() => setVerIdioma(true)} onEdit={() => setEditarPerfil(true)} />
-      <div style={{ padding: '0 8px', animation: 'reveal-up 0.4s 0.14s ease both' }}>
+      <div style={{ animation:'reveal-up .35s .12s ease both' }}>
         <HomeDivider label={t('home.arsenal.titulo')} />
         <HomeToolsGrid t={t} onTool={handleTool} />
         <div style={{ marginTop: 12 }}><HomeDivider label={t('home.conselheiro.titulo')} /><AssistenteTatico /></div>

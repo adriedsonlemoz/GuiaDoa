@@ -23,8 +23,8 @@ export default defineConfig({
         short_name: 'Guia DOA',
         start_url: '/',
         display: 'standalone',
-        background_color: '#E8E0CC',
-        theme_color: '#1C3A5E',
+        background_color: '#D8CDA9',
+        theme_color: '#304946',
         description: 'Guia comunitário com ferramentas táticas, cálculos e informações para jogadores de Dragons of Atlantis.',
         icons: [
           { src: 'img/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

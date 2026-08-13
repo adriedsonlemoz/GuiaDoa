@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { C } from './theme.js';
 import { I18nProvider, useI18n } from './hooks/useI18n.jsx';
 import Modal from './ui/Modal.jsx';
 import { DISPLAY_VERSION } from './version.js';
 import useHashRouter from './app/useHashRouter.js';
 import useAppSync from './app/useAppSync.js';
 import { renderRoute, getRouteLabel } from './app/routes.jsx';
-import OrnamentStripe from './app/OrnamentStripe.jsx';
 import ErrorBoundary from './app/ErrorBoundary.jsx';
 import SyncProgressBanner from './app/SyncProgressBanner.jsx';
 import StartupGate from './app/StartupGate.jsx';
@@ -19,6 +17,7 @@ const GuiaApp = () => {
   const { dragoes } = useGameData();
   const { t, content } = useI18n();
   const currentRoute = getRouteLabel(route, dragoes, t, content);
+  const isHome = route === 'home';
 
   const handleGoHome = () => {
     if (window.temAlteracoesNaoSalvas) setExitDialogOpen(true);
@@ -27,10 +26,13 @@ const GuiaApp = () => {
 
   const handleBack = () => {
     if (window.temAlteracoesNaoSalvas) return setExitDialogOpen(true);
-    if (route === 'home') return;
+    if (isHome) return;
     if (canGoBack) window.history.back();
     else setRoute('home', { replace: true });
   };
+
+  const title = isHome ? 'GUIA DOA' : (currentRoute?.label || 'GUIA DOA');
+  const rightIcon = isHome ? '🛡️' : (currentRoute?.icon || '◆');
 
   return (
     <>
@@ -38,12 +40,8 @@ const GuiaApp = () => {
 
       <Modal open={exitDialogOpen} onClose={() => setExitDialogOpen(false)} maxWidth={320}>
         <div className="p-4 text-center">
-          <p className="font-cinzel font-bold text-base tracking-wide text-aoe-dark mb-2 m-0">
-            ⚠️ {t('app.exit.title')}
-          </p>
-          <p className="font-nunito text-sm text-aoe-mid leading-relaxed mb-4 m-0">
-            {t('app.exit.message')}
-          </p>
+          <p className="font-cinzel font-bold text-base tracking-wide text-aoe-dark mb-2 m-0">⚠️ {t('app.exit.title')}</p>
+          <p className="font-nunito text-sm text-aoe-mid leading-relaxed mb-4 m-0">{t('app.exit.message')}</p>
           <div className="flex gap-2 justify-center">
             <button className="btn-ghost" onClick={() => setExitDialogOpen(false)}>{t('app.exit.stay')}</button>
             <button
@@ -60,83 +58,28 @@ const GuiaApp = () => {
         </div>
       </Modal>
 
-      <header
-        className="sticky top-0 z-40"
-        style={{
-          background: `linear-gradient(180deg, ${C.BG_HEADER} 0%, ${C.BG_PANEL} 100%)`,
-          boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
-        }}
-      >
-        <OrnamentStripe />
-        <div className="flex items-center justify-between px-3 py-2 gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <button
-              onClick={handleGoHome}
-              className="flex items-center gap-1.5 shrink-0 bg-transparent border-none cursor-pointer p-0"
-            >
-              <span className="text-xl" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.25))' }}>🛡️</span>
-              <span
-                className="font-cinzel font-bold text-xs tracking-widest"
-                style={{ color: C.ACCENT, letterSpacing: '3px' }}
-              >
-                GUIA DOA
-              </span>
-            </button>
-
-            {currentRoute && route !== 'home' && (
-              <div className="flex items-center gap-1 min-w-0">
-                <span className="text-aoe-gold4 text-xs opacity-60">›</span>
-                <div
-                  className="flex items-center gap-1 rounded-full px-2 py-0.5 min-w-0 overflow-hidden"
-                  style={{ background: 'rgba(197,160,86,0.12)', border: '1px solid rgba(197,160,86,0.28)' }}
-                >
-                  <span className="text-[0.65rem] leading-none shrink-0">{currentRoute.icon}</span>
-                  <span
-                    className="font-nunito font-bold text-[0.68rem] whitespace-nowrap overflow-hidden text-ellipsis"
-                    style={{ color: C.TEXT_HEADER }}
-                  >
-                    {currentRoute.label}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {route !== 'home' && (
-            <button
-              onClick={handleBack}
-              className="flex items-center gap-1 shrink-0 rounded-md px-2 py-1 transition-all"
-              style={{
-                border: '1px solid rgba(197,160,86,0.32)',
-                background: 'rgba(244,235,221,0.06)',
-                color: C.TEXT_HEADER,
-              }}
-            >
-              <span className="text-xs">←</span>
-              <span className="font-nunito font-bold text-xs">{t('common.back')}</span>
-            </button>
-          )}
-        </div>
-        <OrnamentStripe opacity={0.45} />
+      <header className="game-topbar">
+        <button
+          type="button"
+          className="game-topbar-side"
+          onClick={isHome ? handleGoHome : handleBack}
+          aria-label={isHome ? 'GUIA DOA' : t('common.back')}
+        >
+          {isHome ? '🏰' : '‹'}
+        </button>
+        <div className="game-topbar-title">{title}</div>
+        <div className="game-topbar-side" aria-hidden="true">{rightIcon}</div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-2.5 py-3" style={{ minHeight: 'calc(100vh - 78px)' }}>
+      <main className="game-page">
         <ErrorBoundary onReset={() => setRoute('home')}>
           {renderRoute(route, setRoute)}
         </ErrorBoundary>
       </main>
 
-      <footer style={{ background: `linear-gradient(180deg, ${C.BG_HEADER} 0%, ${C.BG_PANEL} 100%)`, borderTop: `1px solid ${C.BORDER_STRONG}` }}>
-        <OrnamentStripe opacity={0.35} />
-        <div className="py-2 text-center flex items-center justify-center gap-2 relative">
-          <span style={{ color: C.ACCENT, fontSize: '0.7rem', opacity: 0.6 }}>◆</span>
-          <span
-            className="font-nunito text-[0.72rem] tracking-widest font-semibold"
-            style={{ color: 'rgba(244,235,221,0.7)', letterSpacing: '2.5px' }}
-          >
-            GUIA DOA · {DISPLAY_VERSION}
-          </span>
-          <span style={{ color: C.ACCENT, fontSize: '0.7rem', opacity: 0.6 }}>◆</span>
+      <footer style={{ width:'min(100%,760px)', margin:'0 auto', background:'linear-gradient(180deg,#3A5754,#304946)', borderTop:'1px solid #806033' }}>
+        <div className="py-2 text-center" style={{ color:'rgba(255,247,223,.72)', fontSize:'.62rem', letterSpacing:'2px', fontWeight:800 }}>
+          GUIA DOA · {DISPLAY_VERSION}
         </div>
       </footer>
     </>

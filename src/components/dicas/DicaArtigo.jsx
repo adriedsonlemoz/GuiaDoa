@@ -40,47 +40,31 @@ const DicaArtigo = ({ dica, catInfo, onClose, setRoute }) => {
       aria-label={titulo}
       style={{
         position: 'fixed', inset: 0, zIndex: 9000,
-        background: C.BG_MAIN,
+        background: 'linear-gradient(180deg,#e3d8b6,#d5c79f)',
         overflowY: 'auto', overscrollBehavior: 'contain',
       }}
     >
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(242,234,218,.97)', backdropFilter: 'blur(12px)', borderBottom: `1px solid ${C.BORDER}`, boxShadow: '0 3px 12px rgba(62,47,28,.08)' }}>
-        <div style={{ height: 2, background: `linear-gradient(90deg, transparent, ${C.BORDER_SOFT}, ${C.ACCENT}, ${C.BORDER_STRONG}, ${C.ACCENT}, ${C.BORDER_SOFT}, transparent)` }} />
-        <div style={{ maxWidth: 640, margin: '0 auto', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            onClick={onClose}
-            aria-label={t('common.back')}
-            style={{
-              background: C.BG_INPUT,
-              border: `1px solid ${C.BORDER_SOFT}`,
-              borderRadius: 9,
-              color: C.ACCENT_DEEP,
-              width: 34, height: 34, cursor: 'pointer', fontSize: '1rem',
-              boxShadow: '0 2px 6px rgba(62,47,28,.06)',
-            }}
-          >←</button>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div className="font-nunito" style={{ fontSize: '.57rem', color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 900 }}>{t('tips.reading')}</div>
-            <div className="font-cinzel" style={{ fontSize: '.71rem', color: C.TEXT_PRIMARY, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{titulo}</div>
-          </div>
-        </div>
+      <div className="game-modal-heading" style={{ position:'sticky', top:0, zIndex:20 }}>
+        <button className="game-modal-close" onClick={onClose} aria-label={t('common.back')}>‹</button>
+        <h2>{titulo}</h2>
+        <div style={{ display:'grid', placeItems:'center', color:'#efd06b' }}>{typeIcon[dica.tipo] || '💡'}</div>
       </div>
 
-      <main style={{ maxWidth: 640, width: '100%', margin: '0 auto', paddingBottom: 34 }}>
+      <main style={{ maxWidth:640, width:'100%', margin:'0 auto', padding:'0 8px 34px' }}>
         {dica.imagens?.length > 0 && (
-          <div style={{ position: 'relative', height: 245, overflow: 'hidden', cursor: 'zoom-in', background: C.BG_SECONDARY }} onClick={() => setLightboxIdx(0)}>
+          <div style={{ position:'relative', height:245, overflow:'hidden', cursor:'zoom-in', background:C.BG_SECONDARY, border:'1px solid #9d804b', borderTop:0 }} onClick={() => setLightboxIdx(0)}>
             <img src={dica.imagens[0].url} alt={titulo} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(62,47,28,.68), transparent 62%)' }} />
           </div>
         )}
 
-        <header style={{ padding: '20px 16px 15px' }}>
+        <header className="game-panel" style={{ padding:'14px 14px 13px', marginTop:8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
             <span style={{ fontSize: '.63rem', fontWeight: 900, color: C.ACCENT_DEEP, textTransform: 'uppercase', letterSpacing: '.06em' }}>{typeIcon[dica.tipo] || '💡'} {t(`tips.type_${dica.tipo || 'dica'}`)}</span>
             {catInfo && <span style={{ fontSize: '.63rem', color: C.TEXT_MUTED }}>• {catInfo.icon} {categoria}</span>}
             {dica.destaque && <span style={{ fontSize: '.62rem', color: C.ACCENT_DEEP, fontWeight: 900 }}>⭐ {t('tips.featured')}</span>}
           </div>
-          <h1 className="font-cinzel" style={{ margin: '8px 0 0', color: C.TEXT_PRIMARY, fontSize: '1.28rem', lineHeight: 1.32 }}>{titulo}</h1>
+          <h1 className="font-cinzel" style={{ margin: '8px 0 0', color: C.TEXT_PRIMARY, fontSize:'1.12rem', lineHeight: 1.32 }}>{titulo}</h1>
           {resumo && <p className="font-nunito" style={{ margin: '9px 0 0', fontSize: '.84rem', lineHeight: 1.62, color: C.TEXT_SECONDARY }}>{resumo}</p>}
           <div className="font-nunito" style={{ display: 'flex', gap: 9, flexWrap: 'wrap', marginTop: 11, fontSize: '.64rem', color: C.TEXT_FAINT }}>
             {dica.leituraMin > 0 && <span>⏱️ {t('tips.minutes', { count: dica.leituraMin })}</span>}

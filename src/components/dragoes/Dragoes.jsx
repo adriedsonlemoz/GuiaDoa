@@ -31,7 +31,7 @@ const Dragoes = ({ setRoute }) => {
 
   return (
     <div className="max-w-lg mx-auto pb-4" style={{ animation: 'reveal-up 0.4s ease both' }}>
-      <div className="text-center px-4 py-3 rounded-xl mb-3 relative overflow-hidden" style={{ background: 'linear-gradient(135deg,#1C3A5E 0%,#3B5C8C 60%,#1C3A5E 100%)' }}>
+      <div className="text-center px-4 py-3 rounded-xl mb-3 relative overflow-hidden" style={{ background: 'linear-gradient(135deg,#31484A 0%,#58727D 60%,#31484A 100%)' }}>
         <p className="font-cinzel font-bold text-base tracking-widest uppercase text-aoe-cream m-0">🐉 {t('dragons.title')}</p>
         <p className="font-nunito text-[0.65rem] tracking-widest text-aoe-cream/50 m-0 mt-0.5">{t('dragons.subtitle')}</p>
       </div>

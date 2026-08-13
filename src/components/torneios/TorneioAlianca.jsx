@@ -46,7 +46,7 @@ const TorneioAlianca = () => {
     >
       <div
         className="px-4 py-3"
-        style={{ background: `linear-gradient(135deg, ${C.NAVY ?? '#1C3A5E'} 0%, #2A4C72 100%)` }}
+        style={{ background: `linear-gradient(135deg, ${C.NAVY ?? '#31484A'} 0%, #3A5456 100%)` }}
       >
         <p
           className="font-nunito font-bold text-[0.6rem] tracking-[3px] uppercase m-0 mb-1"

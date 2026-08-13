@@ -85,6 +85,7 @@ test('Admin oferece English opcional no mesmo cadastro dos conteúdos principais
   assert.match(adminHtml, /opcional/i);
 });
 
-test('atualização visual de idioma não altera a versão da migração de dados', () => {
-  assert.match(read('api/utils/migrationPolicy.js'), /DATA_MIGRATION_VERSION\s*=\s*['"]1\.0\.0-beta\.2\.8['"]/);
+test('migração de dados foi avançada somente porque o catálogo canônico de itens mudou', () => {
+  assert.match(read('api/utils/migrationPolicy.js'), /DATA_MIGRATION_VERSION\s*=\s*['"]1\.0\.0-beta\.2\.9['"]/);
+  assert.match(read('api/services/autoMigration.js'), /ITENS_SEED/);
 });

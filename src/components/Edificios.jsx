@@ -58,7 +58,7 @@ const Edificios = () => {
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}`}</style>
 
       <div className="rounded-t-xl px-4 py-2.5 text-center overflow-hidden mb-0"
-        style={{ background:'linear-gradient(135deg,#1C3A5E 0%,#3B5C8C 50%,#1C3A5E 100%)' }}>
+        style={{ background:'linear-gradient(135deg,#31484A 0%,#58727D 50%,#31484A 100%)' }}>
         <p className="font-cinzel font-bold text-sm tracking-widest uppercase text-aoe-cream m-0">🏗️ {t('buildings.title')}</p>
         <p className="font-nunito text-[0.65rem] tracking-widest text-aoe-cream/50 m-0 mt-0.5">{t('buildings.city_engineering')}</p>
       </div>

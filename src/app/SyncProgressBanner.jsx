@@ -9,7 +9,7 @@ export default function SyncProgressBanner({ status, progress }) {
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
-      background: 'linear-gradient(90deg,#1C3A5E,#2A4C72)',
+      background: 'linear-gradient(90deg,#31484A,#3A5456)',
       borderBottom: '1px solid rgba(200,168,74,0.4)',
       padding: '7px 16px 0',
     }}>

@@ -6,6 +6,7 @@ import { EDIFICIOS_META, EDIFICIOS_NIVEIS } from '../seeds/edificios.js';
 import { PESQUISAS_SEED } from '../seeds/pesquisas.js';
 import { REINOS_SEED } from '../seeds/reinos.js';
 import { CATS_PADRAO } from '../seeds/categoriasDicas.js';
+import { ITENS_SEED } from '../seeds/itens.js';
 
 test('migração automática possui todos os conjuntos essenciais atuais', () => {
   assert.ok(TODAS_TROPAS.length >= 40);
@@ -16,6 +17,7 @@ test('migração automática possui todos os conjuntos essenciais atuais', () =>
   assert.ok(PESQUISAS_SEED.length > 0);
   assert.ok(REINOS_SEED.length > 0);
   assert.ok(CATS_PADRAO.length > 0);
+  assert.ok(ITENS_SEED.length >= 6);
 });
 
 test('reinos 345 a 348 fazem parte do seed canônico migrado ao MongoDB', () => {
@@ -24,4 +26,12 @@ test('reinos 345 a 348 fazem parte do seed canônico migrado ao MongoDB', () => 
   assert.equal(map.get(346)?.fuso, 'UTC-7');
   assert.equal(map.get(347)?.nome, 'Eisenhold');
   assert.equal(map.get(348)?.fuso, 'UTC-4');
+});
+
+
+test('catálogo inicial de itens possui metadados úteis para o Armazém', () => {
+  const pergaminhos = ITENS_SEED.find(i => i.nome === '10.000 Pergaminhos de Cura');
+  assert.equal(pergaminhos?.categoria, 'Cura');
+  assert.equal(pergaminhos?.quantidade, 10000);
+  assert.ok(ITENS_SEED.every(i => i.nome && i.categoria && i.descricao));
 });

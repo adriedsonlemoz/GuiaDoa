@@ -13,7 +13,7 @@ const LanguageOption = ({ locale, active, onSelect, selectedLabel }) => (
       borderRadius: 18,
       border: `1.5px solid ${active ? 'rgba(200,168,74,.78)' : 'rgba(200,168,74,.22)'}`,
       background: active
-        ? 'linear-gradient(135deg,rgba(28,58,94,.10),rgba(200,168,74,.12))'
+        ? 'linear-gradient(135deg,rgba(49,72,74,.10),rgba(200,168,74,.12))'
         : 'linear-gradient(180deg,rgba(248,244,232,.98),rgba(242,234,218,.98))',
       boxShadow: active ? '0 12px 28px rgba(62,47,28,.12), inset 0 0 0 1px rgba(255,255,255,.32)' : '0 6px 18px rgba(62,47,28,.06)',
       transition: 'transform .16s ease, border-color .16s ease, box-shadow .16s ease',
@@ -21,9 +21,9 @@ const LanguageOption = ({ locale, active, onSelect, selectedLabel }) => (
   >
     <span style={{
       width: 54, height: 54, borderRadius: 16, display: 'grid', placeItems: 'center', fontSize: 28,
-      background: active ? 'linear-gradient(145deg,#1C3A5E,#31587F)' : 'rgba(28,58,94,.06)',
-      border: `1px solid ${active ? 'rgba(200,168,74,.55)' : 'rgba(28,58,94,.10)'}`,
-      boxShadow: active ? '0 7px 18px rgba(28,58,94,.22)' : 'none',
+      background: active ? 'linear-gradient(145deg,#31484A,#58727D)' : 'rgba(49,72,74,.06)',
+      border: `1px solid ${active ? 'rgba(200,168,74,.55)' : 'rgba(49,72,74,.10)'}`,
+      boxShadow: active ? '0 7px 18px rgba(49,72,74,.22)' : 'none',
     }}>{locale.flag}</span>
 
     <span style={{ minWidth: 0 }}>
@@ -42,7 +42,7 @@ const LanguageOption = ({ locale, active, onSelect, selectedLabel }) => (
       width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', flexShrink: 0,
       background: active ? C.ACCENT : 'transparent',
       border: `1.5px solid ${active ? C.ACCENT : 'rgba(154,125,86,.28)'}`,
-      color: active ? '#1C3A5E' : C.TEXT_FAINT, fontSize: 14, fontWeight: 900,
+      color: active ? '#31484A' : C.TEXT_FAINT, fontSize: 14, fontWeight: 900,
     }} aria-label={active ? selectedLabel : undefined}>
       {active ? '✓' : ''}
     </span>
@@ -56,7 +56,7 @@ export default function LanguageChooser({ onBack, onDone, setup = false }) {
     <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: C.BG_MAIN }}>
       <header style={{
         position: 'relative', overflow: 'hidden',
-        background: 'linear-gradient(150deg,#142B46 0%,#1C3A5E 52%,#31587F 100%)',
+        background: 'linear-gradient(150deg,#263C3E 0%,#31484A 52%,#58727D 100%)',
         borderBottom: '1px solid rgba(200,168,74,.55)',
         padding: setup ? '38px 18px 34px' : '18px 18px 28px',
       }}>
@@ -109,7 +109,7 @@ export default function LanguageChooser({ onBack, onDone, setup = false }) {
 
         <div style={{
           marginTop: 18, padding: '11px 13px', display: 'flex', gap: 10, alignItems: 'flex-start',
-          borderRadius: 12, background: 'rgba(28,58,94,.05)', border: '1px solid rgba(28,58,94,.10)',
+          borderRadius: 12, background: 'rgba(49,72,74,.05)', border: '1px solid rgba(49,72,74,.10)',
         }}>
           <span aria-hidden="true" style={{ fontSize: 15, lineHeight: 1.4 }}>◈</span>
           <p className="font-nunito" style={{ margin: 0, color: C.TEXT_MUTED, fontSize: '.66rem', fontWeight: 700, lineHeight: 1.5 }}>

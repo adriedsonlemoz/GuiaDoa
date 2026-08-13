@@ -14,7 +14,8 @@ const TropaSchema = new mongoose.Schema({
 }, { collection: COLLECTIONS.tropas });
 
 const ItemSchema = new mongoose.Schema({
-  nome: String, icone: String, descricao: String, onde: String,
+  nome: String, icone: String, imagem: String, categoria: String, raridade: String, quantidade: Number,
+  descricao: String, origem: String, uso: String, limites: String, onde: String,
 }, { collection: COLLECTIONS.itens });
 
 const EdificioSchema = new mongoose.Schema({

@@ -31,8 +31,12 @@ export const buildContext = async (locale = 'pt-BR') => {
       ? itens.map(i => {
           const nome = localizedValue(i, 'nome', locale);
           const descricao = localizedValue(i, 'descricao', locale);
-          const onde = localizedValue(i, 'onde', locale);
-          return `• **${nome}**` + (descricao ? `: ${descricao}` : '') + (onde ? ` | Onde obter: ${onde}` : '');
+          const origem = localizedValue(i, 'origem', locale) || localizedValue(i, 'onde', locale);
+          const uso = localizedValue(i, 'uso', locale);
+          const categoria = localizedValue(i, 'categoria', locale);
+          const raridade = localizedValue(i, 'raridade', locale);
+          const meta = [categoria, raridade].filter(Boolean).join(' · ');
+          return `• **${nome}**${meta ? ` [${meta}]` : ''}` + (descricao ? `: ${descricao}` : '') + (uso ? ` | Uso: ${uso}` : '') + (origem ? ` | Origem: ${origem}` : '');
         }).join('\n')
       : 'Nenhum item cadastrado.';
 

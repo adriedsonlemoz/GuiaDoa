@@ -38,7 +38,7 @@ const DragaoComparacao = ({ ids, nivelIdx, setNivelIdx, apiDataMap, onRemover, t
     }}>
       {/* Cabeçalho */}
       <div style={{
-        background:`linear-gradient(135deg,#1C3A5E,#2A4C72)`,
+        background:`linear-gradient(135deg,#31484A,#3A5456)`,
         padding:'10px 14px',
         display:'flex', alignItems:'center', justifyContent:'space-between',
       }}>

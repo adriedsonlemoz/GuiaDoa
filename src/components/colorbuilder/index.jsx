@@ -13,7 +13,7 @@ function Toast({ msg, visible }) {
     <div style={{
       position: 'fixed', bottom: 28, left: '50%',
       transform: `translateX(-50%) translateY(${visible ? '0' : '12px'})`,
-      background: 'linear-gradient(135deg,#1C3A5E,#2A4C72)',
+      background: 'linear-gradient(135deg,#31484A,#3A5456)',
       color: 'rgba(200,168,74,0.95)',
       border: '1px solid rgba(200,168,74,0.4)',
       fontFamily: 'inherit', fontSize: '0.75rem',

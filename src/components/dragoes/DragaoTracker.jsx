@@ -182,7 +182,7 @@ const DragaoTracker = ({ dragaoId, setRoute }) => {
       {/* Hero */}
       <div className="rounded-2xl overflow-hidden mb-3" style={{ border:`2px solid ${cor}`, boxShadow:`0 4px 20px ${cor}30` }}>
         <div className="flex items-center gap-3 px-4 py-3"
-          style={{ background:`linear-gradient(135deg,rgba(28,58,94,0.95) 0%,${cor}55 100%)` }}>
+          style={{ background:`linear-gradient(135deg,rgba(49,72,74,0.95) 0%,${cor}55 100%)` }}>
           <div className="w-14 h-14 shrink-0 flex items-center justify-center text-4xl rounded-xl"
             style={{ background:`linear-gradient(135deg,${cor}33,${cor}66)`, border:`2px solid ${cor}88`, boxShadow:`0 2px 12px ${cor}55` }}>
             {dragao.emojiDragao}

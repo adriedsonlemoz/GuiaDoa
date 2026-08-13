@@ -47,7 +47,7 @@ export default function AppErrorState({
       <p className="font-nunito" style={{ color:C.TEXT_SECONDARY, fontSize:'.8rem', lineHeight:1.55, margin:'0 auto 12px' }}>{shownMessage}</p>
       <div className="font-nunito" style={{
         display:'inline-flex', alignItems:'center', gap:6, padding:'5px 9px', borderRadius:7,
-        background:'rgba(28,58,94,.06)', border:'1px solid rgba(28,58,94,.16)',
+        background:'rgba(49,72,74,.06)', border:'1px solid rgba(49,72,74,.16)',
         color:C.TEXT_MUTED, fontSize:'.65rem', fontWeight:800, letterSpacing:'.5px',
       }}>
         {t('errors.support_code')}: <strong style={{ color:C.BLUE_DARK }}>{code}</strong>

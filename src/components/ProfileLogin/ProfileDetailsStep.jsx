@@ -12,7 +12,7 @@ export default function ProfileDetailsStep({
   return (
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', background:C.BG_MAIN }}>
       <header style={{
-        background:'linear-gradient(155deg,#172F4D 0%,#294E76 100%)',
+        background:'linear-gradient(155deg,#293F41 0%,#486467 100%)',
         padding:'28px 18px 24px', borderBottom:`2px solid ${C.BORDER_STRONG}`,
       }}>
         <div style={{ maxWidth:480, margin:'0 auto', display:'flex', alignItems:'center', gap:14 }}>

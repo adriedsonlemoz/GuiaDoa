@@ -104,7 +104,7 @@ const Pesquisas = ({ setRoute }) => {
     <div style={{ maxWidth: 480, margin: '0 auto', paddingBottom: 16 }}>
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg,#1C3A5E,#3B5C8C,#1C3A5E)',
+        background: 'linear-gradient(135deg,#31484A,#58727D,#31484A)',
         borderRadius: '12px 12px 0 0', padding: '12px 16px',
         textAlign: 'center', marginBottom: 0,
       }}>

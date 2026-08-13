@@ -16,7 +16,7 @@ export default function TropaPicker({ tropas, selecionadas, onEscolher, onFechar
   return (
     <div onClick={onFechar} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(20,14,8,0.72)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', animation: 'fadeIn 0.18s ease' }}>
       <div onClick={event => event.stopPropagation()} style={{ width: '100%', maxWidth: 480, maxHeight: '80vh', background: C.BG_MAIN, borderRadius: '18px 18px 0 0', display: 'flex', flexDirection: 'column', animation: 'slideUp 0.22s ease', boxShadow: '0 -8px 32px rgba(0,0,0,0.4)' }}>
-        <div style={{ padding: '10px 14px 12px', background: 'linear-gradient(135deg,#1C3A5E,#2A4C72)', borderRadius: '18px 18px 0 0', borderBottom: '1px solid rgba(200,168,74,0.3)', flexShrink: 0 }}>
+        <div style={{ padding: '10px 14px 12px', background: 'linear-gradient(135deg,#31484A,#3A5456)', borderRadius: '18px 18px 0 0', borderBottom: '1px solid rgba(200,168,74,0.3)', flexShrink: 0 }}>
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(248,242,224,0.25)', margin: '0 auto 10px' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <p className="font-cinzel font-bold m-0" style={{ fontSize: '0.75rem', color: '#F8F2E0', letterSpacing: '1.5px' }}>{t('troops.select')}</p>

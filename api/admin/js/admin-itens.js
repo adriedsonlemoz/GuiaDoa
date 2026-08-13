@@ -37,6 +37,8 @@ function renderItens(d) {
             <thead><tr>
               <th style="width:50px">ÍCONE</th>
               <th>NOME</th>
+              <th>CATEGORIA</th>
+              <th>RARIDADE</th>
               <th style="white-space:nowrap">AÇÕES</th>
             </tr></thead>
             <tbody>
@@ -44,13 +46,15 @@ function renderItens(d) {
                 <tr>
                   <td style="text-align:center;font-size:1.4rem">${esc(item.icone || '🎒')}</td>
                   <td><strong>${esc(item.nome)}</strong></td>
+                  <td>${esc(item.categoria || 'Geral')}</td>
+                  <td>${esc(item.raridade || '—')}</td>
                   <td style="white-space:nowrap">
                     <button class="btn btn-navy btn-sm btn-acao" onclick="editarItem(fromDataArg('${dataArg(item)}'))">✏ Editar</button>
                     <button class="btn btn-red btn-sm btn-acao"  onclick="confirmarRemoverItem(fromStrArg('${strArg(item._id)}'),fromStrArg('${strArg(item.nome)}'))">🗑 Excluir</button>
                   </td>
                 </tr>
               `).join('')}
-              ${d.itens.length === 0 ? '<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--muted)">Nenhum item cadastrado. Clique em "＋ Novo Item" para começar.</td></tr>' : ''}
+              ${d.itens.length === 0 ? '<tr><td colspan="6" style="text-align:center;padding:28px;color:var(--muted)">Nenhum item cadastrado. Clique em "＋ Novo Item" para começar.</td></tr>' : ''}
             </tbody>
           </table>
         </div>
@@ -66,6 +70,14 @@ function abrirModalNovoItem() {
   document.getElementById('fi-nome').value = '';
   document.getElementById('fi-descricao').value = '';
   document.getElementById('fi-onde').value = '';
+  document.getElementById('fi-imagem').value = '';
+  document.getElementById('fi-categoria').value = 'Geral';
+  document.getElementById('fi-raridade').value = '';
+  document.getElementById('fi-quantidade').value = '';
+  document.getElementById('fi-origem').value = '';
+  document.getElementById('fi-uso').value = '';
+  document.getElementById('fi-limites').value = '';
+  document.getElementById('fi-ordem').value = '999';
   renderEmojiPicker();
   abrirModal('modal-item');
 }
@@ -77,6 +89,14 @@ function editarItem(item) {
   document.getElementById('fi-nome').value      = item.nome || '';
   document.getElementById('fi-descricao').value = item.descricao || '';
   document.getElementById('fi-onde').value      = item.onde || '';
+  document.getElementById('fi-imagem').value = item.imagem || '';
+  document.getElementById('fi-categoria').value = item.categoria || 'Geral';
+  document.getElementById('fi-raridade').value = item.raridade || '';
+  document.getElementById('fi-quantidade').value = item.quantidade ?? '';
+  document.getElementById('fi-origem').value = item.origem || '';
+  document.getElementById('fi-uso').value = item.uso || '';
+  document.getElementById('fi-limites').value = item.limites || '';
+  document.getElementById('fi-ordem').value = item.ordem ?? 999;
   document.getElementById('fi-en-nome').value = item.i18n?.['en-US']?.nome || '';
   document.getElementById('fi-en-descricao').value = item.i18n?.['en-US']?.descricao || '';
   document.getElementById('fi-en-onde').value = item.i18n?.['en-US']?.onde || '';
@@ -107,7 +127,17 @@ async function salvarItem() {
   const onde      = document.getElementById('fi-onde').value.trim();
   if (!nome) return toast('Preencha o nome do item!', 'warn');
 
-  const body = { nome, icone: ICONE_SELECIONADO, descricao, onde, i18n: { 'en-US': {
+  const body = {
+    nome, icone: ICONE_SELECIONADO, descricao, onde,
+    imagem: document.getElementById('fi-imagem').value.trim(),
+    categoria: document.getElementById('fi-categoria').value.trim() || 'Geral',
+    raridade: document.getElementById('fi-raridade').value.trim(),
+    quantidade: document.getElementById('fi-quantidade').value,
+    origem: document.getElementById('fi-origem').value.trim(),
+    uso: document.getElementById('fi-uso').value.trim(),
+    limites: document.getElementById('fi-limites').value.trim(),
+    ordem: document.getElementById('fi-ordem').value,
+    i18n: { 'en-US': {
     nome: document.getElementById('fi-en-nome').value.trim(),
     descricao: document.getElementById('fi-en-descricao').value.trim(),
     onde: document.getElementById('fi-en-onde').value.trim(),

@@ -5,6 +5,7 @@ import Edificio from '../models/Edificio.js';
 import Pesquisa from '../models/Pesquisa.js';
 import Reino from '../models/Reino.js';
 import CategoriaDica from '../models/CategoriaDica.js';
+import Item from '../models/Item.js';
 import User from '../models/User.js';
 import AppConfig from '../models/AppConfig.js';
 import { TODAS_TROPAS, NIVEIS_DATA } from '../seeds/core.js';
@@ -13,6 +14,7 @@ import { EDIFICIOS_META, EDIFICIOS_COLUNAS, EDIFICIOS_NIVEIS } from '../seeds/ed
 import { PESQUISAS_SEED } from '../seeds/pesquisas.js';
 import { REINOS_SEED } from '../seeds/reinos.js';
 import { CATS_PADRAO } from '../seeds/categoriasDicas.js';
+import { ITENS_SEED } from '../seeds/itens.js';
 import { mesclarSeed } from '../utils/seedMerge.js';
 import { DATA_MIGRATION_VERSION, deveExecutarMigracao, forceMigrationFromEnv } from '../utils/migrationPolicy.js';
 
@@ -96,6 +98,7 @@ export async function executarMigracaoAutomatica() {
     const reinos = documentosReinos();
     relatorio.reinos = await migrarLista(Reino, reinos, x => ({ id: x.id }));
     relatorio.categoriasDicas = await migrarLista(CategoriaDica, CATS_PADRAO, x => ({ slug: x.slug }));
+    relatorio.itens = await migrarLista(Item, ITENS_SEED, x => ({ nome: x.nome }));
 
     const totalUsuarios = await User.countDocuments();
     const agora = new Date();

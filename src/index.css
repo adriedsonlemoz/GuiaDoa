@@ -10,8 +10,8 @@
 
   body {
     margin: 0;
-    background-color: #E8E0CC;
-    color: #3E2F1C;
+    background-color: #E6DED0;
+    color: #443321;
     font-family: "Nunito", "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
@@ -20,9 +20,9 @@
   }
 
   ::-webkit-scrollbar           { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track     { background: #DDD5BE; }
-  ::-webkit-scrollbar-thumb     { background: #C8A84A; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #A88530; }
+  ::-webkit-scrollbar-track     { background: #D8CFBE; }
+  ::-webkit-scrollbar-thumb     { background: #B8954D; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #987433; }
 
   input, select, textarea { font-family: inherit; }
 }
@@ -33,9 +33,9 @@
   /* === CARD ============================================================== */
   .tw-card {
     border-radius: 0.75rem;
-    border: 1px solid #C8A84A;
+    border: 1px solid #B8954D;
     overflow: hidden;
-    background: linear-gradient(180deg, #EAE0C8 0%, #F2EADA 100%);
+    background: linear-gradient(180deg, #EBE1CF 0%, #F4ECDF 100%);
     box-shadow: 0 2px 12px rgba(62,47,28,0.15), inset 0 1px 0 rgba(255,248,238,0.5);
   }
 
@@ -48,17 +48,17 @@
 
   .btn-gold {
     @apply btn text-aoe-cream border border-aoe-gold3;
-    background: linear-gradient(180deg, #C8A84A 0%, #A88530 100%);
+    background: linear-gradient(180deg, #B8954D 0%, #987433 100%);
     box-shadow: 0 2px 6px rgba(62,47,28,0.2), inset 0 1px 0 rgba(255,248,230,0.3);
   }
-  .btn-gold:hover { background: linear-gradient(180deg, #A88530 0%, #8A6818 100%); }
+  .btn-gold:hover { background: linear-gradient(180deg, #987433 0%, #7C5E25 100%); }
 
   .btn-navy {
     @apply btn text-aoe-cream border border-aoe-blue2;
-    background: linear-gradient(180deg, #4A6FA5 0%, #3B5C8C 100%);
-    box-shadow: 0 2px 6px rgba(30,58,94,0.25);
+    background: linear-gradient(180deg, #6B8588 0%, #58727D 100%);
+    box-shadow: 0 2px 6px rgba(49,72,74,0.25);
   }
-  .btn-navy:hover { background: linear-gradient(180deg, #3B5C8C 0%, #2A4470 100%); }
+  .btn-navy:hover { background: linear-gradient(180deg, #58727D 0%, #3F5963 100%); }
 
   .btn-danger {
     @apply btn text-white border border-red-900;
@@ -84,13 +84,13 @@
   /* === INPUTS ============================================================= */
   .tw-input {
     @apply w-full bg-aoe-input text-aoe-dark font-nunito font-semibold text-sm rounded-lg outline-none transition-all;
-    border: 1.5px solid #C8A84A;
+    border: 1.5px solid #B8954D;
     padding: 6px 12px;
     box-shadow: inset 0 1px 4px rgba(62,47,28,0.07);
   }
-  .tw-input:focus { border-color: #8A6818; box-shadow: inset 0 1px 4px rgba(62,47,28,0.1), 0 0 0 2px rgba(200,168,74,0.2); }
-  .tw-input::placeholder { color: #B8A07A; }
-  .tw-input:disabled { @apply bg-aoe-bg2/60 opacity-70 cursor-not-allowed; border-color: #D8C888; }
+  .tw-input:focus { border-color: #7C5E25; box-shadow: inset 0 1px 4px rgba(62,47,28,0.1), 0 0 0 2px rgba(200,168,74,0.2); }
+  .tw-input::placeholder { color: #B6A182; }
+  .tw-input:disabled { @apply bg-aoe-bg2/60 opacity-70 cursor-not-allowed; border-color: #D3C39A; }
 
   .tw-select {
     @apply tw-input appearance-none cursor-pointer;
@@ -99,7 +99,7 @@
 
   .tw-select-sm {
     @apply bg-aoe-bg2 text-aoe-dark font-nunito font-bold text-xs rounded outline-none appearance-none cursor-pointer;
-    border: 1px solid #A88530;
+    border: 1px solid #987433;
     padding: 2px 4px;
     height: 26px;
   }
@@ -115,35 +115,35 @@
   }
   .tw-divider > .line-l {
     @apply flex-1 h-px;
-    background: linear-gradient(90deg, transparent, #C8A84A);
+    background: linear-gradient(90deg, transparent, #B8954D);
   }
   .tw-divider > .line-r {
     @apply flex-1 h-px;
-    background: linear-gradient(270deg, transparent, #C8A84A);
+    background: linear-gradient(270deg, transparent, #B8954D);
   }
 
   /* === SCORE BOX ========================================================== */
   .tw-score {
     @apply p-2 rounded-lg text-center;
-    background: #F2EADA;
-    border-bottom: 4px solid #C8A84A;
+    background: #F4ECDF;
+    border-bottom: 4px solid #B8954D;
     box-shadow: inset 0 1px 3px rgba(62,47,28,0.06);
   }
 
   /* === GOLD STRIPE ======================================================== */
   .gold-stripe {
     height: 1px;
-    background: linear-gradient(90deg, transparent 0%, #D8C888 8%, #C8A84A 30%, #B8965A 50%, #C8A84A 70%, #D8C888 92%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, #D3C39A 8%, #B8954D 30%, #B8965A 50%, #B8954D 70%, #D3C39A 92%, transparent 100%);
   }
 
   /* === TABLE CELL ========================================================= */
   .tw-th {
     @apply bg-aoe-bg2 text-aoe-muted font-nunito font-bold text-xs uppercase tracking-wide py-2 px-2;
-    border-bottom: 2px solid #C8A84A;
+    border-bottom: 2px solid #B8954D;
   }
   .tw-td {
     @apply text-aoe-dark font-nunito text-sm py-1.5 px-2;
-    border-bottom: 1px solid #D8C888;
+    border-bottom: 1px solid #D3C39A;
   }
 
   /* === MODAL BACKDROP ===================================================== */

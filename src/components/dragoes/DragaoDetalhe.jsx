@@ -228,7 +228,7 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
       <div className="rounded-2xl overflow-hidden mb-3"
         style={{ border:`2px solid ${dragao.cor}`, boxShadow:`0 4px 20px ${dragao.cor}30` }}>
         <div className="flex items-center gap-4 px-4 py-4 relative"
-          style={{ background:`linear-gradient(135deg, rgba(28,58,94,0.95) 0%, ${dragao.cor}55 100%)` }}>
+          style={{ background:`linear-gradient(135deg, rgba(49,72,74,0.95) 0%, ${dragao.cor}55 100%)` }}>
           <div className="w-20 h-20 shrink-0 flex items-center justify-center text-5xl rounded-2xl"
             style={{ background:`linear-gradient(135deg,${dragao.cor}33,${dragao.cor}66)`,
               border:`2.5px solid ${dragao.cor}88`, boxShadow:`0 4px 16px ${dragao.cor}55` }}>

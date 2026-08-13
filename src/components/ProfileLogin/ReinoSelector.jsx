@@ -18,7 +18,7 @@ const ReinoCard = ({ reino, selecionado, onClick }) => {
       width: '100%', textAlign: 'left',
       padding: '9px 12px',
       background: selecionado
-        ? 'linear-gradient(90deg,rgba(28,58,94,0.18),rgba(200,168,74,0.10))'
+        ? 'linear-gradient(90deg,rgba(49,72,74,0.18),rgba(200,168,74,0.10))'
         : 'transparent',
       border: 'none',
       borderBottom: `1px solid rgba(200,168,74,0.12)`,

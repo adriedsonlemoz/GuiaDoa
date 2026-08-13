@@ -442,6 +442,19 @@
         </div>
 
         <div class="field">
+          <label>Imagem (URL)</label>
+          <input id="fi-imagem" type="url" placeholder="https://.../item.png">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="field"><label>Categoria</label><input id="fi-categoria" type="text" placeholder="Ex: Arcas, Cura, Nanos"></div>
+          <div class="field"><label>Raridade</label><input id="fi-raridade" type="text" placeholder="Ex: Raro, Épico"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="field"><label>Quantidade / pacote</label><input id="fi-quantidade" type="number" min="0" placeholder="Opcional"></div>
+          <div class="field"><label>Ordem</label><input id="fi-ordem" type="number" value="999"></div>
+        </div>
+
+        <div class="field">
           <label>Ícone</label>
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
             <div id="emoji-preview" style="
@@ -480,6 +493,10 @@
             onfocus="this.style.borderColor='var(--gold3)'"
             onblur="this.style.borderColor='var(--gold)'"></textarea>
         </div>
+
+        <div class="field"><label>Origem</label><textarea id="fi-origem" rows="2" placeholder="Ex: Loja, evento, baú..."></textarea></div>
+        <div class="field"><label>Utilização</label><textarea id="fi-uso" rows="2" placeholder="Para que o item serve..."></textarea></div>
+        <div class="field"><label>Limites</label><textarea id="fi-limites" rows="2" placeholder="Limite por evento, uso único, disponibilidade..."></textarea></div>
 
         <div class="field">
           <label>Onde Conseguir</label>

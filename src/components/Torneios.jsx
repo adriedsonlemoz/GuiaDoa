@@ -29,7 +29,7 @@ const LISTA_TORNEIOS = [
   { id: 'poder',               icon: '⚡', catKey: 'poder',   cor: '#C87A2C', infoOnly: true  },
   { id: 'treino_tropa',        icon: '⚔️', catKey: 'tropas',  cor: '#A83C2C'                  },
   { id: 'treinamento_dragao',  icon: '🍖', catKey: 'dragao',  cor: '#8B6BAE'                  },
-  { id: 'aceleracoes',         icon: '⏩', catKey: 'poder',   cor: '#3B5C8C'                  },
+  { id: 'aceleracoes',         icon: '⏩', catKey: 'poder',   cor: '#58727D'                  },
 ];
 
 // Ordem fixa de exibição das categorias (não depende de ordenação alfabética por idioma)

@@ -6,31 +6,31 @@ export default {
       colors: {
         aoe: {
           // ── Fundos ──────────────────────────────────────────────────────
-          bg:      '#E8E0CC',   // pergaminho base
-          bg2:     '#DDD5BE',   // alternativo
-          card:    '#F2EADA',   // superfície dos cards
-          card2:   '#EAE0C8',   // gradiente topo do card
-          input:   '#F8F4E8',   // campos de entrada
+          bg:      '#E6DED0',   // pergaminho base
+          bg2:     '#D8CFBE',   // alternativo
+          card:    '#F4ECDF',   // superfície dos cards
+          card2:   '#EBE1CF',   // gradiente topo do card
+          input:   '#FAF5EC',   // campos de entrada
           // ── Navy colonial (AoE3) ────────────────────────────────────────
-          navy:    '#1C3A5E',   // cabeçalho — azul colonial escuro
-          navy2:   '#2A4C72',   // hover
-          navy3:   '#132B47',   // dark active
+          navy:    '#31484A',   // cabeçalho — azul colonial escuro
+          navy2:   '#3A5456',   // hover
+          navy3:   '#25393B',   // dark active
           navylt:  '#D4E2F0',   // navy bem claro (bg suave)
           // ── Dourado ─────────────────────────────────────────────────────
-          gold:    '#C8A84A',   // borda padrão
-          gold2:   '#A88530',   // borda forte
-          gold3:   '#8A6818',   // borda activa
-          gold4:   '#D8C888',   // borda suave
+          gold:    '#B8954D',   // borda padrão
+          gold2:   '#987433',   // borda forte
+          gold3:   '#7C5E25',   // borda activa
+          gold4:   '#D3C39A',   // borda suave
           // ── Texto castanho ───────────────────────────────────────────────
-          dark:    '#3E2F1C',   // texto principal
-          mid:     '#6E5A3C',   // secundário
-          muted:   '#9A7D56',   // label/mutado
-          faint:   '#B8A07A',   // placeholder
-          cream:   '#F8F2E0',   // texto sobre fundo escuro
+          dark:    '#443321',   // texto principal
+          mid:     '#6C5940',   // secundário
+          muted:   '#8D7758',   // label/mutado
+          faint:   '#B6A182',   // placeholder
+          cream:   '#F4EBDD',   // texto sobre fundo escuro
           // ── Azul (AoE3 colonial) ─────────────────────────────────────────
-          blue:    '#3B5C8C',   // azul primário
-          blue2:   '#2A4470',   // escuro
-          blue3:   '#5A7FB0',   // claro
+          blue:    '#58727D',   // azul primário
+          blue2:   '#3F5963',   // escuro
+          blue3:   '#7A9198',   // claro
           // ── Status ───────────────────────────────────────────────────────
           red:     '#A83C2C',
           redlt:   '#C85050',

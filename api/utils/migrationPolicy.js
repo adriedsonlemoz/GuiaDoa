@@ -1,6 +1,6 @@
 // Versão dos dados canônicos, independente da versão visual do aplicativo.
 // Só altere quando houver uma migração real de dados/seeds.
-export const DATA_MIGRATION_VERSION = '1.0.0-beta.2.8';
+export const DATA_MIGRATION_VERSION = '1.0.0-beta.2.9';
 
 export function deveExecutarMigracao(config, versaoDados = DATA_MIGRATION_VERSION, force = false) {
   if (force) return true;

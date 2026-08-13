@@ -19,7 +19,7 @@ export const T = {
     position: 'relative',
   },
   header: {
-    background: 'linear-gradient(135deg,#1C3A5E,#2A4C72)',
+    background: 'linear-gradient(135deg,#31484A,#3A5456)',
     borderBottom: `1px solid rgba(200,168,74,0.4)`,
     padding: '10px 16px',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -86,7 +86,7 @@ export const T = {
 
   // ── Botões ────────────────────────────────────────────────────────────────
   btnSolid: {
-    background: 'linear-gradient(135deg,#2A4C72,#1C3A5E)',
+    background: 'linear-gradient(135deg,#3A5456,#31484A)',
     color: 'rgba(200,168,74,0.95)',
     border: '1.5px solid rgba(200,168,74,0.45)',
     borderRadius: 8, cursor: 'pointer',
@@ -107,7 +107,7 @@ export const T = {
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
   catTab: (active) => ({
-    background: active ? 'linear-gradient(135deg,#2A4C72,#1C3A5E)' : 'transparent',
+    background: active ? 'linear-gradient(135deg,#3A5456,#31484A)' : 'transparent',
     border: active ? '1.5px solid rgba(200,168,74,0.5)' : `1.5px solid rgba(200,168,74,0.2)`,
     borderRadius: 5, color: active ? 'rgba(200,168,74,0.95)' : C.TEXT_MUTED,
     fontSize: '0.6rem', padding: '3px 9px', cursor: 'pointer',
@@ -120,7 +120,7 @@ export const T = {
     border: `1.5px solid rgba(200,168,74,0.2)`,
   },
   modeTab: (active) => ({
-    flex: 1, background: active ? 'linear-gradient(135deg,#2A4C72,#1C3A5E)' : 'none',
+    flex: 1, background: active ? 'linear-gradient(135deg,#3A5456,#31484A)' : 'none',
     border: 'none', borderRadius: 6,
     color: active ? 'rgba(200,168,74,0.9)' : C.TEXT_MUTED,
     fontFamily: 'inherit', fontSize: '0.7rem', padding: '8px 6px',

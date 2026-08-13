@@ -690,3 +690,110 @@
 }
 .game-compare-bar-copy { min-width:0; color:#4f574d; font-size:.63rem; font-weight:750; }
 .game-compare-bar .game-action { min-height:36px; padding:6px 12px; font-size:.72rem; }
+
+/* ── Island Planner · Beta 2.22 ──────────────────────────────────────────── */
+.island-planner-page { display: grid; gap: 9px; }
+.island-top-card { margin-bottom: 0 !important; }
+.island-top-actions {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 12px; background: rgba(239,231,207,.78); border-top: 1px solid var(--game-line, #b9aa7e);
+}
+.island-top-actions > div:first-child { min-width: 0; }
+.island-top-actions strong { display: block; color: #263b36; font-size: .78rem; }
+.island-top-actions span { display: block; margin-top: 2px; color: #756e5d; font-size: .64rem; }
+.island-top-buttons { display: flex; gap: 6px; flex-shrink: 0; }
+
+.island-overview-panel,
+.island-section-panel,
+.island-global-summary,
+.island-recommendation,
+.island-compare-panel { margin: 0; }
+
+.island-overview-panel { padding: 12px; }
+.island-overview-title { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+.island-overview-title > span { font-size: 1.7rem; line-height: 1; }
+.island-overview-title strong { display: block; color: #263b36; font-size: .9rem; }
+.island-overview-title div > span { display: block; color: #786f5d; font-size: .63rem; margin-top: 2px; }
+.island-meter-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.island-slot-meter { padding: 9px 10px; background: rgba(244,237,216,.72); border: 1px solid rgba(117,104,70,.22); border-radius: 5px; }
+.island-slot-meter-head { display: flex; justify-content: space-between; gap: 8px; font-size: .62rem; color: #6e6656; }
+.island-slot-meter-head strong { color: #263b36; font-size: .68rem; }
+.island-slot-meter-head strong.is-full { color: #a4473b; }
+.island-slot-track { height: 5px; background: rgba(48,72,65,.12); margin-top: 6px; overflow: hidden; border-radius: 999px; }
+.island-slot-track > span { display: block; height: 100%; background: #48675e; transition: width .18s ease; }
+
+.island-fortress-control,
+.island-expansion-toggle,
+.island-no-expansion {
+  margin-top: 9px; border: 1px solid rgba(117,104,70,.24); background: rgba(228,218,188,.55); border-radius: 5px;
+}
+.island-fortress-control { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; }
+.island-fortress-control strong { display: block; color: #2a3d37; font-size: .72rem; }
+.island-fortress-control div > span { display: block; color: #756e5d; font-size: .6rem; margin-top: 2px; }
+.island-expansion-toggle { width: 100%; display: flex; align-items: center; gap: 9px; padding: 9px 10px; text-align: left; cursor: pointer; }
+.island-expansion-toggle > span { width: 24px; height: 24px; display: grid; place-items: center; background: rgba(48,72,65,.09); color: #48675e; font-weight: 900; border-radius: 4px; }
+.island-expansion-toggle strong { display: block; color: #2a3d37; font-size: .7rem; }
+.island-expansion-toggle small { display: block; color: #756e5d; font-size: .58rem; margin-top: 2px; }
+.island-expansion-toggle.is-on { border-color: rgba(69,112,83,.48); background: rgba(91,127,91,.09); }
+.island-expansion-toggle.is-on > span { background: #5b7f5b; color: #fff; }
+.island-no-expansion { padding: 8px 10px; color: #677069; font-size: .64rem; }
+
+.island-section-panel .game-section-title,
+.island-global-summary .game-section-title,
+.island-recommendation .game-section-title,
+.island-compare-panel .game-section-title { margin: 0; }
+.island-planner-list { display: grid; }
+.island-planner-row {
+  --row-accent: #48675e;
+  display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 10px; align-items: center;
+  min-height: 75px; padding: 10px 11px; border-bottom: 1px solid rgba(117,104,70,.22); position: relative;
+  background: rgba(239,231,207,.50);
+}
+.island-planner-row::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; background: var(--row-accent); opacity: .5; }
+.island-planner-row:last-child { border-bottom: 0; }
+.island-planner-icon { font-size: 1.7rem; line-height: 1; text-align: center; }
+.island-planner-copy { min-width: 0; }
+.island-planner-titleline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.island-planner-titleline strong { color: #273a35; font-size: .75rem; line-height: 1.2; }
+.island-optional { color: #7a715e; font-size: .51rem; text-transform: uppercase; font-weight: 800; border: 1px solid rgba(117,104,70,.25); padding: 1px 5px; border-radius: 999px; }
+.island-planner-copy p { margin: 3px 0 0; color: #6f6858; font-size: .61rem; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.island-effect { display: block; color: #45655b; margin-top: 4px; font-size: .6rem; font-weight: 800; }
+.island-planner-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.island-stepper { display: grid; grid-template-columns: 28px 30px 28px; min-height: 28px; border: 1px solid rgba(70,86,74,.30); background: rgba(249,245,230,.82); }
+.island-stepper button { border: 0; background: rgba(49,73,66,.08); color: #36564d; font-size: 1rem; font-weight: 900; cursor: pointer; }
+.island-stepper button:disabled { color: #aaa18d; opacity: .55; cursor: default; }
+.island-stepper strong { display: grid; place-items: center; color: #263b36; font-size: .72rem; border-left: 1px solid rgba(70,86,74,.18); border-right: 1px solid rgba(70,86,74,.18); }
+.island-level-select { display: inline-flex; align-items: center; gap: 3px; color: #756d5a; font-size: .55rem; font-weight: 800; }
+.island-level-select select { min-width: 48px; height: 25px; padding: 0 5px; border: 1px solid rgba(70,86,74,.30); background: #f6efd9; color: #2f4740; border-radius: 3px; font-weight: 800; }
+
+.island-add-building { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px; padding: 10px; border-top: 1px solid rgba(117,104,70,.22); background: rgba(220,210,181,.32); }
+.island-add-building select { min-width: 0; border: 1px solid rgba(70,86,74,.30); background: #f6efd9; color: #2c403a; padding: 7px 8px; border-radius: 3px; font-size: .67rem; }
+.island-resource-row-wrap { border-bottom: 1px solid rgba(117,104,70,.22); }
+.island-resource-row-wrap:last-child { border-bottom: 0; }
+.island-resource-row-wrap .island-planner-row { border-bottom: 0; }
+.island-territory-control { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px 8px 63px; background: rgba(218,208,178,.25); color: #746c59; font-size: .58rem; }
+.island-territory-control strong { color: #38584f; }
+.island-territory-control .island-stepper { transform: scale(.88); transform-origin: right center; }
+.island-special-note { margin: 0; padding: 8px 10px; border-top: 1px solid rgba(117,104,70,.18); color: #766e5b; background: rgba(228,218,188,.28); font-size: .59rem; line-height: 1.4; }
+
+.island-global-summary .game-info-table-wrap { margin: 0; border: 0; }
+.island-global-summary .game-info-table-row { background: rgba(239,231,207,.50); }
+.island-recommendation p,
+.island-compare-panel p { margin: 10px 11px; color: #6e6756; font-size: .65rem; line-height: 1.45; }
+.island-recommendation .game-action,
+.island-compare-panel .game-action { margin: 0 10px 10px; }
+.island-focus-row { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); border-bottom: 1px solid rgba(117,104,70,.20); }
+.island-focus-row button { padding: 8px 5px; border: 0; border-right: 1px solid rgba(117,104,70,.18); background: rgba(231,221,193,.48); color: #756d5b; font-size: .6rem; font-weight: 800; cursor: pointer; }
+.island-focus-row button:last-child { border-right: 0; }
+.island-focus-row button.is-active { background: #48675e; color: #f6eedb; }
+.island-delta-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1px; background: rgba(117,104,70,.14); }
+.island-delta-grid > div { display: flex; justify-content: space-between; gap: 7px; padding: 7px 9px; background: rgba(239,231,207,.72); font-size: .58rem; color: #6f6755; }
+.island-delta-grid > div span:first-child { min-width: 0; }
+
+@media (max-width: 420px) {
+  .island-planner-row { grid-template-columns: 36px minmax(0,1fr) auto; gap: 7px; padding: 9px 8px; }
+  .island-planner-icon { font-size: 1.45rem; }
+  .island-planner-copy p { -webkit-line-clamp: 1; }
+  .island-territory-control { padding-left: 51px; }
+  .island-meter-grid { gap: 6px; }
+}

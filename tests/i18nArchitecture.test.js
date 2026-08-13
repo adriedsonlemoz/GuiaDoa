@@ -85,7 +85,7 @@ test('Admin oferece English opcional no mesmo cadastro dos conteúdos principais
   assert.match(adminHtml, /opcional/i);
 });
 
-test('migração de dados foi avançada somente porque o catálogo canônico de itens mudou', () => {
-  assert.match(read('api/utils/migrationPolicy.js'), /DATA_MIGRATION_VERSION\s*=\s*['"]1\.0\.0-beta\.2\.9['"]/);
-  assert.match(read('api/services/autoMigration.js'), /ITENS_SEED/);
+test('migração de dados avança quando o catálogo canônico realmente muda', () => {
+  assert.match(read('api/utils/migrationPolicy.js'), /DATA_MIGRATION_VERSION\s*=\s*['"]1\.0\.0-beta\.2\.10['"]/);
+  assert.match(read('api/services/autoMigration.js'), /EDIFICIOS_META/);
 });

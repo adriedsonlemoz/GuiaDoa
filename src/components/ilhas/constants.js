@@ -54,3 +54,23 @@ export const RESOURCE_VISUAL = {
   ViveiroSementes: { icon: '🌱', color: '#6D8060', labelKey: 'islands.special.nursery', outputKey: 'islands.seeds' },
   MinaDeGeodos: { icon: '💎', color: '#786A82', labelKey: 'islands.special.geode_mine', outputKey: 'islands.geodes' },
 };
+
+// Compatibilidade com componentes legados ainda presentes no projeto.
+// A UI nova usa SLOT_RULES / RESOURCE_VISUAL; estes aliases evitam imports
+// quebrados durante o bundle e podem ser removidos quando os componentes
+// antigos de Ilhas forem eliminados definitivamente.
+export const LIMITES = {
+  cidadePrincipal: SLOT_RULES.PRINC.normal,
+  sitioAgua: SPECIAL_RESOURCE_BY_ISLAND['ÁGUA'].base,
+  cidadeAgua: SLOT_RULES['ÁGUA'].normal,
+};
+
+export const FIXOS = ['Viveiro', 'Forja', 'Fábrica', 'Cofre', 'Sentinela'];
+
+export const TIPO_COR = {
+  fazendas: { accent: RESOURCE_VISUAL.Fazenda.color, bg: '#E8E2C7', label: RESOURCE_VISUAL.Fazenda.icon },
+  minas: { accent: RESOURCE_VISUAL.Mina.color, bg: '#E2E2D7', label: RESOURCE_VISUAL.Mina.icon },
+  pedreiras: { accent: RESOURCE_VISUAL.Pedra.color, bg: '#E5DFD2', label: RESOURCE_VISUAL.Pedra.icon },
+  serrarias: { accent: RESOURCE_VISUAL.Serraria.color, bg: '#E7DDCA', label: RESOURCE_VISUAL.Serraria.icon },
+  perolas: { accent: RESOURCE_VISUAL.FazendaPerolas.color, bg: '#DFE8E6', label: RESOURCE_VISUAL.FazendaPerolas.icon },
+};

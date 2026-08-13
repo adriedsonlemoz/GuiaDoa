@@ -3,7 +3,7 @@ import { C } from '../../theme.js';
 import { useGameData } from '../../data/GameDataContext.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
 import { buildDicaGameVariables } from './dicaGameUtils.js';
-import { LIMITES } from '../ilhas/constants.js';
+import { SLOT_RULES } from '../ilhas/constants.js';
 
 const MODULES = {
   ilhas: { icon: '🏝️', route: 'ilhas', labelKey: 'islands.title' },
@@ -64,8 +64,8 @@ export default function DicaGameContext({ dica, setRoute }) {
             </div>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:10, paddingTop:10, borderTop:`1px solid ${C.BORDER_SOFT}` }}>
-            <div className="font-nunito" style={{ fontSize:'.67rem', color:C.TEXT_SECONDARY }}>🏰 {t('tips.main_city_spaces', { count: LIMITES.cidadePrincipal })}</div>
-            <div className="font-nunito" style={{ fontSize:'.67rem', color:C.TEXT_SECONDARY }}>🐉💧 {t('tips.water_dragon_spaces', { count: LIMITES.cidadeAgua })}</div>
+            <div className="font-nunito" style={{ fontSize:'.67rem', color:C.TEXT_SECONDARY }}>🏰 {t('tips.main_city_spaces', { count: SLOT_RULES.PRINC.normal })}</div>
+            <div className="font-nunito" style={{ fontSize:'.67rem', color:C.TEXT_SECONDARY }}>🐉💧 {t('tips.water_dragon_spaces', { count: SLOT_RULES['ÁGUA'].normal })}</div>
           </div>
           <div className="font-nunito" style={{ fontSize: '.64rem', color: C.TEXT_MUTED, marginTop: 9 }}>{t('tips.live_data_note')}</div>
         </div>

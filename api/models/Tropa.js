@@ -13,6 +13,7 @@ const TropaSchema = new mongoose.Schema({
   car:       { type: Number, default: 0 },
   gestao:    { type: Number, default: 0 },
   desc:      { type: String, default: '' },
+  imagem:    { type: String, default: '', trim: true },
   tipo:      { type: String, enum: ['treinavel', 'especial'], default: 'treinavel' },
   combate:   { type: String, enum: ['corpo_a_corpo', 'distancia'], default: 'corpo_a_corpo' },
   rapida:    { type: Boolean, default: false },

@@ -12,6 +12,7 @@ function normalizeBody(body = {}) {
   const desbloqueio = body.desbloqueio && typeof body.desbloqueio === 'object' ? body.desbloqueio : {};
   return {
     ...body,
+    imagem: String(body.imagem || '').trim(),
     categoria: CATEGORIAS.has(body.categoria) ? body.categoria : 'outro',
     funcoes: Array.isArray(body.funcoes) ? [...new Set(body.funcoes.filter(x => FUNCOES.has(x)))] : [],
     desbloqueio: {

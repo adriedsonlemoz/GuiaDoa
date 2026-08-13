@@ -87,7 +87,7 @@ function irPagina(n){if(n<1||n>TOTAL_PAG)return;PAGINA=n;carregarTropas();}
 function abrirModalNova(){
   EDITANDO_ID=null;
   document.getElementById('modal-titulo').textContent='✦ Nova Tropa';
-  ['nome','poder','vida','def','atqPerto','atqDist','alcance','vel','car','desc','en-nome','en-desc','unlock-nivel','unlock-fonte','unlock-observacao','en-unlock-fonte','en-unlock-observacao'].forEach(id=>document.getElementById(`f-${id}`).value='');
+  ['nome','poder','vida','def','atqPerto','atqDist','alcance','vel','car','imagem','desc','en-nome','en-desc','unlock-nivel','unlock-fonte','unlock-observacao','en-unlock-fonte','en-unlock-observacao'].forEach(id=>document.getElementById(`f-${id}`).value='');
   document.getElementById('f-tipo').value='treinavel';
   document.getElementById('f-combate').value='corpo_a_corpo';
   document.getElementById('f-rapida').value='false';
@@ -118,6 +118,7 @@ function editarTropa(t){
   document.getElementById('f-alcance').value=t.alcance||0;
   document.getElementById('f-vel').value=t.vel||0;
   document.getElementById('f-car').value=t.car||0;
+  document.getElementById('f-imagem').value=t.imagem||'';
   document.getElementById('f-desc').value=t.desc||'';
   document.getElementById('f-en-nome').value=t.i18n?.['en-US']?.nome||'';
   document.getElementById('f-en-desc').value=t.i18n?.['en-US']?.desc||'';
@@ -142,6 +143,7 @@ async function salvarTropa(){
     alcance:  +document.getElementById('f-alcance').value||0,
     vel:      +document.getElementById('f-vel').value||0,
     car:      +document.getElementById('f-car').value||0,
+    imagem:   document.getElementById('f-imagem').value.trim(),
     desc:     document.getElementById('f-desc').value.trim(),
     desbloqueio: {
       tipo: document.getElementById('f-unlock-tipo').value,

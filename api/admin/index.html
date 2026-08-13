@@ -547,6 +547,15 @@
         <label>Nome</label>
         <input type="text" id="pe-nome" placeholder="ex: Maestria do Golpe">
       </div>
+      <div class="field">
+        <label>Categoria</label>
+        <select id="pe-categoria">
+          <option value="Produção">Produção</option>
+          <option value="Movimento e Construção">Movimento e Construção</option>
+          <option value="Corpo a Corpo">Corpo a Corpo</option>
+          <option value="Ataque à Distância">Ataque à Distância</option>
+        </select>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="field" style="margin-bottom:0">
           <label>Nível Máximo (1–15)</label>
@@ -590,8 +599,7 @@
     </div>
     <div class="modal-body" style="max-height:68vh;overflow-y:auto;padding:14px 16px">
       <p style="font-size:0.7rem;color:var(--muted);font-weight:600;margin:0 0 12px;line-height:1.5">
-        Use os controles abaixo para definir o tempo de cada nível.
-        O resultado é calculado automaticamente.
+        Preencha somente os níveis que você conhece. Use formatos como <strong>31m 37s</strong>, <strong>4h 5m 47s</strong> ou <strong>2d 3h</strong>. Campos vazios continuam como desconhecidos.
       </p>
       <div id="niveis-pesquisa-lista"></div>
     </div>

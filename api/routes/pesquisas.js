@@ -49,7 +49,7 @@ router.post('/', autenticar, async (req, res) => {
 
 // ── PUT /api/pesquisas/:slug/meta (admin) ─────────────────────────────────────
 router.put('/:slug/meta', autenticar, async (req, res) => {
-  const { nome, icone, descricao, categoria, nivelMax, ordem } = req.body;
+  const { nome, icone, descricao, categoria, nivelMax, ordem, i18n } = req.body;
   try {
     const p = await Pesquisa.findOne({ slug: req.params.slug });
     if (!p) return res.status(404).json({ erro: 'Pesquisa não encontrada.' });
@@ -68,7 +68,7 @@ router.put('/:slug/meta', autenticar, async (req, res) => {
 
     const atualizado = await Pesquisa.findOneAndUpdate(
       { slug: req.params.slug },
-      { nome, icone, descricao, categoria, nivelMax: max, ordem, niveis: novosNiveis, i18n: sanitizeContentI18n(i18n, I18N_FIELDS), atualizadoEm: new Date() },
+      { nome, icone, descricao, categoria: categoria || p.categoria, nivelMax: max, ordem, niveis: novosNiveis, i18n: sanitizeContentI18n(i18n, I18N_FIELDS), atualizadoEm: new Date() },
       { new: true }
     );
     res.json(atualizado);
@@ -80,11 +80,15 @@ router.put('/:slug/meta', autenticar, async (req, res) => {
 router.put('/:slug/niveis', autenticar, async (req, res) => {
   const { niveis } = req.body;
   if (!Array.isArray(niveis)) return res.status(400).json({ erro: 'niveis deve ser um array.' });
+  const limpos = niveis
+    .map(n => ({ nivel: Number.parseInt(n?.nivel, 10), tempo: String(n?.tempo || '').trim().slice(0, 40) }))
+    .filter(n => Number.isInteger(n.nivel) && n.nivel > 0)
+    .sort((a,b) => a.nivel - b.nivel);
   try {
     const p = await Pesquisa.findOneAndUpdate(
       { slug: req.params.slug },
-      { niveis, atualizadoEm: new Date() },
-      { new: true }
+      { niveis:limpos, atualizadoEm: new Date() },
+      { new: true, runValidators:true }
     );
     if (!p) return res.status(404).json({ erro: 'Pesquisa não encontrada.' });
     res.json(p);

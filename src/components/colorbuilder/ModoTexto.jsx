@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { PRESETS, SUGGEST_PALETTES, SUGGEST_NAMES, KAOMOJI, ASCII_EM, SYM_CATS, FRASES_PRONTAS } from './data.js';
+import { PRESETS, SUGGEST_PALETTES, SUGGEST_NAMES, FRASES_PRONTAS } from './data.js';
+import CharacterTools from './CharacterTools.jsx';
 import { T, C, safeCopy } from './styles.js';
 import { useI18n } from '../../hooks/useI18n.jsx';
 
@@ -180,8 +181,6 @@ export default function ModoTexto({
   const [selected, setSelected] = useState(new Set());
   const [paintMode, setPaintMode] = useState('select');
   const [showMoreColors, setShowMoreColors] = useState(false);
-  const [insertPanel, setInsertPanel] = useState(null);
-  const [symCat, setSymCat] = useState(0);
   const [showModels, setShowModels] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [previewDark, setPreviewDark] = useState(true);
@@ -315,13 +314,8 @@ export default function ModoTexto({
           style={{ ...T.input, width: '100%', minHeight: 82, boxSizing: 'border-box' }}
         />
 
+        <CharacterTools onInsert={insertInInput} />
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-          <TinyButton active={insertPanel === 'emoticons'} onClick={() => setInsertPanel(insertPanel === 'emoticons' ? null : 'emoticons')}>
-            ☺ {t('builder.text.quick_emoticons')}
-          </TinyButton>
-          <TinyButton active={insertPanel === 'symbols'} onClick={() => setInsertPanel(insertPanel === 'symbols' ? null : 'symbols')}>
-            ✦ {t('builder.text.quick_symbols')}
-          </TinyButton>
           <TinyButton active={showModels} onClick={() => setShowModels(value => !value)}>
             ◇ {t('builder.text.models')}
           </TinyButton>
@@ -332,34 +326,6 @@ export default function ModoTexto({
           )}
         </div>
       </div>
-
-      {insertPanel === 'emoticons' && (
-        <div style={T.card}>
-          <div style={T.cardTitle}>{t('builder.kaomoji.title')}</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-            {[...KAOMOJI, ...ASCII_EM].map((item, index) => (
-              <button key={`${item}-${index}`} type="button" style={T.exBtn} onClick={() => insertInInput(item)}>{item}</button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {insertPanel === 'symbols' && (
-        <div style={T.card}>
-          <div style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 8 }}>
-            {SYM_CATS.map((category, index) => (
-              <button key={category.name} type="button" style={{ ...T.catTab(symCat === index), flex: '0 0 auto' }} onClick={() => setSymCat(index)}>
-                {category.name}
-              </button>
-            ))}
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-            {SYM_CATS[symCat].s.map((symbol, index) => (
-              <button key={`${symbol}-${index}`} type="button" style={T.exSym} onClick={() => insertInInput(symbol)}>{symbol}</button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {showModels && (
         <div style={T.card}>

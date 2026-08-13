@@ -1407,6 +1407,34 @@ const ptBR = {
   'builder.text.clear_text': 'Limpar',
   'builder.text.copy_colored': 'Copiar texto colorido',
 
+
+  // Color Builder · wizard unificado
+  'builder.flags.search': 'Buscar bandeira…',
+  'builder.flags.empty': 'Nenhuma bandeira encontrada.',
+  'builder.wizard.question': 'O que você quer criar?',
+  'builder.wizard.help': 'Escolha uma ferramenta e siga um fluxo curto: escreva, ajuste e copie.',
+  'builder.wizard.text_title': 'Texto colorido',
+  'builder.wizard.text_desc': 'Cor única, gradiente ou pintura manual.',
+  'builder.wizard.letters_title': 'Letras & símbolos',
+  'builder.wizard.letters_desc': 'Fontes especiais, letras com acentos e caracteres como ⊙ e ™.',
+  'builder.wizard.flags_title': 'Bandeiras',
+  'builder.wizard.flags_desc': 'Escolha uma bandeira pronta para copiar no chat.',
+  'builder.wizard.score_title': 'Placar',
+  'builder.wizard.score_desc': 'Monte um placar simples, destaque um time e copie.',
+  'builder.wizard.characters_note': 'Nos campos de texto você pode inserir letras especiais, símbolos e emoticons na posição do cursor.',
+  'builder.wizard.back': 'Ferramentas',
+  'builder.wizard.steps': 'Escreva · escolha · copie',
+  'builder.characters.letters': 'Letras',
+  'builder.characters.symbols': 'Símbolos',
+  'builder.characters.emoticons': 'Emoticons',
+  'builder.characters.choose_letter': 'Escolha a letra-base e depois toque na variação que deseja inserir.',
+  'builder.characters.quick_marks': 'Marcas e atalhos',
+  'builder.score.highlight': 'Destaque opcional',
+  'builder.score.highlight_none': 'Nenhum',
+  'builder.score.customize_colors': 'Personalizar cores',
+  'builder.score.inserting_into': 'Caracteres especiais serão inseridos em: {team}',
+  'builder.score.copy': 'Copiar placar',
+
 };
 
 export default ptBR;

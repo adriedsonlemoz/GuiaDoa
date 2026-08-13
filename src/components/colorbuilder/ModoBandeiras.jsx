@@ -6,8 +6,12 @@ import { useI18n } from '../../hooks/useI18n.jsx';
 export default function ModoBandeiras({ showToast }) {
   const { t } = useI18n();
   const [regiao, setRegiao] = useState(0);
+  const [busca, setBusca] = useState('');
 
-  const flagsRegiao = FLAGS.slice(...FLAG_REGIOES[regiao].range);
+  const termo = busca.trim().toLocaleLowerCase('pt-BR');
+  const flagsRegiao = termo
+    ? FLAGS.filter(flag => flag.name.toLocaleLowerCase('pt-BR').includes(termo))
+    : FLAGS.slice(...FLAG_REGIOES[regiao].range);
 
   return (
     <div style={T.body}>
@@ -15,20 +19,30 @@ export default function ModoBandeiras({ showToast }) {
         <div style={T.cardTitle}>
           <span style={{ color: C.ACCENT }}>🏳</span> {t('builder.flags.title')}
         </div>
-        <p style={{ fontSize: '0.67rem', color: C.TEXT_MUTED, marginBottom: 12, lineHeight: 1.6 }}>
+        <p style={{ fontSize: '0.67rem', color: C.TEXT_MUTED, marginBottom: 10, lineHeight: 1.6 }}>
           {t('builder.flags.help')}
         </p>
 
+        <input
+          value={busca}
+          onChange={event => setBusca(event.target.value)}
+          placeholder={t('builder.flags.search')}
+          style={{ ...T.input, width: '100%', minHeight: 36, marginBottom: 10, boxSizing: 'border-box' }}
+        />
+
         {/* Tabs de região */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 12 }}>
+        {!termo && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 12 }}>
           {FLAG_REGIOES.map((r, i) => (
             <button key={i} style={T.catTab(regiao === i)} onClick={() => setRegiao(i)}>
               {r.name}
             </button>
           ))}
-        </div>
+        </div>}
 
         {/* Lista de bandeiras */}
+        {flagsRegiao.length === 0 && (
+          <div style={{ padding: '18px 8px', textAlign: 'center', color: C.TEXT_MUTED, fontSize: '0.72rem' }}>{t('builder.flags.empty')}</div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {flagsRegiao.map((flag, i) => {
             const code = flagCode(flag);

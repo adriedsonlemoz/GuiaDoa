@@ -1365,6 +1365,34 @@ const enUS = {
   'builder.text.clear_text': 'Clear',
   'builder.text.copy_colored': 'Copy colored text',
 
+
+  // Color Builder · unified wizard
+  'builder.flags.search': 'Search flags…',
+  'builder.flags.empty': 'No flags found.',
+  'builder.wizard.question': 'What do you want to create?',
+  'builder.wizard.help': 'Choose a tool and follow a short flow: type, adjust and copy.',
+  'builder.wizard.text_title': 'Colored text',
+  'builder.wizard.text_desc': 'Single color, gradient or manual painting.',
+  'builder.wizard.letters_title': 'Letters & symbols',
+  'builder.wizard.letters_desc': 'Special fonts, accented letters and characters such as ⊙ and ™.',
+  'builder.wizard.flags_title': 'Flags',
+  'builder.wizard.flags_desc': 'Choose a ready-made flag to copy into chat.',
+  'builder.wizard.score_title': 'Score',
+  'builder.wizard.score_desc': 'Build a simple score, highlight a team and copy it.',
+  'builder.wizard.characters_note': 'In text fields you can insert special letters, symbols and emoticons at the cursor position.',
+  'builder.wizard.back': 'Tools',
+  'builder.wizard.steps': 'Type · choose · copy',
+  'builder.characters.letters': 'Letters',
+  'builder.characters.symbols': 'Symbols',
+  'builder.characters.emoticons': 'Emoticons',
+  'builder.characters.choose_letter': 'Choose a base letter, then tap the variation you want to insert.',
+  'builder.characters.quick_marks': 'Marks and shortcuts',
+  'builder.score.highlight': 'Optional highlight',
+  'builder.score.highlight_none': 'None',
+  'builder.score.customize_colors': 'Customize colors',
+  'builder.score.inserting_into': 'Special characters will be inserted into: {team}',
+  'builder.score.copy': 'Copy score',
+
 };
 
 export default enUS;

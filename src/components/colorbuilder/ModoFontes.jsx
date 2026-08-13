@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { T, C, safeCopy } from './styles.js';
 import { useI18n } from '../../hooks/useI18n.jsx';
+import CharacterTools from './CharacterTools.jsx';
 
 // ─── Helper: itera por code points (resolve surrogate pairs) ─────────────────
 const chars  = str => [...str];
@@ -25,6 +26,7 @@ function conv(text, map) {
 
 // ─── Fontes ───────────────────────────────────────────────────────────────────
 const FONTES = [
+  { id: 'original', grupo: 'Básico', nome: 'Original', fn: t => t },
   { id: 'bold', grupo: 'Negrito', nome: 'Negrito',
     fn: t => conv(t, mkMap('𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙','𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳','𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗')) },
   { id: 'italic', grupo: 'Negrito', nome: 'Itálico',
@@ -152,21 +154,21 @@ const FONTES = [
     fn: t => '★彡 ' + t + ' 彡★' },
 ];
 
-const GRUPOS = [...new Set(FONTES.map(f => f.grupo))];
+const GRUPOS = ['Todos', ...new Set(FONTES.map(f => f.grupo))];
 const EXEMPLO = 'Shadow Warriors';
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function ModoFontes({ showToast }) {
   const { t } = useI18n();
   const [texto,     setTexto]     = useState('');
-  const [grupo,     setGrupo]     = useState(GRUPOS[0]);
+  const [grupo,     setGrupo]     = useState('Todos');
   const [busca,     setBusca]     = useState('');
   const [copiedId,  setCopiedId]  = useState(null);
   const [historico, setHistorico] = useState([]);
   const inputRef = useRef(null);
 
   const fontesFiltradas = FONTES.filter(f => {
-    const noGrupo = busca ? true : f.grupo === grupo;
+    const noGrupo = busca ? true : grupo === 'Todos' || f.grupo === grupo;
     const naBusca = busca
       ? f.nome.toLowerCase().includes(busca.toLowerCase()) ||
         f.grupo.toLowerCase().includes(busca.toLowerCase())
@@ -175,9 +177,9 @@ export default function ModoFontes({ showToast }) {
   });
 
   const copiar = (fonte, textoBase) => {
-    const t = textoBase || texto;
-    if (!t.trim()) { showToast(t('builder.fonts.enter_first')); inputRef.current?.focus(); return; }
-    const resultado = fonte.fn(t);
+    const textoValor = textoBase || texto;
+    if (!textoValor.trim()) { showToast(t('builder.fonts.enter_first')); inputRef.current?.focus(); return; }
+    const resultado = fonte.fn(textoValor);
     safeCopy(resultado, () => {
       setCopiedId(fonte.id);
       setHistorico(prev => [
@@ -193,6 +195,19 @@ export default function ModoFontes({ showToast }) {
     texto.trim() ? fonte.fn(texto) : fonte.fn(EXEMPLO);
 
   const charCount = chars(texto).length;
+
+  const insertCharacter = value => {
+    const el = inputRef.current;
+    const pos = el?.selectionStart ?? texto.length;
+    const next = texto.slice(0, pos) + value + texto.slice(pos);
+    setTexto(next);
+    setTimeout(() => {
+      const target = inputRef.current;
+      if (!target) return;
+      target.focus();
+      target.setSelectionRange(pos + value.length, pos + value.length);
+    }, 0);
+  };
 
   return (
     <div style={T.body}>
@@ -221,7 +236,8 @@ export default function ModoFontes({ showToast }) {
             >✕</button>
           )}
         </div>
-        <p style={{ fontSize: '0.63rem', color: C.TEXT_FAINT, marginTop: 5 }}>
+        <CharacterTools onInsert={insertCharacter} />
+        <p style={{ fontSize: '0.63rem', color: C.TEXT_FAINT, marginTop: 7 }}>
           {t('builder.fonts.help')}
         </p>
       </div>

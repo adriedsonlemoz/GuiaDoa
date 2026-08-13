@@ -4,32 +4,52 @@ import { readFileSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('Texto Colorido abre direto e mantém as outras ferramentas em abas compactas', () => {
+test('Construtor de Texto abre como wizard unificado com quatro caminhos', () => {
   const root = read('src/components/colorbuilder/index.jsx');
-  assert.match(root, /useState\('texto'\)/);
-  assert.match(root, /builder\.nav\.text/);
-  assert.match(root, /builder\.nav\.fonts/);
-  assert.match(root, /builder\.nav\.flags/);
-  assert.match(root, /builder\.nav\.score/);
-  assert.doesNotMatch(root, /TelaBoas/);
+  assert.match(root, /useState\(null\)/);
+  assert.match(root, /WizardHome/);
+  assert.match(root, /builder\.wizard\.text_title/);
+  assert.match(root, /builder\.wizard\.letters_title/);
+  assert.match(root, /builder\.wizard\.flags_title/);
+  assert.match(root, /builder\.wizard\.score_title/);
+  assert.doesNotMatch(root, /builder\.nav\.text/);
 });
 
-test('fluxo rápido oferece cor única, gradiente e manual sem botão Montar', () => {
+test('Texto Colorido mantém cor única, gradiente, manual e usa seletor compartilhado de caracteres', () => {
   const text = read('src/components/colorbuilder/ModoTexto.jsx');
   assert.match(text, /styleMode.*single/);
   assert.match(text, /mode_gradient/);
   assert.match(text, /mode_manual/);
-  assert.match(text, /gradientStart/);
-  assert.match(text, /manual_brush/);
+  assert.match(text, /CharacterTools/);
+  assert.match(text, /ctb_recent_v2/);
+  assert.match(text, /position:\s*'sticky'/);
   assert.doesNotMatch(text, />\s*→ Montar\s*</);
 });
 
-test('Texto Colorido possui inserção rápida, prévia, código recolhível e recentes locais', () => {
-  const text = read('src/components/colorbuilder/ModoTexto.jsx');
-  assert.match(text, /ctb_recent_v2/);
-  assert.match(text, /insertPanel/);
-  assert.match(text, /previewDark/);
-  assert.match(text, /showCode/);
-  assert.match(text, /position:\s*'sticky'/);
-  assert.match(text, /copy_colored/);
+test('Letras especiais incluem diacríticos e caracteres decorativos como G⊙KU™', () => {
+  const chars = read('src/components/colorbuilder/CharacterTools.jsx');
+  const fonts = read('src/components/colorbuilder/ModoFontes.jsx');
+  assert.match(chars, /⊙/);
+  assert.match(chars, /™/);
+  assert.match(chars, /ü/);
+  assert.match(chars, /ï/);
+  assert.match(chars, /LETTER_VARIANTS/);
+  assert.match(fonts, /id: 'original'/);
+  assert.match(fonts, /CharacterTools/);
+});
+
+test('Placar foi simplificado e também aceita caracteres especiais nos nomes', () => {
+  const score = read('src/components/colorbuilder/ModoPlacar.jsx');
+  assert.match(score, /CharacterTools/);
+  assert.match(score, /destaque.*none/);
+  assert.match(score, /customize_colors/);
+  assert.doesNotMatch(score, /placarAntA/);
+  assert.doesNotMatch(score, /placarAntB/);
+});
+
+test('Bandeiras mantêm cópia direta e agora possuem busca rápida', () => {
+  const flags = read('src/components/colorbuilder/ModoBandeiras.jsx');
+  assert.match(flags, /builder\.flags\.search/);
+  assert.match(flags, /safeCopy/);
+  assert.match(flags, /FLAGS\.filter/);
 });

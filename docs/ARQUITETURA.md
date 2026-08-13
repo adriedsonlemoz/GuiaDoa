@@ -102,3 +102,14 @@ O antigo módulo central de traduções e a integração automática externa for
 - IDs numéricos dos realms continuam no banco como identidade técnica, mas não são exibidos no seletor do perfil.
 - `src/components/reinos/RealmClock.jsx` e `useRealmClock.js` centralizam a apresentação e cálculo do horário do realm pelo fuso salvo no perfil.
 - `src/utils/timezone.js` centraliza a conversão de rótulos `UTC±N` em offset numérico.
+
+## Dependências e builds
+
+A partir da Beta 2.24, o build web e a toolchain móvel são isolados:
+
+- o frontend web não instala Capacitor; o GitHub Actions instala Capacitor 8 apenas durante a geração do APK;
+- o PWA não depende mais de `vite-plugin-pwa`/Workbox; `scripts/generate-pwa.mjs` gera o service worker após o Vite finalizar o `dist/`;
+- `package-lock.json` do frontend não deve conter dependências marcadas como deprecated;
+- `node_modules` nunca deve fazer parte dos pacotes ZIP/versionados.
+
+Essa separação reduz dependências transitivas no Vercel e evita que atualizações da camada Android afetem o deploy web.

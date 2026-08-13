@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { sanitizarHistorico, validarEntradaAssistente } from '../utils/assistantValidation.js';
 import { decidirAcessoSetup, validarSetupKey } from '../security/setupAccess.js';
 import { formatarErroApi } from '../utils/apiError.js';
@@ -99,4 +100,13 @@ test('migração legada renomeia doa_* sem sobrescrever destino existente', asyn
   assert.deepEqual(renomes, [['doa_users', 'guiadoa_users']]);
   assert.equal(resultado.conflitos.length, 1);
   assert.deepEqual(resultado.conflitos[0], { origem: 'doa_tropas', destino: 'guiadoa_tropas' });
+});
+
+test('uploads usam Multer 2.2 com limites defensivos', () => {
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  const dicas = readFileSync(new URL('../routes/dicas.js', import.meta.url), 'utf8');
+  assert.equal(pkg.dependencies.multer, '^2.2.0');
+  assert.match(dicas, /fieldNestingDepth:\s*2/);
+  assert.match(dicas, /files:\s*10/);
+  assert.match(dicas, /fields:\s*20/);
 });

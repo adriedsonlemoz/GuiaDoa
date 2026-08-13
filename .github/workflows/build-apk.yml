@@ -32,19 +32,19 @@ jobs:
       - name: 📥 Checkout do repositório
         uses: actions/checkout@v4
 
-      # ── 2. Node 20 ───────────────────────────────────────────────────────────
-      - name: 🟢 Setup Node.js 20
+      # ── 2. Node 22 ───────────────────────────────────────────────────────────
+      - name: 🟢 Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
-      # ── 3. Java 17 ───────────────────────────────────────────────────────────
-      - name: ☕ Setup Java 17
+      # ── 3. Java 21 ───────────────────────────────────────────────────────────
+      - name: ☕ Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       # ── 4. Android SDK ───────────────────────────────────────────────────────
       - name: 🤖 Setup Android SDK
@@ -61,20 +61,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # ── 6. Cache node_modules ────────────────────────────────────────────────
-      - name: 📦 Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      # ── 7. Instalar dependências ─────────────────────────────────────────────
+      # ── 6. Instalar dependências ─────────────────────────────────────────────
       - name: 📦 Instalar dependências npm
         run: npm ci
 
-      # ── 8. Validar URL da API em builds release ───────────────────────────────
+      # ── 7. Validar URL da API em builds release ───────────────────────────────
       - name: 🛡️ Validar API de produção
         if: ${{ github.event.inputs.build_type == 'release' }}
         env:
@@ -98,13 +89,17 @@ jobs:
               ;;
           esac
 
-      # ── 9. Build Vite → dist/ ────────────────────────────────────────────────
+      # ── 8. Build Vite → dist/ ────────────────────────────────────────────────
       - name: 🔨 Build web (Vite)
         run: npm run build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL || '' }}
 
-      # ── 9. Verificar se pasta android/ existe ────────────────────────────────
+      # ── 9. Toolchain móvel isolada do build web ───────────────────────────────
+      - name: 📱 Instalar Capacitor 8 (somente APK)
+        run: npm install --no-save --package-lock=false @capacitor/core@8.5.0 @capacitor/android@8.5.0 @capacitor/cli@8.5.0
+
+      # ── 10. Verificar se pasta android/ existe ────────────────────────────────
       - name: 🔍 Verificar pasta android/
         id: check_android
         run: |
@@ -114,20 +109,20 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      # ── 10. Adicionar plataforma Android (só se não existir) ─────────────────
+      # ── 11. Adicionar plataforma Android (só se não existir) ─────────────────
       - name: ➕ Capacitor add android
         if: steps.check_android.outputs.exists == 'false'
         run: npx cap add android
 
-      # ── 11. Capacitor sync ───────────────────────────────────────────────────
+      # ── 12. Capacitor sync ───────────────────────────────────────────────────
       - name: 🔄 Capacitor sync
         run: npx cap sync android
 
-      # ── 12. Permissão Gradle ─────────────────────────────────────────────────
+      # ── 13. Permissão Gradle ─────────────────────────────────────────────────
       - name: 🔐 Permissão gradlew
         run: chmod +x android/gradlew
 
-      # ── 13a. Build DEBUG ─────────────────────────────────────────────────────
+      # ── 14a. Build DEBUG ─────────────────────────────────────────────────────
       - name: 🛠️ Build APK Debug
         if: ${{ github.event.inputs.build_type != 'release' }}
         run: |
@@ -137,7 +132,7 @@ jobs:
             --stacktrace \
             -Dorg.gradle.jvmargs="-Xmx2048m"
 
-      # ── 13b. Build RELEASE (requer keystore) ─────────────────────────────────
+      # ── 14b. Build RELEASE (requer keystore) ─────────────────────────────────
       - name: 🔏 Build APK Release
         if: ${{ github.event.inputs.build_type == 'release' }}
         run: |
@@ -152,7 +147,7 @@ jobs:
           KEY_ALIAS:        ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD:     ${{ secrets.KEY_PASSWORD }}
 
-      # ── 14. Localizar APK gerado ─────────────────────────────────────────────
+      # ── 15. Localizar APK gerado ─────────────────────────────────────────────
       - name: 🔍 Localizar APK
         id: find_apk
         run: |
@@ -170,7 +165,7 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
-      # ── 16. Sumário no GitHub ────────────────────────────────────────────────
+      # ── 17. Sumário no GitHub ────────────────────────────────────────────────
       - name: 📋 Sumário do build
         if: always()
         run: |

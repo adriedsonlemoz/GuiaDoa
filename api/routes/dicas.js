@@ -62,7 +62,7 @@ cloudinary.config({
 // ─── Multer (memória temporária — persistência somente no Cloudinary) ─────────
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits:  { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  limits:  { fileSize: 10 * 1024 * 1024, files: 10, fields: 20, fieldNestingDepth: 2 }, // 10 MB por imagem
   fileFilter: (_, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
     else cb(new Error('Apenas imagens são permitidas'));

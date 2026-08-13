@@ -16,6 +16,15 @@ const TropaSchema = new mongoose.Schema({
   tipo:      { type: String, enum: ['treinavel', 'especial'], default: 'treinavel' },
   combate:   { type: String, enum: ['corpo_a_corpo', 'distancia'], default: 'corpo_a_corpo' },
   rapida:    { type: Boolean, default: false },
+  categoria: { type: String, enum: ['infantaria','distancia','cavalaria','dragao','pesada','transporte','outro'], default: 'outro' },
+  funcoes:   [{ type: String, enum: ['ataque','defesa','farming','suporte','equilibrada'] }],
+  desbloqueio: {
+    tipo:       { type: String, enum: ['edificio','pesquisa','evento','outro',''], default: '' },
+    fonte:      { type: String, default: '', trim: true },
+    nivel:      { type: Number, default: null, min: 0 },
+    observacao: { type: String, default: '', trim: true },
+  },
+  taxonomiaVersao: { type: Number, default: 0 },
   i18n:      { type: mongoose.Schema.Types.Mixed, default: {} },
   atualizadoEm: { type: Date, default: Date.now },
 }, { collection: COLLECTIONS.tropas });

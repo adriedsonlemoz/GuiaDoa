@@ -10,7 +10,15 @@ import { SLOT_CORES, SLOT_MAX } from './comparar/config.js';
 const TropaComparar = () => {
   const { tropas } = useTropas();
   const { t } = useI18n();
-  const [slots, setSlots] = useState(() => Array(SLOT_MAX).fill(null));
+  const [slots, setSlots] = useState(() => {
+    const base = Array(SLOT_MAX).fill(null);
+    try {
+      const names = JSON.parse(sessionStorage.getItem('guiadoa_troop_compare') || '[]');
+      sessionStorage.removeItem('guiadoa_troop_compare');
+      names.slice(0, SLOT_MAX).forEach((name, index) => { base[index] = tropas.find(t => t.nome === name) || null; });
+    } catch {}
+    return base;
+  });
   const [pickerSlot, setPickerSlot] = useState(null);
   const tropasAtivas = slots.filter(Boolean);
   const adicionarTropa = tropa => {

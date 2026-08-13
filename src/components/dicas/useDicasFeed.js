@@ -25,8 +25,18 @@ export default function useDicasFeed() {
       fetch(`${API_URL}/api/dicas`).then(readJson),
     ]).then(([cats, feed]) => {
       if (!active) return;
-      setCategorias(Array.isArray(cats) ? cats : []);
-      setDicas(Array.isArray(feed) ? feed : []);
+      const nextCats = Array.isArray(cats) ? cats : [];
+      const nextFeed = Array.isArray(feed) ? feed : [];
+      setCategorias(nextCats);
+      setDicas(nextFeed);
+      try {
+        const requested = sessionStorage.getItem('guiadoa_open_tip');
+        if (requested) {
+          sessionStorage.removeItem('guiadoa_open_tip');
+          const found = nextFeed.find(item => item.slug === requested || item._id === requested);
+          if (found) setArtigoAberto(found);
+        }
+      } catch {}
     }).catch(() => {
       if (active) setToast({ open: true, message: t('tips.load_error'), severity: 'error' });
     }).finally(() => {

@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { C } from '../../theme.js';
 import { getIcone, getTipoAtaque, fmtFull, ATRIBUTOS } from './tropaUtils.js';
+import { categoryLabelKey, inferredRoles, roleLabelKey } from './tacticalUtils.js';
+import RelatedTroopTips from './RelatedTroopTips.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
 
 /* ── Barra de atributo ───────────────────────────────────────────────────── */
@@ -35,7 +37,7 @@ const StatRow = ({ icon, label, value, color, max, locale }) => {
 };
 
 /* ── Modal ───────────────────────────────────────────────────────────────── */
-const TropaModal = ({ tropa, onFechar }) => {
+const TropaModal = ({ tropa, onFechar, onOpenTips }) => {
   const { t, content, locale } = useI18n();
   // Fecha com ESC no desktop
   useEffect(() => {
@@ -55,6 +57,10 @@ const TropaModal = ({ tropa, onFechar }) => {
   const tipo = getTipoAtaque(tropa, t);
   const nome = content(tropa, 'nome');
   const descricao = content(tropa, 'desc');
+  const roles = inferredRoles(tropa);
+  const unlock = tropa.desbloqueio || {};
+  const unlockSource = content({ desbloqueioFonte: unlock.fonte, i18n:tropa.i18n }, 'desbloqueioFonte') || unlock.fonte;
+  const unlockNote = content({ desbloqueioObservacao: unlock.observacao, i18n:tropa.i18n }, 'desbloqueioObservacao') || unlock.observacao;
 
   return (
     /* Backdrop */
@@ -131,6 +137,9 @@ const TropaModal = ({ tropa, onFechar }) => {
                   }}>
                   ⭐ {tropa.poder} {t('common.power').toLowerCase()}
                 </span>
+                <span className="font-nunito font-black" style={{ fontSize:'0.6rem', padding:'2px 8px', borderRadius:10, background:'rgba(248,242,224,.08)', border:'1px solid rgba(248,242,224,.18)', color:'rgba(248,242,224,.78)' }}>
+                  {t(categoryLabelKey(tropa.categoria || 'outro'))}
+                </span>
               </div>
             </div>
 
@@ -187,25 +196,26 @@ const TropaModal = ({ tropa, onFechar }) => {
             </div>
           </div>
 
-          {/* Seções futuras */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {[{ icon: '📋', title: t('troops.requirements').toUpperCase() }, { icon: '🔮', title: t('troops.amulets').toUpperCase() }].map(sec => (
-              <div key={sec.title} style={{
-                padding: '10px 8px', borderRadius: 8, textAlign: 'center',
-                border: `1px dashed ${C.BORDER_SOFT}`,
-                background: 'rgba(184,150,90,0.04)',
-              }}>
-                <span className="font-nunito font-bold block"
-                  style={{ fontSize: '0.65rem', color: C.TEXT_MUTED, letterSpacing: '1px' }}>
-                  {sec.icon} {sec.title}
-                </span>
-                <span className="font-nunito"
-                  style={{ fontSize: '0.65rem', color: C.TEXT_FAINT, fontStyle: 'italic' }}>
-                  {t('common.coming_soon')}
-                </span>
-              </div>
-            ))}
+          {/* Perfil tático */}
+          <div style={{ border:`1px solid ${C.BORDER_SOFT}`, background:C.BG_CARD, borderRadius:10, padding:'10px 11px', marginTop:8 }}>
+            <div className="font-nunito font-black" style={{ fontSize:'.62rem', color:C.TEXT_MUTED, letterSpacing:'1px', textTransform:'uppercase' }}>{t('troops.taxonomy')}</div>
+            <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:7 }}>
+              {roles.map(role => <span key={role} className="font-nunito font-bold" style={{ fontSize:'.62rem', padding:'3px 7px', borderRadius:999, background:'rgba(28,58,94,.07)', border:'1px solid rgba(28,58,94,.16)', color:C.TEXT_SECONDARY }}>{t(roleLabelKey(role))}</span>)}
+            </div>
           </div>
+
+          {/* Requisito confirmado */}
+          <div style={{ border:`1px solid ${C.BORDER_SOFT}`, background:'rgba(200,168,74,.07)', borderRadius:10, padding:'10px 11px', marginTop:8 }}>
+            <div className="font-nunito font-black" style={{ fontSize:'.62rem', color:'#6a5018', letterSpacing:'1px', textTransform:'uppercase' }}>🔓 {t('troops.unlock')}</div>
+            {unlockSource ? (
+              <div style={{ marginTop:6 }}>
+                <div className="font-nunito font-bold" style={{ fontSize:'.72rem', color:C.TEXT_PRIMARY }}>{unlockSource}{unlock.nivel ? ` · ${t('common.level_short')} ${unlock.nivel}` : ''}</div>
+                {unlockNote && <div className="font-nunito" style={{ fontSize:'.64rem', color:C.TEXT_MUTED, lineHeight:1.45, marginTop:3 }}>{unlockNote}</div>}
+              </div>
+            ) : <div className="font-nunito" style={{ fontSize:'.64rem', color:C.TEXT_FAINT, marginTop:5, fontStyle:'italic' }}>{t('troops.unlock.unknown')}</div>}
+          </div>
+
+          <RelatedTroopTips troopName={tropa.nome} onOpenTips={onOpenTips} />
         </div>
       </div>
     </div>

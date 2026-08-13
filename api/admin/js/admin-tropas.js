@@ -48,7 +48,7 @@ function renderTropas(d) {
               ${d.tropas.map(t=>{
                 return `
                 <tr>
-                  <td><strong style="font-size:0.88rem">${esc(t.nome)}</strong></td>
+                  <td><strong style="font-size:0.88rem">${esc(t.nome)}</strong><div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap"><span class="badge">${t.combate==='distancia'?'🏹 Distância':'⚔️ Corpo a corpo'}</span><span class="badge">${esc(t.categoria||'outro')}</span>${t.desbloqueio?.fonte?`<span class="badge">🔓 ${esc(t.desbloqueio.fonte)}${t.desbloqueio.nivel?' '+esc(String(t.desbloqueio.nivel)):''}</span>`:''}</div></td>
                   <td style="text-align:right;white-space:nowrap">
                     <button class="btn btn-navy btn-sm" onclick="editarTropa(fromDataArg('${dataArg(t)}'))">✏ Editar</button>
                     <button class="btn btn-red btn-sm" onclick="confirmarRemover(fromStrArg('${strArg(t._id)}'),fromStrArg('${strArg(t.nome)}'))">🗑 Excluir</button>
@@ -87,10 +87,13 @@ function irPagina(n){if(n<1||n>TOTAL_PAG)return;PAGINA=n;carregarTropas();}
 function abrirModalNova(){
   EDITANDO_ID=null;
   document.getElementById('modal-titulo').textContent='✦ Nova Tropa';
-  ['nome','poder','vida','def','atqPerto','atqDist','alcance','vel','car','desc','en-nome','en-desc'].forEach(id=>document.getElementById(`f-${id}`).value='');
+  ['nome','poder','vida','def','atqPerto','atqDist','alcance','vel','car','desc','en-nome','en-desc','unlock-nivel','unlock-fonte','unlock-observacao','en-unlock-fonte','en-unlock-observacao'].forEach(id=>document.getElementById(`f-${id}`).value='');
   document.getElementById('f-tipo').value='treinavel';
   document.getElementById('f-combate').value='corpo_a_corpo';
   document.getElementById('f-rapida').value='false';
+  document.getElementById('f-categoria').value='outro';
+  ['ataque','defesa','farming','suporte','equilibrada'].forEach(role=>document.getElementById(`f-role-${role}`).checked=role==='equilibrada');
+  document.getElementById('f-unlock-tipo').value='';
   abrirModal('modal-tropa');
 }
 
@@ -101,6 +104,12 @@ function editarTropa(t){
   document.getElementById('f-tipo').value=t.tipo||'treinavel';
   document.getElementById('f-combate').value=t.combate||'corpo_a_corpo';
   document.getElementById('f-rapida').value=t.rapida?'true':'false';
+  document.getElementById('f-categoria').value=t.categoria||'outro';
+  { const roles=Array.isArray(t.funcoes)&&t.funcoes.length?t.funcoes:['equilibrada']; ['ataque','defesa','farming','suporte','equilibrada'].forEach(role=>document.getElementById(`f-role-${role}`).checked=roles.includes(role)); }
+  document.getElementById('f-unlock-tipo').value=t.desbloqueio?.tipo||'';
+  document.getElementById('f-unlock-nivel').value=t.desbloqueio?.nivel??'';
+  document.getElementById('f-unlock-fonte').value=t.desbloqueio?.fonte||'';
+  document.getElementById('f-unlock-observacao').value=t.desbloqueio?.observacao||'';
   document.getElementById('f-poder').value=t.poder||0;
   document.getElementById('f-vida').value=t.vida||0;
   document.getElementById('f-def').value=t.def||0;
@@ -112,6 +121,8 @@ function editarTropa(t){
   document.getElementById('f-desc').value=t.desc||'';
   document.getElementById('f-en-nome').value=t.i18n?.['en-US']?.nome||'';
   document.getElementById('f-en-desc').value=t.i18n?.['en-US']?.desc||'';
+  document.getElementById('f-en-unlock-fonte').value=t.i18n?.['en-US']?.desbloqueioFonte||'';
+  document.getElementById('f-en-unlock-observacao').value=t.i18n?.['en-US']?.desbloqueioObservacao||'';
   abrirModal('modal-tropa');
 }
 
@@ -121,6 +132,8 @@ async function salvarTropa(){
     tipo:     document.getElementById('f-tipo').value,
     combate:  document.getElementById('f-combate').value,
     rapida:   document.getElementById('f-rapida').value === 'true',
+    categoria:document.getElementById('f-categoria').value,
+    funcoes:  ['ataque','defesa','farming','suporte','equilibrada'].filter(role=>document.getElementById(`f-role-${role}`).checked),
     poder:    +document.getElementById('f-poder').value||0,
     vida:     +document.getElementById('f-vida').value||0,
     def:      +document.getElementById('f-def').value||0,
@@ -130,9 +143,17 @@ async function salvarTropa(){
     vel:      +document.getElementById('f-vel').value||0,
     car:      +document.getElementById('f-car').value||0,
     desc:     document.getElementById('f-desc').value.trim(),
+    desbloqueio: {
+      tipo: document.getElementById('f-unlock-tipo').value,
+      nivel: document.getElementById('f-unlock-nivel').value,
+      fonte: document.getElementById('f-unlock-fonte').value.trim(),
+      observacao: document.getElementById('f-unlock-observacao').value.trim(),
+    },
     i18n: { 'en-US': {
       nome: document.getElementById('f-en-nome').value.trim(),
       desc: document.getElementById('f-en-desc').value.trim(),
+      desbloqueioFonte: document.getElementById('f-en-unlock-fonte').value.trim(),
+      desbloqueioObservacao: document.getElementById('f-en-unlock-observacao').value.trim(),
     } },
   };
   if(!body.nome) return toast('Preencha o nome da tropa!','warn');

@@ -116,6 +116,28 @@
           </select>
         </div>
       </div>
+      <div class="grid2">
+        <div class="field"><label>Categoria tática</label>
+          <select id="f-categoria">
+            <option value="infantaria">Infantaria</option>
+            <option value="distancia">Distância</option>
+            <option value="cavalaria">Cavalaria</option>
+            <option value="dragao">Dragão</option>
+            <option value="pesada">Unidade pesada</option>
+            <option value="transporte">Transporte</option>
+            <option value="outro">Outra</option>
+          </select>
+        </div>
+        <div class="field"><label>Funções táticas</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:7px">
+            <label style="font-weight:600"><input id="f-role-ataque" type="checkbox"> Ataque</label>
+            <label style="font-weight:600"><input id="f-role-defesa" type="checkbox"> Defesa</label>
+            <label style="font-weight:600"><input id="f-role-farming" type="checkbox"> Farming</label>
+            <label style="font-weight:600"><input id="f-role-suporte" type="checkbox"> Suporte</label>
+            <label style="font-weight:600"><input id="f-role-equilibrada" type="checkbox"> Equilibrada</label>
+          </div>
+        </div>
+      </div>
       <div class="grid3">
         <div class="field"><label>Poder ⭐</label><input id="f-poder" type="number" min="0" placeholder="0"></div>
         <div class="field"><label>Vida ❤️</label><input id="f-vida" type="number" min="0" placeholder="0"></div>
@@ -131,10 +153,20 @@
         <div class="field"><label>Carga 📦</label><input id="f-car" type="number" min="0" placeholder="0"></div>
       </div>
       <div class="field"><label>Descrição</label><textarea id="f-desc" placeholder="Descrição da tropa..."></textarea></div>
+      <div class="i18n-section" style="border-color:rgba(184,150,90,.45)">
+        <div class="i18n-title">🔓 Requisito de desbloqueio <span>opcional</span></div>
+        <div class="grid2">
+          <div class="field"><label>Tipo</label><select id="f-unlock-tipo"><option value="">Não informado</option><option value="edificio">Edifício</option><option value="pesquisa">Pesquisa</option><option value="evento">Evento</option><option value="outro">Outro</option></select></div>
+          <div class="field"><label>Nível necessário</label><input id="f-unlock-nivel" type="number" min="0" placeholder="Ex.: 18"></div>
+        </div>
+        <div class="field"><label>Edifício / Pesquisa / Fonte</label><input id="f-unlock-fonte" placeholder="Ex.: Fábrica"></div>
+        <div class="field"><label>Observação</label><input id="f-unlock-observacao" placeholder="Como esta tropa é desbloqueada"></div>
+      </div>
       <div class="i18n-section">
         <div class="i18n-title">🌐 English <span>opcional</span></div>
         <div class="field"><label>Name</label><input id="f-en-nome" placeholder="Troop name in English"></div>
         <div class="field"><label>Description</label><textarea id="f-en-desc" placeholder="Troop description in English..."></textarea></div>
+        <div class="grid2"><div class="field"><label>Unlock source</label><input id="f-en-unlock-fonte" placeholder="Factory"></div><div class="field"><label>Unlock note</label><input id="f-en-unlock-observacao" placeholder="How this unit is unlocked"></div></div>
       </div>
     </div>
     <div class="modal-footer">

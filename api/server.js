@@ -38,7 +38,7 @@ mongoose.connect(process.env.MONGO_URI, mongoConnectOptions())
 
     const conteudo = await executarMigracoesConteudo();
     if (conteudo.ok && !conteudo.ignorada) {
-      console.log(`📚  Conteúdo:      ${conteudo.inseridas || 0} dica(s) inserida(s), ${conteudo.adaptadas || 0} adaptada(s)`);
+      console.log(`📚  Conteúdo:      ${conteudo.inseridas || 0} dica(s) inserida(s), ${conteudo.adaptadas || 0} adaptada(s), ${conteudo.tropasAtualizadas || 0} tropa(s) classificadas`);
     } else if (!conteudo.ok) {
       console.error(`⚠️   Migração de conteúdo falhou: ${conteudo.erro}`);
     }

@@ -3,7 +3,6 @@ import React from 'react';
 import Home from '../components/Home.jsx';
 import Torneios from '../components/Torneios.jsx';
 import Tropas from '../components/Tropas.jsx';
-import TropaLista from '../components/tropas/TropaLista.jsx';
 import TropaComparar from '../components/tropas/TropaComparar.jsx';
 import CalculosTropas from '../components/CalculosTropas.jsx';
 import Edificios from '../components/Edificios.jsx';
@@ -66,7 +65,7 @@ export function renderRoute(route, setRoute) {
     case 'home': return <Home setRoute={setRoute} />;
     case 'torneios': return <Torneios setRoute={setRoute} />;
     case 'tropas': return <Tropas setRoute={setRoute} />;
-    case 'tropas_lista': return <TropaLista />;
+    case 'tropas_lista': return <Tropas setRoute={setRoute} />;
     case 'tropas_comparar': return <TropaComparar />;
     case 'calculostropas': return <CalculosTropas setRoute={setRoute} />;
     case 'edificios': return <Edificios setRoute={setRoute} />;

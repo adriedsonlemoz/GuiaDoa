@@ -144,6 +144,7 @@ router.get('/', async (req, res) => {
   try {
     const filter = { ativo: true };
     if (req.query.categoria) filter.categoria = req.query.categoria;
+    if (req.query.tropa) filter['relacionados.tropas'] = String(req.query.tropa).trim();
     const dicas = await Dica.find(filter).sort({ destaque: -1, ordem: 1, criadoEm: -1 });
     res.json(dicas);
   } catch (e) { res.status(500).json({ erro: e.message }); }

@@ -118,7 +118,11 @@ export async function executarMigracaoAutomatica() {
     relatorio.tropas = await migrarLista(Tropa, TODAS_TROPAS, x => ({ nome: x.nome }));
     const tropasRemovidas = await Tropa.deleteMany({ nome:'Hoplitas Imortais' });
     relatorio.tropasRemovidas = tropasRemovidas.deletedCount || 0;
-    relatorio.niveis = await migrarLista(Nivel, NIVEIS_DATA, x => ({ nivel: x[0] }), x => ({ nivel: x[0], xp: x[1] ?? null }));
+    const niveisLegados = await Nivel.find({ xp:{ $ne:null }, $or:[{ poderNecessario:{ $exists:false } }, { poderNecessario:null }] }).lean();
+    for (const nivel of niveisLegados) await Nivel.updateOne({ _id:nivel._id }, { $set:{ poderNecessario:nivel.xp } });
+    relatorio.niveisLegadoMigrados = niveisLegados.length;
+    relatorio.niveis = await migrarLista(Nivel, NIVEIS_DATA, x => ({ nivel:x[0] }), x => ({ nivel:x[0], poderNecessario:x[1] ?? null }));
+    await Nivel.updateMany({ xp:{ $exists:true } }, { $unset:{ xp:'' } });
     relatorio.dragoes = await migrarLista(Dragao, DRAGOES_SEED, x => ({ slug: x.id }), normalizarDragao, { mergeArrays:{ niveis:'nivel', habilidades:'id' } });
     relatorio.dragoesLegadoLimpos = await corrigirCatalogoDragoesLegado();
     const edificios = documentosEdificios();

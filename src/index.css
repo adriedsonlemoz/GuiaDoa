@@ -927,3 +927,25 @@
 @media (max-width:390px) {
   .troop-training-table-head,.troop-training-table-row { grid-template-columns:minmax(0,1fr) 66px 78px; padding-left:8px; padding-right:8px; }
 }
+
+/* Beta 2.32 · tabelas compactas usadas em Dragões/Níveis */
+.game-info-table {
+  overflow: hidden;
+  border: 1px solid #7b7150;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #948a67 0%, #857b5c 100%);
+  padding: 7px 10px 8px;
+  box-shadow: inset 0 1px 0 rgba(255,248,217,.16);
+}
+.game-info-table .game-info-table-row {
+  color: #f5ead0;
+  grid-template-columns: minmax(0,1fr) auto;
+}
+.game-info-table .game-info-table-row + .game-info-table-row {
+  border-top: 1px solid rgba(255,241,198,.12);
+}
+.game-info-table .game-info-table-row strong {
+  color: #ffe39a;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}

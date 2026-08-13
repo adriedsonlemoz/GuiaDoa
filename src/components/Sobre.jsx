@@ -7,7 +7,8 @@ import { useI18n } from '../hooks/useI18n.jsx';
 import { DISPLAY_VERSION } from '../version.js';
 
 const CHANGELOG_CONFIG = [
-  { ver: DISPLAY_VERSION, icon: '⚔️', key: 'latest', color: '#A88530', count: 4 },
+  { ver: DISPLAY_VERSION, icon: '🏰', key: 'latest', color: '#4E716A', count: 4 },
+  { ver: 'Beta 2.31', icon: '🐉', key: 'history.2_31', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.16', icon: '📜', key: 'history.2_16', color: '#5C7FA3', count: 4 },
   { ver: 'Beta 2.15', icon: '⚔️', key: 'history.2_15', color: '#5C7FA3', count: 4 },
   { ver: 'Beta 2.14', icon: '📚', key: 'history.2_14', color: '#5C7FA3', count: 4 },

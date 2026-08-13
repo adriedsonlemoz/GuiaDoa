@@ -43,7 +43,7 @@ const PesquisaSchema = new mongoose.Schema({
   niveis: [{ nivel: Number, tempo: String }],
 }, { collection: COLLECTIONS.pesquisas });
 
-const NivelSchema = new mongoose.Schema({ nivel: Number, xp: Number }, { collection: COLLECTIONS.niveis });
+const NivelSchema = new mongoose.Schema({ nivel:Number, poderNecessario:Number, xp:Number }, { collection: COLLECTIONS.niveis });
 const ReinoSchema = new mongoose.Schema({
   id: Number, slug: String, nome: String, fuso: String, regiao: String, idioma: String,
 }, { collection: COLLECTIONS.reinos });

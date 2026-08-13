@@ -107,7 +107,7 @@ export const buildContext = async (locale = 'pt-BR') => {
     // ── NÍVEIS DO CASTELO ─────────────────────────────────────────────────────
     const niveisTxt = niveis.length
       ? niveis.map(n =>
-          `  Nv${n.nivel}: ${n.xp != null ? n.xp.toLocaleString(locale) + ' XP' : 'desconhecido'}`
+          `  Nv${n.nivel}: ${(n.poderNecessario ?? n.xp) != null ? (n.poderNecessario ?? n.xp).toLocaleString(locale) + (String(locale).startsWith('en') ? ' power' : ' de poder') : (String(locale).startsWith('en') ? 'unknown' : 'desconhecido')}`
         ).join('\n')
       : 'Tabela de níveis não cadastrada.';
 

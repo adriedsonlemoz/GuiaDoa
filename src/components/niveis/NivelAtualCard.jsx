@@ -1,49 +1,48 @@
 import React from 'react';
-import { C } from '../../theme.js';
 import { useI18n } from '../../hooks/useI18n.jsx';
 import { formatNumber } from './niveisUtils.js';
 
-const ProgressBar = ({ pct, color = C.ACCENT }) => (
-  <div style={{ height: 6, borderRadius: 99, background: `${C.BORDER_SOFT}55`, overflow: 'hidden', border: `1px solid ${C.BORDER_SOFT}` }}>
-    <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: `linear-gradient(90deg, ${color}99, ${color})`, borderRadius: 99, transition: 'width 0.5s ease' }} />
-  </div>
-);
-
-export default function NivelAtualCard({ carregando, poderAtualText, nivelExato, maxNivel, progressoNivel, proximaMeta, faltamParaMeta, atingiuMax }) {
+export default function NivelAtualCard({ carregando, poderAtualText, nivelConfirmado, nivelPossivelMax, temLacuna, progressoNivel, proximaMeta, faltamParaMeta, atingiuMax }) {
   const { t, locale } = useI18n();
-  const pct = Math.min(progressoNivel, 100);
+  if (carregando) return <div className="game-panel" style={{ padding:24, textAlign:'center' }}>{t('levels.loading')}</div>;
+
   return (
-    <div className="tw-card mb-3 overflow-hidden" style={{ background: `linear-gradient(135deg, ${C.BG_HEADER} 0%, #0f2540 100%)`, border: `2px solid ${C.BORDER}` }}>
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <div>
-          <p className="font-nunito font-bold text-[0.6rem] uppercase tracking-widest m-0 mb-0.5" style={{ color: `${C.ACCENT}99` }}>{t('levels.current_level')}</p>
-          {carregando
-            ? <p className="font-cinzel font-bold text-4xl m-0" style={{ color: C.ACCENT }}>…</p>
-            : <p className="font-cinzel font-bold text-5xl leading-none m-0" style={{ color: C.ACCENT }}>{poderAtualText ? (nivelExato > 0 ? nivelExato : '0') : '—'}</p>}
-          {!carregando && nivelExato > 0 && <p className="font-nunito font-semibold text-xs m-0 mt-1" style={{ color: `${C.ACCENT}88` }}>{t('levels.of_levels', { count: maxNivel })}</p>}
-        </div>
-        <div className="relative flex items-center justify-center" style={{ width: 72, height: 72 }}>
-          <svg width="72" height="72" style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx="36" cy="36" r="30" fill="none" stroke={`${C.ACCENT}22`} strokeWidth="6" />
-            <circle cx="36" cy="36" r="30" fill="none" stroke={C.ACCENT} strokeWidth="6" strokeLinecap="round"
-              strokeDasharray={`${2 * Math.PI * 30}`} strokeDashoffset={`${2 * Math.PI * 30 * (1 - pct / 100)}`} style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
-          </svg>
-          <span className="absolute font-nunito font-black text-sm" style={{ color: C.ACCENT }}>{poderAtualText ? `${Math.round(pct)}%` : '—'}</span>
-        </div>
+    <section className="game-panel" style={{ marginBottom:10 }}>
+      <div className="game-section-title"><span>{t('levels.progress_summary')}</span><span className="game-section-title-aside">{poderAtualText || '—'}</span></div>
+      <div style={{ padding:'14px 14px 12px' }}>
+        {!poderAtualText ? (
+          <p className="game-list-copy" style={{ margin:0, textAlign:'center' }}>{t('levels.enter_power_help')}</p>
+        ) : (
+          <>
+            <div style={{ display:'flex', justifyContent:'space-between', gap:12, alignItems:'flex-end' }}>
+              <div>
+                <div style={{ fontSize:'.67rem', fontWeight:800, color:'#667064', textTransform:'uppercase', letterSpacing:'.04em' }}>{t('levels.confirmed_level')}</div>
+                <div style={{ fontSize:'2rem', lineHeight:1, fontWeight:900, color:'#294b47', marginTop:3 }}>Nv.{nivelConfirmado || 0}</div>
+                {temLacuna ? <div style={{ fontSize:'.72rem', color:'#765f34', marginTop:5, fontWeight:700 }}>{t('levels.possible_until', { level:nivelPossivelMax })}</div> : null}
+              </div>
+              {proximaMeta ? (
+                <div style={{ textAlign:'right' }}>
+                  <div style={{ fontSize:'.67rem', fontWeight:800, color:'#667064', textTransform:'uppercase' }}>{t('levels.next_known')}</div>
+                  <div style={{ fontSize:'1.15rem', fontWeight:900, color:'#425f57' }}>Nv.{proximaMeta[0]}</div>
+                  <div style={{ fontSize:'.7rem', color:'#5d655b', marginTop:2 }}>{t('levels.remaining_short', { amount:formatNumber(faltamParaMeta, locale) })}</div>
+                </div>
+              ) : null}
+            </div>
+            {!atingiuMax && proximaMeta ? (
+              <div style={{ marginTop:12 }}>
+                <div style={{ height:8, overflow:'hidden', background:'rgba(92,102,83,.18)', border:'1px solid rgba(106,91,55,.32)', borderRadius:2 }}>
+                  <div style={{ height:'100%', width:`${Math.max(0,Math.min(100,progressoNivel))}%`, background:'linear-gradient(90deg,#496f69,#2f5a55)' }} />
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', marginTop:4, color:'#697166', fontSize:'.62rem', fontWeight:700 }}>
+                  <span>Nv.{nivelConfirmado || 0}</span><span>{Math.round(progressoNivel)}%</span><span>Nv.{proximaMeta[0]}</span>
+                </div>
+                {temLacuna ? <p className="game-list-copy" style={{ marginTop:8 }}>{t('levels.unknown_gap_help')}</p> : null}
+              </div>
+            ) : null}
+            {atingiuMax ? <div className="game-badge" style={{ marginTop:10 }}>{t('levels.max_reached')}</div> : null}
+          </>
+        )}
       </div>
-      {poderAtualText && !atingiuMax && (
-        <div className="px-4 pb-3">
-          <div className="flex justify-between mb-1">
-            <span className="font-nunito font-semibold text-[0.6rem]" style={{ color: `${C.ACCENT}88` }}>{t('levels.level_label', { level: nivelExato })}</span>
-            <span className="font-nunito font-semibold text-[0.6rem]" style={{ color: `${C.ACCENT}88` }}>{t('levels.level_label', { level: proximaMeta?.[0] ?? '—' })}</span>
-          </div>
-          <ProgressBar pct={progressoNivel} />
-          <p className="font-nunito font-semibold text-[0.65rem] text-center mt-1 m-0" style={{ color: `${C.ACCENT}77` }}>
-            {t('levels.remaining_to_level', { amount: formatNumber(faltamParaMeta, locale), level: proximaMeta?.[0] ?? '—' })}
-          </p>
-        </div>
-      )}
-      {poderAtualText && atingiuMax && <div className="px-4 pb-3 text-center"><p className="font-cinzel font-bold text-sm m-0" style={{ color: C.ACCENT }}>{t('levels.max_reached')}</p></div>}
-    </div>
+    </section>
   );
 }

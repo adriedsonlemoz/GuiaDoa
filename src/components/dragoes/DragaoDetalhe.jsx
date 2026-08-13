@@ -12,6 +12,7 @@ function getSavedLevel(id) {
 }
 
 const SkillModal = ({ skill, onClose }) => {
+  const { t } = useI18n();
   if (!skill) return null;
   return (
     <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(22,29,27,.66)', display:'flex', alignItems:'flex-end', justifyContent:'center', padding:12 }}>
@@ -20,12 +21,12 @@ const SkillModal = ({ skill, onClose }) => {
           {skill.imagem ? <img src={skill.imagem} alt="" style={{ width:54, height:54, objectFit:'cover', borderRadius:6, border:'1px solid #b69b63' }} /> : <div style={{ width:54, height:54, display:'grid', placeItems:'center', fontSize:24, border:'1px solid #b69b63', borderRadius:6 }}>✦</div>}
           <div style={{ flex:1 }}>
             <div style={{ fontWeight:900, fontSize:'1rem' }}>{skill.nome}</div>
-            <div style={{ opacity:.72, fontSize:'.72rem', marginTop:2 }}>{skill.tipo === 'comum' ? 'Habilidade comum' : 'Habilidade de batalha'}</div>
+            <div style={{ opacity:.72, fontSize:'.72rem', marginTop:2 }}>{skill.tipo === 'comum' ? t('dragons.skill_type_common') : t('dragons.skill_type_battle')}</div>
           </div>
           <button type="button" className="game-action-button" onClick={onClose} style={{ width:36, minWidth:36, padding:6 }}>✕</button>
         </div>
         <div style={{ padding:16, color:'#3f493f', lineHeight:1.6, whiteSpace:'pre-wrap' }}>
-          {skill.descricao || 'A descrição desta habilidade ainda não foi cadastrada.'}
+          {skill.descricao || t('dragons.skill_pending')}
         </div>
       </div>
     </div>
@@ -79,11 +80,11 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
           {dragao.imagem ? <img src={dragao.imagem} alt={content(dragao,'nome')} style={{ width:84, height:80, objectFit:'cover', borderRadius:7, border:'1.5px solid #b99b62', background:'#263b39' }} /> : <div style={{ width:84, height:80, display:'grid', placeItems:'center', fontSize:42 }}>🐉</div>}
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ fontWeight:900, fontSize:'1.08rem' }}>{content(dragao,'nome')}</div>
-            <div style={{ opacity:.72, fontSize:'.75rem', marginTop:2 }}>{content(dragao,'elemento') || 'Dragão'}</div>
+            <div style={{ opacity:.72, fontSize:'.75rem', marginTop:2 }}>{content(dragao,'elemento') || t('dragons.dragon_label')}</div>
             <div style={{ marginTop:9, display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
               <span style={{ fontSize:'.7rem', fontWeight:800, opacity:.8 }}>{t('dragons.my_level')}</span>
               <button type="button" className="game-action-button" style={{ padding:'4px 10px' }} onClick={()=>setMeuNivel(v=>Math.max(0,v-1))}>−</button>
-              <strong style={{ minWidth:34, textAlign:'center' }}>Nv.{meuNivel}</strong>
+              <strong style={{ minWidth:34, textAlign:'center' }}>{t('common.level_short')}{meuNivel}</strong>
               <button type="button" className="game-action-button" style={{ padding:'4px 10px' }} onClick={()=>setMeuNivel(v=>Math.min(90,v+1))}>+</button>
             </div>
           </div>
@@ -101,8 +102,8 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
           <GameSectionTitle>{t('dragons.known_attributes')}</GameSectionTitle>
           <p className="game-list-copy" style={{ margin:'8px 12px' }}>{t('dragons.sparse_levels_help')}</p>
           <div style={{ display:'flex', gap:6, overflowX:'auto', padding:'0 12px 4px' }}>
-            <button type="button" className={`game-tab ${nivelConsulta === 0 ? 'is-active':''}`} onClick={()=>setNivelConsulta(0)}>Nv.0</button>
-            {niveis.map(n => <button type="button" key={n.nivel} className={`game-tab ${nivelConsulta === n.nivel ? 'is-active':''}`} onClick={()=>setNivelConsulta(n.nivel)}>Nv.{n.nivel}</button>)}
+            <button type="button" className={`game-tab ${nivelConsulta === 0 ? 'is-active':''}`} onClick={()=>setNivelConsulta(0)}>{t('common.level_short')}0</button>
+            {niveis.map(n => <button type="button" key={n.nivel} className={`game-tab ${nivelConsulta === n.nivel ? 'is-active':''}`} onClick={()=>setNivelConsulta(n.nivel)}>{t('common.level_short')}{n.nivel}</button>)}
           </div>
           {snapshot ? <div style={{ padding:'0 12px 12px' }}><AttributeTable snapshot={snapshot} locale={locale} t={t} />{snapshot.nivel < 51 ? <p className="game-list-copy" style={{ marginTop:8 }}>{t('dragons.elemental_from_51')}</p> : null}</div> : <div style={{ padding:24, textAlign:'center' }}>{t('dragons.attributes_unavailable')}</div>}
         </section>
@@ -122,9 +123,9 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
         <section className="game-panel" style={{ marginTop:8 }}>
           <GameSectionTitle>{t('dragons.how_to_get')}</GameSectionTitle>
           <div style={{ padding:14 }}>
-            <div style={{ fontWeight:900, color:'#334d48', marginBottom:7 }}>{obt.tipo === 'fragmentos' ? '🧩 Fragmentos' : obt.tipo === 'recompensa' ? '🎁 Recompensa' : obt.tipo === 'inicial' ? '🏰 Inicial' : '🐉 Captura'}</div>
+            <div style={{ fontWeight:900, color:'#334d48', marginBottom:7 }}>{obt.tipo === 'fragmentos' ? `🧩 ${t('dragons.obtain_fragments')}` : obt.tipo === 'recompensa' ? `🎁 ${t('dragons.obtain_reward')}` : obt.tipo === 'inicial' ? `🏰 ${t('dragons.obtain_initial')}` : `🐉 ${t('dragons.obtain_capture')}`}</div>
             <p style={{ margin:0, lineHeight:1.55, color:'#574f40' }}>{obt.resumo || t('dragons.capture_pending')}</p>
-            {obt.dia ? <div className="game-info-table" style={{ marginTop:12 }}><div className="game-info-table-row"><span>Dia</span><strong>{obt.dia}</strong></div></div> : null}
+            {obt.dia ? <div className="game-info-table" style={{ marginTop:12 }}><div className="game-info-table-row"><span>{t('common.day')}</span><strong>{obt.dia}</strong></div></div> : null}
             {obt.fonte ? <div className="game-info-table" style={{ marginTop:12 }}><div className="game-info-table-row"><span>{t('dragons.source')}</span><strong>{obt.fonte.nome || obt.fonte.slug}</strong></div>{(obt.fonte.nivelMin != null || obt.fonte.nivelMax != null) ? <div className="game-info-table-row"><span>{t('dragons.field_levels')}</span><strong>{obt.fonte.nivelMin ?? '?'}–{obt.fonte.nivelMax ?? '?'}</strong></div> : null}</div> : null}
             {obt.fonte?.modulo === 'campos' ? <p className="game-list-copy" style={{ marginTop:10 }}>{t('dragons.fields_future_link')}</p> : null}
           </div>

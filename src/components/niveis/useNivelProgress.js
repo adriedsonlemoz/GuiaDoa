@@ -1,116 +1,68 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useGameData } from '../../data/GameDataContext.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
-import { calcularProgresso, formatNumber, formatSufixo, unformat } from './niveisUtils.js';
+import { calcularMetaNivel, calcularProgresso, formatNumber, formatSufixo, unformat } from './niveisUtils.js';
+
+const CURRENT_KEY = 'doa_poder_niveis';
+const HISTORY_KEY = 'doa_niveis_historico_v2';
+const GOAL_KEY = 'doa_niveis_meta_v2';
+
+function readHistory() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed.filter(x => Number(x?.power) > 0).slice(0, 8) : [];
+  } catch { return []; }
+}
 
 export default function useNivelProgress() {
-  const tabelaRef = useRef(null);
   const inputRef = useRef(null);
-  const nivelAtualRef = useRef(null);
   const { niveis: niveisOnline, loading: carregando } = useGameData();
   const { t, locale } = useI18n();
-  const todosNiveis = useMemo(() => niveisOnline.map(item => [item.nivel, item.xp ?? null]), [niveisOnline]);
-
-  const [promptAberto, setPromptAberto] = useState(true);
-  const [resultadoDialog, setResultadoDialog] = useState({ open: false, titulo: '', mensagem: '', tipo: 'success' });
-  const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
-  const [isDirty, setIsDirty] = useState(false);
-  const [poderAtualText, setPoderAtualText] = useState(() => {
-    const saved = localStorage.getItem('doa_poder_niveis');
-    return saved ? formatNumber(saved, locale) : '';
-  });
-  const [poderAntigoText, setPoderAntigoText] = useState(() => {
-    const saved = localStorage.getItem('doa_poder_antigo');
-    return saved ? formatNumber(saved, locale) : '';
-  });
-
-  useEffect(() => {
-    window.temAlteracoesNaoSalvas = isDirty;
-    const handleBeforeUnload = event => {
-      if (isDirty) {
-        event.preventDefault();
-        event.returnValue = '';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.temAlteracoesNaoSalvas = false;
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [isDirty]);
-
-  useEffect(() => {
-    const current = unformat(poderAtualText);
-    const old = unformat(poderAntigoText);
-    if (current) setPoderAtualText(formatNumber(current, locale));
-    if (old) setPoderAntigoText(formatNumber(old, locale));
-  // Reformat only when the display locale changes.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locale]);
+  const todosNiveis = useMemo(() => niveisOnline.map(item => [item.nivel, item.poderNecessario ?? item.xp ?? null]), [niveisOnline]);
+  const [savedPower, setSavedPower] = useState(() => Number(localStorage.getItem(CURRENT_KEY) || 0));
+  const [poderAtualText, setPoderAtualText] = useState(() => savedPower ? formatNumber(savedPower, locale) : '');
+  const [historico, setHistorico] = useState(readHistory);
+  const [metaNivel, setMetaNivel] = useState(() => Number(localStorage.getItem(GOAL_KEY) || 0));
+  const [toast, setToast] = useState({ open:false, message:'', severity:'success' });
+  const [verTodos, setVerTodos] = useState(false);
 
   const currentPowerNum = unformat(poderAtualText);
-  const oldPowerNum = unformat(poderAntigoText);
-  const diferencaPoder = currentPowerNum - oldPowerNum;
+  const diferencaPoder = currentPowerNum - savedPower;
+  const isDirty = currentPowerNum > 0 && currentPowerNum !== savedPower;
   const progresso = useMemo(() => calcularProgresso(todosNiveis, currentPowerNum), [todosNiveis, currentPowerNum]);
+  const metasConhecidas = useMemo(() => todosNiveis.filter(([, poder]) => poder != null), [todosNiveis]);
+  const metaSalvaValida = metasConhecidas.some(([nivel]) => Number(nivel) === Number(metaNivel));
+  const metaEfetiva = metaSalvaValida ? metaNivel : (progresso.proximaMeta?.[0] || progresso.ultimoConhecido?.[0] || 0);
+  const meta = useMemo(() => calcularMetaNivel(todosNiveis, metaEfetiva, currentPowerNum), [todosNiveis, metaEfetiva, currentPowerNum]);
 
-  useEffect(() => {
-    if (!carregando && progresso.nivelExato > 0 && nivelAtualRef.current && tabelaRef.current) {
-      const timer = setTimeout(() => nivelAtualRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 400);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [carregando, progresso.nivelExato]);
-
-  const closeToast = () => setToast(current => ({ ...current, open: false }));
   const handleInputPower = event => {
     const number = unformat(event.target.value);
-    setPoderAtualText(number === 0 ? '' : formatNumber(number, locale));
-    setIsDirty(true);
+    setPoderAtualText(number ? formatNumber(number, locale) : '');
   };
-  const handleInputAntigo = event => {
-    const number = unformat(event.target.value);
-    setPoderAntigoText(number === 0 ? '' : formatNumber(number, locale));
-    setIsDirty(true);
+  const handleMeta = event => {
+    const value = Number(event.target.value || 0);
+    setMetaNivel(value);
+    try { localStorage.setItem(GOAL_KEY, String(value)); } catch { /* local */ }
   };
-
   const handleSave = () => {
-    localStorage.setItem('doa_poder_niveis', currentPowerNum);
-    localStorage.setItem('doa_poder_antigo', oldPowerNum);
-    setIsDirty(false);
-    if (diferencaPoder > 0 && oldPowerNum > 0) {
-      setResultadoDialog({
-        open: true,
-        titulo: t('levels.report_up_title'),
-        mensagem: t('levels.report_up', { amount: formatSufixo(diferencaPoder, locale) }),
-        tipo: 'success',
-      });
-    } else if (diferencaPoder < 0 && oldPowerNum > 0) {
-      setResultadoDialog({
-        open: true,
-        titulo: t('levels.report_down_title'),
-        mensagem: t('levels.report_down', { amount: formatSufixo(Math.abs(diferencaPoder), locale) }),
-        tipo: 'warning',
-      });
-    } else {
-      setToast({ open: true, message: t('levels.saved'), severity: 'success' });
-    }
+    if (!currentPowerNum) return;
+    const now = new Date().toISOString();
+    const previous = savedPower;
+    try { localStorage.setItem(CURRENT_KEY, String(currentPowerNum)); } catch { /* local */ }
+    const nextHistory = [{ power:currentPowerNum, at:now }, ...historico.filter(x => Number(x.power) !== currentPowerNum)].slice(0, 8);
+    setHistorico(nextHistory);
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory)); } catch { /* local */ }
+    setSavedPower(currentPowerNum);
+    const message = previous && currentPowerNum !== previous
+      ? t(currentPowerNum > previous ? 'levels.saved_gain' : 'levels.saved_loss', { amount:formatSufixo(Math.abs(currentPowerNum - previous), locale) })
+      : t('levels.saved');
+    setToast({ open:true, message, severity: currentPowerNum < previous ? 'warning' : 'success' });
   };
-
-  const handleAtualizarSim = () => {
-    if (poderAtualText) {
-      setPoderAntigoText(poderAtualText);
-      setPoderAtualText('');
-      setIsDirty(true);
-    }
-    setPromptAberto(false);
-    setTimeout(() => inputRef.current?.focus(), 300);
-  };
+  const restoreHistory = power => setPoderAtualText(formatNumber(power, locale));
 
   return {
-    tabelaRef, inputRef, nivelAtualRef, carregando, todosNiveis,
-    promptAberto, setPromptAberto, resultadoDialog, setResultadoDialog, toast, closeToast,
-    poderAtualText, poderAntigoText, isDirty, currentPowerNum, diferencaPoder,
-    isPositivo: diferencaPoder > 0, ...progresso,
-    handleInputPower, handleInputAntigo, handleSave, handleAtualizarSim,
+    inputRef, carregando, todosNiveis, metasConhecidas, metaNivel:metaEfetiva, meta, historico, verTodos, setVerTodos,
+    toast, closeToast:()=>setToast(v=>({...v,open:false})), poderAtualText, currentPowerNum, savedPower, diferencaPoder, isDirty,
+    ...progresso, handleInputPower, handleMeta, handleSave, restoreHistory,
   };
 }

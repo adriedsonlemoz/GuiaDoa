@@ -27,3 +27,15 @@ test('Admin de dicas gerencia resumo, tipo, leitura, idiomas e relações', () =
     assert.match(admin, new RegExp(token));
   }
 });
+
+
+test('Dicas seguem paleta de pergaminho e não exibem botão de voltar duplicado', () => {
+  const tela = read('src/components/Dicas.jsx');
+  const card = read('src/components/dicas/DicaCard.jsx');
+  const artigo = read('src/components/dicas/DicaArtigo.jsx');
+  const contexto = read('src/components/dicas/DicaGameContext.jsx');
+  assert.doesNotMatch(tela, /setRoute\('home'\)/);
+  assert.doesNotMatch(tela + card + contexto, /BG_HEADER|#294f7a|#274d78/);
+  assert.match(artigo, /createPortal/);
+  assert.match(artigo, /document\.body/);
+});

@@ -18,20 +18,16 @@ const Dicas = ({ setRoute }) => {
     <div style={{ maxWidth: 640, margin: '0 auto', paddingBottom: 28, animation: 'reveal-up 0.4s ease both' }}>
       <Toast {...feed.toast} onClose={feed.closeToast} />
 
-      <div style={{ padding: '10px 12px 0' }}>
-        <button onClick={() => setRoute('home')} aria-label={t('common.back')} style={{ background: C.BG_CARD, border: `1px solid ${C.BORDER_SOFT}`, borderRadius: 10, color: C.TEXT_SECONDARY, width: 36, height: 36, cursor: 'pointer', fontSize: '1rem', boxShadow: '0 2px 8px rgba(62,47,28,.05)' }}>←</button>
-      </div>
-
-      <section style={{ margin: '10px 12px 13px', padding: '19px 17px', borderRadius: 18, background: `linear-gradient(145deg, ${C.BG_HEADER}, #294f7a)`, border: '1px solid rgba(200,168,74,.36)', boxShadow: '0 10px 28px rgba(28,58,94,.16)', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', right: -18, top: -24, fontSize: 86, opacity: .07 }}>📚</div>
-        <div className="font-nunito" style={{ color: '#e7c96e', fontSize: '.64rem', fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase' }}>{t('tips.library')}</div>
-        <h1 className="font-cinzel" style={{ color: '#fff8e8', fontSize: '1.23rem', margin: '5px 0 0' }}>{t('tips.title')}</h1>
-        <p className="font-nunito" style={{ color: 'rgba(255,255,255,.72)', fontSize: '.77rem', lineHeight: 1.5, margin: '6px 0 0', maxWidth: 430 }}>{t('tips.subtitle_long')}</p>
-        <div style={{ marginTop: 13, display: 'flex', gap: 8, alignItems: 'center', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.11)', borderRadius: 11, padding: '9px 11px' }}>
+      <section style={{ margin: '12px 12px 13px', padding: '18px 17px', borderRadius: 18, background: `linear-gradient(145deg, ${C.BG_CARD_TOP} 0%, ${C.BG_CARD} 70%, #EFE1B9 100%)`, border: `1.5px solid ${C.BORDER}`, boxShadow: '0 8px 22px rgba(62,47,28,.10), inset 0 1px 0 rgba(255,248,238,.75)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', right: -16, top: -22, fontSize: 84, opacity: .055, filter: 'sepia(1)' }}>📚</div>
+        <div className="font-nunito" style={{ color: C.ACCENT_DEEP, fontSize: '.64rem', fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase' }}>{t('tips.library')}</div>
+        <h1 className="font-cinzel" style={{ color: C.TEXT_PRIMARY, fontSize: '1.23rem', margin: '5px 0 0' }}>{t('tips.title')}</h1>
+        <p className="font-nunito" style={{ color: C.TEXT_SECONDARY, fontSize: '.77rem', lineHeight: 1.5, margin: '6px 0 0', maxWidth: 430 }}>{t('tips.subtitle_long')}</p>
+        <div style={{ marginTop: 13, display: 'flex', gap: 8, alignItems: 'center', background: C.BG_INPUT, border: `1px solid ${C.BORDER_SOFT}`, borderRadius: 11, padding: '9px 11px' }}>
           <span style={{ opacity: .72 }}>⌕</span>
           <input value={feed.busca} onChange={e => feed.setBusca(e.target.value)} placeholder={t('tips.search_placeholder')} aria-label={t('tips.search_placeholder')}
-            style={{ flex: 1, minWidth: 0, border: 0, outline: 0, background: 'transparent', color: '#fff8e8', fontFamily: 'Nunito, sans-serif', fontSize: '.76rem' }} />
-          {feed.busca && <button onClick={() => feed.setBusca('')} style={{ border: 0, background: 'transparent', color: '#e7c96e', cursor: 'pointer' }}>✕</button>}
+            style={{ flex: 1, minWidth: 0, border: 0, outline: 0, background: 'transparent', color: C.TEXT_PRIMARY, fontFamily: 'Nunito, sans-serif', fontSize: '.76rem' }} />
+          {feed.busca && <button onClick={() => feed.setBusca('')} style={{ border: 0, background: 'transparent', color: C.ACCENT_DEEP, cursor: 'pointer' }}>✕</button>}
         </div>
       </section>
 

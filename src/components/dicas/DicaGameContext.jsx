@@ -49,25 +49,25 @@ export default function DicaGameContext({ dica, setRoute }) {
   return (
     <div style={{ marginTop: 18, display: 'grid', gap: 12 }}>
       {capacidade > 0 && dica.slug === 'guia-inicial-construcoes' && (
-        <div style={{ borderRadius: 14, padding: '14px 15px', background: `linear-gradient(135deg, ${C.BG_HEADER}, #274d78)`, color: '#fff', boxShadow: '0 6px 18px rgba(28,58,94,.16)' }}>
-          <div className="font-cinzel" style={{ fontSize: '.73rem', color: '#e7c96e', letterSpacing: '.06em', textTransform: 'uppercase' }}>{t('tips.live_data')}</div>
+        <div style={{ borderRadius: 14, padding: '14px 15px', background: `linear-gradient(135deg, ${C.BG_CARD_TOP}, ${C.BG_CARD})`, color: C.TEXT_PRIMARY, border: `1.5px solid ${C.BORDER}`, boxShadow: '0 6px 18px rgba(62,47,28,.09), inset 0 1px 0 rgba(255,248,238,.7)' }}>
+          <div className="font-cinzel" style={{ fontSize: '.73rem', color: C.ACCENT_DEEP, letterSpacing: '.06em', textTransform: 'uppercase' }}>{t('tips.live_data')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
             <div>
-              <div className="font-nunito" style={{ fontSize: '.66rem', opacity: .72 }}>{t('tips.fountain_level_35')}</div>
+              <div className="font-nunito" style={{ fontSize: '.66rem', color: C.TEXT_MUTED }}>{t('tips.fountain_level_35')}</div>
               <div className="font-cinzel" style={{ fontSize: '1.05rem', marginTop: 2 }}>{fmt(capacidade, locale)}</div>
-              <div className="font-nunito" style={{ fontSize: '.64rem', opacity: .72 }}>{t('tips.troops_capacity')}</div>
+              <div className="font-nunito" style={{ fontSize: '.64rem', color: C.TEXT_MUTED }}>{t('tips.troops_capacity')}</div>
             </div>
             <div>
-              <div className="font-nunito" style={{ fontSize: '.66rem', opacity: .72 }}>{t('tips.plan_38_fountains')}</div>
+              <div className="font-nunito" style={{ fontSize: '.66rem', color: C.TEXT_MUTED }}>{t('tips.plan_38_fountains')}</div>
               <div className="font-cinzel" style={{ fontSize: '1.05rem', marginTop: 2 }}>{fmt(capacidade * 38, locale)}</div>
-              <div className="font-nunito" style={{ fontSize: '.64rem', opacity: .72 }}>{t('tips.before_bonuses')}</div>
+              <div className="font-nunito" style={{ fontSize: '.64rem', color: C.TEXT_MUTED }}>{t('tips.before_bonuses')}</div>
             </div>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:10, paddingTop:10, borderTop:'1px solid rgba(255,255,255,.12)' }}>
-            <div className="font-nunito" style={{ fontSize:'.67rem', opacity:.82 }}>🏰 {t('tips.main_city_spaces', { count: LIMITES.cidadePrincipal })}</div>
-            <div className="font-nunito" style={{ fontSize:'.67rem', opacity:.82 }}>🐉💧 {t('tips.water_dragon_spaces', { count: LIMITES.cidadeAgua })}</div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:10, paddingTop:10, borderTop:`1px solid ${C.BORDER_SOFT}` }}>
+            <div className="font-nunito" style={{ fontSize:'.67rem', color:C.TEXT_SECONDARY }}>🏰 {t('tips.main_city_spaces', { count: LIMITES.cidadePrincipal })}</div>
+            <div className="font-nunito" style={{ fontSize:'.67rem', color:C.TEXT_SECONDARY }}>🐉💧 {t('tips.water_dragon_spaces', { count: LIMITES.cidadeAgua })}</div>
           </div>
-          <div className="font-nunito" style={{ fontSize: '.64rem', opacity: .66, marginTop: 9 }}>{t('tips.live_data_note')}</div>
+          <div className="font-nunito" style={{ fontSize: '.64rem', color: C.TEXT_MUTED, marginTop: 9 }}>{t('tips.live_data_note')}</div>
         </div>
       )}
 

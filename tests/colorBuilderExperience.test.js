@@ -53,3 +53,29 @@ test('Bandeiras mantêm cópia direta e agora possuem busca rápida', () => {
   assert.match(flags, /safeCopy/);
   assert.match(flags, /FLAGS\.filter/);
 });
+
+
+test('Construtor prioriza caracteres aceitos pelo jogo e remove emojis gráficos', () => {
+  const data = read('src/components/colorbuilder/data.js');
+  const chars = read('src/components/colorbuilder/CharacterTools.jsx');
+  const text = read('src/components/colorbuilder/ModoTexto.jsx');
+  assert.match(data, /sanitizeGameText/);
+  assert.match(data, /hasUnsupportedGameEmoji/);
+  assert.doesNotMatch(data, /'⭐'/);
+  assert.doesNotMatch(data, /'💫'/);
+  assert.doesNotMatch(data, /'✨'/);
+  assert.doesNotMatch(data, /'🌟'/);
+  assert.match(data, /ε｡♡‿♡｡/);
+  assert.match(data, /☆','★|★','☆/);
+  assert.match(chars, /game_safe_note/);
+  assert.match(text, /emoji_removed/);
+});
+
+test('Modelos de General usam estrelas de texto e cores de 5 e 4 estrelas', () => {
+  const data = read('src/components/colorbuilder/data.js');
+  assert.match(data, /general_5_laranja/);
+  assert.match(data, /\[FF8C00\]Nova ★★★★★/);
+  assert.match(data, /general_4_roxo/);
+  assert.match(data, /\[8A2BE2\]Nova ★★★★/);
+  assert.doesNotMatch(data, /General Lendário ⭐/);
+});

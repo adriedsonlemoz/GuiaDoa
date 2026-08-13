@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { getFusoOffset, getProfile } from '../utils/storage.js';
 import { useTorneioTimer } from '../hooks/useTorneioTimer.js';
 import { useI18n } from '../hooks/useI18n.jsx';
@@ -110,6 +110,18 @@ const Torneios = () => {
   }, [hubTab]);
 
   const recentItems = useMemo(() => recent.map(getTournament).filter(Boolean), [recent]);
+
+  useEffect(() => {
+    try {
+      const requested = sessionStorage.getItem('guiadoa_open_tournament');
+      if (!requested || !getTournament(requested)) return;
+      sessionStorage.removeItem('guiadoa_open_tournament');
+      setRecent(pushRecentTournament(requested));
+      setActiveId(requested);
+      setDetailTab(getTournament(requested)?.type === 'calculator' ? 'calculator' : 'guide');
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    } catch {}
+  }, []);
 
   const turnoverProps = {
     realm: profile.reino,

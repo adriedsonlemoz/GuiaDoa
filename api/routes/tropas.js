@@ -30,7 +30,10 @@ router.get('/', autenticar, async (req, res) => {
   try {
     const { busca = '', pagina = 1, limite = 50, ordenar = 'nome', dir = '1', tipo } = req.query;
     const filtro = {};
-    if (busca) filtro.nome = { $regex: busca, $options: 'i' };
+    if (busca) {
+      const regex = { $regex: busca, $options: 'i' };
+      filtro.$or = [{ nome: regex }, { aliases: regex }];
+    }
     if (tipo)  filtro.tipo = tipo;
 
     const total  = await Tropa.countDocuments(filtro);

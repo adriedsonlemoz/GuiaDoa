@@ -890,3 +890,40 @@
   .tournament-reward-row { align-items:flex-start; flex-direction:column; }
   .tournament-reward-controls { width:100%; justify-content:flex-end; }
 }
+
+/* ── Troop training planner · Beta 2.30 ───────────────────────────────── */
+.troop-training-panel { margin-top:10px; overflow:hidden; }
+.troop-training-quantity { display:grid; grid-template-columns:minmax(0,1fr) 98px; gap:7px 9px; align-items:end; padding:10px 11px; border-bottom:1px solid rgba(117,104,70,.20); background:rgba(235,226,197,.48); }
+.troop-training-quantity > label { color:#596157; font-size:.58rem; font-weight:850; letter-spacing:.05em; text-transform:uppercase; }
+.troop-training-quantity > input { width:100%; height:34px; padding:4px 8px; border:1px solid #9f8b5e; border-radius:3px; outline:none; background:#f7f0d8; color:#2f3732; font-size:.88rem; font-weight:850; font-variant-numeric:tabular-nums; text-align:center; }
+.troop-training-quantity > input:focus { border-color:#466c61; box-shadow:0 0 0 2px rgba(57,101,91,.12); }
+.troop-training-presets { grid-column:1 / -1; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; }
+.troop-training-presets button { min-height:29px; border:1px solid rgba(69,99,87,.40); border-radius:3px; background:linear-gradient(180deg,#66806f,#4d685d); color:#f6edd6; font-size:.62rem; font-weight:900; cursor:pointer; }
+.troop-training-presets button:active { transform:translateY(1px); }
+.troop-training-power { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 10px; align-items:center; padding:10px 11px; border-bottom:1px solid rgba(117,104,70,.20); background:linear-gradient(180deg,rgba(139,139,98,.64),rgba(119,119,84,.68)); color:#fff8df; }
+.troop-training-power span { font-size:.62rem; font-weight:850; letter-spacing:.04em; text-transform:uppercase; }
+.troop-training-power strong { grid-row:1 / 3; grid-column:2; font-size:1.05rem; line-height:1; font-variant-numeric:tabular-nums; color:#fff1ad; }
+.troop-training-power small { font-size:.55rem; color:rgba(255,248,222,.72); }
+.troop-training-table { background:rgba(231,220,186,.54); }
+.troop-training-table-head,.troop-training-table-row { display:grid; grid-template-columns:minmax(0,1fr) 78px 92px; align-items:center; gap:6px; padding:7px 10px; }
+.troop-training-table-head { background:#665f49; color:#f5ecd3; font-size:.54rem; font-weight:900; letter-spacing:.045em; text-transform:uppercase; }
+.troop-training-table-head span:nth-child(n+2),.troop-training-table-row > span:nth-child(n+2),.troop-training-table-row > strong { text-align:right; }
+.troop-training-table-row { min-height:37px; border-bottom:1px solid rgba(117,104,70,.18); color:#524e40; font-size:.65rem; }
+.troop-training-table-row > span:first-child { min-width:0; display:flex; align-items:center; gap:7px; font-weight:750; }
+.troop-training-table-row > span:first-child b { width:17px; flex:0 0 17px; text-align:center; font-size:.8rem; }
+.troop-training-table-row > span:nth-child(2) { color:#706956; font-variant-numeric:tabular-nums; }
+.troop-training-table-row > strong { color:#34594f; font-size:.67rem; font-variant-numeric:tabular-nums; }
+.troop-training-table-row.is-population { background:rgba(142,148,102,.15); }
+.troop-requirements-block { border-top:1px solid rgba(117,104,70,.24); background:rgba(218,208,178,.44); }
+.troop-subheading { padding:7px 10px; background:rgba(99,94,70,.14); color:#4d544b; font-size:.56rem; font-weight:900; letter-spacing:.055em; text-transform:uppercase; }
+.troop-requirement-row { min-height:36px; display:grid; grid-template-columns:24px minmax(0,1fr) auto; gap:7px; align-items:center; padding:6px 10px; border-top:1px solid rgba(117,104,70,.15); color:#585343; font-size:.64rem; }
+.troop-requirement-type { width:24px; text-align:center; color:#46685e; font-size:.82rem; font-weight:900; }
+.troop-requirement-row strong { color:#34594f; font-size:.61rem; white-space:nowrap; }
+.troop-training-tournament { padding:10px 11px; border-top:1px solid rgba(117,104,70,.18); background:rgba(235,226,197,.55); }
+.troop-training-tournament .game-action { width:100%; }
+.troop-training-event,.troop-training-empty { margin:0; padding:12px 11px; color:#655d4c; background:rgba(231,220,186,.54); font-size:.66rem; line-height:1.45; }
+.troop-training-event { color:#70583e; }
+
+@media (max-width:390px) {
+  .troop-training-table-head,.troop-training-table-row { grid-template-columns:minmax(0,1fr) 66px 78px; padding-left:8px; padding-right:8px; }
+}

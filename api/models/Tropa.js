@@ -3,6 +3,8 @@ import { COLLECTIONS } from '../config/database.js';
 
 const TropaSchema = new mongoose.Schema({
   nome:      { type: String, required: true, unique: true, trim: true },
+  slug:      { type: String, default: '', trim: true, index: true },
+  aliases:   [{ type: String, trim: true }],
   poder:     { type: Number, default: 0 },
   vida:      { type: Number, default: 0 },
   def:       { type: Number, default: 0 },
@@ -24,6 +26,22 @@ const TropaSchema = new mongoose.Schema({
     fonte:      { type: String, default: '', trim: true },
     nivel:      { type: Number, default: null, min: 0 },
     observacao: { type: String, default: '', trim: true },
+  },
+  treinamento: {
+    disponivel:    { type: Boolean, default: true },
+    obtencao:      { type: String, enum: ['treino','evento','outro',''], default: '' },
+    dadosCompletos:{ type: Boolean, default: false },
+    custos: [{
+      id:         { type: String, default: '', trim: true },
+      nome:       { type: String, default: '', trim: true },
+      quantidade: { type: Number, default: 0, min: 0 },
+    }],
+    requisitos: [{
+      tipo:  { type: String, enum: ['pesquisa','edificio','outro'], default: 'outro' },
+      nome:  { type: String, default: '', trim: true },
+      nivel: { type: Number, default: 0, min: 0 },
+    }],
+    populacao: { type: Number, default: 0, min: 0 },
   },
   taxonomiaVersao: { type: Number, default: 0 },
   i18n:      { type: mongoose.Schema.Types.Mixed, default: {} },

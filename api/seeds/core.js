@@ -1,5 +1,7 @@
+import { enriquecerTropa, TROPA_EXTRA_SEEDS } from './tropasCatalogo.js';
+
 // Dados padrão canônicos migrados da base atual do aplicativo.
-export const TODAS_TROPAS = [
+const BASE_TROPAS = [
   // ── ESPECIAIS ──────────────────────────────────────────────────────────────
   {nome:"Condenadores",vida:20000,def:850,atqPerto:3000,atqDist:0,alcance:0,vel:450,car:600,poder:40,gestao:0,tipo:"especial",desc:"+20% de Ataque e -20% de Dano recebido na Dominação do Dragão."},
   {nome:"Cavaleiros Espectrais",vida:15000,def:650,atqPerto:4000,atqDist:0,alcance:0,vel:1200,car:300,poder:40,gestao:0,tipo:"especial",desc:"Golpe paralisante. +20% de Ataque e -20% de Dano recebido."},
@@ -56,6 +58,8 @@ export const TODAS_TROPAS = [
   {nome:"Amarande",vida:3000,def:350,atqPerto:3000,atqDist:0,alcance:0,vel:751,car:500,poder:10,gestao:0,tipo:"treinavel",desc:"+50% de ataque corpo a corpo das 22h00 às 6h00 UTC."},
   {nome:"Hoplitas Imortais",vida:3000,def:1200,atqPerto:1200,atqDist:800,alcance:800,vel:400,car:100,poder:10,gestao:0,tipo:"treinavel",desc:"Versão aprimorada dos Hoplitas, com armadura reforçada."},
 ];
+
+export const TODAS_TROPAS = [...BASE_TROPAS, ...TROPA_EXTRA_SEEDS].map(enriquecerTropa);
 
 export const TROPAS_ESPECIAIS = TODAS_TROPAS.filter(t => t.tipo === 'especial');
 export const TROPAS_TREINAVEIS = TODAS_TROPAS.filter(t => t.tipo === 'treinavel');

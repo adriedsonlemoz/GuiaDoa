@@ -55,6 +55,9 @@ export default function CharacterTools({ onInsert, compact = false }) {
           ☺ {t('builder.characters.emoticons')}
         </button>
       </div>
+      <div style={{ marginTop: 5, fontSize: '0.58rem', lineHeight: 1.45, color: C.TEXT_FAINT }}>
+        {t('builder.characters.game_safe_note')}
+      </div>
 
       {panel === 'letters' && (
         <div style={{ marginTop: 8, padding: 9, background: C.BG_SECONDARY, border: `1px solid ${C.BORDER_SOFT}`, borderRadius: 8 }}>

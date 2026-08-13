@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { PRESETS, SUGGEST_PALETTES, SUGGEST_NAMES, FRASES_PRONTAS } from './data.js';
+import { PRESETS, SUGGEST_PALETTES, SUGGEST_NAMES, FRASES_PRONTAS, sanitizeGameText, hasUnsupportedGameEmoji } from './data.js';
 import CharacterTools from './CharacterTools.jsx';
 import { T, C, safeCopy } from './styles.js';
 import { useI18n } from '../../hooks/useI18n.jsx';
@@ -220,9 +220,11 @@ export default function ModoTexto({
   };
 
   const handleInput = (next) => {
-    setInputVal(next);
+    const cleaned = sanitizeGameText(next);
+    if (hasUnsupportedGameEmoji(next)) showToast(t('builder.characters.emoji_removed'));
+    setInputVal(cleaned);
     if (styleMode === 'manual') {
-      setTokens(previous => [...next].map((char, index) => ({
+      setTokens(previous => [...cleaned].map((char, index) => ({
         char,
         color: previous[index]?.char === char ? previous[index]?.color || null : null,
       })));

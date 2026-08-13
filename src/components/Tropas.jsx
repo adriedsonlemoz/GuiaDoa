@@ -25,7 +25,8 @@ export default function Tropas({ setRoute }) {
       .filter(troop => {
         if (!matchesTroopFilter(troop, filter)) return false;
         if (!query) return true;
-        return `${content(troop, 'nome')} ${content(troop, 'desc')}`.toLocaleLowerCase().includes(query);
+        const aliases = Array.isArray(troop.aliases) ? troop.aliases.join(' ') : '';
+        return `${content(troop, 'nome')} ${aliases} ${content(troop, 'desc')}`.toLocaleLowerCase().includes(query);
       })
       .sort((a, b) => content(a, 'nome').localeCompare(content(b, 'nome')));
   }, [tropas, search, filter, content]);
@@ -46,6 +47,21 @@ export default function Tropas({ setRoute }) {
     });
   };
 
+
+  const openTrainingTournament = (troop, quantity) => {
+    try {
+      sessionStorage.setItem('guiadoa_tournament_prefill', JSON.stringify({
+        tournamentId: 'treino_tropa',
+        troopId: troop.slug || troop.nome,
+        troopName: troop.nome,
+        quantity: Math.max(1, Number(quantity) || 1),
+      }));
+      sessionStorage.setItem('guiadoa_open_tournament', 'treino_tropa');
+    } catch {}
+    setDetail(null);
+    setRoute('torneios');
+  };
+
   const openComparison = () => {
     if (compareNames.length < 2) return;
     sessionStorage.setItem('guiadoa_troop_compare', JSON.stringify(compareNames));
@@ -54,7 +70,7 @@ export default function Tropas({ setRoute }) {
 
   return (
     <>
-      {detail && <TropaModal tropa={detail} onFechar={() => setDetail(null)} onOpenTips={() => { setDetail(null); setRoute('dicas'); }} />}
+      {detail && <TropaModal tropa={detail} onFechar={() => setDetail(null)} onOpenTips={() => { setDetail(null); setRoute('dicas'); }} onOpenTournament={openTrainingTournament} />}
       <div style={{ maxWidth:620, margin:'0 auto', paddingBottom:16, animation:'reveal-up .25s ease both' }}>
         <GameHeader title={t('troops.encyclopedia')} subtitle={t('troops.simple_intro')} />
         <SimpleTroopFilters search={search} setSearch={setSearch} filter={filter} setFilter={setFilter} />

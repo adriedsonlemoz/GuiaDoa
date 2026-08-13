@@ -4,8 +4,9 @@ import { getIcone, getTipoAtaque, fmtFull, ATRIBUTOS } from './tropaUtils.js';
 import RelatedTroopTips from './RelatedTroopTips.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
 import { GameInfoTable, GameSectionTitle } from '../shared/GameChrome.jsx';
+import TroopTrainingPlanner from './TroopTrainingPlanner.jsx';
 
-export default function TropaModal({ tropa, onFechar, onOpenTips }) {
+export default function TropaModal({ tropa, onFechar, onOpenTips, onOpenTournament }) {
   const { t, content, locale } = useI18n();
 
   useEffect(() => {
@@ -61,19 +62,17 @@ export default function TropaModal({ tropa, onFechar, onOpenTips }) {
           <GameSectionTitle>{t('troops.attributes').toUpperCase()}</GameSectionTitle>
           <GameInfoTable rows={rows} />
 
-          <section className="game-panel" style={{ marginTop:10 }}>
-            <GameSectionTitle>{t('troops.training_requirement')}</GameSectionTitle>
-            <div style={{ padding:'11px 12px', fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", color:'#58462c' }}>
-              {unlockSource ? (
-                <>
-                  <div style={{ fontSize:'.78rem', fontWeight:700 }}>{unlockSource}{unlock.nivel ? ` • ${t('common.level_short')} ${unlock.nivel}` : ''}</div>
-                  {unlockNote ? <div style={{ marginTop:5, color:'#796644', fontSize:'.68rem', lineHeight:1.4 }}>{unlockNote}</div> : null}
-                </>
-              ) : (
-                <div style={{ color:'#8d7956', fontSize:'.68rem' }}>{t('troops.training_requirement_unknown')}</div>
-              )}
-            </div>
-          </section>
+          <TroopTrainingPlanner troop={tropa} onOpenTournament={onOpenTournament} />
+
+          {!tropa.treinamento && unlockSource ? (
+            <section className="game-panel" style={{ marginTop:10 }}>
+              <GameSectionTitle>{t('troops.training_requirement')}</GameSectionTitle>
+              <div style={{ padding:'11px 12px', fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", color:'#58462c' }}>
+                <div style={{ fontSize:'.78rem', fontWeight:700 }}>{unlockSource}{unlock.nivel ? ` • ${t('common.level_short')} ${unlock.nivel}` : ''}</div>
+                {unlockNote ? <div style={{ marginTop:5, color:'#796644', fontSize:'.68rem', lineHeight:1.4 }}>{unlockNote}</div> : null}
+              </div>
+            </section>
+          ) : null}
 
           <RelatedTroopTips troopName={tropa.nome} onOpenTips={onOpenTips} />
         </div>

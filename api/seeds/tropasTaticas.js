@@ -31,7 +31,7 @@ function category(t) {
   if (/drag[aã]o|dragonete/.test(n)) return 'dragao';
   if (/arqueir|mago|espelho|canh[aã]o/.test(n)) return 'distancia';
   if (/cavaleir|biga|centauro|montad/.test(n)) return 'cavalaria';
-  if (/transporte|carregador/.test(n)) return 'transporte';
+  if (/transporte|carregador|escev/.test(n)) return 'transporte';
   if (/gigante|ogro|golem|tit[aã]|minotauro/.test(n)) return 'pesada';
   if (t.tipo === 'especial') return 'outro';
   return 'infantaria';

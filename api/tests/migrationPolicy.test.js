@@ -9,7 +9,7 @@ test('migração roda na primeira instalação e quando a versão dos dados muda
 
 test('versão visual do app não força nova migração de dados', () => {
   const config = { migracaoEstado:'pronto', migracaoVersao:DATA_MIGRATION_VERSION };
-  assert.equal(DATA_MIGRATION_VERSION, '1.0.0-beta.2.10');
+  assert.equal(DATA_MIGRATION_VERSION, '1.0.0-beta.2.11');
   assert.equal(deveExecutarMigracao(config), false);
   assert.equal(deveExecutarMigracao(config, DATA_MIGRATION_VERSION, true), true);
 });

@@ -17,17 +17,38 @@ const BONUS_CHAVES = [
 
 const fmtN = (n, locale = 'pt-BR') => Number(n || 0).toLocaleString(locale);
 
-const emptyRow = () => ({ id: Date.now() + Math.random(), tropa: '', qtd: '', bonus: 1 });
+const emptyRow = () => ({ id: Date.now() + Math.random(), tropaId: '', tropa: '', qtd: '', bonus: 1 });
 
 const TorneioTreinoTropa = () => {
   const { t, content, locale } = useI18n();
   const { tropas: dbTropas } = useGameData();
   const sortedTropas = useMemo(() => [...dbTropas].sort((a, b) => content(a, 'nome').localeCompare(content(b, 'nome'))), [dbTropas, content]);
-  const [linhas, setLinhas] = useState(() => {
+  const [prefill] = useState(() => {
     try {
-      const s = localStorage.getItem(STORAGE_KEY);
-      return s ? JSON.parse(s).linhas || [emptyRow(), emptyRow()] : [emptyRow(), emptyRow()];
-    } catch { return [emptyRow(), emptyRow()]; }
+      const raw = sessionStorage.getItem('guiadoa_tournament_prefill');
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (data?.tournamentId !== 'treino_tropa') return null;
+      sessionStorage.removeItem('guiadoa_tournament_prefill');
+      return data;
+    } catch { return null; }
+  });
+  const [linhas, setLinhas] = useState(() => {
+    let base = [emptyRow(), emptyRow()];
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) base = JSON.parse(saved).linhas || base;
+    } catch {}
+    if (prefill?.troopId || prefill?.troopName) {
+      const row = {
+        ...emptyRow(),
+        tropaId: prefill.troopId || '',
+        tropa: prefill.troopName || '',
+        qtd: Math.max(1, Number(prefill.quantity) || 1).toLocaleString(locale),
+      };
+      return [row, ...base.slice(1)];
+    }
+    return base;
   });
   const [ptsPossuidos, setPtsPossuidos] = useState(() => {
     try {
@@ -37,6 +58,11 @@ const TorneioTreinoTropa = () => {
   });
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
 
+
+  const resolveTroop = row => dbTropas.find(item => item.slug && item.slug === row.tropaId)
+    || dbTropas.find(item => item.nome === row.tropa)
+    || dbTropas.find(item => Array.isArray(item.aliases) && item.aliases.includes(row.tropa));
+
   const setLinha = (id, field, value) =>
     setLinhas(ls => ls.map(l => l.id === id ? { ...l, [field]: value } : l));
 
@@ -45,9 +71,9 @@ const TorneioTreinoTropa = () => {
 
   const ptsDasLinhas = useMemo(() =>
     linhas.reduce((acc, l) => {
-      const tropa = dbTropas.find(item => item.nome === l.tropa);
+      const tropa = resolveTroop(l);
       const poder = tropa?.poder || 0;
-      const qtd   = parseInt((l.qtd || '').replace(/\./g, '')) || 0;
+      const qtd   = parseInt((l.qtd || '').replace(/\D/g, '')) || 0;
       return acc + qtd * poder * (l.bonus || 1);
     }, 0),
     [linhas, dbTropas]
@@ -143,9 +169,9 @@ const TorneioTreinoTropa = () => {
 
         <div className="px-3 py-3 space-y-2" style={{ background: C.BG_CARD }}>
           {linhas.map(l => {
-            const tropa = dbTropas.find(item => item.nome === l.tropa);
+            const tropa = resolveTroop(l);
             const poder = tropa?.poder || 0;
-            const qtd   = parseInt((l.qtd || '').replace(/\./g, '')) || 0;
+            const qtd   = parseInt((l.qtd || '').replace(/\D/g, '')) || 0;
             const sub   = qtd * poder * (l.bonus || 1);
             const ativo = sub > 0;
             return (
@@ -162,12 +188,15 @@ const TorneioTreinoTropa = () => {
                   <select
                     className="tw-select flex-1 min-w-0"
                     style={{ fontSize: '0.75rem', padding: '5px 6px' }}
-                    value={l.tropa}
-                    onChange={e => setLinha(l.id, 'tropa', e.target.value)}
+                    value={l.tropaId || resolveTroop(l)?.slug || ''}
+                    onChange={e => {
+                      const selected = dbTropas.find(item => (item.slug || item.nome) === e.target.value);
+                      setLinhas(rows => rows.map(row => row.id === l.id ? { ...row, tropaId:e.target.value, tropa:selected?.nome || '' } : row));
+                    }}
                   >
                     <option value="">{t('torneio.layout.selecionar_tropa')}</option>
                     {sortedTropas.map(item => (
-                      <option key={item.nome} value={item.nome}>{content(item, 'nome')}</option>
+                      <option key={item.slug || item.nome} value={item.slug || item.nome}>{content(item, 'nome')}</option>
                     ))}
                   </select>
                   <button

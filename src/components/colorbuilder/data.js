@@ -34,34 +34,43 @@ export const SUGGEST_NAMES = [
   'Mono PB', 'Terroso', '🇧🇷 Brasil',
 ];
 
-// ─── Kaomoji (30) ─────────────────────────────────────────────────────────────
+// ─── Texto compatível com o chat do jogo ──────────────────────────────────────
+// O jogo aceita caracteres Unicode de texto/kaomoji, mas rejeita emojis gráficos
+// como 🤩 😍 🥰. Mantemos somente combinações textuais e símbolos testáveis.
 export const KAOMOJI = [
-  '｡♡‿♡｡','(◕‿◕)','(✿◡‿◡)','ʕ•ᴥ•ʔ','(≧◡≦)','(╥﹏╥)',
+  'ε｡♡‿♡｡','｡♡‿♡｡','(◕‿◕)','(✿◡‿◡)','ʕ•ᴥ•ʔ','(≧◡≦)','(╥﹏╥)',
   '(ᵔᴥᵔ)','✧˖°','°•✦•°','★~(◠‿◕✿)','(っ˘ω˘ς)','(•_•)',
   '¯\\_(ツ)_/¯','(づ｡◕‿◕｡)づ','(ﾉ◕ヮ◕)ﾉ','(ง •̀_•́)ง',
   '(｀・ω・´)','(・∀・)','(＾▽＾)','(´• ω •`)','(◡ ω ◡)',
   '( ˘ ³˘)♥','(っ◔◡◔)っ','(⁀ᗢ⁀)','ฅ^•ﻌ•^ฅ','(ʘᗩʘ)',
-  '(ó_ò)','(*^‿^*)','(▽〃)','٩(◕‿◕)۶',
+  '(ó_ò)','(*^‿^*)','(▽〃)','٩(◕‿◕)۶','۶ωʕ٩ᗒづ',
 ];
 
-// ─── ASCII Emoticons (20) ─────────────────────────────────────────────────────
 export const ASCII_EM = [
   '(^_^)','(>_<)','(T_T)','UwU','OwO','>w<','^w^',
   ':-)',':-D',':-P',':3','-_-','o_O','xD','B-)',
   ';-)','(;-;)',':O','(*_*)','(=^.^=)',
 ];
 
-// ─── Categorias de símbolos (8) ───────────────────────────────────────────────
+// Somente símbolos em estilo de texto. Evita pictogramas/emoji como ⭐ ✨ 🌟.
 export const SYM_CATS = [
-  { name:'Corações', s:['♡','♥','❤','❥','❣','❦','💗','💓','💞','💝','🖤','🤍','💛','🧡','💜','💙','💚','❧'] },
-  { name:'Estrelas',  s:['★','☆','✦','✧','✩','✪','✫','✬','✭','✮','✯','✰','⭐','💫','✨','🌟','🌠','⚡'] },
-  { name:'Flores',    s:['✿','❀','❁','✾','☘','🌸','🌺','🌻','🌹','🌷','🌼','🍀','🍃','🌿','🍂','🍁','🌱','🪷'] },
+  { name:'Corações', s:['♡','♥','❥','❣','❦','❧'] },
+  { name:'Estrelas',  s:['★','☆','✦','✧','✩','✪','✫','✬','✭','✮','✯','✰'] },
+  { name:'Flores',    s:['✿','❀','❁','✾'] },
   { name:'Partes',    s:['｡','◕','◡','ᵔ','ᴥ','◠','˘','ω','ヽ','ノ','づ','っ','ε','٩','۶','ฅ','ʕ','ʔ','•','ᗒ','ᗕ'] },
   { name:'Especiais', s:['•','·','‿','~','–','—','…','°','♪','♫','♬','♩','✓','✗','∞','§','†','‡','‼','⁉','™','©','®'] },
-  { name:'Formas',    s:['▲','△','▼','▽','◆','◇','●','○','■','□','▪','▫','◉','◎','⬟','⬡','⬢','⬣','⏺','⬤'] },
+  { name:'Formas',    s:['▲','△','▼','▽','◆','◇','●','○','■','□','▪','▫','◉','◎'] },
   { name:'Setas',     s:['→','←','↑','↓','↗','↘','↙','↖','↔','↕','⇒','⇐','⇑','⇓','»','«','›','‹','⟨','⟩'] },
-  { name:'Céu',       s:['🌙','☽','☾','☀','☁','⛅','🌤','❄','☃','⛄','🌈','⚡','🌊','🌌','✦'] },
+  { name:'Ornamentos',s:['☽','☾','☀','☁','❄','☃','✦','彡'] },
 ];
+
+const UNSUPPORTED_GAME_EMOJI = /[\u{1F000}-\u{1FAFF}\u2B50\u2728\u2764]/gu;
+export function sanitizeGameText(value = '') {
+  return String(value).replace(UNSUPPORTED_GAME_EMOJI, '').replace(/[\uFE0F\u200D]/g, '');
+}
+export function hasUnsupportedGameEmoji(value = '') {
+  return sanitizeGameText(value) !== String(value);
+}
 
 // ─── Bandeiras (25) ───────────────────────────────────────────────────────────
 export const FLAGS = [
@@ -141,27 +150,32 @@ export const MODOS = [
 // Código no formato [HEX]texto, mesmo padrão usado pelo restante do builder
 export const FRASES_PRONTAS = [
   {
+    id: 'general_5_laranja',
+    label: 'General 5★ · Laranja',
+    preview: 'Nova ★★★★★',
+    codigo: '[FF8C00]Nova ★★★★★',
+  },
+  {
+    id: 'general_4_roxo',
+    label: 'General 4★ · Roxo',
+    preview: 'Nova ★★★★',
+    codigo: '[8A2BE2]Nova ★★★★',
+  },
+  {
     id: 'parabens_general_pt',
-    label: '🎉 Parabéns General (PT)',
+    label: 'Parabéns General (PT)',
     preview: 'Parabéns General!',
-    // Roxo (8A2BE2) + Laranja (FF8C00) — cores dos generais raros do jogo
     codigo: '[8A2BE2]Parabéns [FF8C00]General[8A2BE2]!',
   },
   {
     id: 'parabens_general_en',
-    label: '🎉 Congratulations General (EN)',
+    label: 'Congratulations General (EN)',
     preview: 'Congratulations General!',
     codigo: '[8A2BE2]Congratulations [FF8C00]General[8A2BE2]!',
   },
   {
-    id: 'general_roxo_laranja_pt',
-    label: '⭐ General Lendário (PT)',
-    preview: 'General Lendário ⭐',
-    codigo: '[FF8C00]General [8A2BE2]Lendário[FF8C00] ⭐',
-  },
-  {
     id: 'boa_sorte_pt',
-    label: '🍀 Boa sorte! (PT)',
+    label: 'Boa sorte! (PT)',
     preview: 'Boa sorte!',
     codigo: '[8A2BE2]Boa [FF8C00]sorte[8A2BE2]!',
   },

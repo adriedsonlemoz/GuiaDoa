@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { T, C, safeCopy } from './styles.js';
 import { useI18n } from '../../hooks/useI18n.jsx';
-import { PLACAR_CORES_PADRAO } from './data.js';
+import { PLACAR_CORES_PADRAO, sanitizeGameText, hasUnsupportedGameEmoji } from './data.js';
 import CharacterTools from './CharacterTools.jsx';
 
 const CORES_RAPIDAS = [
@@ -58,6 +58,13 @@ export default function ModoPlacar({ showToast }) {
     `[${corTimeB}]${timeB}`
   ), [corTimeA, corTimeB, corA, corB, corSeparador, timeA, timeB, placarA, placarB]);
 
+  const handleTeamChange = (slot, value) => {
+    const cleaned = sanitizeGameText(value);
+    if (hasUnsupportedGameEmoji(value)) showToast(t('builder.characters.emoji_removed'));
+    if (slot === 'A') setTimeA(cleaned);
+    else setTimeB(cleaned);
+  };
+
   const insertCharacter = value => {
     const isA = activeTeam === 'A';
     const ref = isA ? refA : refB;
@@ -79,14 +86,14 @@ export default function ModoPlacar({ showToast }) {
       <div style={T.card}>
         <div style={T.cardTitle}>1 · {t('builder.score.teams')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 64px 18px 64px 1fr', gap: 5, alignItems: 'center' }}>
-          <input ref={refA} value={timeA} onFocus={() => setActiveTeam('A')} onChange={e => setTimeA(e.target.value)}
+          <input ref={refA} value={timeA} onFocus={() => setActiveTeam('A')} onChange={e => handleTeamChange('A', e.target.value)}
             aria-label={t('builder.score.team_a')} style={{ ...T.input, minWidth: 0, minHeight: 40, textAlign: 'center', padding: '7px 6px' }} />
           <input value={placarA} onChange={e => setPlacarA(e.target.value.replace(/\D/g, '').slice(0, 3))} inputMode="numeric"
             aria-label={`${t('builder.score.team_a')} score`} style={{ ...T.input, minWidth: 0, minHeight: 40, textAlign: 'center', fontWeight: 800, padding: '7px 4px' }} />
           <span style={{ textAlign: 'center', fontWeight: 900, color: C.TEXT_MUTED }}>–</span>
           <input value={placarB} onChange={e => setPlacarB(e.target.value.replace(/\D/g, '').slice(0, 3))} inputMode="numeric"
             aria-label={`${t('builder.score.team_b')} score`} style={{ ...T.input, minWidth: 0, minHeight: 40, textAlign: 'center', fontWeight: 800, padding: '7px 4px' }} />
-          <input ref={refB} value={timeB} onFocus={() => setActiveTeam('B')} onChange={e => setTimeB(e.target.value)}
+          <input ref={refB} value={timeB} onFocus={() => setActiveTeam('B')} onChange={e => handleTeamChange('B', e.target.value)}
             aria-label={t('builder.score.team_b')} style={{ ...T.input, minWidth: 0, minHeight: 40, textAlign: 'center', padding: '7px 6px' }} />
         </div>
 

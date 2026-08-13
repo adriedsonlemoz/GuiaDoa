@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { T, C, safeCopy } from './styles.js';
 import { useI18n } from '../../hooks/useI18n.jsx';
 import CharacterTools from './CharacterTools.jsx';
+import { sanitizeGameText, hasUnsupportedGameEmoji } from './data.js';
 
 // ─── Helper: itera por code points (resolve surrogate pairs) ─────────────────
 const chars  = str => [...str];
@@ -209,6 +210,12 @@ export default function ModoFontes({ showToast }) {
     }, 0);
   };
 
+  const handleTextChange = value => {
+    const cleaned = sanitizeGameText(value);
+    if (hasUnsupportedGameEmoji(value)) showToast(t('builder.characters.emoji_removed'));
+    setTexto(cleaned);
+  };
+
   return (
     <div style={T.body}>
 
@@ -223,7 +230,7 @@ export default function ModoFontes({ showToast }) {
           <textarea
             ref={inputRef}
             value={texto}
-            onChange={e => setTexto(e.target.value)}
+            onChange={e => handleTextChange(e.target.value)}
             placeholder="Shadow Warriors rule the night…"
             rows={2}
             style={{ ...T.input, flex: 1 }}

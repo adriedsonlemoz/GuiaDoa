@@ -95,10 +95,10 @@ export function renderRoute(route, setRoute) {
         return <PesquisaDetalhe slug={route.replace('pesquisa_', '')} />;
       }
       if (route.startsWith('dragao_tracker_')) {
-        return <DragaoTracker dragaoId={route.replace('dragao_tracker_', '')} />;
+        return <DragaoTracker dragaoId={route.replace('dragao_tracker_', '')} setRoute={setRoute} />;
       }
       if (route.startsWith('dragao_')) {
-        return <DragaoDetalhe dragaoId={route.replace('dragao_', '')} />;
+        return <DragaoDetalhe dragaoId={route.replace('dragao_', '')} setRoute={setRoute} />;
       }
       return <Home setRoute={setRoute} />;
   }

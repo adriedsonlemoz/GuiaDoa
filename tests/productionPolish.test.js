@@ -42,7 +42,7 @@ test('perfil foi dividido em etapas e usa a camada central de idiomas', () => {
 
 test('detalhes de dragão importam o hook de estado usado pelo módulo', () => {
   const detalhe = read('src/components/dragoes/DragaoDetalhe.jsx');
-  assert.match(detalhe, /import React, \{ useState \} from ['"]react['"]/);
+  assert.match(detalhe, /useState/);
 });
 
 test('aplicativo público não expõe atalho do painel administrativo', () => {

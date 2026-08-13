@@ -6,7 +6,7 @@ import { TODAS_TROPAS } from '../api/seeds/core.js';
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
 test('catálogo canônico de tropas inclui treinamento, aliases, retratos e Escevóforo', () => {
-  assert.equal(TODAS_TROPAS.length, 54);
+  assert.equal(TODAS_TROPAS.length, 53);
   const escev = TODAS_TROPAS.find(t => t.nome === 'Escevóforo');
   assert.ok(escev);
   assert.equal(escev.poder, 2);
@@ -18,9 +18,7 @@ test('catálogo canônico de tropas inclui treinamento, aliases, retratos e Esce
   assert.equal(veneno?.treinamento?.custos?.find(c => c.id === 'venom_crystal')?.quantidade, 50);
   assert.equal(veneno?.treinamento?.requisitos?.find(r => r.nome === 'Guarnição')?.nivel, 32);
 
-  const imortais = TODAS_TROPAS.find(t => t.nome === 'Hoplitas Imortais');
-  assert.equal(imortais?.treinamento?.dadosCompletos, false);
-  assert.equal(imortais?.imagem || '', '');
+  assert.equal(TODAS_TROPAS.some(t => t.nome === 'Hoplitas Imortais'), false);
 });
 
 test('retratos extraídos ficam como assets locais e não dependem de geração de imagem', () => {

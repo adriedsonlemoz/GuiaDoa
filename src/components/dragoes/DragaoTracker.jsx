@@ -19,7 +19,7 @@ const carregarDados = (dragao) => {
   });
   const xpDragParts = (dragao.nivelDragao?.xpConhecida?.[0]
     ? `0/${dragao.nivelDragao.xpConhecida[0].xpNecessaria}` : '0/0').split('/');
-  return { nivelDragao: dragao.nivelDragao?.nivelVisto ?? 1, xpDragaoAtual: 0, xpDragaoTotal: parseInt(xpDragParts[1]) || 0, habilidades };
+  return { nivelDragao: 0, xpDragaoAtual: 0, xpDragaoTotal: parseInt(xpDragParts[1]) || 0, habilidades };
 };
 
 const getXpParaNivel = (hab, nivel) => {
@@ -48,7 +48,7 @@ const XPBar = ({ atual, total, cor, locale = 'pt-BR' }) => {
   );
 };
 
-const NivelControl = ({ value, onChange, cor, min=1, max=999 }) => (
+const NivelControl = ({ value, onChange, cor, min=0, max=90 }) => (
   <div className="flex items-center gap-1.5">
     <button
       className="w-7 h-7 rounded-md flex items-center justify-center font-black text-base border-none cursor-pointer"
@@ -195,7 +195,7 @@ const DragaoTracker = ({ dragaoId, setRoute }) => {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-nunito font-bold text-[0.68rem]" style={{ color:'rgba(255,248,238,0.6)' }}>{t('dragon_tracker.level')}</span>
               <NivelControl
-                value={dados.nivelDragao || 1}
+                value={dados.nivelDragao ?? 0}
                 onChange={v => setDados(d => ({ ...d, nivelDragao:v }))}
                 cor={cor}
               />

@@ -231,7 +231,7 @@
 
   <!-- Modal Dragão (meta) -->
   <div id="modal-dragao" class="modal-bg">
-    <div class="modal-card" style="max-width:460px">
+    <div class="modal-card" style="max-width:560px">
       <div class="modal-header">
         <h3 id="modal-dragao-titulo">Novo Dragão</h3>
         <button class="btn-close" onclick="fecharModal('modal-dragao')">✕</button>
@@ -263,6 +263,27 @@
         <div class="field">
           <label>Descrição</label>
           <textarea id="fdr-descricao" rows="2" placeholder="Descrição do dragão..."></textarea>
+        </div>
+        <div class="field">
+          <label>Retrato <span style="font-size:0.6rem;color:var(--muted)">(caminho ou URL)</span></label>
+          <input id="fdr-imagem" type="text" placeholder="/assets/dragons/grande_dragao.webp">
+        </div>
+
+        <div style="padding:12px;margin:12px 0;background:var(--bg2);border:1px solid rgba(200,168,74,.3);border-radius:10px">
+          <div style="font-size:.65rem;font-weight:900;letter-spacing:1.2px;color:var(--gold3);text-transform:uppercase;margin-bottom:8px">🐉 Como obter</div>
+          <div class="field-row">
+            <div class="field"><label>Tipo</label><select id="fdr-obt-tipo"><option value="desconhecido">Desconhecido</option><option value="inicial">Inicial</option><option value="recompensa">Recompensa</option><option value="fragmentos">Fragmentos</option><option value="captura">Captura</option><option value="evento">Evento</option></select></div>
+            <div class="field"><label>Dia <span style="font-size:.6rem;color:var(--muted)">(se aplicável)</span></label><input id="fdr-obt-dia" type="number" min="1" placeholder="Ex: 2"></div>
+          </div>
+          <div class="field"><label>Resumo</label><textarea id="fdr-obt-resumo" rows="2" placeholder="Como o jogador obtém este dragão..."></textarea></div>
+          <div class="field-row">
+            <div class="field"><label>Fonte / Campo</label><input id="fdr-obt-fonte" placeholder="Ex: Campo de Floresta"></div>
+            <div class="field"><label>Slug futuro</label><input id="fdr-obt-slug" placeholder="Ex: campo-floresta"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Nível mínimo</label><input id="fdr-obt-min" type="number" min="1"></div>
+            <div class="field"><label>Nível máximo</label><input id="fdr-obt-max" type="number" min="1"></div>
+          </div>
         </div>
         <div class="field-row">
           <div class="field"><label>Bônus de Marcha</label><input id="fdr-bonus" placeholder="Ex: +5% ataque"></div>
@@ -323,6 +344,27 @@
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="fecharModal('modal-dniv')">Fechar</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal Habilidades do Dragão -->
+  <div id="modal-dhab" class="modal-bg">
+    <div class="modal-card" style="max-width:620px">
+      <div class="modal-header">
+        <h3 id="modal-dhab-titulo">Habilidades</h3>
+        <button class="btn-close" onclick="fecharModal('modal-dhab')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:.72rem;color:var(--muted);font-weight:700;margin:0 0 12px">Cadastre somente a habilidade base. Não é necessário preencher os 90 níveis.</p>
+        <div id="dhab-lista"></div>
+        <div id="dhab-form" style="display:none;margin-top:12px;padding:12px;background:var(--bg2);border:1px solid rgba(200,168,74,.35);border-radius:10px">
+          <div class="field-row"><div class="field"><label>Nome *</label><input id="dhab-nome"></div><div class="field"><label>Tipo</label><select id="dhab-tipo"><option value="batalha">Batalha</option><option value="comum">Comum</option></select></div></div>
+          <div class="field"><label>Imagem <span style="font-size:.6rem;color:var(--muted)">(opcional)</span></label><input id="dhab-imagem" placeholder="/assets/... ou URL"></div>
+          <div class="field"><label>Descrição / efeito base</label><textarea id="dhab-descricao" rows="4"></textarea></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="fecharFormHabilidade()">Cancelar</button><button class="btn btn-gold" onclick="salvarHabilidadeDragao()">💾 Salvar habilidade</button></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-ghost" onclick="fecharModal('modal-dhab')">Fechar</button></div>
     </div>
   </div>
 

@@ -128,8 +128,6 @@ export const TROOP_TRAINING = {
     custos:[R('food',6500,'Comida'),R('wood',4000,'Madeira'),R('stone',6000,'Pedra'),R('metals',8000,'Metais'),R('venom_crystal',100,'Cristal de Veneno')],
     requisitos:[edificio('Guarnição',30),edificio('Torre do Infinito',10)], populacao:9,
   },
-  // O print de Hoplitas Imortais não estava no conjunto recebido; deixamos sem custos para não inventar dados.
-  'Hoplitas Imortais': { dadosCompletos:false },
   'Escevóforo': {
     aliases:['Skeuophoroi'],
     custos:[R('food',50,'Comida'),R('wood',150,'Madeira'),R('metals',10,'Metais')],

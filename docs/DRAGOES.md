@@ -1,0 +1,21 @@
+# Dragões
+
+A Beta 2.31 adota um catálogo progressivo de Dragões. O objetivo é registrar apenas dados confirmados à medida que novas telas do jogo forem obtidas.
+
+## Retratos
+
+Os 14 retratos atuais foram recortados diretamente das capturas fornecidas ao projeto e ficam em `public/assets/dragons/`. Nenhuma imagem foi gerada artificialmente.
+
+## Atributos
+
+Não é necessário cadastrar os 90 níveis. O Admin aceita snapshots esparsos (por exemplo Nv.1, Nv.5, Nv.10, Nv.51). O frontend compara somente dragões que possuem um snapshot confirmado para o mesmo nível. Nv.0 é um estado pessoal/local e começa zerado.
+
+Atributos elementais só são exibidos a partir do Nv.51. O Grande Dragão possui atualmente snapshots confirmados de Nv.1 e Nv.51.
+
+## Habilidades
+
+Cada habilidade guarda apenas `id`, `nome`, `tipo`, `imagem` opcional e `descricao`/efeito base. Não há progressão obrigatória de Nv.1 a Nv.90.
+
+## Como obter
+
+`obtencao` é estruturado para permitir ligação futura com Campos/Anthropus. O Dragão Beladona já referencia Campo de Floresta Nv.6–10. Dragões sem origem confirmada permanecem como captura pendente, sem dados inventados.

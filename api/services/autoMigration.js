@@ -44,7 +44,34 @@ function gerarNiveisPesquisa(max) {
 
 function normalizarDragao(d) {
   const { id, ...rest } = d;
-  return { ...rest, slug: id, niveis: [] };
+  return { ...rest, slug: id, niveis: Array.isArray(d.niveis) ? d.niveis : [] };
+}
+
+async function corrigirCatalogoDragoesLegado() {
+  const grandeSeed = DRAGOES_SEED.find(d => d.id === 'grande_dragao');
+  const grande = await Dragao.findOne({ slug:'grande_dragao' });
+  if (grande && Array.isArray(grande.habilidades) && grande.habilidades.some(h => h?.nivelAtual || h?.nivelMax || h?.xpConhecida)) {
+    grande.habilidades = grandeSeed?.habilidades || [];
+    grande.itensAlimentacao = [];
+    await grande.save();
+  }
+
+  const legadas = {
+    dragao_agua: ['Maré Profunda','Névoa Oceânica','Corrente Sombria'],
+    dragao_beladona: ['Toxina Letal','Aura do Pântano','Névoa Venenosa'],
+    dragao_terra: ['Pele de Pedra','Tremor Sísmico','Fortaleza Viva'],
+  };
+  let limpos = 0;
+  for (const [slug, nomes] of Object.entries(legadas)) {
+    const atual = await Dragao.findOne({ slug });
+    const atuais = (atual?.habilidades || []).map(h => h?.nome).filter(Boolean);
+    if (atuais.length === nomes.length && nomes.every(n => atuais.includes(n))) {
+      atual.habilidades = [];
+      await atual.save();
+      limpos += 1;
+    }
+  }
+  return limpos;
 }
 
 function documentosEdificios() {
@@ -89,8 +116,11 @@ export async function executarMigracaoAutomatica() {
 
     const relatorio = {};
     relatorio.tropas = await migrarLista(Tropa, TODAS_TROPAS, x => ({ nome: x.nome }));
+    const tropasRemovidas = await Tropa.deleteMany({ nome:'Hoplitas Imortais' });
+    relatorio.tropasRemovidas = tropasRemovidas.deletedCount || 0;
     relatorio.niveis = await migrarLista(Nivel, NIVEIS_DATA, x => ({ nivel: x[0] }), x => ({ nivel: x[0], xp: x[1] ?? null }));
-    relatorio.dragoes = await migrarLista(Dragao, DRAGOES_SEED, x => ({ slug: x.id }), normalizarDragao);
+    relatorio.dragoes = await migrarLista(Dragao, DRAGOES_SEED, x => ({ slug: x.id }), normalizarDragao, { mergeArrays:{ niveis:'nivel', habilidades:'id' } });
+    relatorio.dragoesLegadoLimpos = await corrigirCatalogoDragoesLegado();
     const edificios = documentosEdificios();
     relatorio.edificios = await migrarLista(Edificio, edificios, x => ({ slug: x.slug }), x => x, { mergeArrays: { niveis: 'nivel' } });
     const pesquisas = documentosPesquisas();

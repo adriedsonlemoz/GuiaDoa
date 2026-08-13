@@ -56,7 +56,6 @@ const BASE_TROPAS = [
   {nome:"Hoplita",vida:1513,def:900,atqPerto:800,atqDist:600,alcance:600,vel:460,car:50,poder:5,gestao:0,tipo:"treinavel",desc:"Cada 2000 Hoplitas podem reduzir o dano em 1%, até o máximo."},
   {nome:"Serpentes Arsênicas",vida:2000,def:400,atqPerto:10,atqDist:1000,alcance:1600,vel:100,car:100,poder:10,gestao:0,tipo:"treinavel",desc:"Atacam e envenenam qualquer inimigo no campo de batalha."},
   {nome:"Amarande",vida:3000,def:350,atqPerto:3000,atqDist:0,alcance:0,vel:751,car:500,poder:10,gestao:0,tipo:"treinavel",desc:"+50% de ataque corpo a corpo das 22h00 às 6h00 UTC."},
-  {nome:"Hoplitas Imortais",vida:3000,def:1200,atqPerto:1200,atqDist:800,alcance:800,vel:400,car:100,poder:10,gestao:0,tipo:"treinavel",desc:"Versão aprimorada dos Hoplitas, com armadura reforçada."},
 ];
 
 export const TODAS_TROPAS = [...BASE_TROPAS, ...TROPA_EXTRA_SEEDS].map(enriquecerTropa);

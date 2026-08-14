@@ -77,32 +77,93 @@ test('troca de nick por poder próximo é apenas sugerida, nunca unida automatic
   assert.match(route, /merge-members/);
 });
 
-test('importador visual usa Groq Vision sem persistir os screenshots', () => {
+test('importador visual usa Groq Vision e armazenamento apenas temporário para lotes retomáveis', () => {
   const vision = readFileSync(new URL('../services/alliance/vision.js', import.meta.url), 'utf8');
   const route = readFileSync(new URL('../routes/allianceTracker.js', import.meta.url), 'utf8');
+  const batch = readFileSync(new URL('../services/alliance/importBatch.js', import.meta.url), 'utf8');
   assert.match(vision, /qwen\/qwen3\.6-27b/);
   assert.match(vision, /image_url/);
   assert.match(route, /memoryStorage\(\)/);
-  assert.doesNotMatch(route, /cloudinary\.uploader|writeFile|createWriteStream/);
+  assert.doesNotMatch(route, /cloudinary\.uploader/);
+  assert.match(batch, /tmpdir\(\)/);
+  assert.match(batch, /removeImageFiles/);
+  assert.match(batch, /cancelImportBatch/);
   assert.match(route, /files:\s*10/);
   assert.match(route, /fileSize:\s*6 \* 1024 \* 1024/);
 });
 
 test('leitor visual traduz erros do provedor em diagnósticos úteis', async () => {
-  const { friendlyVisionError, visionModelCandidates } = await import('../services/alliance/vision.js');
+  const { friendlyVisionError, parseRetryAfter, visionModelCandidates } = await import('../services/alliance/vision.js');
   assert.equal(friendlyVisionError(401, '{"error":{"message":"invalid api key"}}').code, 'VISION_INVALID_KEY');
   assert.equal(friendlyVisionError(429, '{"error":{"message":"rate limit"}}').retryable, true);
   assert.equal(friendlyVisionError(404, '{"error":{"message":"model not found"}}').code, 'VISION_MODEL_UNAVAILABLE');
+  assert.equal(parseRetryAfter('2.5'), 2500);
   const models = visionModelCandidates('modelo/customizado');
   assert.equal(models[0], 'modelo/customizado');
   assert.ok(models.includes('qwen/qwen3.6-27b'));
 });
 
-test('Alliance Tracker possui rota progressiva para narrar a leitura real', () => {
+test('Alliance Tracker possui rota progressiva e retomável para narrar a leitura real', () => {
   const route = readFileSync(new URL('../routes/allianceTracker.js', import.meta.url), 'utf8');
   assert.match(route, /extract-stream/);
+  assert.match(route, /extract-batches/);
   assert.match(route, /application\/x-ndjson/);
   assert.match(route, /image_start/);
+  assert.match(route, /completed: batch\.results\.length/);
   assert.match(route, /merge_start/);
   assert.match(route, /mapLimited\(req\.files, 1/);
+});
+
+test('rate limit respeita Retry-After e tenta novamente a mesma imagem antes de falhar', async () => {
+  const { extractAllianceScreenshot } = await import('../services/alliance/vision.js');
+  const originalFetch = global.fetch;
+  const events = [];
+  let calls = 0;
+  global.fetch = async () => {
+    calls += 1;
+    if (calls === 1) return new Response('{"error":{"message":"rate limit"}}', { status:429, headers:{ 'retry-after':'0' } });
+    return new Response(JSON.stringify({ choices:[{ message:{ content:JSON.stringify({ snapshotType:'power', rows:[{ name:'Teste', power:123 }], warnings:[] }) } }] }), { status:200, headers:{ 'content-type':'application/json' } });
+  };
+  try {
+    const result = await extractAllianceScreenshot({
+      apiKey:'teste', buffer:Buffer.from('imagem'), rateLimitRetries:2, baseBackoffMs:1,
+      onProgress:event => events.push(event.stage),
+    });
+    assert.equal(calls, 2);
+    assert.equal(result.rows[0].name, 'Teste');
+    assert.ok(events.includes('rate_limit'));
+    assert.ok(events.includes('retrying'));
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('lote temporário preserva resultados concluídos e descarta a imagem já processada', async () => {
+  const {
+    appendImportBatchResult,
+    cancelImportBatch,
+    createImportBatch,
+    loadImportBatch,
+    readImportBatchImage,
+  } = await import('../services/alliance/importBatch.js');
+  const owner = 'teste-owner';
+  const batch = await createImportBatch({
+    ownerUserId: owner,
+    capturedAt: '2026-08-14T12:00:00.000Z',
+    files: [
+      { originalname:'1.png', mimetype:'image/png', size:3, buffer:Buffer.from('one') },
+      { originalname:'2.png', mimetype:'image/png', size:3, buffer:Buffer.from('two') },
+    ],
+  });
+  try {
+    assert.ok(await readImportBatchImage(batch, 0));
+    await appendImportBatchResult(batch, { snapshotType:'power', rows:[{ name:'A', power:1 }], warnings:[], model:'teste' });
+    assert.equal(await readImportBatchImage(batch, 0), null);
+    assert.ok(await readImportBatchImage(batch, 1));
+    const restored = await loadImportBatch(batch.id, owner);
+    assert.equal(restored.results.length, 1);
+    assert.equal(restored.currentIndex, 1);
+  } finally {
+    await cancelImportBatch(batch.id, owner);
+  }
 });

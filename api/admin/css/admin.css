@@ -347,3 +347,12 @@ td{border-bottom-color:rgba(128,96,51,.14)}
 .at-scan-progress{text-align:right;margin-top:3px;font-size:.55rem;font-weight:900;color:#2F5652}.at-scan-log{display:grid;gap:4px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(128,96,51,.16)}.at-scan-log div{display:flex;gap:6px;align-items:flex-start;color:#868572;font-size:.61rem;line-height:1.35}.at-scan-log div span{color:#2F8A43;font-weight:900}.at-scan-log div.is-current{color:#3f493f;font-weight:750}.at-scan-log div.is-current span{color:#2F5652}
 @keyframes atScanPulse{0%,100%{transform:scale(.85);opacity:.62}50%{transform:scale(1.12);opacity:1}}
 @media(prefers-reduced-motion:reduce){.at-scan-orb span{animation:none}.at-scan-track i{transition:none}}
+
+/* Beta 2.38 · lote retomável e progresso real da leitura da Aliança */
+.at-scan-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;padding-top:9px;border-top:1px solid rgba(128,96,51,.16)}
+.at-scan-actions[hidden]{display:none!important}
+.at-scan-actions .btn{margin:0}
+.at-scan-progress{font-variant-numeric:tabular-nums}
+@media(max-width:520px){.at-scan-actions .btn{flex:1 1 100%}}
+
+.at-drop.is-disabled{opacity:.55;pointer-events:none;filter:saturate(.65)}

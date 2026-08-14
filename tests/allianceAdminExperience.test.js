@@ -27,6 +27,9 @@ test('importação da Aliança mostra narrativa de progresso e recuperação de 
   assert.match(admin, /Tentando um leitor visual alternativo/);
   assert.match(admin, /Tudo pronto\. Abrindo revisão/);
   assert.match(admin, /extract-stream/);
-  assert.match(admin, /Tentar leitura novamente/);
+  assert.match(admin, /Continuar leitura/);
+  assert.match(admin, /Limite temporário atingido → aguardando → tentando novamente/);
+  assert.match(admin, /imagens concluídas/);
+  assert.match(admin, /extract-batches/);
   assert.match(css, /\.at-scan-story/);
 });

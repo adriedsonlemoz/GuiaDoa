@@ -2,6 +2,8 @@ import { SNAPSHOT_TYPES } from '../../utils/allianceTracker.js';
 
 const DEFAULT_MODEL = process.env.GROQ_VISION_MODEL || 'qwen/qwen3.6-27b';
 const FALLBACK_MODEL = process.env.GROQ_VISION_FALLBACK_MODEL || 'meta-llama/llama-4-maverick-17b-128e-instruct';
+const DEFAULT_RATE_LIMIT_RETRIES = 3;
+const DEFAULT_BACKOFF_MS = 2_000;
 
 function extractJson(text = '') {
   const clean = String(text).trim().replace(/^```(?:json)?\s*/i, '').replace(/```$/i, '').trim();
@@ -32,7 +34,27 @@ function parseProviderError(raw = '') {
   return { message, code };
 }
 
-export function friendlyVisionError(status, raw = '', model = '') {
+export function parseRetryAfter(value, now = Date.now()) {
+  if (value == null || value === '') return null;
+  const raw = String(value).trim();
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds) && seconds >= 0) return Math.ceil(seconds * 1000);
+  const when = Date.parse(raw);
+  if (!Number.isNaN(when)) return Math.max(0, when - now);
+  return null;
+}
+
+function retryDelayMs(error, retryIndex, baseBackoffMs) {
+  const headerDelay = Number(error?.retryAfterMs);
+  if (Number.isFinite(headerDelay) && headerDelay >= 0) return Math.ceil(headerDelay);
+  return Math.max(1, Math.round(baseBackoffMs * (2 ** retryIndex)));
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export function friendlyVisionError(status, raw = '', model = '', retryAfterMs = null) {
   const provider = parseProviderError(raw);
   let message = 'O serviço visual não conseguiu ler este screenshot.';
   let code = 'VISION_PROVIDER_ERROR';
@@ -52,7 +74,7 @@ export function friendlyVisionError(status, raw = '', model = '') {
   } else if (status === 429) {
     code = 'VISION_RATE_LIMIT';
     retryable = true;
-    message = 'O limite temporário do leitor visual foi atingido. Aguarde alguns instantes e tente novamente.';
+    message = 'O limite temporário do leitor visual continuou ativo após as tentativas automáticas.';
   } else if (status >= 500) {
     code = 'VISION_PROVIDER_UNAVAILABLE';
     retryable = true;
@@ -66,13 +88,14 @@ export function friendlyVisionError(status, raw = '', model = '') {
   error.providerStatus = status;
   error.providerCode = provider.code || null;
   error.providerMessage = provider.message || null;
+  error.retryAfterMs = Number.isFinite(Number(retryAfterMs)) ? Math.max(0, Number(retryAfterMs)) : null;
   error.model = model || null;
   error.detail = raw;
   return error;
 }
 
 function shouldTryNextModel(error) {
-  return [400, 403, 404, 422, 500, 502, 503].includes(Number(error?.providerStatus || error?.status));
+  return [400, 403, 404, 422, 429, 500, 502, 503].includes(Number(error?.providerStatus || error?.status));
 }
 
 const PROMPT = `Você extrai dados de screenshots da tela Aliança > Membros do jogo Dragons of Atlantis em português.
@@ -95,33 +118,40 @@ Retorne SOMENTE um objeto JSON neste formato:
 {"snapshotType":"power|last_connection|joined_at","rows":[{"name":"...","power":123,"lastConnection":"YYYY-MM-DD HH:mm:ss","joinedAt":"YYYY-MM-DD HH:mm:ss","online":false,"confidence":0.98}],"warnings":[]}
 Inclua em cada linha apenas os campos relevantes ao tipo detectado.`;
 
-async function requestModel({ apiKey, buffer, mimetype, model, signal }) {
+async function requestModel({ apiKey, buffer, mimetype, model, timeoutMs }) {
   const base64 = buffer.toString('base64');
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    signal,
-    body: JSON.stringify({
-      model,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'text', text: PROMPT },
-          { type: 'image_url', image_url: { url: `data:${mimetype};base64,${base64}` } },
-        ],
-      }],
-      response_format: { type: 'json_object' },
-      temperature: 0.1,
-      max_completion_tokens: 4000,
-      stream: false,
-    }),
-  });
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      signal: ctrl.signal,
+      body: JSON.stringify({
+        model,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: PROMPT },
+            { type: 'image_url', image_url: { url: `data:${mimetype};base64,${base64}` } },
+          ],
+        }],
+        response_format: { type: 'json_object' },
+        temperature: 0.1,
+        max_completion_tokens: 4000,
+        stream: false,
+      }),
+    });
 
-  if (!response.ok) {
-    const detail = await response.text();
-    throw friendlyVisionError(response.status, detail, model);
+    if (!response.ok) {
+      const detail = await response.text();
+      const retryAfterMs = parseRetryAfter(response.headers.get('retry-after'));
+      throw friendlyVisionError(response.status, detail, model, retryAfterMs);
+    }
+    return response.json();
+  } finally {
+    clearTimeout(timer);
   }
-  return response.json();
 }
 
 export async function extractAllianceScreenshot({
@@ -130,6 +160,8 @@ export async function extractAllianceScreenshot({
   mimetype = 'image/jpeg',
   model = DEFAULT_MODEL,
   timeoutMs = 60_000,
+  rateLimitRetries = DEFAULT_RATE_LIMIT_RETRIES,
+  baseBackoffMs = DEFAULT_BACKOFF_MS,
   onProgress = null,
 }) {
   if (!apiKey) {
@@ -140,17 +172,25 @@ export async function extractAllianceScreenshot({
     throw error;
   }
 
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   const candidates = visionModelCandidates(model);
   const attempts = [];
 
-  try {
-    for (let index = 0; index < candidates.length; index += 1) {
-      const currentModel = candidates[index];
-      onProgress?.({ stage: 'provider', model: currentModel, attempt: index + 1, attempts: candidates.length });
+  for (let index = 0; index < candidates.length; index += 1) {
+    const currentModel = candidates[index];
+    let rateRetry = 0;
+
+    while (true) {
+      onProgress?.({
+        stage: rateRetry > 0 ? 'retrying' : 'provider',
+        model: currentModel,
+        attempt: index + 1,
+        attempts: candidates.length,
+        retry: rateRetry,
+        maxRetries: rateLimitRetries,
+      });
+
       try {
-        const data = await requestModel({ apiKey, buffer, mimetype, model: currentModel, signal: ctrl.signal });
+        const data = await requestModel({ apiKey, buffer, mimetype, model: currentModel, timeoutMs });
         const parsed = extractJson(data.choices?.[0]?.message?.content || '');
         const snapshotType = SNAPSHOT_TYPES.includes(parsed.snapshotType) ? parsed.snapshotType : null;
         return {
@@ -162,18 +202,50 @@ export async function extractAllianceScreenshot({
         };
       } catch (error) {
         if (error.name === 'AbortError') throw error;
-        attempts.push({ model: currentModel, status: error.providerStatus || error.status || 502, code: error.code || null });
-        onProgress?.({ stage: 'provider_failed', model: currentModel, code: error.code || null, retryable: shouldTryNextModel(error) && index < candidates.length - 1 });
-        if (!shouldTryNextModel(error) || index === candidates.length - 1) {
+        attempts.push({
+          model: currentModel,
+          status: error.providerStatus || error.status || 502,
+          code: error.code || null,
+          retry: rateRetry,
+        });
+
+        if (Number(error.providerStatus || error.status) === 429 && rateRetry < rateLimitRetries) {
+          const waitMs = retryDelayMs(error, rateRetry, baseBackoffMs);
+          rateRetry += 1;
+          onProgress?.({
+            stage: 'rate_limit',
+            model: currentModel,
+            waitMs,
+            retry: rateRetry,
+            maxRetries: rateLimitRetries,
+            retryAfterProvided: error.retryAfterMs != null,
+          });
+          await wait(waitMs);
+          continue;
+        }
+
+        const canTryNext = shouldTryNextModel(error) && index < candidates.length - 1;
+        onProgress?.({
+          stage: 'provider_failed',
+          model: currentModel,
+          code: error.code || null,
+          retryable: canTryNext,
+          rateLimitExhausted: Number(error.providerStatus || error.status) === 429,
+        });
+        if (!canTryNext) {
           error.attempts = attempts;
           throw error;
         }
+        break;
       }
     }
-    throw new Error('Nenhum modelo visual disponível.');
-  } finally {
-    clearTimeout(timer);
   }
+
+  const error = new Error('Nenhum modelo visual disponível.');
+  error.code = 'VISION_NO_MODEL';
+  error.status = 502;
+  error.attempts = attempts;
+  throw error;
 }
 
 export function serializeVisionError(error) {
@@ -183,6 +255,7 @@ export function serializeVisionError(error) {
     retryable: Boolean(error?.retryable),
     providerStatus: error?.providerStatus || null,
     providerCode: error?.providerCode || null,
+    retryAfterMs: error?.retryAfterMs ?? null,
     model: error?.model || null,
     attempts: Array.isArray(error?.attempts) ? error.attempts : [],
   };

@@ -18,6 +18,17 @@ import {
   scoreNicknameCandidate,
 } from '../utils/allianceTracker.js';
 import { extractAllianceScreenshot, serializeVisionError } from '../services/alliance/vision.js';
+import {
+  appendImportBatchResult,
+  cancelImportBatch,
+  completeImportBatch,
+  createImportBatch,
+  loadImportBatch,
+  markImportBatchProcessing,
+  pauseImportBatch,
+  publicImportBatch,
+  readImportBatchImage,
+} from '../services/alliance/importBatch.js';
 
 const router = Router();
 const upload = multer({
@@ -175,8 +186,44 @@ router.post('/extract', upload.array('images', 10), async (req, res) => {
   }
 });
 
+router.get('/extract-batches/:batchId', async (req, res) => {
+  const batch = await loadImportBatch(req.params.batchId, req.usuario.id);
+  if (!batch) return res.status(404).json({ erro: 'Lote de leitura não encontrado ou expirado.', code: 'VISION_BATCH_NOT_FOUND' });
+  res.json(publicImportBatch(batch));
+});
+
+router.delete('/extract-batches/:batchId', async (req, res) => {
+  const removed = await cancelImportBatch(req.params.batchId, req.usuario.id);
+  if (!removed) return res.status(404).json({ erro: 'Lote de leitura não encontrado ou expirado.', code: 'VISION_BATCH_NOT_FOUND' });
+  res.json({ ok: true });
+});
+
 router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
-  if (!req.files?.length) return res.status(400).json({ erro: 'Selecione pelo menos um screenshot.' });
+  const resumeId = String(req.query.batchId || '').trim();
+  let batch = null;
+
+  if (resumeId) {
+    batch = await loadImportBatch(resumeId, req.usuario.id);
+    if (!batch) return res.status(404).json({ erro: 'Lote de leitura não encontrado ou expirado.', code: 'VISION_BATCH_NOT_FOUND' });
+  } else {
+    if (!req.files?.length) return res.status(400).json({ erro: 'Selecione pelo menos um screenshot.' });
+    const capturedAt = dateIso(req.body?.capturedAt)?.toISOString() || new Date().toISOString();
+    batch = await createImportBatch({
+      files: req.files,
+      ownerUserId: req.usuario.id,
+      allianceId: req.body?.allianceId || null,
+      capturedAt,
+    });
+  }
+
+  if (batch.status === 'processing') {
+    return res.status(409).json({
+      erro: 'Este lote ainda está processando a imagem atual. O progresso já concluído continua preservado.',
+      code: 'VISION_BATCH_BUSY',
+      retryable: true,
+      ...publicImportBatch(batch),
+    });
+  }
 
   res.status(200);
   res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
@@ -184,50 +231,121 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
   res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders?.();
 
+  let clientDisconnected = false;
+  res.on('close', () => {
+    if (!res.writableEnded) clientDisconnected = true;
+  });
+
   const send = payload => {
-    if (!res.destroyed) res.write(`${JSON.stringify(payload)}\n`);
+    if (res.destroyed || res.writableEnded) return false;
+    res.write(`${JSON.stringify(payload)}\n`);
+    return true;
   };
   const apiKey = process.env.GROQ_API_KEY;
-  const results = [];
+
+  if (batch.status === 'completed' && batch.finalData) {
+    send({ type: 'start', imagesCount: batch.total, batchId: batch.id, completed: batch.total, resumed: true });
+    send({ type: 'done', data: batch.finalData, batchId: batch.id, completed: batch.total, total: batch.total });
+    return res.end();
+  }
 
   try {
-    send({ type: 'start', imagesCount: req.files.length });
-    for (let index = 0; index < req.files.length; index += 1) {
-      const file = req.files[index];
-      send({ type: 'image_start', index, total: req.files.length, name: file.originalname });
+    await markImportBatchProcessing(batch);
+    send({
+      type: 'start',
+      imagesCount: batch.total,
+      batchId: batch.id,
+      completed: batch.results.length,
+      resumed: Boolean(resumeId),
+    });
+
+    for (let index = batch.results.length; index < batch.total; index += 1) {
+      if (clientDisconnected) {
+        await pauseImportBatch(batch, {
+          erro: 'A conexão com o Admin foi interrompida. O lote ficou preservado para continuar.',
+          code: 'VISION_CLIENT_DISCONNECTED',
+          retryable: true,
+        });
+        return;
+      }
+
+      const file = await readImportBatchImage(batch, index);
+      if (!file) {
+        const missing = {
+          erro: 'O arquivo temporário desta imagem não está mais disponível. Inicie um novo lote.',
+          code: 'VISION_BATCH_IMAGE_MISSING',
+          retryable: false,
+        };
+        await pauseImportBatch(batch, missing);
+        send({ type: 'error', error: { ...missing, batchId: batch.id, completed: batch.results.length, total: batch.total, currentIndex: index } });
+        return res.end();
+      }
+
+      send({
+        type: 'image_start', index, total: batch.total, completed: batch.results.length,
+        name: file.name, batchId: batch.id,
+      });
+
       const result = await extractAllianceScreenshot({
         apiKey,
         buffer: file.buffer,
         mimetype: file.mimetype,
-        onProgress: progress => send({ type: 'vision_progress', index, total: req.files.length, ...progress }),
+        onProgress: progress => send({
+          type: 'vision_progress', index, total: batch.total, completed: batch.results.length,
+          batchId: batch.id, ...progress,
+        }),
       });
-      results.push(result);
+
+      await appendImportBatchResult(batch, result);
       send({
-        type: 'image_done', index, total: req.files.length, rows: result.rows.length,
-        snapshotType: result.snapshotType, model: result.model, warnings: result.warnings?.length || 0,
+        type: 'image_done', index, total: batch.total, completed: batch.results.length,
+        rows: result.rows.length, snapshotType: result.snapshotType, model: result.model,
+        warnings: result.warnings?.length || 0, batchId: batch.id,
       });
+
+      if (clientDisconnected && batch.results.length < batch.total) {
+        await pauseImportBatch(batch, {
+          erro: 'A conexão com o Admin foi interrompida. As imagens concluídas foram preservadas.',
+          code: 'VISION_CLIENT_DISCONNECTED',
+          retryable: true,
+        });
+        return;
+      }
     }
 
-    send({ type: 'merge_start', imagesCount: results.length });
-    const merged = mergeExtractedRows(results);
+    send({ type: 'merge_start', imagesCount: batch.results.length, completed: batch.results.length, total: batch.total, batchId: batch.id });
+    const merged = mergeExtractedRows(batch.results);
     if (!merged.rows.length) {
-      send({ type: 'error', error: { erro: 'As imagens foram lidas, mas nenhum membro pôde ser confirmado. Tente uma captura mais nítida.', code: 'VISION_NO_ROWS', retryable: true } });
+      const noRows = { erro: 'As imagens foram lidas, mas nenhum membro pôde ser confirmado. Tente uma captura mais nítida.', code: 'VISION_NO_ROWS', retryable: false };
+      await pauseImportBatch(batch, noRows);
+      send({ type: 'error', error: { ...noRows, batchId: batch.id, completed: batch.results.length, total: batch.total, currentIndex: batch.results.length } });
       return res.end();
     }
 
     const data = {
       ...merged,
-      imagesCount: req.files.length,
-      models: [...new Set(results.map(r => r.model).filter(Boolean))],
+      capturedAt: batch.capturedAt,
+      imagesCount: batch.total,
+      models: [...new Set(batch.results.map(r => r.model).filter(Boolean))],
     };
-    send({ type: 'done', data });
+    await completeImportBatch(batch, data);
+    send({ type: 'done', data, batchId: batch.id, completed: batch.total, total: batch.total });
     res.end();
   } catch (error) {
     logVisionError(error);
     const payload = error.name === 'AbortError'
-      ? { erro: 'A leitura demorou demais e foi interrompida.', code: 'VISION_TIMEOUT', retryable: true }
+      ? { erro: 'A leitura desta imagem demorou demais e foi interrompida.', code: 'VISION_TIMEOUT', retryable: true }
       : serializeVisionError(error);
-    send({ type: 'error', error: payload });
+    const enriched = {
+      ...payload,
+      batchId: batch.id,
+      completed: batch.results.length,
+      total: batch.total,
+      currentIndex: batch.results.length,
+      canContinue: Boolean(payload.retryable),
+    };
+    await pauseImportBatch(batch, enriched).catch(() => {});
+    send({ type: 'error', error: enriched });
     res.end();
   }
 });

@@ -58,19 +58,16 @@
   <!-- TOPBAR -->
   <nav class="topbar">
     <div class="topbar-brand" onclick="irHome()">
-      <span>⚔️</span>
-      <span>Guia DOA · Admin</span>
+      <img src="/img/app-icon.png" alt="GUIA DOA">
+      <span class="admin-brand-copy"><strong>GUIA DOA</strong><small>Admin</small></span>
     </div>
     <div class="topbar-right">
-      <a href="/" target="_blank"
-        style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:7px;padding:5px 10px;text-decoration:none;color:rgba(248,242,224,0.8);font-size:0.72rem;font-weight:800;letter-spacing:0.5px;transition:all 0.18s;"
-        onmouseover="this.style.background='rgba(255,255,255,0.15)'"
-        onmouseout="this.style.background='rgba(255,255,255,0.08)'">
-        🌐 Ver Projeto
+      <a class="topbar-project-link" href="https://guia-doa.vercel.app/" target="_blank" rel="noopener noreferrer" title="Ver Projeto">
+        <span>🌐 Ver Projeto</span>
       </a>
       <div class="topbar-divider"></div>
       <span class="topbar-user" id="topbar-user">—</span>
-      <button class="btn btn-sm btn-ghost" onclick="sair()" style="padding:4px 10px;font-size:0.7rem;">Sair</button>
+      <button class="btn btn-sm btn-ghost" onclick="sair()" title="Sair">Sair</button>
     </div>
   </nav>
 
@@ -709,6 +706,7 @@
 <script src="/admin/js/admin-reinos.js"></script>
 <script src="/admin/js/admin-dicas.js"></script>
 <script src="/admin/js/admin-alliances.js"></script>
+<script src="/admin/js/admin-ui.js"></script>
 
 </body>
 </html>

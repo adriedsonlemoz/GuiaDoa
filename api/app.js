@@ -73,6 +73,11 @@ app.use('/api/assistente', assistenteRoutes);
 app.use('/api/dicas', dicasRoutes);
 app.use('/api/alliance-tracker', allianceTrackerRoutes);
 
+// Assets públicos também ficam disponíveis no domínio da API para o Admin.
+// Isso mantém caminhos como /assets/dragons/... válidos tanto no Vercel quanto no Render.
+app.use('/assets', express.static(join(__dirname, '..', 'public', 'assets'), { maxAge: '7d' }));
+app.use('/img', express.static(join(__dirname, '..', 'public', 'img'), { maxAge: '7d' }));
+
 app.use('/admin', express.static(join(__dirname, 'admin')));
 app.get('/admin', (_, res) => res.sendFile(join(__dirname, 'admin', 'index.html')));
 app.get('/admin/setup', (_, res) => res.redirect(302, '/admin'));

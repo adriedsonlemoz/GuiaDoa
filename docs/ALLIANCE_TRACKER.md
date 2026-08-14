@@ -10,7 +10,17 @@ Criar histórico da Aliança a partir de screenshots da tela **Aliança > Membro
 - Última Conexão
 - Data de Entrada na Aliança
 
-A leitura visual usa a `GROQ_API_KEY` já utilizada pelo Assistente Tático. O modelo pode ser trocado sem alterar código através de `GROQ_VISION_MODEL`. A leitura é sequencial, uma imagem por vez. Em HTTP 429, o serviço respeita `Retry-After` quando disponível e aplica retry/backoff automático antes de tentar o modelo alternativo.
+A leitura usa um pipeline único e conservador: **screenshot → OCR local → validação por regras → Groq somente como fallback**. O OCR roda no próprio backend com Tesseract.js e os dados locais de idioma inglês instalados junto das dependências da API; portanto, uma captura que passa pela validação local não gera chamada à IA visual.
+
+O parser local só aceita a imagem quando consegue confirmar o tipo da coluna, extrair um número mínimo de linhas e atingir o limiar de confiança configurado. Ele não tenta adivinhar letras parecidas com números: leituras ambíguas são encaminhadas ao fallback visual em vez de virarem dados oficiais. Quando o OCR local não é suficiente, a `GROQ_API_KEY` já usada pelo Assistente Tático é acionada apenas para aquela imagem. O modelo pode ser trocado sem alterar código através de `GROQ_VISION_MODEL`. A leitura continua sequencial, uma imagem por vez. Em HTTP 429 do fallback Groq, o serviço respeita `Retry-After` quando disponível e aplica retry/backoff automático antes de tentar o modelo alternativo.
+
+Configuração opcional do OCR no backend:
+
+- `ALLIANCE_OCR_ENABLED=true` — desativa apenas em caso de diagnóstico;
+- `ALLIANCE_OCR_MIN_CONFIDENCE=0.82` — confiança mínima média para aceitar OCR sem IA;
+- `ALLIANCE_OCR_MIN_ROWS=2` — mínimo de linhas confirmadas para aceitar a captura localmente.
+
+Se o OCR resolver a captura, a Groq não é necessária. Se o OCR rejeitar uma leitura ambígua e não houver `GROQ_API_KEY`, o lote informa que o fallback não está configurado em vez de inventar valores.
 
 ## Privacidade e armazenamento
 

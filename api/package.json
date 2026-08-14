@@ -1,6 +1,6 @@
 {
   "name": "guiadoa-api",
-  "version": "1.0.0-beta.2.38",
+  "version": "1.0.0-beta.2.39",
   "description": "API admin do Guia DOA",
   "type": "module",
   "main": "server.js",
@@ -21,6 +21,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.4.1",
     "multer": "^2.2.0",
-    "streamifier": "^0.1.1"
+    "streamifier": "^0.1.1",
+    "@tesseract.js-data/eng": "^1.0.0",
+    "tesseract.js": "^7.0.0"
   }
 }

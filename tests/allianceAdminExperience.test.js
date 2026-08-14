@@ -23,8 +23,10 @@ test('importação da Aliança mostra narrativa de progresso e recuperação de 
   const admin = read('api/admin/js/admin-alliances.js');
   const css = read('api/admin/css/admin.css');
   assert.match(admin, /at-scan-story/);
-  assert.match(admin, /Procurando a tabela de membros/);
-  assert.match(admin, /Tentando um leitor visual alternativo/);
+  assert.match(admin, /OCR local procurando nomes e valores/);
+  assert.match(admin, /Leitura local suficiente — IA não será usada/);
+  assert.match(admin, /OCR local ficou em dúvida → usando IA só nesta imagem/);
+  assert.match(admin, /Tentando um modelo de IA alternativo/);
   assert.match(admin, /Tudo pronto\. Abrindo revisão/);
   assert.match(admin, /extract-stream/);
   assert.match(admin, /Continuar leitura/);

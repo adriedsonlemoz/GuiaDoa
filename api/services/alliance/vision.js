@@ -1,4 +1,5 @@
 import { SNAPSHOT_TYPES } from '../../utils/allianceTracker.js';
+import { extractAllianceScreenshotWithOcr } from './ocr.js';
 
 const DEFAULT_MODEL = process.env.GROQ_VISION_MODEL || 'qwen/qwen3.6-27b';
 const FALLBACK_MODEL = process.env.GROQ_VISION_FALLBACK_MODEL || 'meta-llama/llama-4-maverick-17b-128e-instruct';
@@ -154,7 +155,7 @@ async function requestModel({ apiKey, buffer, mimetype, model, timeoutMs }) {
   }
 }
 
-export async function extractAllianceScreenshot({
+async function extractAllianceScreenshotWithGroq({
   apiKey,
   buffer,
   mimetype = 'image/jpeg',
@@ -165,7 +166,7 @@ export async function extractAllianceScreenshot({
   onProgress = null,
 }) {
   if (!apiKey) {
-    const error = new Error('A GROQ_API_KEY não está configurada no Render. O Alliance Tracker precisa dela para ler screenshots.');
+    const error = new Error('O OCR local não teve confiança suficiente e a GROQ_API_KEY não está configurada no Render para usar a leitura visual de fallback.');
     error.status = 503;
     error.code = 'VISION_KEY_MISSING';
     error.retryable = false;
@@ -248,6 +249,68 @@ export async function extractAllianceScreenshot({
   throw error;
 }
 
+
+export async function extractAllianceScreenshot({
+  apiKey,
+  buffer,
+  mimetype = 'image/jpeg',
+  model = DEFAULT_MODEL,
+  timeoutMs = 60_000,
+  rateLimitRetries = DEFAULT_RATE_LIMIT_RETRIES,
+  baseBackoffMs = DEFAULT_BACKOFF_MS,
+  onProgress = null,
+  ocrTimeoutMs = 90_000,
+} = {}) {
+  const ocr = await extractAllianceScreenshotWithOcr({
+    buffer,
+    timeoutMs: ocrTimeoutMs,
+    onProgress,
+  });
+
+  if (ocr.accepted) {
+    return {
+      snapshotType: ocr.snapshotType,
+      rows: ocr.rows,
+      warnings: ocr.warnings || [],
+      model: ocr.model || 'tesseract.js/eng-local',
+      engine: 'ocr',
+      aiUsed: false,
+      ocrUsed: true,
+      ocrConfidence: ocr.confidence ?? null,
+      attempts: [],
+    };
+  }
+
+  try {
+    const vision = await extractAllianceScreenshotWithGroq({
+      apiKey,
+      buffer,
+      mimetype,
+      model,
+      timeoutMs,
+      rateLimitRetries,
+      baseBackoffMs,
+      onProgress,
+    });
+    return {
+      ...vision,
+      engine: 'groq_fallback',
+      aiUsed: true,
+      ocrUsed: Boolean(ocr.available),
+      ocrConfidence: ocr.confidence ?? null,
+      ocrFallbackReason: ocr.reason || null,
+    };
+  } catch (error) {
+    error.ocr = {
+      available: Boolean(ocr.available),
+      confidence: ocr.confidence ?? null,
+      rows: Array.isArray(ocr.rows) ? ocr.rows.length : 0,
+      reason: ocr.reason || null,
+    };
+    throw error;
+  }
+}
+
 export function serializeVisionError(error) {
   return {
     erro: error?.message || 'Falha ao analisar screenshots.',
@@ -258,5 +321,6 @@ export function serializeVisionError(error) {
     retryAfterMs: error?.retryAfterMs ?? null,
     model: error?.model || null,
     attempts: Array.isArray(error?.attempts) ? error.attempts : [],
+    ocr: error?.ocr || null,
   };
 }

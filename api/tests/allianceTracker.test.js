@@ -10,6 +10,58 @@ import {
   parseRealmDate,
   scoreNicknameCandidate,
 } from '../utils/allianceTracker.js';
+import { detectSnapshotTypeFromOcr, parseAllianceOcr } from '../services/alliance/ocr.js';
+
+
+function allianceOcrTsv(lines = []) {
+  const header = ['level','page_num','block_num','par_num','line_num','word_num','left','top','width','height','conf','text'].join('\t');
+  const rows = [];
+  let top = 10;
+  lines.forEach((line, lineIndex) => {
+    let left = 10;
+    line.forEach((word, wordIndex) => {
+      rows.push([5,1,1,1,lineIndex + 1,wordIndex + 1,left,top,80,20,word.conf ?? 96,word.text].join('\t'));
+      left += word.width ?? 120;
+    });
+    top += 30;
+  });
+  return [header, ...rows].join('\n');
+}
+
+test('OCR local detecta os três tipos de screenshot sem depender da IA', () => {
+  assert.equal(detectSnapshotTypeFromOcr('Aliança > Membros — Poder'), 'power');
+  assert.equal(detectSnapshotTypeFromOcr('Aliança > Membros — Última Conexão'), 'last_connection');
+  assert.equal(detectSnapshotTypeFromOcr('Alliance Members — Join Date'), 'joined_at');
+  assert.equal(detectSnapshotTypeFromOcr('Data de Entrada na Aliança • Poder'), 'joined_at');
+});
+
+test('OCR local aceita linhas de Poder apenas quando a leitura é suficientemente confiável', () => {
+  const parsed = parseAllianceOcr({
+    text: 'Aliança Membros Poder',
+    tsv: allianceOcrTsv([
+      [{ text:'G⊙KU™', conf:97, width:520 }, { text:'3,117,901', conf:99 }],
+      [{ text:'IMPERADOR', conf:96, width:520 }, { text:'2,441,811', conf:98 }],
+    ]),
+  });
+  assert.equal(parsed.accepted, true);
+  assert.equal(parsed.snapshotType, 'power');
+  assert.deepEqual(parsed.rows.map(({ name, power }) => ({ name, power })), [
+    { name:'G⊙KU™', power:3117901 },
+    { name:'IMPERADOR', power:2441811 },
+  ]);
+});
+
+test('OCR local rejeita leitura ambígua em vez de inventar números', () => {
+  const parsed = parseAllianceOcr({
+    text: 'Aliança Membros Poder',
+    tsv: allianceOcrTsv([
+      [{ text:'JogadorA', conf:55, width:520 }, { text:'1O0O', conf:55 }],
+      [{ text:'JogadorB', conf:58, width:520 }, { text:'2O0O', conf:58 }],
+    ]),
+  });
+  assert.equal(parsed.accepted, false);
+  assert.equal(parsed.rows.length, 0);
+});
 
 test('Alliance Tracker respeita o limite de 120 membros do jogo', () => {
   assert.equal(ALLIANCE_MEMBER_LIMIT, 120);
@@ -77,10 +129,15 @@ test('troca de nick por poder próximo é apenas sugerida, nunca unida automatic
   assert.match(route, /merge-members/);
 });
 
-test('importador visual usa Groq Vision e armazenamento apenas temporário para lotes retomáveis', () => {
+test('importador usa OCR local primeiro, Groq somente como fallback e armazenamento temporário', () => {
+  const ocr = readFileSync(new URL('../services/alliance/ocr.js', import.meta.url), 'utf8');
   const vision = readFileSync(new URL('../services/alliance/vision.js', import.meta.url), 'utf8');
   const route = readFileSync(new URL('../routes/allianceTracker.js', import.meta.url), 'utf8');
   const batch = readFileSync(new URL('../services/alliance/importBatch.js', import.meta.url), 'utf8');
+  assert.match(ocr, /tesseract\.js/);
+  assert.match(ocr, /@tesseract\.js-data\/eng/);
+  assert.match(ocr, /parseAllianceOcr/);
+  assert.match(vision, /extractAllianceScreenshotWithOcr/);
   assert.match(vision, /qwen\/qwen3\.6-27b/);
   assert.match(vision, /image_url/);
   assert.match(route, /memoryStorage\(\)/);
@@ -112,6 +169,8 @@ test('Alliance Tracker possui rota progressiva e retomável para narrar a leitur
   assert.match(route, /completed: batch\.results\.length/);
   assert.match(route, /merge_start/);
   assert.match(route, /mapLimited\(req\.files, 1/);
+  assert.match(route, /ocrImagesCount/);
+  assert.match(route, /aiImagesCount/);
 });
 
 test('rate limit respeita Retry-After e tenta novamente a mesma imagem antes de falhar', async () => {

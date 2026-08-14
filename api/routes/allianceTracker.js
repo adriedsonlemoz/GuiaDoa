@@ -178,7 +178,14 @@ router.post('/extract', upload.array('images', 10), async (req, res) => {
     }));
     const merged = mergeExtractedRows(results);
     if (!merged.rows.length) return res.status(422).json({ erro: 'Nenhum membro pôde ser lido. Tente uma captura mais nítida.', code: 'VISION_NO_ROWS' });
-    res.json({ ...merged, imagesCount: req.files.length, models: [...new Set(results.map(r => r.model).filter(Boolean))] });
+    res.json({
+      ...merged,
+      imagesCount: req.files.length,
+      models: [...new Set(results.map(r => r.model).filter(Boolean))],
+      engines: [...new Set(results.map(r => r.engine).filter(Boolean))],
+      ocrImagesCount: results.filter(r => r.engine === 'ocr').length,
+      aiImagesCount: results.filter(r => r.aiUsed).length,
+    });
   } catch (error) {
     if (error.name === 'AbortError') return res.status(504).json({ erro: 'A leitura dos screenshots demorou demais.', code: 'VISION_TIMEOUT', retryable: true });
     logVisionError(error);
@@ -300,6 +307,8 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
       send({
         type: 'image_done', index, total: batch.total, completed: batch.results.length,
         rows: result.rows.length, snapshotType: result.snapshotType, model: result.model,
+        engine: result.engine || null, aiUsed: Boolean(result.aiUsed),
+        ocrConfidence: result.ocrConfidence ?? null,
         warnings: result.warnings?.length || 0, batchId: batch.id,
       });
 
@@ -327,6 +336,9 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
       capturedAt: batch.capturedAt,
       imagesCount: batch.total,
       models: [...new Set(batch.results.map(r => r.model).filter(Boolean))],
+      engines: [...new Set(batch.results.map(r => r.engine).filter(Boolean))],
+      ocrImagesCount: batch.results.filter(r => r.engine === 'ocr').length,
+      aiImagesCount: batch.results.filter(r => r.aiUsed).length,
     };
     await completeImportBatch(batch, data);
     send({ type: 'done', data, batchId: batch.id, completed: batch.total, total: batch.total });

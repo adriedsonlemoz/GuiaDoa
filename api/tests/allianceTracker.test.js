@@ -8,6 +8,7 @@ import {
   normalizeMemberName,
   parsePower,
   parseRealmDate,
+  isValidDateParts,
   scoreNicknameCandidate,
 } from '../utils/allianceTracker.js';
 import { buildOcrRegions, detectSnapshotTypeFromOcr, imageDimensions, parseAllianceOcr } from '../services/alliance/ocr.js';
@@ -51,6 +52,19 @@ test('OCR local aceita linhas de Poder apenas quando a leitura é suficientement
     { name:'G⊙KU™', power:3117901 },
     { name:'IMPERADOR', power:2441811 },
   ]);
+});
+
+test('OCR tolera espaços gerados pelo Tesseract ao redor de separadores sem corrigir letras ambíguas', () => {
+  const power = parseAllianceOcr({
+    text:'Poder', snapshotTypeHint:'power', minRows:1,
+    tsv: allianceOcrTsv([[{ text:'Daizu', conf:96, width:500 }, { text:'1 , 500 , 000', conf:96 }]]),
+  });
+  assert.equal(power.rows[0].power, 1500000);
+  const joined = parseAllianceOcr({
+    text:'Data de entrada', snapshotTypeHint:'joined_at', minRows:1,
+    tsv: allianceOcrTsv([[{ text:'Daizu', conf:96, width:500 }, { text:'2026 - 08 - 14 10 : 30 : 00', conf:96 }]]),
+  });
+  assert.equal(joined.rows[0].joinedAt, '2026-08-14 10:30:00');
 });
 
 test('OCR local rejeita leitura ambígua em vez de inventar números', () => {
@@ -146,7 +160,8 @@ test('importador da Alliance é 100% local e mantém armazenamento temporário',
   assert.match(route, /memoryStorage\(\)/);
   assert.doesNotMatch(route, /cloudinary\.uploader/);
   assert.match(batch, /tmpdir\(\)/);
-  assert.match(batch, /removeImageFiles/);
+  assert.match(batch, /readImportBatchImage/);
+  assert.match(batch, /COMPLETED_TTL_MS/);
   assert.match(batch, /cancelImportBatch/);
   assert.match(route, /files:\s*10/);
   assert.match(route, /fileSize:\s*6 \* 1024 \* 1024/);
@@ -202,7 +217,7 @@ test('leitor local preserva imagem inconclusiva para revisão sem interromper po
   assert.ok(result.reviewItems.some(item => item.type === 'snapshot_type_manual'));
 });
 
-test('lote temporário preserva resultados concluídos e descarta a imagem já processada', async () => {
+test('lote temporário preserva resultados e mantém a origem apenas durante a revisão', async () => {
   const {
     appendImportBatchResult,
     cancelImportBatch,
@@ -222,7 +237,7 @@ test('lote temporário preserva resultados concluídos e descarta a imagem já p
   try {
     assert.ok(await readImportBatchImage(batch, 0));
     await appendImportBatchResult(batch, { snapshotType:'power', rows:[{ name:'A', power:1 }], warnings:[], model:'teste' });
-    assert.equal(await readImportBatchImage(batch, 0), null);
+    assert.ok(await readImportBatchImage(batch, 0));
     assert.ok(await readImportBatchImage(batch, 1));
     const restored = await loadImportBatch(batch.id, owner);
     assert.equal(restored.results.length, 1);
@@ -230,6 +245,74 @@ test('lote temporário preserva resultados concluídos e descarta a imagem já p
   } finally {
     await cancelImportBatch(batch.id, owner);
   }
+});
+
+
+test('datas inválidas não são normalizadas silenciosamente pelo JavaScript', () => {
+  assert.equal(isValidDateParts(2026, 2, 31, 10, 0, 0), false);
+  assert.equal(parseRealmDate('2026-02-31 10:00:00', 0), null);
+  assert.equal(parseRealmDate('2028-02-29 10:00:00', 0).toISOString(), '2028-02-29T10:00:00.000Z');
+});
+
+test('poder rejeita caracteres contaminados e números fora do inteiro seguro', () => {
+  assert.equal(parsePower('1O00'), null);
+  assert.equal(parsePower('power 1000'), null);
+  assert.equal(parsePower('999999999999999999999999'), null);
+});
+
+test('OCR reconstrói nome e valor separados em blocos diferentes pela posição visual', () => {
+  const header = ['level','page_num','block_num','par_num','line_num','word_num','left','top','width','height','conf','text'].join('\t');
+  const tsv = [
+    header,
+    [5,1,1,1,1,1,20,100,220,24,96,'Daizu'].join('\t'),
+    [5,1,2,1,1,1,650,101,180,24,98,'1,500,000'].join('\t'),
+    [5,1,1,1,2,1,20,145,220,24,95,'G⊙KU™'].join('\t'),
+    [5,1,2,1,2,1,650,146,180,24,97,'3,117,901'].join('\t'),
+  ].join('\n');
+  const parsed = parseAllianceOcr({ text:'Poder', tsv, snapshotTypeHint:'power', minRows:1 });
+  assert.deepEqual(parsed.rows.map(row => [row.name,row.power]), [['Daizu',1500000],['G⊙KU™',3117901]]);
+});
+
+test('merge mantém valor e confiança da mesma leitura quando screenshots conflitam', () => {
+  const merged = mergeExtractedRows([
+    { snapshotType:'power', coverageComplete:true, rows:[{ name:'Daizu', power:1500000, confidence:.98 }] },
+    { snapshotType:'power', coverageComplete:true, rows:[{ name:'Daizu', power:1800000, confidence:.60 }] },
+  ]);
+  const daizu = merged.rows.find(row => row.name === 'Daizu');
+  assert.equal(daizu.power, 1500000);
+  assert.equal(daizu.confidence, .98);
+  assert.equal(daizu.reviewRequired, true);
+  assert.ok(daizu.reviewReasons.includes('value_conflict'));
+  assert.ok(merged.reviewItems.some(item => item.type === 'value_conflict'));
+});
+
+test('merge exclui screenshot de tipo divergente e bloqueia cobertura completa', () => {
+  const merged = mergeExtractedRows([
+    { snapshotType:'power', coverageComplete:true, rows:[{ name:'Daizu', power:1500000, confidence:.98 }] },
+    { snapshotType:'joined_at', coverageComplete:true, rows:[{ name:'Outro', joinedAt:'2026-08-14 10:00:00', confidence:.99 }] },
+  ], 'power');
+  assert.equal(merged.rows.length, 1);
+  assert.equal(merged.rows[0].name, 'Daizu');
+  assert.equal(merged.coverageComplete, false);
+  assert.ok(merged.reviewItems.some(item => item.type === 'snapshot_type_conflict'));
+});
+
+test('imagem estruturalmente incompleta bloqueia uso do lote como cobertura completa', () => {
+  const merged = mergeExtractedRows([
+    { snapshotType:'power', coverageComplete:true, rows:[{ name:'Daizu', power:1500000, confidence:.98 }] },
+    { snapshotType:'power', coverageComplete:false, rows:[], reviewItems:[{ type:'image_manual_entry' }] },
+  ], 'power');
+  assert.equal(merged.coverageComplete, false);
+  assert.equal(merged.structurallyIncompleteImages, 1);
+});
+
+test('rota protege lista completa, usa transação atômica e expõe imagem temporária autenticada', () => {
+  const route = readFileSync(new URL('../routes/allianceTracker.js', import.meta.url), 'utf8');
+  assert.match(route, /ALLIANCE_COVERAGE_INCOMPLETE/);
+  assert.match(route, /withTransaction/);
+  assert.match(route, /extract-batches\/:batchId\/images\/:index/);
+  assert.match(route, /Cache-Control', 'private, no-store/);
+  assert.match(route, /releaseUploadBuffers/);
 });
 
 
@@ -260,6 +343,8 @@ test('ROI é calculada a partir das dimensões do screenshot sem biblioteca exte
   assert.ok(regions.header.width < 1080);
   assert.ok(regions.table.top > 0);
   assert.ok(regions.table.height < 2400);
+  assert.equal(regions.columnVariants.length, 2);
+  assert.ok(regions.nameColumn.width < regions.table.width);
 });
 
 test('reconciliação do lote usa membros conhecidos apenas como evidência para revisão', () => {

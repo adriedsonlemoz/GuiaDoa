@@ -26,6 +26,7 @@ import {
   createImportBatch,
   loadImportBatch,
   markImportBatchProcessing,
+  heartbeatImportBatch,
   pauseImportBatch,
   publicImportBatch,
   readImportBatchImage,
@@ -165,25 +166,38 @@ async function mapLimited(items, limit, worker) {
 }
 
 function logVisionError(error) {
-  if (error?.detail) console.error('[alliance-tracker] visão:', error.detail);
+  if (error?.detail) console.error('[alliance-tracker] leitura local:', error.detail);
+}
+
+function releaseUploadBuffers(req) {
+  if (!Array.isArray(req.files)) return;
+  for (const file of req.files) {
+    if (file && Buffer.isBuffer(file.buffer)) file.buffer = null;
+  }
+  req.files = [];
 }
 
 router.post('/extract', upload.array('images', 10), async (req, res) => {
   if (!req.files?.length) return res.status(400).json({ erro: 'Selecione pelo menos um screenshot.' });
+  const imagesCount = req.files.length;
+  res.setHeader('Deprecation', 'true');
+  res.setHeader('Link', '</api/alliance-tracker/extract-stream>; rel="successor-version"');
   try {
-    // Sequencial de propósito: mantém uso de CPU/memória previsível e preserva a narrativa por imagem.
+    // Compatibilidade legada: usa exatamente o mesmo leitor local, mas sem retomada.
+    const hint = SNAPSHOT_TYPES.includes(req.body?.snapshotTypeHint) ? req.body.snapshotTypeHint : null;
     const results = await mapLimited(req.files, 1, async (file) => extractAllianceScreenshot({
       buffer: file.buffer,
       mimetype: file.mimetype,
+      snapshotTypeHint: hint,
     }));
-    const merged = mergeExtractedRows(results);
+    const merged = mergeExtractedRows(results, hint);
     if (!merged.rows.length && !merged.reviewItems?.length) {
       merged.reviewItems = [{ type:'image_manual_entry', message:'Nenhuma linha pôde ser reconstruída automaticamente; revise e adicione os dados manualmente.' }];
       merged.warnings = [...new Set([...(merged.warnings || []), 'Leitura local inconclusiva; revisão manual necessária.'])];
     }
     res.json({
       ...merged,
-      imagesCount: req.files.length,
+      imagesCount,
       models: [...new Set(results.map(r => r.model).filter(Boolean))],
       engines: [...new Set(results.map(r => r.engine).filter(Boolean))],
       ocrImagesCount: results.filter(r => r.engine === 'ocr').length,
@@ -193,6 +207,8 @@ router.post('/extract', upload.array('images', 10), async (req, res) => {
     if (error.name === 'AbortError') return res.status(504).json({ erro: 'A leitura dos screenshots demorou demais.', code: 'VISION_TIMEOUT', retryable: true });
     logVisionError(error);
     res.status(error.status || 502).json(serializeVisionError(error));
+  } finally {
+    releaseUploadBuffers(req);
   }
 });
 
@@ -200,6 +216,19 @@ router.get('/extract-batches/:batchId', async (req, res) => {
   const batch = await loadImportBatch(req.params.batchId, req.usuario.id);
   if (!batch) return res.status(404).json({ erro: 'Lote de leitura não encontrado ou expirado.', code: 'VISION_BATCH_NOT_FOUND' });
   res.json(publicImportBatch(batch));
+});
+
+router.get('/extract-batches/:batchId/images/:index', async (req, res) => {
+  const batch = await loadImportBatch(req.params.batchId, req.usuario.id);
+  if (!batch) return res.status(404).json({ erro: 'Lote de leitura não encontrado ou expirado.', code: 'VISION_BATCH_NOT_FOUND' });
+  const index = Number(req.params.index);
+  if (!Number.isInteger(index) || index < 0 || index >= batch.total) return res.status(400).json({ erro: 'Índice de imagem inválido.' });
+  const file = await readImportBatchImage(batch, index);
+  if (!file) return res.status(404).json({ erro: 'A imagem temporária não está mais disponível.' });
+  res.setHeader('Content-Type', file.mimetype || 'application/octet-stream');
+  res.setHeader('Cache-Control', 'private, no-store, max-age=0');
+  res.setHeader('Content-Disposition', `inline; filename="alliance-${index + 1}"`);
+  res.send(file.buffer);
 });
 
 router.delete('/extract-batches/:batchId', async (req, res) => {
@@ -218,12 +247,21 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
   } else {
     if (!req.files?.length) return res.status(400).json({ erro: 'Selecione pelo menos um screenshot.' });
     const capturedAt = dateIso(req.body?.capturedAt)?.toISOString() || new Date().toISOString();
-    batch = await createImportBatch({
-      files: req.files,
-      ownerUserId: req.usuario.id,
-      allianceId: req.body?.allianceId || null,
-      capturedAt,
-    });
+    const snapshotTypeHint = SNAPSHOT_TYPES.includes(req.body?.snapshotTypeHint) ? req.body.snapshotTypeHint : null;
+    try {
+      batch = await createImportBatch({
+        files: req.files,
+        ownerUserId: req.usuario.id,
+        allianceId: req.body?.allianceId || null,
+        capturedAt,
+        snapshotTypeHint,
+      });
+    } catch (error) {
+      const payload = serializeVisionError(error);
+      return res.status(error?.code === 'ALLIANCE_BATCH_OWNER_BUSY' ? 409 : 500).json(payload);
+    } finally {
+      releaseUploadBuffers(req);
+    }
   }
 
   if (batch.status === 'processing') {
@@ -297,6 +335,22 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
       } : null,
     });
 
+    let lastHeartbeatAt = 0;
+    let heartbeatChain = Promise.resolve();
+    const emitProgress = (index, progress) => {
+      send({
+        type: 'vision_progress', index, total: batch.total, completed: batch.results.length,
+        batchId: batch.id, ...progress,
+      });
+      const now = Date.now();
+      if (now - lastHeartbeatAt >= 10_000) {
+        lastHeartbeatAt = now;
+        heartbeatChain = heartbeatChain.then(() => heartbeatImportBatch(batch)).catch(error => {
+          console.warn('[alliance-tracker] heartbeat do lote:', error?.message || error);
+        });
+      }
+    };
+
     for (let index = batch.results.length; index < batch.total; index += 1) {
       if (clientDisconnected) {
         await pauseImportBatch(batch, {
@@ -332,12 +386,11 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
         knownMembers: resolverMembers,
         corrections: resolverCorrections,
         onCheckpoint: checkpoint => saveImportBatchOcrCheckpoint(batch, index, checkpoint),
-        onProgress: progress => send({
-          type: 'vision_progress', index, total: batch.total, completed: batch.results.length,
-          batchId: batch.id, ...progress,
-        }),
+        onProgress: progress => emitProgress(index, progress),
+        snapshotTypeHint: batch.snapshotTypeHint || null,
       });
 
+      await heartbeatChain;
       await appendImportBatchResult(batch, result);
       send({
         type: 'image_done', index, total: batch.total, completed: batch.results.length,
@@ -366,7 +419,7 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
     }
 
     send({ type: 'merge_start', imagesCount: batch.results.length, completed: batch.results.length, total: batch.total, batchId: batch.id });
-    const merged = mergeExtractedRows(batch.results, null, { knownNames });
+    const merged = mergeExtractedRows(batch.results, batch.snapshotTypeHint || null, { knownNames });
     if (!merged.rows.length && !merged.reviewItems?.length) {
       merged.reviewItems = [{
         type: 'image_manual_entry',
@@ -386,7 +439,11 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
     const localSuggested = batch.results.reduce((sum, r) => sum + Number(r.localResolver?.suggested || 0), 0);
     const data = {
       ...merged,
+      batchId: batch.id,
       capturedAt: batch.capturedAt,
+      snapshotTypeHint: batch.snapshotTypeHint || null,
+      coverageComplete: Boolean(merged.coverageComplete),
+      sourceImages: (batch.files || []).map(({ index, name, mimetype, size }) => ({ index, name, mimetype, size })),
       uploadedImagesCount: batch.uploadedTotal || batch.total,
       imagesCount: batch.total,
       duplicatesSkipped: batch.duplicatesSkipped || 0,
@@ -437,213 +494,304 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
 });
 
 router.post('/alliances/:id/import', async (req, res) => {
-  const alliance = await workspaceFor(req, req.params.id);
-  if (!alliance) return res.status(404).json({ erro: 'Aliança não encontrada.' });
+  const workspace = await workspaceFor(req, req.params.id);
+  if (!workspace) return res.status(404).json({ erro: 'Aliança não encontrada.' });
+
   const type = SNAPSHOT_TYPES.includes(req.body?.type) ? req.body.type : null;
   if (!type) return res.status(400).json({ erro: 'Tipo de captura inválido.' });
   const capturedAt = dateIso(req.body?.capturedAt) || new Date();
   const completeList = Boolean(req.body?.completeList);
   const imagesCount = Math.max(0, Math.min(20, Number(req.body?.imagesCount) || 0));
+  const batchId = String(req.body?.batchId || '').trim();
+  let verifiedCompleteBatch = null;
+
+  // "Lista completa" só pode gerar saídas quando o próprio lote confirma cobertura
+  // estrutural de todas as imagens. Não confiamos apenas no checkbox do navegador.
+  if (completeList) {
+    if (!batchId) {
+      return res.status(409).json({
+        erro: 'Para detectar saídas, confirme uma leitura completa vinculada ao lote atual.',
+        code: 'ALLIANCE_COMPLETE_REQUIRES_BATCH',
+      });
+    }
+    const batch = await loadImportBatch(batchId, req.usuario.id);
+    const sameAlliance = batch && String(batch.allianceId || '') === String(workspace._id);
+    const finalType = batch?.finalData?.snapshotType;
+    if (!batch || batch.status !== 'completed' || !sameAlliance || finalType !== type) {
+      return res.status(409).json({
+        erro: 'O lote atual não corresponde a esta Aliança/tipo de captura. Importe como parcial ou faça uma nova leitura.',
+        code: 'ALLIANCE_BATCH_MISMATCH',
+      });
+    }
+    if (!batch.finalData?.coverageComplete) {
+      return res.status(409).json({
+        erro: 'Este lote possui uma ou mais imagens estruturalmente incompletas. Para proteger os membros, a detecção de saídas foi bloqueada.',
+        code: 'ALLIANCE_COVERAGE_INCOMPLETE',
+      });
+    }
+    verifiedCompleteBatch = batch;
+  }
+
   const rawRows = Array.isArray(req.body?.rows) ? req.body.rows : [];
   const correctionCandidates = rawRows
     .filter(raw => raw?.reviewed && raw?.ocrOriginalName && cleanMemberName(raw.ocrOriginalName) && cleanMemberName(raw.name))
     .map(raw => ({ observedName: cleanMemberName(raw.ocrOriginalName), confirmedName: cleanMemberName(raw.name) }))
     .filter(item => item.observedName && item.confirmedName && normalizeMemberName(item.observedName) !== normalizeMemberName(item.confirmedName));
+
   const rowsMap = new Map();
-  rawRows.forEach(raw => {
+  const invalidRows = [];
+  rawRows.forEach((raw, index) => {
     const row = sanitizeExtractedRow(raw, type);
-    if (row) rowsMap.set(row.normalizedName, row);
+    if (!row) {
+      invalidRows.push({ index, name: cleanMemberName(raw?.name || '') });
+      return;
+    }
+    const prior = rowsMap.get(row.normalizedName);
+    if (!prior || Number(row.confidence ?? -1) > Number(prior.confidence ?? -1)) rowsMap.set(row.normalizedName, row);
   });
-  const rows = [...rowsMap.values()];
-  if (!rows.length) return res.status(400).json({ erro: 'A importação não possui membros.' });
-  if (rows.length > (alliance.memberLimit || ALLIANCE_MEMBER_LIMIT)) return res.status(400).json({ erro: `Uma Aliança aceita no máximo ${ALLIANCE_MEMBER_LIMIT} membros.` });
-
-  const allMembers = await AllianceMember.find({ allianceId: alliance._id });
-  const activeBefore = allMembers.filter(m => m.status === 'active');
-  const hasPreviousComplete = Boolean(await AllianceSnapshot.exists({ allianceId: alliance._id, completeList: true }));
-  const baseline = completeList && !hasPreviousComplete;
-
-  const byName = new Map();
-  allMembers.forEach(m => {
-    byName.set(m.normalizedName, m);
-    (m.aliases || []).forEach(a => byName.set(a.normalizedName, m));
-  });
-
-  const unmatchedIncoming = rows.filter(row => !byName.has(row.normalizedName)).length;
-  const returnedIncoming = rows.filter(row => byName.get(row.normalizedName)?.status === 'left').length;
-  const projectedActive = activeBefore.length + unmatchedIncoming + returnedIncoming;
-  if (!completeList && projectedActive > (alliance.memberLimit || ALLIANCE_MEMBER_LIMIT)) {
-    return res.status(409).json({ erro: `A importação parcial resultaria em ${projectedActive} membros ativos; o limite é ${ALLIANCE_MEMBER_LIMIT}. Revise nomes lidos incorretamente.` });
-  }
-
-  const snapshotRows = [];
-  const changes = [];
-  const seenIds = new Set();
-  const newMembers = [];
-  const returnedMembers = [];
-
-  for (const row of rows) {
-    let member = byName.get(row.normalizedName) || null;
-    if (!member) {
-      member = new AllianceMember({
-        allianceId: alliance._id,
-        currentName: row.name,
-        normalizedName: row.normalizedName,
-        aliases: [],
-        status: 'active',
-        firstSeenAt: capturedAt,
-        lastSeenAt: capturedAt,
-      });
-      newMembers.push(member);
-      allMembers.push(member);
-      byName.set(row.normalizedName, member);
-    } else if (member.status === 'left') {
-      member.status = 'active';
-      member.leftAt = null;
-      returnedMembers.push(member);
-    }
-
-    if (!member._id) member._id = new mongoose.Types.ObjectId();
-    seenIds.add(String(member._id));
-    if (!member.lastSeenAt || capturedAt >= member.lastSeenAt) member.lastSeenAt = capturedAt;
-    member.updatedAt = new Date();
-
-    let lastConnectionAt = null;
-    let joinedAt = null;
-    if (type === 'power') {
-      const power = parsePower(row.power);
-      if (power != null && (!member.latestPowerAt || capturedAt >= member.latestPowerAt)) {
-        if (member.latestPower != null && member.latestPowerAt && power !== member.latestPower) {
-          member.previousPower = member.latestPower;
-          member.previousPowerAt = member.latestPowerAt;
-        }
-        member.latestPower = power;
-        member.latestPowerAt = capturedAt;
-      }
-      if (row.online) {
-        member.onlineAtCapture = true;
-        member.onlineCapturedAt = capturedAt;
-      }
-    }
-    if (type === 'last_connection') {
-      lastConnectionAt = parseRealmDate(row.lastConnection, alliance.utcOffset);
-      member.lastConnectionRaw = row.lastConnection || '';
-      if (lastConnectionAt && (!member.lastConnectionAt || capturedAt >= (member.onlineCapturedAt || member.lastConnectionAt))) member.lastConnectionAt = lastConnectionAt;
-      member.onlineAtCapture = Boolean(row.online);
-      member.onlineCapturedAt = capturedAt;
-      if (row.online && (!member.lastConnectionAt || capturedAt > member.lastConnectionAt)) member.lastConnectionAt = capturedAt;
-    }
-    if (type === 'joined_at') {
-      joinedAt = parseRealmDate(row.joinedAt, alliance.utcOffset);
-      member.joinedAtRaw = row.joinedAt || '';
-      if (joinedAt) member.joinedAt = joinedAt;
-    }
-    await member.save();
-    snapshotRows.push({
-      memberId: member._id,
-      name: row.name,
-      normalizedName: row.normalizedName,
-      power: type === 'power' ? parsePower(row.power) : null,
-      lastConnectionAt,
-      lastConnectionRaw: type === 'last_connection' ? (row.lastConnection || '') : '',
-      joinedAt,
-      joinedAtRaw: type === 'joined_at' ? (row.joinedAt || '') : '',
-      online: Boolean(row.online),
+  if (invalidRows.length) {
+    return res.status(400).json({
+      erro: `${invalidRows.length} linha(s) possuem valor inválido. Corrija Poder/data antes de importar.`,
+      code: 'ALLIANCE_INVALID_ROWS',
+      invalidRows,
     });
   }
 
-  if (completeList) {
-    if (!baseline) {
-      newMembers.forEach(m => changes.push({ type: 'joined', memberId: m._id, name: m.currentName, note: 'Novo nome em uma captura completa.' }));
-      returnedMembers.forEach(m => changes.push({ type: 'returned', memberId: m._id, name: m.currentName, note: 'Membro que havia saído voltou a aparecer.' }));
-      for (const member of activeBefore) {
-        if (!seenIds.has(String(member._id))) {
-          member.status = 'left';
-          member.leftAt = capturedAt;
-          member.updatedAt = new Date();
-          await member.save();
-          changes.push({ type: 'left', memberId: member._id, name: member.currentName, note: 'Não apareceu na nova captura completa.' });
+  const rows = [...rowsMap.values()];
+  if (!rows.length) return res.status(400).json({ erro: 'A importação não possui membros.' });
+  if (completeList && verifiedCompleteBatch) {
+    const expectedRows = Number(verifiedCompleteBatch.finalData?.rows?.length || 0);
+    if (!expectedRows || rows.length !== expectedRows) {
+      return res.status(409).json({
+        erro: 'A quantidade de linhas foi alterada manualmente após a leitura. Para evitar falsas saídas, importe como parcial ou refaça a captura.',
+        code: 'ALLIANCE_COMPLETE_ROWS_CHANGED',
+      });
+    }
+  }
+  if (rows.length > (workspace.memberLimit || ALLIANCE_MEMBER_LIMIT)) {
+    return res.status(400).json({ erro: `Uma Aliança aceita no máximo ${ALLIANCE_MEMBER_LIMIT} membros.` });
+  }
+
+  const session = await mongoose.startSession();
+  let payload = null;
+  try {
+    await session.withTransaction(async () => {
+      const alliance = await AllianceWorkspace.findOne({ _id: workspace._id, ownerUserId: req.usuario.id }).session(session);
+      if (!alliance) {
+        const error = new Error('Aliança não encontrada.');
+        error.status = 404;
+        throw error;
+      }
+
+      const allMembers = await AllianceMember.find({ allianceId: alliance._id }).session(session);
+      const activeBefore = allMembers.filter(m => m.status === 'active');
+      const hasPreviousComplete = Boolean(await AllianceSnapshot.exists({ allianceId: alliance._id, completeList: true }).session(session));
+      const baseline = completeList && !hasPreviousComplete;
+
+      const byName = new Map();
+      allMembers.forEach(m => {
+        byName.set(m.normalizedName, m);
+        (m.aliases || []).forEach(a => byName.set(a.normalizedName, m));
+      });
+
+      const unmatchedIncoming = rows.filter(row => !byName.has(row.normalizedName)).length;
+      const returnedIncoming = rows.filter(row => byName.get(row.normalizedName)?.status === 'left').length;
+      const projectedActive = activeBefore.length + unmatchedIncoming + returnedIncoming;
+      if (!completeList && projectedActive > (alliance.memberLimit || ALLIANCE_MEMBER_LIMIT)) {
+        const error = new Error(`A importação parcial resultaria em ${projectedActive} membros ativos; o limite é ${ALLIANCE_MEMBER_LIMIT}. Revise nomes lidos incorretamente.`);
+        error.status = 409;
+        throw error;
+      }
+
+      const snapshotRows = [];
+      const changes = [];
+      const seenIds = new Set();
+      const newMembers = [];
+      const returnedMembers = [];
+
+      for (const row of rows) {
+        let member = byName.get(row.normalizedName) || null;
+        if (!member) {
+          member = new AllianceMember({
+            _id: new mongoose.Types.ObjectId(),
+            allianceId: alliance._id,
+            currentName: row.name,
+            normalizedName: row.normalizedName,
+            aliases: [],
+            status: 'active',
+            firstSeenAt: capturedAt,
+            lastSeenAt: capturedAt,
+          });
+          newMembers.push(member);
+          allMembers.push(member);
+          byName.set(row.normalizedName, member);
+        } else if (member.status === 'left') {
+          member.status = 'active';
+          member.leftAt = null;
+          returnedMembers.push(member);
+        }
+
+        seenIds.add(String(member._id));
+        if (!member.lastSeenAt || capturedAt >= member.lastSeenAt) member.lastSeenAt = capturedAt;
+        member.updatedAt = new Date();
+
+        let lastConnectionAt = null;
+        let joinedAt = null;
+        if (type === 'power') {
+          const power = parsePower(row.power);
+          if (power != null && (!member.latestPowerAt || capturedAt >= member.latestPowerAt)) {
+            if (member.latestPower != null && member.latestPowerAt && power !== member.latestPower) {
+              member.previousPower = member.latestPower;
+              member.previousPowerAt = member.latestPowerAt;
+            }
+            member.latestPower = power;
+            member.latestPowerAt = capturedAt;
+          }
+        }
+        if (type === 'last_connection') {
+          lastConnectionAt = row.online ? capturedAt : parseRealmDate(row.lastConnection, alliance.utcOffset);
+          member.lastConnectionRaw = row.online ? 'Online' : (row.lastConnection || '');
+          member.onlineAtCapture = Boolean(row.online);
+          member.onlineCapturedAt = capturedAt;
+          if (lastConnectionAt && (!member.lastConnectionAt || lastConnectionAt > member.lastConnectionAt)) member.lastConnectionAt = lastConnectionAt;
+          if (row.online && (!member.lastConnectionAt || capturedAt > member.lastConnectionAt)) member.lastConnectionAt = capturedAt;
+        }
+        if (type === 'joined_at') {
+          joinedAt = parseRealmDate(row.joinedAt, alliance.utcOffset);
+          if (!joinedAt) {
+            const error = new Error(`Data de entrada inválida para ${row.name}.`);
+            error.status = 400;
+            throw error;
+          }
+          member.joinedAtRaw = row.joinedAt || '';
+          member.joinedAt = joinedAt;
+        }
+
+        await member.save({ session });
+        snapshotRows.push({
+          memberId: member._id,
+          name: row.name,
+          normalizedName: row.normalizedName,
+          power: type === 'power' ? parsePower(row.power) : null,
+          lastConnectionAt,
+          lastConnectionRaw: type === 'last_connection' ? (row.online ? 'Online' : (row.lastConnection || '')) : '',
+          joinedAt,
+          joinedAtRaw: type === 'joined_at' ? (row.joinedAt || '') : '',
+          online: Boolean(row.online),
+        });
+      }
+
+      if (completeList && !baseline) {
+        newMembers.forEach(m => changes.push({ type: 'joined', memberId: m._id, name: m.currentName, note: 'Novo nome em uma captura completa.' }));
+        returnedMembers.forEach(m => changes.push({ type: 'returned', memberId: m._id, name: m.currentName, note: 'Membro que havia saído voltou a aparecer.' }));
+
+        for (const member of activeBefore) {
+          if (!seenIds.has(String(member._id))) {
+            member.status = 'left';
+            member.leftAt = capturedAt;
+            member.updatedAt = new Date();
+            await member.save({ session });
+            changes.push({ type: 'left', memberId: member._id, name: member.currentName, note: 'Não apareceu na nova captura completa validada.' });
+          }
+        }
+
+        const leftNow = activeBefore.filter(m => !seenIds.has(String(m._id)));
+        const candidateRows = newMembers.map(m => rows.find(r => r.normalizedName === m.normalizedName)).filter(Boolean);
+        for (const row of candidateRows) {
+          const ranked = leftNow
+            .map(old => ({ old, ...scoreNicknameCandidate(old, row, type) }))
+            .filter(c => c.score >= 0.55)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 1);
+          const fresh = newMembers.find(m => m.normalizedName === row.normalizedName);
+          ranked.forEach(c => changes.push({
+            type: 'nickname_candidate',
+            memberId: c.old._id,
+            name: c.old.currentName,
+            otherMemberId: fresh?._id || null,
+            otherName: row.name,
+            score: Number(c.score.toFixed(2)),
+            note: c.reasons.join(', '),
+          }));
         }
       }
 
-      const leftNow = activeBefore.filter(m => !seenIds.has(String(m._id)));
-      const candidateRows = newMembers.map(m => rows.find(r => r.normalizedName === m.normalizedName)).filter(Boolean);
-      for (const row of candidateRows) {
-        const ranked = leftNow
-          .map(old => ({ old, ...scoreNicknameCandidate(old, row, type) }))
-          .filter(c => c.score >= 0.55)
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 1);
-        const fresh = newMembers.find(m => m.normalizedName === row.normalizedName);
-        ranked.forEach(c => changes.push({
-          type: 'nickname_candidate',
-          memberId: c.old._id,
-          name: c.old.currentName,
-          otherMemberId: fresh?._id || null,
-          otherName: row.name,
-          score: Number(c.score.toFixed(2)),
-          note: c.reasons.join(', '),
-        }));
+      const activeAfter = await AllianceMember.countDocuments({ allianceId: alliance._id, status: 'active' }).session(session);
+      if (activeAfter > (alliance.memberLimit || ALLIANCE_MEMBER_LIMIT)) {
+        const error = new Error(`A importação resultaria em ${activeAfter} membros ativos; o limite é ${ALLIANCE_MEMBER_LIMIT}. Revise nomes lidos incorretamente.`);
+        error.status = 409;
+        throw error;
       }
-    }
-  }
 
-  const activeAfter = await AllianceMember.countDocuments({ allianceId: alliance._id, status: 'active' });
-  if (activeAfter > (alliance.memberLimit || ALLIANCE_MEMBER_LIMIT)) {
-    return res.status(409).json({ erro: `A importação resultaria em ${activeAfter} membros ativos; o limite é ${ALLIANCE_MEMBER_LIMIT}. Revise nomes lidos incorretamente.` });
-  }
+      const snapshot = new AllianceSnapshot({
+        allianceId: alliance._id,
+        type,
+        capturedAt,
+        completeList,
+        baseline,
+        imagesCount,
+        rows: snapshotRows,
+        changes,
+        createdBy: req.usuario.id,
+      });
+      await snapshot.save({ session });
 
-  const snapshot = await AllianceSnapshot.create({
-    allianceId: alliance._id,
-    type,
-    capturedAt,
-    completeList,
-    baseline,
-    imagesCount,
-    rows: snapshotRows,
-    changes,
-    createdBy: req.usuario.id,
-  });
-  if (correctionCandidates.length) {
-    const dedupedCorrections = new Map();
-    for (const item of correctionCandidates) {
-      const key = `${normalizeMemberName(item.observedName)}\u0000${normalizeMemberName(item.confirmedName)}`;
-      dedupedCorrections.set(key, item);
-    }
-    const confirmedAt = new Date();
-    await AllianceOcrCorrection.bulkWrite([...dedupedCorrections.values()].map(item => ({
-      updateOne: {
-        filter: {
-          allianceId: alliance._id,
-          normalizedObserved: normalizeMemberName(item.observedName),
-          normalizedConfirmed: normalizeMemberName(item.confirmedName),
+      if (correctionCandidates.length) {
+        const dedupedCorrections = new Map();
+        for (const item of correctionCandidates) {
+          const key = `${normalizeMemberName(item.observedName)}\u0000${normalizeMemberName(item.confirmedName)}`;
+          dedupedCorrections.set(key, item);
+        }
+        const confirmedAt = new Date();
+        await AllianceOcrCorrection.bulkWrite([...dedupedCorrections.values()].map(item => ({
+          updateOne: {
+            filter: {
+              allianceId: alliance._id,
+              normalizedObserved: normalizeMemberName(item.observedName),
+              normalizedConfirmed: normalizeMemberName(item.confirmedName),
+            },
+            update: {
+              $set: { observedName: item.observedName, confirmedName: item.confirmedName, lastConfirmedAt: confirmedAt, createdBy: req.usuario.id },
+              $setOnInsert: { firstConfirmedAt: confirmedAt },
+              $inc: { count: 1 },
+            },
+            upsert: true,
+          },
+        })), { ordered: false, session });
+      }
+
+      alliance.updatedAt = new Date();
+      await alliance.save({ session });
+
+      payload = {
+        snapshot: snapshot.toObject(),
+        summary: {
+          rows: snapshotRows.length,
+          active: activeAfter,
+          baseline,
+          joined: changes.filter(c => c.type === 'joined').length,
+          left: changes.filter(c => c.type === 'left').length,
+          returned: changes.filter(c => c.type === 'returned').length,
+          nicknameCandidates: changes.filter(c => c.type === 'nickname_candidate').length,
+          learnedCorrections: correctionCandidates.length,
+          atomic: true,
         },
-        update: {
-          $set: { observedName: item.observedName, confirmedName: item.confirmedName, lastConfirmedAt: confirmedAt, createdBy: req.usuario.id },
-          $setOnInsert: { firstConfirmedAt: confirmedAt },
-          $inc: { count: 1 },
-        },
-        upsert: true,
-      },
-    })), { ordered: false }).catch(error => console.warn('[alliance-tracker] aprendizado OCR:', error.message));
+      };
+    });
+
+    res.status(201).json(payload);
+  } catch (error) {
+    const status = Number(error?.status) || 500;
+    const transactionUnsupported = /Transaction numbers are only allowed|replica set|mongos/i.test(String(error?.message || ''));
+    res.status(transactionUnsupported ? 503 : status).json({
+      erro: transactionUnsupported
+        ? 'O MongoDB atual não oferece transações. A importação foi cancelada sem aplicar alterações; use um cluster replica set/Atlas para o Alliance Tracker.'
+        : (error?.message || 'Falha ao importar a captura da Alliance. Nenhuma alteração parcial foi confirmada.'),
+      code: transactionUnsupported ? 'ALLIANCE_TRANSACTION_UNAVAILABLE' : 'ALLIANCE_IMPORT_ATOMIC_FAILED',
+    });
+  } finally {
+    await session.endSession().catch(() => {});
   }
-
-  alliance.updatedAt = new Date();
-  await alliance.save();
-
-  res.status(201).json({
-    snapshot,
-    summary: {
-      rows: snapshotRows.length,
-      active: activeAfter,
-      baseline,
-      joined: changes.filter(c => c.type === 'joined').length,
-      left: changes.filter(c => c.type === 'left').length,
-      returned: changes.filter(c => c.type === 'returned').length,
-      nicknameCandidates: changes.filter(c => c.type === 'nickname_candidate').length,
-      learnedCorrections: correctionCandidates.length,
-    },
-  });
 });
 
 router.post('/alliances/:id/merge-members', async (req, res) => {

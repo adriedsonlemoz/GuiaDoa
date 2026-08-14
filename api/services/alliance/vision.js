@@ -16,6 +16,7 @@ function ocrFromCheckpoint(checkpoint = null) {
     warnings: Array.isArray(checkpoint.warnings) ? checkpoint.warnings : [],
     confidence: checkpoint.confidence ?? null,
     diagnostics: checkpoint.diagnostics || {},
+    coverageComplete: checkpoint.coverageComplete !== false,
     checkpoint,
     engine: 'tesseract.js',
     model: 'tesseract.js/eng-local',
@@ -63,7 +64,7 @@ function buildLocalResult({ ocr, local, checkpoint }) {
   const manualReviewRequired = Boolean(reviewItems.length || !local.accepted);
   const warnings = [...new Set([
     ...(local.warnings || []),
-    ...(manualReviewRequired ? ['As dúvidas restantes foram preservadas para revisão manual; nenhuma IA externa foi chamada.'] : []),
+    ...(manualReviewRequired ? ['As dúvidas restantes foram preservadas para revisão manual; o lote seguirá pelo leitor local.'] : []),
   ])];
 
   return {
@@ -77,6 +78,7 @@ function buildLocalResult({ ocr, local, checkpoint }) {
     externalAiUsed: false,
     localOnly: true,
     manualReviewRequired,
+    coverageComplete: Boolean(local.coverageComplete),
     ocrUsed: Boolean(ocr.available),
     localResolverUsed: true,
     localResolver: local.resolver || {},
@@ -97,6 +99,7 @@ export async function extractAllianceScreenshot({
   ocrTimeoutMs = 90_000,
   knownMembers = [],
   corrections = [],
+  snapshotTypeHint = null,
 } = {}) {
   let ocr = ocrFromCheckpoint(ocrCheckpoint);
   if (ocr) {
@@ -109,7 +112,7 @@ export async function extractAllianceScreenshot({
       exceptions: ocr.exceptions.length,
     });
   } else {
-    ocr = await extractAllianceScreenshotWithOcr({ buffer, timeoutMs: ocrTimeoutMs, onProgress });
+    ocr = await extractAllianceScreenshotWithOcr({ buffer, timeoutMs: ocrTimeoutMs, snapshotTypeHint, onProgress });
     if (ocr.checkpoint && onCheckpoint) {
       try { await onCheckpoint(ocr.checkpoint); } catch (error) {
         console.warn('[alliance-tracker] checkpoint OCR:', error?.message || error);
@@ -141,7 +144,7 @@ export async function extractAllianceScreenshot({
       pendingRows: local.resolver?.pendingRows || 0,
       structuralExceptions: local.resolver?.structuralExceptions || 0,
       snapshotType: result.snapshotType,
-      message: 'O leitor local preservou tudo que conseguiu e enviará as dúvidas para sua revisão. O lote continuará sem IA externa.',
+      message: 'O leitor local preservou tudo que conseguiu e enviará as dúvidas para sua revisão. O lote continuará normalmente.',
     });
   } else {
     onProgress?.({
@@ -161,5 +164,6 @@ export function serializeVisionError(error) {
     code: error?.code || 'LOCAL_READER_ERROR',
     retryable: Boolean(error?.retryable),
     ocr: error?.ocr || null,
+    retryAfterMs: Number.isFinite(Number(error?.retryAfterMs)) ? Number(error.retryAfterMs) : undefined,
   };
 }

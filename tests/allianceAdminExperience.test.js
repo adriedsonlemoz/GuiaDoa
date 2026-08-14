@@ -26,7 +26,7 @@ test('importação da Aliança mostra narrativa de progresso e recuperação de 
   assert.match(admin, /OCR local procurando nomes e valores/);
   assert.match(admin, /Leitura local suficiente — imagem resolvida/);
   assert.match(admin, /OCR local ficou em dúvida — preservando o que foi reconhecido/);
-  assert.match(admin, /Nenhuma IA externa será chamada/);
+  assert.match(admin, /100% local/);
   assert.match(admin, /Tudo pronto\. Abrindo revisão/);
   assert.match(admin, /extract-stream/);
   assert.match(admin, /Continuar leitura/);
@@ -48,6 +48,12 @@ test('Alliance Tracker avançado mostra ROI, métricas e revisão somente das ex
   assert.match(admin, /Duplicados/);
   assert.match(css, /\.at-reader-metrics/);
   assert.match(css, /\.at-row-exception/);
+  assert.match(admin, /at-snapshot-type-hint/);
+  assert.match(admin, /atShowSourceImage/);
+  assert.match(admin, /Cobertura incompleta/);
+  assert.match(admin, /ocr_column_pairing/);
+  assert.match(css, /\.at-source-modal/);
+  assert.match(css, /\.at-coverage-block/);
 });
 
 

@@ -2,12 +2,12 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { mkdir } from 'node:fs/promises';
-import { SNAPSHOT_TYPES } from '../../utils/allianceTracker.js';
+import { SNAPSHOT_TYPES, isValidDateParts } from '../../utils/allianceTracker.js';
 
 const require = createRequire(import.meta.url);
 const DEFAULT_MIN_CONFIDENCE = 0.82;
 const DEFAULT_LINE_CONFIDENCE = 0.76;
-const DEFAULT_MIN_ROWS = 2;
+const DEFAULT_MIN_ROWS = 1;
 const DEFAULT_TIMEOUT_MS = 90_000;
 const OCR_CACHE_DIR = join(tmpdir(), 'guiadoa-tesseract-cache');
 const OCR_IDLE_MS = 5 * 60_000;
@@ -85,9 +85,8 @@ export function imageDimensions(buffer) {
 }
 
 export function buildOcrRegions(dimensions) {
-  if (!dimensions?.width || !dimensions?.height) return { header: null, table: null };
+  if (!dimensions?.width || !dimensions?.height) return { header: null, table: null, nameColumn: null, valueColumn: null };
   const { width, height } = dimensions;
-  // O layout do jogo é estável, mas usamos margens largas para tolerar aparelhos/resoluções diferentes.
   const header = {
     left: Math.max(0, Math.round(width * 0.03)),
     top: Math.max(0, Math.round(height * 0.03)),
@@ -95,68 +94,142 @@ export function buildOcrRegions(dimensions) {
     height: Math.max(1, Math.round(height * 0.38)),
   };
   const tableTop = Math.round(height * 0.15);
+  const tableBottomMargin = Math.round(height * 0.025);
   const table = {
     left: Math.max(0, Math.round(width * 0.015)),
     top: Math.max(0, tableTop),
     width: Math.max(1, Math.round(width * 0.97)),
-    height: Math.max(1, height - tableTop - Math.round(height * 0.025)),
+    height: Math.max(1, height - tableTop - tableBottomMargin),
   };
-  return { header, table };
+  // Divisão principal com pequena sobreposição. Uma segunda geometria mais larga
+  // é usada apenas se o primeiro pareamento não reconstruir nenhuma linha.
+  const makeColumns = (nameRatio, valueRatio) => {
+    const valueLeft = Math.max(0, Math.round(width * valueRatio));
+    return {
+      nameColumn: { left: table.left, top: table.top, width: Math.max(1, Math.round(table.width * nameRatio)), height: table.height },
+      valueColumn: { left: valueLeft, top: table.top, width: Math.max(1, width - valueLeft - Math.round(width * 0.015)), height: table.height },
+    };
+  };
+  const primary = makeColumns(0.62, 0.55);
+  const alternate = makeColumns(0.74, 0.63);
+  return { header, table, ...primary, columnVariants: [primary, alternate] };
 }
 
-function parseTsv(tsv = '') {
+function tsvWords(tsv = '') {
   const lines = String(tsv || '').split(/\r?\n/).filter(Boolean);
   if (lines.length < 2) return [];
   const header = lines[0].split('\t');
   const index = Object.fromEntries(header.map((name, i) => [name, i]));
-  const groups = new Map();
-
-  for (const raw of lines.slice(1)) {
+  return lines.slice(1).map(raw => {
     const cols = raw.split('\t');
-    if (Number(cols[index.level]) !== 5) continue;
+    if (Number(cols[index.level]) !== 5) return null;
     const text = String(cols[index.text] || '').trim();
-    if (!text) continue;
+    if (!text) return null;
     const conf = Number(cols[index.conf]);
-    const left = Number(cols[index.left]) || 0;
-    const top = Number(cols[index.top]) || 0;
-    const width = Number(cols[index.width]) || 0;
-    const height = Number(cols[index.height]) || 0;
-    const key = [cols[index.page_num], cols[index.block_num], cols[index.par_num], cols[index.line_num]].join(':');
-    const group = groups.get(key) || [];
-    group.push({ text, conf: Number.isFinite(conf) ? conf : 0, left, top, width, height });
-    groups.set(key, group);
-  }
-
-  return [...groups.values()].map(words => {
-    words.sort((a, b) => a.left - b.left);
-    const confident = words.filter(word => word.conf >= 0);
-    const confidence = confident.length ? confident.reduce((sum, word) => sum + word.conf, 0) / confident.length / 100 : 0;
-    const minLeft = Math.min(...words.map(word => word.left));
-    const minTop = Math.min(...words.map(word => word.top));
-    const maxRight = Math.max(...words.map(word => word.left + word.width));
-    const maxBottom = Math.max(...words.map(word => word.top + word.height));
     return {
-      text: words.map(word => word.text).join(' ').replace(/\s+/g, ' ').trim(),
-      confidence: Math.max(0, Math.min(1, confidence)),
-      words,
-      box: { left: minLeft, top: minTop, width: Math.max(1, maxRight - minLeft), height: Math.max(1, maxBottom - minTop) },
+      text,
+      conf: Number.isFinite(conf) ? conf : 0,
+      left: Number(cols[index.left]) || 0,
+      top: Number(cols[index.top]) || 0,
+      width: Number(cols[index.width]) || 0,
+      height: Number(cols[index.height]) || 0,
+      page: cols[index.page_num] || '1',
+      block: cols[index.block_num] || '0',
+      par: cols[index.par_num] || '0',
+      line: cols[index.line_num] || '0',
     };
-  }).filter(line => line.text);
+  }).filter(Boolean);
+}
+
+function lineFromWords(words = []) {
+  if (!words.length) return null;
+  const sorted = [...words].sort((a, b) => a.left - b.left);
+  const confident = sorted.filter(word => word.conf >= 0);
+  const confidence = confident.length ? confident.reduce((sum, word) => sum + word.conf, 0) / confident.length / 100 : 0;
+  const minLeft = Math.min(...sorted.map(word => word.left));
+  const minTop = Math.min(...sorted.map(word => word.top));
+  const maxRight = Math.max(...sorted.map(word => word.left + word.width));
+  const maxBottom = Math.max(...sorted.map(word => word.top + word.height));
+  return {
+    text: sorted.map(word => word.text).join(' ').replace(/\s+/g, ' ').trim(),
+    confidence: Math.max(0, Math.min(1, confidence)),
+    words: sorted,
+    box: { left: minLeft, top: minTop, width: Math.max(1, maxRight - minLeft), height: Math.max(1, maxBottom - minTop) },
+  };
+}
+
+function visualLines(words = []) {
+  if (!words.length) return [];
+  const heights = words.map(word => Math.max(1, word.height)).sort((a, b) => a - b);
+  const medianHeight = heights[Math.floor(heights.length / 2)] || 16;
+  const tolerance = Math.max(6, medianHeight * 0.72);
+  const clusters = [];
+
+  for (const word of [...words].sort((a, b) => (a.top + a.height / 2) - (b.top + b.height / 2) || a.left - b.left)) {
+    const center = word.top + word.height / 2;
+    let best = null;
+    let distance = Infinity;
+    for (const cluster of clusters) {
+      const delta = Math.abs(center - cluster.center);
+      if (delta <= tolerance && delta < distance) {
+        best = cluster;
+        distance = delta;
+      }
+    }
+    if (!best) {
+      clusters.push({ center, words: [word] });
+    } else {
+      best.words.push(word);
+      best.center = best.words.reduce((sum, item) => sum + item.top + item.height / 2, 0) / best.words.length;
+    }
+  }
+  return clusters.map(cluster => lineFromWords(cluster.words)).filter(line => line?.text);
+}
+
+function parseTsv(tsv = '') {
+  const words = tsvWords(tsv);
+  if (!words.length) return [];
+  const grouped = new Map();
+  for (const word of words) {
+    const key = [word.page, word.block, word.par, word.line].join(':');
+    const group = grouped.get(key) || [];
+    group.push(word);
+    grouped.set(key, group);
+  }
+  const nativeLines = [...grouped.values()].map(lineFromWords).filter(line => line?.text);
+  const reconstructed = visualLines(words);
+  const all = [...nativeLines, ...reconstructed];
+  const deduped = [];
+  for (const line of all) {
+    const normalized = normalizeOcrSearchText(line.text);
+    const center = line.box.top + line.box.height / 2;
+    const duplicate = deduped.some(existing => {
+      const sameText = normalizeOcrSearchText(existing.text) === normalized;
+      const existingCenter = existing.box.top + existing.box.height / 2;
+      return sameText && Math.abs(existingCenter - center) <= Math.max(5, line.box.height);
+    });
+    if (!duplicate) deduped.push(line);
+  }
+  return deduped.sort((a, b) => a.box.top - b.box.top || a.box.left - b.box.left);
 }
 
 function normalizeValuePunctuation(value = '') {
-  // Corrige apenas pontuação visualmente equivalente. Letras parecidas com dígitos
-  // não são convertidas: ambiguidade numérica deve ir ao fallback/revisão.
-  return String(value).replace(/[–—−]/g, '-').replace(/[：]/g, ':');
+  // Corrige apenas pontuação/espaçamento visualmente equivalentes. Letras parecidas
+  // com dígitos continuam intocadas: ambiguidade numérica vai para revisão.
+  return String(value)
+    .replace(/[–—−]/g, '-')
+    .replace(/[：]/g, ':')
+    .replace(/(\d)\s*([.,:/-])\s*(?=\d)/g, '$1$2')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function dateCandidate(text = '') {
   const normalized = normalizeValuePunctuation(text);
-  const match = normalized.match(/\b(20\d{2})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})\b/);
+  const match = normalized.match(/\b(20\d{2})[-/.](\d{2})[-/.](\d{2})\s+(\d{2}):(\d{2})(?::(\d{2}))?\b/);
   if (!match) return null;
-  const [, year, month, day, hour, minute, second] = match;
-  const numeric = [month, day, hour, minute, second].map(Number);
-  if (numeric[0] < 1 || numeric[0] > 12 || numeric[1] < 1 || numeric[1] > 31 || numeric[2] > 23 || numeric[3] > 59 || numeric[4] > 59) return null;
+  const [, year, month, day, hour, minute, second = '00'] = match;
+  if (!isValidDateParts(Number(year), Number(month), Number(day), Number(hour), Number(minute), Number(second))) return null;
   return { raw: match[0], normalized: `${year}-${month}-${day} ${hour}:${minute}:${second}`, index: match.index ?? -1 };
 }
 
@@ -430,32 +503,44 @@ function safeText(value = '', max = 6000) {
   return String(value || '').replace(/\u0000/g, '').slice(0, max);
 }
 
-function passParameters(variant = 'standard', psm = '6') {
-  if (variant === 'adaptive') {
-    return {
-      tessedit_pageseg_mode: psm,
-      preserve_interword_spaces: '1',
-      user_defined_dpi: '300',
-      thresholding_method: '2', // Sauvola em Tesseract 5; ótimo para fundos/contraste irregulares.
-      thresholding_window_size: '0.33',
-      thresholding_kfactor: '0.34',
-    };
-  }
-  return {
-    tessedit_pageseg_mode: psm,
+function passParameters(variant = 'standard', psm = '6', role = 'mixed', snapshotType = null) {
+  const base = {
+    tessedit_pageseg_mode: String(psm),
     preserve_interword_spaces: '1',
-    user_defined_dpi: '220',
-    thresholding_method: '0',
+    user_defined_dpi: variant === 'adaptive' ? '300' : '220',
+    thresholding_method: variant === 'adaptive' ? '2' : '0',
+    tessedit_char_whitelist: '',
   };
+  if (variant === 'adaptive') {
+    base.thresholding_window_size = '0.33';
+    base.thresholding_kfactor = '0.34';
+  }
+  if (role === 'value') {
+    if (snapshotType === 'power') base.tessedit_char_whitelist = '0123456789., ';
+    else if (snapshotType === 'joined_at') base.tessedit_char_whitelist = '0123456789-/: ';
+    else if (snapshotType === 'last_connection') base.tessedit_char_whitelist = '0123456789-/: OnlineonlineConectadoconectado';
+  }
+  return base;
 }
 
-async function recognizePass({ worker, buffer, rectangle = null, timeoutMs, variant, region, psm, onProgress }) {
-  onProgress?.({ stage: 'ocr_region', region, variant, rectangle: rectangle || null });
-  await worker.setParameters(passParameters(variant, psm));
+async function recognizePass({
+  worker,
+  buffer,
+  rectangle = null,
+  timeoutMs,
+  variant,
+  region,
+  psm,
+  role = 'mixed',
+  snapshotType = null,
+  onProgress,
+}) {
+  onProgress?.({ stage: 'ocr_region', region, variant, role, rectangle: rectangle || null });
+  await worker.setParameters(passParameters(variant, psm, role, snapshotType));
   let lastProgress = -1;
   let lastStatus = '';
   activeProgressSink = message => {
-    const event = progressEvent(message, { region, variant });
+    const event = progressEvent(message, { region, variant, role });
     const bucket = Math.floor(event.progress * 10);
     if (event.status !== lastStatus || bucket > lastProgress) {
       lastStatus = event.status;
@@ -485,6 +570,8 @@ async function recognizePass({ worker, buffer, rectangle = null, timeoutMs, vari
       tsv: String(data?.tsv || ''),
       region,
       variant,
+      role,
+      rectangle,
     };
   } finally {
     if (timer) clearTimeout(timer);
@@ -492,34 +579,191 @@ async function recognizePass({ worker, buffer, rectangle = null, timeoutMs, vari
   }
 }
 
+function offsetBox(box = null, rectangle = null) {
+  if (!box) return null;
+  return {
+    left: Number(box.left || 0) + Number(rectangle?.left || 0),
+    top: Number(box.top || 0) + Number(rectangle?.top || 0),
+    width: Math.max(1, Number(box.width || 1)),
+    height: Math.max(1, Number(box.height || 1)),
+  };
+}
+
+function annotateParsedGeometry(parsed, rectangle, dimensions, region) {
+  if (!parsed) return parsed;
+  const annotate = row => ({
+    ...row,
+    ocrBox: offsetBox(row.ocrBox, rectangle),
+    ocrImageDimensions: dimensions ? { width: dimensions.width, height: dimensions.height } : null,
+    ocrRegion: region,
+  });
+  return {
+    ...parsed,
+    rows: (parsed.rows || []).map(annotate),
+    trustedRows: (parsed.trustedRows || []).map(annotate),
+  };
+}
+
+function valueFromText(text = '', snapshotType = null) {
+  if (snapshotType === 'power') {
+    const marker = powerCandidate(text);
+    return marker ? { power: marker.value, raw: marker.raw } : null;
+  }
+  if (snapshotType === 'joined_at') {
+    const marker = dateCandidate(text);
+    return marker ? { joinedAt: marker.normalized, raw: marker.raw } : null;
+  }
+  if (snapshotType === 'last_connection') {
+    const date = dateCandidate(text);
+    const online = onlineCandidate(text);
+    if (date) return { lastConnection: date.normalized, online: false, raw: date.raw };
+    if (online) return { lastConnection: '', online: true, raw: online.raw };
+  }
+  return null;
+}
+
+function cleanNameOnlyLine(text = '') {
+  let name = cleanOcrName(text);
+  if (!name) return null;
+  const normalized = normalizeOcrSearchText(name);
+  if (/^(alianca|alliance|membros?|members?|nome|name|poder|power|ultima conexao|last connection|data de entrada|join date)$/.test(normalized)) return null;
+  // Evita tratar uma linha composta só por valor como nickname.
+  if (/^[\d\s.,:/-]+$/.test(name)) return null;
+  return suspiciousName(name) ? null : name;
+}
+
+function parseColumnPairs({
+  namesTsv = '',
+  valuesTsv = '',
+  snapshotType,
+  minRows,
+  minConfidence,
+  lineMinConfidence,
+  nameRectangle = null,
+  valueRectangle = null,
+  dimensions = null,
+} = {}) {
+  const nameLines = parseTsv(namesTsv).map(line => ({
+    ...line,
+    box: offsetBox(line.box, nameRectangle),
+    name: cleanNameOnlyLine(line.text),
+  })).filter(line => line.name);
+  const valueLines = parseTsv(valuesTsv).map(line => ({
+    ...line,
+    box: offsetBox(line.box, valueRectangle),
+    value: valueFromText(line.text, snapshotType),
+  })).filter(line => line.value);
+
+  const pairs = [];
+  const usedNames = new Set();
+  for (const valueLine of valueLines) {
+    const valueCenter = valueLine.box.top + valueLine.box.height / 2;
+    const candidates = nameLines
+      .map((nameLine, index) => {
+        const nameCenter = nameLine.box.top + nameLine.box.height / 2;
+        const scale = Math.max(8, Math.max(nameLine.box.height, valueLine.box.height) * 1.35);
+        return { nameLine, index, distance: Math.abs(nameCenter - valueCenter), scale };
+      })
+      .filter(item => !usedNames.has(item.index) && item.distance <= item.scale)
+      .sort((a, b) => a.distance - b.distance || b.nameLine.confidence - a.nameLine.confidence);
+    if (!candidates.length) continue;
+    const match = candidates[0];
+    usedNames.add(match.index);
+    const confidence = Math.max(0, Math.min(1, Math.min(match.nameLine.confidence, valueLine.confidence)));
+    const left = Math.min(match.nameLine.box.left, valueLine.box.left);
+    const top = Math.min(match.nameLine.box.top, valueLine.box.top);
+    const right = Math.max(match.nameLine.box.left + match.nameLine.box.width, valueLine.box.left + valueLine.box.width);
+    const bottom = Math.max(match.nameLine.box.top + match.nameLine.box.height, valueLine.box.top + valueLine.box.height);
+    const reviewRequired = confidence < lineMinConfidence;
+    pairs.push({
+      name: match.nameLine.name,
+      ...valueLine.value,
+      confidence,
+      source: 'ocr',
+      reviewRequired,
+      reviewReasons: reviewRequired ? ['low_ocr_confidence'] : [],
+      ocrBox: { left, top, width: right - left, height: bottom - top },
+      ocrImageDimensions: dimensions ? { width: dimensions.width, height: dimensions.height } : null,
+      ocrRegion: 'column-pair',
+    });
+  }
+
+  const trustedRows = pairs.filter(row => !row.reviewRequired);
+  const confidence = trustedRows.length
+    ? trustedRows.reduce((sum, row) => sum + Number(row.confidence || 0), 0) / trustedRows.length
+    : 0;
+  const exceptions = pairs.filter(row => row.reviewRequired).map((row, line) => ({
+    type: 'low_confidence',
+    line,
+    name: row.name,
+    confidence: row.confidence,
+  }));
+  const accepted = trustedRows.length >= minRows && confidence >= minConfidence && exceptions.length === 0;
+  const usable = trustedRows.length >= minRows || pairs.length >= minRows;
+  const warnings = [];
+  if (trustedRows.length < minRows) warnings.push(`Pareamento por colunas confirmou ${trustedRows.length} linha(s) segura(s).`);
+  if (exceptions.length) warnings.push(`${exceptions.length} linha(s) pareadas ficaram para revisão.`);
+
+  return {
+    accepted,
+    usable,
+    reason: accepted ? null : trustedRows.length < minRows ? 'rows' : exceptions.length ? 'exceptions' : 'confidence',
+    snapshotType,
+    detectedFromText: snapshotType,
+    rows: pairs,
+    trustedRows,
+    exceptions,
+    warnings,
+    confidence,
+    lowestConfidence: trustedRows.length ? Math.min(...trustedRows.map(row => row.confidence)) : 0,
+    linesCount: Math.max(nameLines.length, valueLines.length),
+    parsedRatio: valueLines.length ? pairs.length / valueLines.length : 0,
+    qualityScore: Math.max(0, Math.min(1, (pairs.length ? 0.3 : 0) + confidence * 0.55 + Math.min(0.15, pairs.length * 0.02))),
+    columnPairing: true,
+  };
+}
+
 function chooseBestParse(candidates = []) {
   return [...candidates].filter(Boolean).sort((a, b) => {
     if (a.accepted !== b.accepted) return a.accepted ? -1 : 1;
     if (a.usable !== b.usable) return a.usable ? -1 : 1;
-    if (a.exceptions.length !== b.exceptions.length) return a.exceptions.length - b.exceptions.length;
-    if (b.trustedRows.length !== a.trustedRows.length) return b.trustedRows.length - a.trustedRows.length;
+    if ((a.trustedRows?.length || 0) !== (b.trustedRows?.length || 0)) return (b.trustedRows?.length || 0) - (a.trustedRows?.length || 0);
+    if ((a.rows?.length || 0) !== (b.rows?.length || 0)) return (b.rows?.length || 0) - (a.rows?.length || 0);
+    if ((a.exceptions?.length || 0) !== (b.exceptions?.length || 0)) return (a.exceptions?.length || 0) - (b.exceptions?.length || 0);
     return Number(b.qualityScore || 0) - Number(a.qualityScore || 0);
   })[0] || null;
 }
 
-async function runOcrPipeline({ buffer, timeoutMs, minRows, minConfidence, lineMinConfidence, onProgress, forceFull = false }) {
+async function runOcrPipeline({
+  buffer,
+  timeoutMs,
+  minRows,
+  minConfidence,
+  lineMinConfidence,
+  onProgress,
+  forceFull = false,
+  snapshotTypeHint = null,
+}) {
   const worker = await getWorker();
   const dimensions = imageDimensions(buffer);
   const regions = buildOcrRegions(dimensions);
-  const perPassTimeout = Math.max(12_000, Math.floor(timeoutMs / 3));
+  const perPassTimeout = Math.max(12_000, Math.floor(timeoutMs / 5));
   const passes = [];
   const parsedCandidates = [];
-  let snapshotType = null;
+  let snapshotType = SNAPSHOT_TYPES.includes(snapshotTypeHint) ? snapshotTypeHint : null;
   let headerText = '';
 
-  onProgress?.({ stage: 'ocr_layout', dimensions, roi: Boolean(regions.header && !forceFull) });
+  onProgress?.({ stage: 'ocr_layout', dimensions, roi: Boolean(regions.header && !forceFull), columns: Boolean(regions.nameColumn && regions.valueColumn) });
+  if (snapshotType) {
+    onProgress?.({ stage: 'ocr_type_hint', snapshotType, forced: true });
+  }
 
-  if (regions.header && !forceFull) {
+  if (!snapshotType && regions.header && !forceFull) {
     const headerPass = await recognizePass({
       worker, buffer, rectangle: regions.header, timeoutMs: perPassTimeout,
-      variant: 'standard', region: 'header', psm: '11', onProgress,
+      variant: 'standard', region: 'header', psm: '11', role: 'mixed', onProgress,
     });
-    passes.push({ region: 'header', variant: 'standard' });
+    passes.push({ region: 'header', variant: 'standard', role: 'mixed' });
     headerText = headerPass.text;
     snapshotType = detectSnapshotTypeFromOcr(headerText);
     onProgress?.({ stage: 'ocr_header', snapshotType, textFound: Boolean(headerText), region: 'header' });
@@ -528,12 +772,12 @@ async function runOcrPipeline({ buffer, timeoutMs, minRows, minConfidence, lineM
   if (!snapshotType) {
     const fullPass = await recognizePass({
       worker, buffer, rectangle: null, timeoutMs: perPassTimeout,
-      variant: 'standard', region: 'full', psm: '3', onProgress,
+      variant: 'standard', region: 'full', psm: '3', role: 'mixed', onProgress,
     });
-    passes.push({ region: 'full', variant: 'standard' });
+    passes.push({ region: 'full', variant: 'standard', role: 'mixed' });
     headerText = `${headerText}\n${fullPass.text}`.trim();
     snapshotType = detectSnapshotTypeFromOcr(headerText);
-    const parsedFull = parseAllianceOcr({
+    let parsedFull = parseAllianceOcr({
       text: fullPass.text,
       tsv: fullPass.tsv,
       snapshotTypeHint: snapshotType,
@@ -541,6 +785,7 @@ async function runOcrPipeline({ buffer, timeoutMs, minRows, minConfidence, lineM
       minConfidence,
       lineMinConfidence,
     });
+    parsedFull = annotateParsedGeometry(parsedFull, null, dimensions, 'full');
     parsedCandidates.push({ ...parsedFull, pass: 'full-standard', rawText: safeText(fullPass.text) });
     onProgress?.({ stage: 'ocr_header', snapshotType, textFound: Boolean(fullPass.text), region: 'full' });
     if (parsedFull.accepted) {
@@ -551,10 +796,10 @@ async function runOcrPipeline({ buffer, timeoutMs, minRows, minConfidence, lineM
   if (snapshotType && regions.table && !forceFull) {
     const tablePass = await recognizePass({
       worker, buffer, rectangle: regions.table, timeoutMs: perPassTimeout,
-      variant: 'standard', region: 'table', psm: '6', onProgress,
+      variant: 'standard', region: 'table', psm: '6', role: 'mixed', snapshotType, onProgress,
     });
-    passes.push({ region: 'table', variant: 'standard' });
-    const parsed = parseAllianceOcr({
+    passes.push({ region: 'table', variant: 'standard', role: 'mixed' });
+    let parsed = parseAllianceOcr({
       text: `${headerText}\n${tablePass.text}`,
       tsv: tablePass.tsv,
       snapshotTypeHint: snapshotType,
@@ -562,6 +807,7 @@ async function runOcrPipeline({ buffer, timeoutMs, minRows, minConfidence, lineM
       minConfidence,
       lineMinConfidence,
     });
+    parsed = annotateParsedGeometry(parsed, regions.table, dimensions, 'table');
     parsedCandidates.push({ ...parsed, pass: 'table-standard', rawText: safeText(tablePass.text) });
     if (parsed.accepted) {
       return { parsed, passes, rawText: safeText(tablePass.text), headerText: safeText(headerText, 1200), dimensions, regions };
@@ -570,10 +816,10 @@ async function runOcrPipeline({ buffer, timeoutMs, minRows, minConfidence, lineM
     onProgress?.({ stage: 'ocr_variant', variant: 'adaptive', reason: parsed.reason, exceptions: parsed.exceptions.length });
     const adaptivePass = await recognizePass({
       worker, buffer, rectangle: regions.table, timeoutMs: perPassTimeout,
-      variant: 'adaptive', region: 'table', psm: '11', onProgress,
+      variant: 'adaptive', region: 'table', psm: '11', role: 'mixed', snapshotType, onProgress,
     });
-    passes.push({ region: 'table', variant: 'adaptive' });
-    const adaptive = parseAllianceOcr({
+    passes.push({ region: 'table', variant: 'adaptive', role: 'mixed' });
+    let adaptive = parseAllianceOcr({
       text: `${headerText}\n${adaptivePass.text}`,
       tsv: adaptivePass.tsv,
       snapshotTypeHint: snapshotType,
@@ -581,27 +827,101 @@ async function runOcrPipeline({ buffer, timeoutMs, minRows, minConfidence, lineM
       minConfidence,
       lineMinConfidence,
     });
+    adaptive = annotateParsedGeometry(adaptive, regions.table, dimensions, 'table');
     parsedCandidates.push({ ...adaptive, pass: 'table-adaptive', rawText: safeText(adaptivePass.text) });
-  } else if (!parsedCandidates.length) {
+    if (adaptive.accepted) {
+      return { parsed: adaptive, passes, rawText: safeText(adaptivePass.text), headerText: safeText(headerText, 1200), dimensions, regions };
+    }
+
+    // Quando o TSV separa nickname e valor em blocos diferentes, uma leitura única
+    // não consegue formar a linha. Lemos as colunas separadamente e pareamos pelo eixo Y.
+    const currentBest = chooseBestParse(parsedCandidates);
+    if ((currentBest?.trustedRows?.length || 0) < minRows && regions.nameColumn && regions.valueColumn) {
+      onProgress?.({ stage: 'ocr_column_pairing', snapshotType, reason: currentBest?.reason || 'rows' });
+      const namePass = await recognizePass({
+        worker, buffer, rectangle: regions.nameColumn, timeoutMs: perPassTimeout,
+        variant: 'standard', region: 'name-column', psm: '6', role: 'name', snapshotType, onProgress,
+      });
+      passes.push({ region: 'name-column', variant: 'standard', role: 'name' });
+      const valuePass = await recognizePass({
+        worker, buffer, rectangle: regions.valueColumn, timeoutMs: perPassTimeout,
+        variant: 'adaptive', region: 'value-column', psm: '6', role: 'value', snapshotType, onProgress,
+      });
+      passes.push({ region: 'value-column', variant: 'adaptive', role: 'value' });
+      const paired = parseColumnPairs({
+        namesTsv: namePass.tsv,
+        valuesTsv: valuePass.tsv,
+        snapshotType,
+        minRows,
+        minConfidence,
+        lineMinConfidence,
+        nameRectangle: regions.nameColumn,
+        valueRectangle: regions.valueColumn,
+        dimensions,
+      });
+      parsedCandidates.push({ ...paired, pass: 'column-pair', rawText: safeText(`${namePass.text}\n${valuePass.text}`) });
+      onProgress?.({
+        stage: 'ocr_column_pairing_done',
+        snapshotType,
+        rows: paired.rows.length,
+        trustedRows: paired.trustedRows.length,
+        exceptions: paired.exceptions.length,
+      });
+      if (paired.accepted) {
+        return { parsed: paired, passes, rawText: safeText(`${namePass.text}\n${valuePass.text}`), headerText: safeText(headerText, 1200), dimensions, regions };
+      }
+
+      if (!paired.rows.length && Array.isArray(regions.columnVariants) && regions.columnVariants[1]) {
+        const alt = regions.columnVariants[1];
+        onProgress?.({ stage: 'ocr_column_pairing', snapshotType, reason: 'alternate-geometry', alternate: true });
+        const altNamePass = await recognizePass({
+          worker, buffer, rectangle: alt.nameColumn, timeoutMs: perPassTimeout,
+          variant: 'adaptive', region: 'name-column-alt', psm: '11', role: 'name', snapshotType, onProgress,
+        });
+        passes.push({ region: 'name-column-alt', variant: 'adaptive', role: 'name' });
+        const altValuePass = await recognizePass({
+          worker, buffer, rectangle: alt.valueColumn, timeoutMs: perPassTimeout,
+          variant: 'adaptive', region: 'value-column-alt', psm: '11', role: 'value', snapshotType, onProgress,
+        });
+        passes.push({ region: 'value-column-alt', variant: 'adaptive', role: 'value' });
+        const altPaired = parseColumnPairs({
+          namesTsv: altNamePass.tsv, valuesTsv: altValuePass.tsv, snapshotType,
+          minRows, minConfidence, lineMinConfidence,
+          nameRectangle: alt.nameColumn, valueRectangle: alt.valueColumn, dimensions,
+        });
+        parsedCandidates.push({ ...altPaired, pass: 'column-pair-alt', rawText: safeText(`${altNamePass.text}\n${altValuePass.text}`) });
+        onProgress?.({ stage: 'ocr_column_pairing_done', snapshotType, rows: altPaired.rows.length, trustedRows: altPaired.trustedRows.length, exceptions: altPaired.exceptions.length, alternate: true });
+        if (altPaired.accepted) {
+          return { parsed: altPaired, passes, rawText: safeText(`${altNamePass.text}\n${altValuePass.text}`), headerText: safeText(headerText, 1200), dimensions, regions };
+        }
+      }
+    }
+  }
+
+  const bestBeforeFull = chooseBestParse(parsedCandidates);
+  if (!bestBeforeFull?.accepted && (!snapshotType || forceFull || (bestBeforeFull?.rows?.length || 0) === 0)) {
     const fullAdaptive = await recognizePass({
       worker, buffer, rectangle: null, timeoutMs: perPassTimeout,
-      variant: 'adaptive', region: 'full', psm: '11', onProgress,
+      variant: 'adaptive', region: 'full', psm: '11', role: 'mixed', snapshotType, onProgress,
     });
-    passes.push({ region: 'full', variant: 'adaptive' });
-    const parsed = parseAllianceOcr({
+    passes.push({ region: 'full', variant: 'adaptive', role: 'mixed' });
+    const detected = snapshotType || detectSnapshotTypeFromOcr(fullAdaptive.text);
+    let parsed = parseAllianceOcr({
       text: fullAdaptive.text,
       tsv: fullAdaptive.tsv,
-      snapshotTypeHint: detectSnapshotTypeFromOcr(fullAdaptive.text),
+      snapshotTypeHint: detected,
       minRows,
       minConfidence,
       lineMinConfidence,
     });
+    parsed = annotateParsedGeometry(parsed, null, dimensions, 'full');
     parsedCandidates.push({ ...parsed, pass: 'full-adaptive', rawText: safeText(fullAdaptive.text) });
+    snapshotType = detected || snapshotType;
   }
 
   const best = chooseBestParse(parsedCandidates);
   return {
-    parsed: best || parseAllianceOcr({ text: headerText, minRows, minConfidence, lineMinConfidence }),
+    parsed: best || parseAllianceOcr({ text: headerText, snapshotTypeHint, minRows, minConfidence, lineMinConfidence }),
     passes,
     rawText: safeText(best?.rawText || ''),
     headerText: safeText(headerText, 1200),
@@ -616,6 +936,7 @@ export async function extractAllianceScreenshotWithOcr({
   minRows = envNumber('ALLIANCE_OCR_MIN_ROWS', DEFAULT_MIN_ROWS, 1, 20),
   minConfidence = envNumber('ALLIANCE_OCR_MIN_CONFIDENCE', DEFAULT_MIN_CONFIDENCE, 0.5, 0.99),
   lineMinConfidence = envNumber('ALLIANCE_OCR_LINE_MIN_CONFIDENCE', DEFAULT_LINE_CONFIDENCE, 0.45, 0.99),
+  snapshotTypeHint = null,
   onProgress = null,
 } = {}) {
   if (!enabledByEnv()) {
@@ -626,7 +947,7 @@ export async function extractAllianceScreenshotWithOcr({
   }
 
   return runQueued(async () => {
-    onProgress?.({ stage: 'ocr_start', engine: 'tesseract.js', pipeline: 'roi-line-confidence' });
+    onProgress?.({ stage: 'ocr_start', engine: 'tesseract.js', pipeline: 'roi-visual-row-column-pairing', snapshotTypeHint: SNAPSHOT_TYPES.includes(snapshotTypeHint) ? snapshotTypeHint : null });
     let lastError = null;
     try {
       for (let attempt = 0; attempt <= OCR_MAX_INTERNAL_RETRIES; attempt += 1) {
@@ -639,6 +960,7 @@ export async function extractAllianceScreenshotWithOcr({
             lineMinConfidence,
             onProgress,
             forceFull: attempt > 0,
+            snapshotTypeHint,
           });
           const parsed = pipeline.parsed;
           onProgress?.({ stage: 'ocr_parsing', engine: 'tesseract.js', passes: pipeline.passes.length });
@@ -655,6 +977,8 @@ export async function extractAllianceScreenshotWithOcr({
               trustedRows: parsed.trustedRows?.length || 0,
               exceptions: parsed.exceptions?.length || 0,
               qualityScore: parsed.qualityScore || 0,
+              columnPairing: Boolean(parsed.columnPairing),
+              snapshotTypeHint: SNAPSHOT_TYPES.includes(snapshotTypeHint) ? snapshotTypeHint : null,
             },
             checkpoint: {
               snapshotType: parsed.snapshotType,
@@ -672,6 +996,8 @@ export async function extractAllianceScreenshotWithOcr({
                 roiUsed: Boolean(pipeline.regions?.header),
                 dimensions: pipeline.dimensions,
                 qualityScore: parsed.qualityScore || 0,
+                columnPairing: Boolean(parsed.columnPairing),
+                snapshotTypeHint: SNAPSHOT_TYPES.includes(snapshotTypeHint) ? snapshotTypeHint : null,
               },
               headerText: pipeline.headerText,
               rawText: pipeline.rawText,

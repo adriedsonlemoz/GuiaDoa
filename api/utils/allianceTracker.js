@@ -21,22 +21,53 @@ export function cleanMemberName(value = '') {
 
 export function parsePower(value) {
   if (value == null || value === '') return null;
-  if (typeof value === 'number' && Number.isFinite(value)) return Math.max(0, Math.round(value));
-  const digits = String(value).replace(/[^0-9]/g, '');
-  return digits ? Number(digits) : null;
+  if (typeof value === 'number') {
+    return Number.isSafeInteger(value) && value >= 0 ? value : null;
+  }
+  const text = String(value).trim();
+  if (!text || !/^(?:\d+|\d{1,3}(?:[.,\s]\d{3})+)$/.test(text)) return null;
+  const digits = text.replace(/[.,\s]/g, '');
+  if (!digits || !/^\d+$/.test(digits)) return null;
+  const numeric = Number(digits);
+  return Number.isSafeInteger(numeric) && numeric >= 0 ? numeric : null;
+}
+
+export function isValidDateParts(year, month, day, hour = 0, minute = 0, second = 0) {
+  const y = Number(year), mo = Number(month), d = Number(day), h = Number(hour), mi = Number(minute), s = Number(second);
+  if (![y, mo, d, h, mi, s].every(Number.isInteger)) return false;
+  if (y < 2000 || y > 2200 || mo < 1 || mo > 12 || h < 0 || h > 23 || mi < 0 || mi > 59 || s < 0 || s > 59) return false;
+  const maxDay = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  return d >= 1 && d <= maxDay;
+}
+
+export function isStrictRealmDateText(value = '') {
+  const text = String(value || '').trim();
+  const m = text.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
+  return Boolean(m && isValidDateParts(...m.slice(1).map(Number)));
 }
 
 export function parseRealmDate(value, utcOffsetHours = 0) {
   if (!value) return null;
   if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
   const text = String(value).trim();
-  const direct = /^\d{4}-\d{2}-\d{2}T/.test(text) ? new Date(text) : null;
-  if (direct && !Number.isNaN(direct.getTime())) return direct;
-  const m = text.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
-  if (!m) return null;
-  const [, y, mo, d, h, mi, s = '0'] = m;
-  const offset = Number.isFinite(Number(utcOffsetHours)) ? Number(utcOffsetHours) : 0;
-  return new Date(Date.UTC(Number(y), Number(mo) - 1, Number(d), Number(h), Number(mi), Number(s)) - offset * 3600000);
+
+  const realmMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (realmMatch) {
+    const [, y, mo, d, h, mi, s = '0'] = realmMatch;
+    if (!isValidDateParts(Number(y), Number(mo), Number(d), Number(h), Number(mi), Number(s))) return null;
+    const offset = Number.isFinite(Number(utcOffsetHours)) ? Number(utcOffsetHours) : 0;
+    const date = new Date(Date.UTC(Number(y), Number(mo) - 1, Number(d), Number(h), Number(mi), Number(s)) - offset * 3600000);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/);
+  if (isoMatch) {
+    const [, y, mo, d, h, mi, s = '0'] = isoMatch;
+    if (!isValidDateParts(Number(y), Number(mo), Number(d), Number(h), Number(mi), Number(s))) return null;
+    const direct = new Date(text);
+    return Number.isNaN(direct.getTime()) ? null : direct;
+  }
+  return null;
 }
 
 export function sanitizeExtractedRow(row = {}, type = 'power') {
@@ -49,10 +80,20 @@ export function sanitizeExtractedRow(row = {}, type = 'power') {
     confidence: Number.isFinite(Number(row.confidence)) ? Math.max(0, Math.min(1, Number(row.confidence))) : null,
     sourceImageIndex: Number.isInteger(Number(row.sourceImageIndex)) ? Number(row.sourceImageIndex) : null,
   };
-  if (type === 'power') return { ...base, power: parsePower(row.power) };
-  if (type === 'last_connection') return { ...base, lastConnection: String(row.lastConnection || row.lastConnectionAt || '').trim().slice(0, 32) };
-  if (type === 'joined_at') return { ...base, joinedAt: String(row.joinedAt || '').trim().slice(0, 32) };
-  return base;
+  if (type === 'power') {
+    const power = parsePower(row.power);
+    return power == null ? null : { ...base, power };
+  }
+  if (type === 'last_connection') {
+    const lastConnection = String(row.lastConnection || row.lastConnectionAt || '').trim().slice(0, 32);
+    if (!base.online && !isStrictRealmDateText(lastConnection)) return null;
+    return { ...base, lastConnection: base.online ? '' : lastConnection };
+  }
+  if (type === 'joined_at') {
+    const joinedAt = String(row.joinedAt || '').trim().slice(0, 32);
+    return isStrictRealmDateText(joinedAt) ? { ...base, joinedAt } : null;
+  }
+  return null;
 }
 
 export function mergeExtractedRows(results = [], forcedType = null, { knownNames = [] } = {}) {
@@ -64,25 +105,29 @@ export function mergeExtractedRows(results = [], forcedType = null, { knownNames
   const warnings = [];
   const reviewItems = [];
   const known = [...new Set((knownNames || []).map(cleanMemberName).filter(Boolean))];
+  let coverageComplete = true;
+  let structurallyIncompleteImages = 0;
+  let excludedTypeConflictRows = 0;
 
   const valueKey = row => {
     if (type === 'power') return row.power == null ? '' : String(row.power);
     if (type === 'last_connection') return row.online ? 'online' : String(row.lastConnection || '');
     return String(row.joinedAt || '');
   };
-  const confidenceOf = row => Number.isFinite(Number(row?.confidence)) ? Number(row.confidence) : 0.75;
+  const confidenceOf = row => Number.isFinite(Number(row?.confidence)) ? Number(row.confidence) : 0;
   const addReviewReason = (row, reason) => {
     row.reviewRequired = true;
     row.reviewReasons = [...new Set([...(row.reviewReasons || []), reason])];
   };
-  const mergeFields = (target, source) => {
-    if (type === 'power' && source.power != null) target.power = source.power;
+  const copyTypedValue = (target, source) => {
+    if (type === 'power') target.power = source.power;
     if (type === 'last_connection') {
-      if (source.lastConnection) target.lastConnection = source.lastConnection;
-      target.online = Boolean(target.online || source.online);
+      target.lastConnection = source.lastConnection || '';
+      target.online = Boolean(source.online);
     }
-    if (type === 'joined_at' && source.joinedAt) target.joinedAt = source.joinedAt;
-    target.confidence = Math.max(confidenceOf(target), confidenceOf(source));
+    if (type === 'joined_at') target.joinedAt = source.joinedAt;
+  };
+  const mergeMetadata = (target, source) => {
     target.sources = [...new Set([...(target.sources || [target.source].filter(Boolean)), ...(source.sources || [source.source].filter(Boolean))])];
     target.sourceImageIndexes = [...new Set([...(target.sourceImageIndexes || [target.sourceImageIndex].filter(Number.isInteger)), ...(source.sourceImageIndexes || [source.sourceImageIndex].filter(Number.isInteger))])];
     target.reviewRequired = Boolean(target.reviewRequired || source.reviewRequired);
@@ -91,29 +136,103 @@ export function mergeExtractedRows(results = [], forcedType = null, { knownNames
   };
 
   results.forEach((result, imageIndex) => {
-    if (result?.snapshotType && result.snapshotType !== type) {
-      const message = `A imagem ${imageIndex + 1} parece ser do tipo ${result.snapshotType}, diferente de ${type}.`;
-      warnings.push(message);
-      reviewItems.push({ type: 'snapshot_type_conflict', imageIndex, detected: result.snapshotType, expected: type, message });
+    const structuralIncomplete = result?.coverageComplete === false
+      || !result?.snapshotType
+      || !Array.isArray(result?.rows)
+      || result.rows.length === 0
+      || Number(result?.localResolver?.structuralExceptions || 0) > 0;
+    if (structuralIncomplete) {
+      coverageComplete = false;
+      structurallyIncompleteImages += 1;
     }
+
+    if (result?.snapshotType && result.snapshotType !== type) {
+      coverageComplete = false;
+      const message = `A imagem ${imageIndex + 1} parece ser do tipo ${result.snapshotType}, diferente de ${type}; suas linhas ficaram fora da mesclagem para evitar misturar colunas.`;
+      warnings.push(message);
+      const preservedRows = Array.isArray(result.rows) ? result.rows.map(row => ({ ...row })) : [];
+      excludedTypeConflictRows += preservedRows.length;
+      reviewItems.push({
+        type: 'snapshot_type_conflict',
+        imageIndex,
+        detected: result.snapshotType,
+        expected: type,
+        rows: preservedRows,
+        message,
+      });
+      (result?.warnings || []).forEach(w => warnings.push(`Imagem ${imageIndex + 1}: ${w}`));
+      (result?.reviewItems || []).forEach(item => reviewItems.push({ ...item, imageIndex: item.imageIndex ?? imageIndex }));
+      return;
+    }
+
     (result?.warnings || []).forEach(w => warnings.push(`Imagem ${imageIndex + 1}: ${w}`));
     (result?.reviewItems || []).forEach(item => reviewItems.push({ ...item, imageIndex: item.imageIndex ?? imageIndex }));
 
     (result?.rows || []).forEach(raw => {
       const row = sanitizeExtractedRow({ ...raw, sourceImageIndex: imageIndex }, type);
-      if (!row) return;
+      if (!row) {
+        coverageComplete = false;
+        reviewItems.push({
+          type: 'invalid_row_value',
+          imageIndex,
+          name: cleanMemberName(raw?.name || ''),
+          message: `Uma linha da imagem ${imageIndex + 1} foi preservada para revisão porque o valor não passou pela validação estrita.`,
+        });
+        return;
+      }
       const enriched = {
         ...raw,
         ...row,
-        source: raw.source || (result?.engine === 'ocr' ? 'ocr' : result?.aiUsed ? 'ai' : 'unknown'),
-        sources: Array.isArray(raw.sources) ? raw.sources : [raw.source || (result?.engine === 'ocr' ? 'ocr' : result?.aiUsed ? 'ai' : 'unknown')],
+        source: raw.source || (result?.engine === 'ocr' ? 'ocr' : 'local'),
+        sources: Array.isArray(raw.sources) ? raw.sources : [raw.source || (result?.engine === 'ocr' ? 'ocr' : 'local')],
         sourceImageIndexes: [imageIndex],
         reviewRequired: Boolean(raw.reviewRequired),
         reviewReasons: [...new Set(raw.reviewReasons || [])],
       };
       const exact = rows.find(existing => existing.normalizedName === enriched.normalizedName);
       if (exact) {
-        mergeFields(exact, enriched);
+        const priorValue = valueKey(exact);
+        const incomingValue = valueKey(enriched);
+        if (priorValue && incomingValue && priorValue !== incomingValue) {
+          const priorConfidence = confidenceOf(exact);
+          const incomingConfidence = confidenceOf(enriched);
+          const alternatives = [
+            { value: priorValue, confidence: priorConfidence, imageIndexes: [...(exact.sourceImageIndexes || [])] },
+            { value: incomingValue, confidence: incomingConfidence, imageIndexes: [imageIndex] },
+          ];
+          if (incomingConfidence > priorConfidence) {
+            copyTypedValue(exact, enriched);
+            exact.confidence = incomingConfidence;
+            exact.ocrBox = enriched.ocrBox || exact.ocrBox;
+            exact.ocrImageDimensions = enriched.ocrImageDimensions || exact.ocrImageDimensions;
+            exact.sourceImageIndex = imageIndex;
+          }
+          exact.valueAlternatives = alternatives;
+          mergeMetadata(exact, enriched);
+          addReviewReason(exact, 'value_conflict');
+          reviewItems.push({
+            type: 'value_conflict',
+            name: exact.name,
+            alternatives,
+            selectedValue: valueKey(exact),
+            imageIndexes: exact.sourceImageIndexes,
+            imageIndex: exact.sourceImageIndex,
+            ocrBox: exact.ocrBox || null,
+            ocrImageDimensions: exact.ocrImageDimensions || null,
+            message: `O mesmo membro apareceu com valores diferentes (${priorValue} / ${incomingValue}); mantive a leitura de maior confiança para sua confirmação.`,
+          });
+        } else {
+          if ((!priorValue && incomingValue) || confidenceOf(enriched) > confidenceOf(exact)) {
+            if (incomingValue) copyTypedValue(exact, enriched);
+            if (confidenceOf(enriched) > confidenceOf(exact)) {
+              exact.confidence = confidenceOf(enriched);
+              exact.ocrBox = enriched.ocrBox || exact.ocrBox;
+              exact.ocrImageDimensions = enriched.ocrImageDimensions || exact.ocrImageDimensions;
+              exact.sourceImageIndex = imageIndex;
+            }
+          }
+          mergeMetadata(exact, enriched);
+        }
         return;
       }
 
@@ -130,9 +249,13 @@ export function mergeExtractedRows(results = [], forcedType = null, { knownNames
         if (preferred !== alias.name) {
           alias.name = preferred;
           alias.normalizedName = normalizeMemberName(preferred);
+          alias.confidence = confidenceOf(enriched);
+          alias.ocrBox = enriched.ocrBox || alias.ocrBox;
+          alias.ocrImageDimensions = enriched.ocrImageDimensions || alias.ocrImageDimensions;
+          alias.sourceImageIndex = imageIndex;
         }
         alias.nameAlternatives = alternatives;
-        mergeFields(alias, enriched);
+        mergeMetadata(alias, enriched);
         addReviewReason(alias, 'nickname_conflict');
         reviewItems.push({
           type: 'nickname_conflict',
@@ -141,6 +264,9 @@ export function mergeExtractedRows(results = [], forcedType = null, { knownNames
           suggestedName: preferred,
           value,
           imageIndexes: alias.sourceImageIndexes,
+          imageIndex: alias.sourceImageIndex,
+          ocrBox: alias.ocrBox || null,
+          ocrImageDimensions: alias.ocrImageDimensions || null,
           message: `O mesmo valor apareceu com nomes parecidos: ${alternatives.join(' / ')}.`,
         });
         return;
@@ -150,7 +276,6 @@ export function mergeExtractedRows(results = [], forcedType = null, { knownNames
     });
   });
 
-  // Histórico conhecido serve só como evidência. Nunca renomeia automaticamente.
   for (const row of rows) {
     if (!known.length) break;
     if (known.some(name => normalizeMemberName(name) === row.normalizedName)) continue;
@@ -167,11 +292,15 @@ export function mergeExtractedRows(results = [], forcedType = null, { knownNames
       name: row.name,
       knownName: best.name,
       similarity: Number(best.similarity.toFixed(2)),
+      imageIndex: row.sourceImageIndex,
+      ocrBox: row.ocrBox || null,
+      ocrImageDimensions: row.ocrImageDimensions || null,
       message: `Nickname parecido com membro conhecido (${best.name}); confirmar manualmente antes de considerar troca de nick.`,
     });
   }
 
   if (rows.length > ALLIANCE_MEMBER_LIMIT) {
+    coverageComplete = false;
     const message = `A leitura encontrou ${rows.length} linhas, acima do limite de ${ALLIANCE_MEMBER_LIMIT} membros. Revise duplicações antes de importar.`;
     warnings.push(message);
     reviewItems.push({ type: 'member_limit', count: rows.length, limit: ALLIANCE_MEMBER_LIMIT, message });
@@ -180,6 +309,7 @@ export function mergeExtractedRows(results = [], forcedType = null, { knownNames
   const exceptionRows = rows.filter(row => row.reviewRequired).length;
   const typeConflicts = reviewItems.filter(item => item.type === 'snapshot_type_conflict').length;
   const knownMatches = rows.filter(row => known.some(name => normalizeMemberName(name) === row.normalizedName)).length;
+  if (typeConflicts || structurallyIncompleteImages) coverageComplete = false;
   const metrics = {
     rows: rows.length,
     trustedRows: rows.length - exceptionRows,
@@ -188,9 +318,25 @@ export function mergeExtractedRows(results = [], forcedType = null, { knownNames
     typeConflicts,
     knownMatches,
     knownMembers: known.length,
+    coverageComplete,
+    structurallyIncompleteImages,
+    excludedTypeConflictRows,
+    valueConflicts: reviewItems.filter(item => item.type === 'value_conflict').length,
   };
 
-  return { snapshotType: type, rows, warnings: [...new Set(warnings)], reviewItems, metrics };
+  if (!coverageComplete) {
+    warnings.push('Cobertura incompleta: este lote não pode detectar saídas até todas as capturas necessárias serem lidas com estrutura suficiente.');
+  }
+
+  return {
+    snapshotType: type,
+    rows,
+    warnings: [...new Set(warnings)],
+    reviewItems,
+    metrics,
+    coverageComplete,
+    structurallyIncompleteImages,
+  };
 }
 
 function levenshtein(a = '', b = '') {

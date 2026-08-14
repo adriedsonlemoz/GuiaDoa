@@ -104,6 +104,8 @@ function reviewItemFor(row, candidate, confidence, reason = 'local_resolver_sugg
     name: row.name,
     suggestedName: candidate?.name || null,
     confidence: Number(confidence.toFixed(3)),
+    ocrBox: row.ocrBox || null,
+    ocrImageDimensions: row.ocrImageDimensions || null,
     reasons: candidate?.reasons || [],
     message: candidate?.name
       ? `Resolvedor local sugere “${candidate.name}” para a leitura “${row.name}” (${Math.round(confidence * 100)}%).`
@@ -212,13 +214,13 @@ export function resolveAllianceOcrLocally({
   });
   const pendingRows = rows.filter(row => row.reviewRequired);
   const trustedRows = rows.filter(row => !row.reviewRequired);
-  const accepted = Boolean(type && rows.length >= 2 && pendingRows.length === 0 && unresolvedStructural.length === 0);
-  const usable = Boolean(type && rows.length >= 2);
+  const accepted = Boolean(type && rows.length >= 1 && pendingRows.length === 0 && unresolvedStructural.length === 0);
+  const usable = Boolean(type && rows.length >= 1);
   const reason = accepted
     ? null
     : !type
       ? 'snapshot_type'
-      : rows.length < 2
+      : rows.length < 1
         ? 'rows'
         : unresolvedStructural.length
           ? 'structural'
@@ -226,9 +228,12 @@ export function resolveAllianceOcrLocally({
             ? 'review'
             : 'confidence';
 
+  const coverageComplete = Boolean(type && rows.length >= 1 && unresolvedStructural.length === 0);
+
   return {
     ...ocr,
     accepted,
+    coverageComplete,
     usable,
     reason,
     rows,

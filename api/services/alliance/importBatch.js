@@ -9,6 +9,7 @@ const COMPLETED_TTL_MS = 30 * 60 * 1000;
 const BATCH_SWEEP_MS = 15 * 60 * 1000;
 const META_FILE = 'batch.json';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const ACTIVE_OWNER_BATCHES = new Map();
 
 const nowIso = () => new Date().toISOString();
 const ownerKey = value => String(value || '');
@@ -33,14 +34,13 @@ async function writeMeta(batch) {
   return batch;
 }
 
-async function removeImageFiles(batch) {
-  await Promise.all((batch.files || []).map(file => rm(join(batchDir(batch.id), file.storageName), { force: true }).catch(() => {})));
-}
+
 
 function compactCompletedResult(result = {}) {
   const copy = { ...result };
-  // O texto OCR bruto só é necessário para retomar a imagem atual. Depois que a imagem
-  // conclui, guardamos apenas dados estruturados/diagnóstico e apagamos o screenshot.
+  // O checkpoint OCR bruto só é necessário para retomar a imagem atual. Depois que a imagem
+  // conclui, guardamos no JSON apenas dados estruturados/diagnóstico. O screenshot permanece
+  // isolado no diretório temporário apenas durante a revisão e é removido ao cancelar/confirmar/expirar.
   if (copy.checkpoint) delete copy.checkpoint;
   return copy;
 }
@@ -55,7 +55,10 @@ export async function cleanupExpiredImportBatches() {
       const raw = await readFile(metaPath(id), 'utf8');
       const batch = JSON.parse(raw);
       const expiresAt = new Date(batch.expiresAt || 0).getTime();
-      if (!expiresAt || expiresAt <= now) await rm(batchDir(id), { recursive: true, force: true });
+      if (!expiresAt || expiresAt <= now) {
+        if (ACTIVE_OWNER_BATCHES.get(ownerKey(batch.ownerUserId)) === id) ACTIVE_OWNER_BATCHES.delete(ownerKey(batch.ownerUserId));
+        await rm(batchDir(id), { recursive: true, force: true });
+      }
     } catch {
       const info = await stat(batchDir(id)).catch(() => null);
       if (info && now - info.mtimeMs > BATCH_TTL_MS) await rm(batchDir(id), { recursive: true, force: true });
@@ -63,8 +66,16 @@ export async function cleanupExpiredImportBatches() {
   }));
 }
 
-export async function createImportBatch({ files, ownerUserId, allianceId = null, capturedAt = null }) {
+export async function createImportBatch({ files, ownerUserId, allianceId = null, capturedAt = null, snapshotTypeHint = null }) {
   await cleanupExpiredImportBatches();
+  const owner = ownerKey(ownerUserId);
+  if (ACTIVE_OWNER_BATCHES.get(owner)) {
+    const error = new Error('Já existe outro lote da Alliance sendo processado por este Admin.');
+    error.code = 'ALLIANCE_BATCH_OWNER_BUSY';
+    error.retryable = true;
+    error.retryAfterMs = 1500;
+    throw error;
+  }
   const id = randomUUID();
   const createdAt = nowIso();
   const dir = batchDir(id);
@@ -105,6 +116,7 @@ export async function createImportBatch({ files, ownerUserId, allianceId = null,
     id,
     ownerUserId: ownerKey(ownerUserId),
     allianceId: allianceId ? String(allianceId) : null,
+    snapshotTypeHint: ['power', 'last_connection', 'joined_at'].includes(snapshotTypeHint) ? snapshotTypeHint : null,
     capturedAt: capturedAt || createdAt,
     createdAt,
     updatedAt: createdAt,
@@ -146,6 +158,7 @@ export async function loadImportBatch(id, ownerUserId) {
           retryable: true,
         };
         batch.updatedAt = nowIso();
+        if (ACTIVE_OWNER_BATCHES.get(ownerKey(batch.ownerUserId)) === batch.id) ACTIVE_OWNER_BATCHES.delete(ownerKey(batch.ownerUserId));
         await writeMeta(batch);
       }
     }
@@ -156,11 +169,31 @@ export async function loadImportBatch(id, ownerUserId) {
 }
 
 export async function markImportBatchProcessing(batch) {
+  const owner = ownerKey(batch.ownerUserId);
+  const active = ACTIVE_OWNER_BATCHES.get(owner);
+  if (active && active !== batch.id) {
+    const error = new Error('Já existe outro lote da Alliance sendo processado por este Admin.');
+    error.code = 'ALLIANCE_BATCH_OWNER_BUSY';
+    error.retryable = true;
+    error.retryAfterMs = 1500;
+    throw error;
+  }
+  ACTIVE_OWNER_BATCHES.set(owner, batch.id);
   batch.status = 'processing';
   batch.currentIndex = batch.results.length;
   batch.processingStartedAt = nowIso();
   batch.updatedAt = batch.processingStartedAt;
   batch.lastError = null;
+  batch.expiresAt = new Date(Date.now() + BATCH_TTL_MS).toISOString();
+  return writeMeta(batch);
+}
+
+export async function heartbeatImportBatch(batch) {
+  if (!batch || batch.status !== 'processing') return batch;
+  const owner = ownerKey(batch.ownerUserId);
+  if (!ACTIVE_OWNER_BATCHES.get(owner)) ACTIVE_OWNER_BATCHES.set(owner, batch.id);
+  batch.updatedAt = nowIso();
+  batch.processingStartedAt = batch.updatedAt;
   batch.expiresAt = new Date(Date.now() + BATCH_TTL_MS).toISOString();
   return writeMeta(batch);
 }
@@ -188,12 +221,13 @@ export async function appendImportBatchResult(batch, result) {
   batch.processingStartedAt = batch.updatedAt;
   batch.expiresAt = new Date(Date.now() + BATCH_TTL_MS).toISOString();
   await writeMeta(batch);
-  const completedFile = batch.files?.[completedIndex];
-  if (completedFile) await rm(join(batchDir(batch.id), completedFile.storageName), { force: true }).catch(() => {});
+  // Na Beta 2.43 a captura permanece apenas durante a etapa de revisão para que
+  // o Admin consiga mostrar a origem de uma linha duvidosa. DELETE/expiração remove tudo.
   return batch;
 }
 
 export async function pauseImportBatch(batch, error = null) {
+  if (ACTIVE_OWNER_BATCHES.get(ownerKey(batch.ownerUserId)) === batch.id) ACTIVE_OWNER_BATCHES.delete(ownerKey(batch.ownerUserId));
   batch.status = 'paused';
   batch.currentIndex = batch.results.length;
   batch.processingStartedAt = null;
@@ -204,6 +238,7 @@ export async function pauseImportBatch(batch, error = null) {
 }
 
 export async function completeImportBatch(batch, finalData) {
+  if (ACTIVE_OWNER_BATCHES.get(ownerKey(batch.ownerUserId)) === batch.id) ACTIVE_OWNER_BATCHES.delete(ownerKey(batch.ownerUserId));
   batch.status = 'completed';
   batch.currentIndex = batch.total;
   batch.currentCheckpoint = null;
@@ -212,7 +247,8 @@ export async function completeImportBatch(batch, finalData) {
   batch.expiresAt = new Date(Date.now() + COMPLETED_TTL_MS).toISOString();
   batch.lastError = null;
   batch.finalData = finalData;
-  await removeImageFiles(batch);
+  // Os screenshots continuam somente no diretório temporário durante a revisão
+  // (máx. COMPLETED_TTL_MS) e são apagados ao confirmar/cancelar ou expirar.
   return writeMeta(batch);
 }
 
@@ -229,6 +265,7 @@ export async function readImportBatchImage(batch, index) {
 export async function cancelImportBatch(id, ownerUserId) {
   const batch = await loadImportBatch(id, ownerUserId);
   if (!batch) return false;
+  if (ACTIVE_OWNER_BATCHES.get(ownerKey(batch.ownerUserId)) === batch.id) ACTIVE_OWNER_BATCHES.delete(ownerKey(batch.ownerUserId));
   await rm(batchDir(id), { recursive: true, force: true });
   return true;
 }
@@ -244,6 +281,7 @@ export function publicImportBatch(batch) {
     currentIndex: batch.currentIndex,
     capturedAt: batch.capturedAt,
     allianceId: batch.allianceId,
+    snapshotTypeHint: batch.snapshotTypeHint || null,
     files: (batch.files || []).map(({ index, uploadIndex, name, mimetype, size }) => ({ index, uploadIndex, name, mimetype, size })),
     checkpoint: batch.currentCheckpoint ? {
       index: batch.currentCheckpoint.index,

@@ -10,6 +10,8 @@ const AT = {
   scan: { running: false, progress: 0, lines: [], batchId: null, completed: 0, total: 0, status: null, canContinue: false, restoring: false, following: false },
 };
 
+let AT_SOURCE_URL = null;
+
 const AT_TYPE_LABEL = {
   power: 'Poder',
   last_connection: 'Última conexão',
@@ -236,12 +238,15 @@ function atRenderImport() {
   panel.innerHTML = `
     <div class="at-card">
       <h3>📸 Importar screenshots</h3>
-      <p class="at-muted">Envie uma ou várias telas do mesmo filtro: <strong>Poder</strong>, <strong>Última Conexão</strong> ou <strong>Data de Entrada</strong>. O sistema tenta <strong>OCR local primeiro</strong> e só usa IA visual quando a leitura local não for segura.</p>
+      <p class="at-muted">Envie uma ou várias telas do mesmo filtro: <strong>Poder</strong>, <strong>Última Conexão</strong> ou <strong>Data de Entrada</strong>. A leitura é <strong>100% local</strong>; quando o OCR não tiver certeza, a dúvida vai para sua revisão.</p>
       <label class="at-drop" for="at-files"><span>🖼️</span><strong>Selecionar screenshots</strong><small>JPG, PNG ou WebP · até 10 imagens · 6 MB cada</small></label>
       <input id="at-files" type="file" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="atFilesChanged(this.files)">
       <div id="at-file-list" class="at-file-list">Nenhuma imagem selecionada.</div>
-      <div class="field" style="max-width:300px"><label>Data/hora da captura</label><input id="at-captured" type="datetime-local" value="${local}"></div>
-      <div class="at-note"><strong>Leitura 100% local:</strong> OCR + resolvedor próprio usam histórico da Alliance e correções já confirmadas. Nenhuma IA externa é chamada. Dúvidas ou trechos não reconstruídos seguem para sua revisão manual, sem interromper o lote.</div>
+      <div class="field-row at-import-options">
+        <div class="field"><label>Tipo da captura</label><select id="at-snapshot-type-hint"><option value="auto">Detectar automaticamente</option><option value="power">Poder</option><option value="last_connection">Última conexão</option><option value="joined_at">Data de entrada</option></select><small>Se você souber o filtro aberto no jogo, selecionar aqui pula a detecção do cabeçalho e melhora a leitura.</small></div>
+        <div class="field"><label>Data/hora da captura</label><input id="at-captured" type="datetime-local" value="${local}"></div>
+      </div>
+      <div class="at-note"><strong>Leitura 100% local:</strong> o Tesseract tenta linha visual, segunda passagem e, quando necessário, separa <strong>nomes</strong> e <strong>valores</strong> em colunas para parear pela posição. O resolvedor próprio usa histórico e correções confirmadas; dúvidas seguem para sua revisão.</div>
       <button id="at-read-btn" class="btn btn-gold" onclick="atExtract(false)" disabled>🔎 Ler screenshots</button>
       <div id="at-scan-story" class="at-scan-story" hidden>
         <div class="at-scan-head">
@@ -333,7 +338,7 @@ function atScanNarrate(event) {
       title: resumed ? `${completed}/${total} imagens já estavam concluídas.` : `Recebi ${event.uploadedTotal || event.imagesCount} screenshot${(event.uploadedTotal || event.imagesCount) === 1 ? '' : 's'}.`,
       text: resumed
         ? `${event.checkpoint?.ocrReady ? 'O OCR da imagem atual também foi recuperado do checkpoint. ' : ''}Vou continuar da próxima etapa sem reler capturas concluídas.`
-        : `${event.duplicatesSkipped ? `${event.duplicatesSkipped} captura(s) repetida(s) foram ignoradas pelo hash. ` : ''}Vou processar ${event.imagesCount} imagem(ns) única(s), uma por vez: ROI + OCR local primeiro; IA somente nas exceções.`,
+        : `${event.duplicatesSkipped ? `${event.duplicatesSkipped} captura(s) repetida(s) foram ignoradas pelo hash. ` : ''}Vou processar ${event.imagesCount} imagem(ns) única(s), uma por vez: ROI, reconstrução de linhas e pareamento local por colunas quando necessário.`,
       progress:realProgress, completed, total,
       line: resumed ? `Lote recuperado: ${completed}/${total} imagens concluídas.` : event.duplicatesSkipped ? `Upload concluído; ${event.duplicatesSkipped} screenshot(s) duplicado(s) descartado(s).` : 'Upload concluído. Iniciando análise local por regiões.',
     });
@@ -350,10 +355,10 @@ function atScanNarrate(event) {
   if (event.type === 'vision_progress' && event.stage === 'ocr_start') {
     return atScanStory({
       kicker:`Imagem ${current} de ${total} · OCR local`,
-      title:'Lendo no próprio backend, sem IA…',
-      text:'O Tesseract reconhece a tabela localmente no backend. Nenhuma IA externa participa desta leitura.',
+      title:'Lendo no próprio backend…',
+      text:'O Tesseract reconhece a tabela localmente no backend e o GUIA valida cada linha antes da revisão.',
       progress:realProgress, completed, total,
-      line:'OCR local iniciado; nenhuma chamada de IA até aqui.',
+      line:'OCR local iniciado.',
     });
   }
   if (event.type === 'vision_progress' && event.stage === 'ocr_layout') {
@@ -362,11 +367,11 @@ function atScanNarrate(event) {
       title:event.roi ? 'Mapeando cabeçalho e tabela…' : 'Layout variável — usando leitura integral.',
       text:event.roi ? 'O leitor separou regiões de interesse para reduzir ruído antes de reconhecer os membros.' : 'A imagem não expôs dimensões seguras para recorte; o OCR seguirá pela imagem inteira.',
       progress:realProgress, completed, total,
-      line:event.roi ? 'ROI calculada: cabeçalho primeiro, tabela depois.' : 'ROI indisponível; fallback local para imagem inteira.',
+      line:event.roi ? 'ROI calculada: cabeçalho primeiro, tabela depois.' : 'ROI indisponível; seguindo com leitura integral local.',
     });
   }
   if (event.type === 'vision_progress' && event.stage === 'ocr_region') {
-    const label = event.region === 'header' ? 'cabeçalho' : event.region === 'table' ? 'tabela' : 'imagem inteira';
+    const label = event.region === 'header' ? 'cabeçalho' : event.region === 'table' ? 'tabela' : String(event.region || '').includes('name-column') ? 'coluna de nomes' : String(event.region || '').includes('value-column') ? 'coluna de valores' : 'imagem inteira';
     return atScanStory({
       kicker:`Imagem ${current} de ${total} · ${label}`,
       title:event.region === 'header' ? 'Identificando a coluna selecionada…' : 'Lendo somente a área útil da lista…',
@@ -375,12 +380,22 @@ function atScanNarrate(event) {
       line:`OCR local: ${label} · variante ${event.variant || 'padrão'}.`,
     });
   }
+  if (event.type === 'vision_progress' && event.stage === 'ocr_type_hint') {
+    const label = AT_TYPE_LABEL[event.snapshotType] || event.snapshotType;
+    return atScanStory({
+      kicker:`Imagem ${current} de ${total} · tipo informado`,
+      title:`Filtro informado: ${label}.`,
+      text:'Como você informou o tipo da captura, o leitor pula a descoberta do cabeçalho e concentra o OCR diretamente na tabela.',
+      progress:realProgress, completed, total,
+      line:`Tipo fixado pelo Admin: ${label}.`,
+    });
+  }
   if (event.type === 'vision_progress' && event.stage === 'ocr_header') {
     const label = AT_TYPE_LABEL[event.snapshotType] || 'não confirmado';
     return atScanStory({
       kicker:`Imagem ${current} de ${total} · cabeçalho`,
       title:event.snapshotType ? `Coluna identificada: ${label}.` : 'Cabeçalho ainda inconclusivo.',
-      text:event.snapshotType ? 'Agora o parser sabe qual formato esperar em cada linha da tabela.' : 'Vou ampliar a análise local antes de considerar qualquer chamada de IA.',
+      text:event.snapshotType ? 'Agora o parser sabe qual formato esperar em cada linha da tabela.' : 'Vou ampliar a análise local e tentar outras segmentações.',
       progress:realProgress, completed, total,
       line:event.snapshotType ? `Tipo confirmado pelo OCR: ${label}.` : 'Tipo não confirmado no recorte; tentando leitura local ampliada.',
     });
@@ -389,16 +404,34 @@ function atScanNarrate(event) {
     return atScanStory({
       kicker:`Imagem ${current} de ${total} · segunda passada`,
       title:'Primeira leitura deixou exceções → refinando localmente.',
-      text:`Antes de usar IA, o Tesseract tenta outra segmentação/limiarização. Exceções detectadas: ${event.exceptions || 0}.`,
+      text:`O Tesseract tenta outra segmentação/limiarização local. Exceções detectadas: ${event.exceptions || 0}.`,
       progress:realProgress, completed, total,
-      line:'Pré-processamento adaptativo acionado; IA continua sem uso.',
+      line:'Pré-processamento adaptativo acionado.',
+    });
+  }
+  if (event.type === 'vision_progress' && event.stage === 'ocr_column_pairing') {
+    return atScanStory({
+      kicker:`Imagem ${current} de ${total} · reconstrução por colunas`,
+      title:event.alternate ? 'Primeiro recorte não encontrou linhas → ajustando a divisão das colunas.' : 'Nome e valor parecem separados → lendo cada coluna isoladamente.',
+      text:event.alternate ? 'O leitor ampliou a área de nickname e reposicionou a coluna de valor para lidar com layouts/resoluções diferentes.' : 'O Tesseract vai reconhecer a área dos nicknames e a área dos valores separadamente; depois o GUIA pareia as duas leituras pela posição vertical na tela.',
+      progress:realProgress, completed, total,
+      line:event.alternate ? 'Tentando uma segunda geometria local de colunas.' : 'Ativando pareamento local: coluna de nomes + coluna de valores.',
+    });
+  }
+  if (event.type === 'vision_progress' && event.stage === 'ocr_column_pairing_done') {
+    return atScanStory({
+      kicker:`Imagem ${current} de ${total} · colunas pareadas`,
+      title:`Reconstruí ${Number(event.rows || 0)} linha(s) pela posição visual.`,
+      text:`${Number(event.trustedRows || 0)} linha(s) ficaram seguras e ${Number(event.exceptions || 0)} precisam de revisão.`,
+      progress:realProgress, completed, total,
+      line:`Pareamento por coordenadas concluído: ${Number(event.rows || 0)} linha(s).`,
     });
   }
   if (event.type === 'vision_progress' && event.stage === 'ocr_retry') {
     return atScanStory({
       kicker:`Imagem ${current} de ${total} · recuperação OCR`,
       title:'O leitor local travou/expirou → reiniciando automaticamente.',
-      text:'O worker do Tesseract foi descartado e uma tentativa local limpa será feita antes de recorrer à IA.',
+      text:'O worker do Tesseract foi descartado e uma tentativa local limpa será feita.',
       progress:realProgress, completed, total,
       line:'OCR local reiniciado após falha temporária.',
     });
@@ -417,7 +450,7 @@ function atScanNarrate(event) {
     return atScanStory({
       kicker:`Imagem ${current} de ${total} · OCR local ${ocrPct}%`,
       title:'Reconhecendo texto localmente…',
-      text:'Nomes, números e datas estão sendo lidos sem consumir a API visual.',
+      text:'Nomes, números e datas estão sendo lidos pelo motor local.',
       progress:realProgress, completed, total,
     });
   }
@@ -445,7 +478,7 @@ function atScanNarrate(event) {
     const pending = Number(event.pendingRows || 0);
     return atScanStory({
       kicker:`Imagem ${current} de ${total} · resolvedor local`,
-      title:auto ? `${auto} inconsistência(s) resolvida(s) sem IA externa.` : 'Cruzando OCR com o histórico da Alliance…',
+      title:auto ? `${auto} inconsistência(s) resolvida(s) pelo resolvedor local.` : 'Cruzando OCR com o histórico da Alliance…',
       text:`O GUIA DOA comparou nomes, aliases e dados anteriores localmente. ${pending ? `${pending} linha(s) ainda precisam de confirmação.` : 'Nenhuma inconsistência de nickname ficou pendente.'}`,
       progress:realProgress, completed, total,
       line:`Resolvedor local: ${auto} resolvida(s) · ${Number(event.suggested || 0)} sugestão(ões) · ${pending} pendente(s).`,
@@ -457,7 +490,7 @@ function atScanNarrate(event) {
       title:'As dúvidas restantes vão para sua revisão.',
       text:'O leitor local preservou tudo que conseguiu. As inconsistências restantes serão destacadas para você confirmar depois, sem interromper as próximas imagens.',
       progress:realProgress, completed, total,
-      line:'Exceções preservadas para revisão manual; seguindo sem IA externa.',
+      line:'Exceções preservadas para revisão manual; seguindo para a próxima etapa.',
     });
   }
   if (event.type === 'vision_progress' && event.stage === 'ocr_review') {
@@ -474,7 +507,7 @@ function atScanNarrate(event) {
     return atScanStory({
       kicker:`Imagem ${current} de ${total} · revisão necessária`,
       title:'OCR local não conseguiu concluir esta imagem.',
-      text:'Esta captura será marcada para revisão manual e o lote seguirá para a próxima imagem. Nenhuma IA externa será chamada.',
+      text:'Esta captura será marcada para revisão manual e o lote seguirá para a próxima imagem.',
       progress:realProgress, completed, total,
       line:'OCR local indisponível nesta captura; seguindo para revisão manual.',
     });
@@ -519,7 +552,7 @@ function atScanNarrate(event) {
     return atScanStory({
       kicker:`${total}/${total} imagens concluídas · 100% local`,
       title:`${rows} membro${rows === 1 ? '' : 's'} pronto${rows === 1 ? '' : 's'} para revisão.`,
-      text:`${sourceText}${duplicateText} ${Number(m.reviewItemsCount || 0)} exceção(ões) ficaram destacadas. Os screenshots temporários já foram apagados do backend.`,
+      text:`${sourceText}${duplicateText} ${Number(m.reviewItemsCount || 0)} exceção(ões) ficaram destacadas. Os screenshots ficam disponíveis apenas durante esta revisão e serão apagados ao confirmar, cancelar ou expirar o lote.`,
       progress:100, completed:total, total,
       line:`Tudo pronto. Abrindo revisão. ${Number(m.trustedRows || 0)} linhas seguras · ${Number(m.exceptionRows || 0)} linha(s) com revisão.`, tone:'success',
     });
@@ -589,7 +622,7 @@ async function atRestoreBatch() {
     AT.scan.status = state.status;
     AT.scan.lastError = state.lastError || null;
     if (state.status === 'completed' && state.finalData) {
-      AT.review = { ...state.finalData, capturedAt: state.finalData.capturedAt || state.capturedAt, completeList:false };
+      AT.review = { ...state.finalData, batchId: state.finalData.batchId || state.batchId || batchId, capturedAt: state.finalData.capturedAt || state.capturedAt, completeList:false };
       atRenderReview();
       return;
     }
@@ -621,6 +654,7 @@ async function atRestoreBatch() {
 }
 
 async function atCancelBatch({ silent = false } = {}) {
+  atCloseSourcePreview();
   const batchId = AT.scan.batchId || localStorage.getItem(atBatchStorageKey());
   if (batchId) {
     try {
@@ -677,7 +711,7 @@ async function atContinueReading() {
       AT.scan.status = state.status;
       AT.scan.lastError = state.lastError || null;
       if (state.status === 'completed' && state.finalData) {
-        AT.review = { ...state.finalData, capturedAt: state.finalData.capturedAt || state.capturedAt, completeList:false };
+        AT.review = { ...state.finalData, batchId: state.finalData.batchId || state.batchId || batchId, capturedAt: state.finalData.capturedAt || state.capturedAt, completeList:false };
         return atRenderReview();
       }
       if (state.status === 'paused' || state.status === 'ready') {
@@ -727,7 +761,7 @@ async function atExtract(resume = false) {
   atScanStory({
     kicker:resume ? 'Continuando leitura' : 'Começando',
     title:resume ? `Retomando da imagem ${AT.scan.completed + 1}…` : 'Preparando os screenshots…',
-    text:resume ? 'As imagens já concluídas permanecem preservadas e não serão relidas.' : 'Primeiro envio as imagens; cada uma tenta OCR local antes de qualquer fallback por IA.',
+    text:resume ? 'As imagens já concluídas permanecem preservadas e não serão relidas.' : 'Primeiro envio as imagens; cada uma passa pelo pipeline local de OCR e validação.',
     progress:AT.scan.total ? (AT.scan.completed/AT.scan.total)*100 : 0,
     completed:AT.scan.completed, total:AT.scan.total,
     line:resume ? 'Solicitando continuação do lote temporário.' : 'Preparando envio.',
@@ -742,8 +776,10 @@ async function atExtract(resume = false) {
       const fd = new FormData();
       AT.files.forEach(file => fd.append('images', file));
       const capturedRaw = document.getElementById('at-captured')?.value;
+      const typeHint = document.getElementById('at-snapshot-type-hint')?.value || 'auto';
       fd.append('capturedAt', capturedRaw ? new Date(capturedRaw).toISOString() : new Date().toISOString());
       if (AT.alliance?._id) fd.append('allianceId', AT.alliance._id);
+      if (typeHint !== 'auto') fd.append('snapshotTypeHint', typeHint);
       options.body = fd;
     }
 
@@ -766,7 +802,7 @@ async function atExtract(resume = false) {
       for (const raw of lines) {
         if (!raw.trim()) continue;
         const event = JSON.parse(raw);
-        if (event.type === 'error') throw event.error || { erro:'Falha durante a leitura visual.' };
+        if (event.type === 'error') throw event.error || { erro:'Falha durante a leitura local.' };
         atScanNarrate(event);
         if (event.type === 'done') result = event.data;
       }
@@ -778,7 +814,7 @@ async function atExtract(resume = false) {
       batchId:AT.scan.batchId, completed:AT.scan.completed, total:AT.scan.total,
     };
 
-    AT.review = { ...result, capturedAt: result.capturedAt || new Date().toISOString(), completeList:false };
+    AT.review = { ...result, batchId: result.batchId || AT.scan.batchId, capturedAt: result.capturedAt || new Date().toISOString(), completeList:false };
     AT.scan.status = 'completed';
     await new Promise(resolve => setTimeout(resolve, 250));
     atRenderReview();
@@ -819,12 +855,63 @@ function atReviewReasonLabel(reason) {
     nickname_conflict:'Nickname divergente entre capturas',
     known_name_variant:'Parecido com membro já conhecido',
     snapshot_type_conflict:'Tipo da captura divergente',
+    value_conflict:'Valor divergente entre screenshots',
+    invalid_row_value:'Valor inválido para o tipo selecionado',
     local_resolver_suggestion:'Sugestão do resolvedor local',
     snapshot_type_manual:'Tipo da captura requer confirmação',
     image_manual_entry:'Imagem requer entrada manual',
     structural_manual_review:'Trecho não reconstruído pelo OCR',
     local_manual_review:'Confirmação manual do leitor local',
+    manual_row:'Linha adicionada manualmente',
   })[reason] || String(reason || 'Revisão necessária').replaceAll('_',' ');
+}
+
+function atSourceImageIndex(item) {
+  const direct = Number(item?.sourceImageIndex ?? item?.imageIndex);
+  if (Number.isInteger(direct) && direct >= 0) return direct;
+  const first = Number(Array.isArray(item?.sourceImageIndexes) ? item.sourceImageIndexes[0] : NaN);
+  return Number.isInteger(first) && first >= 0 ? first : null;
+}
+
+function atCloseSourcePreview() {
+  if (AT_SOURCE_URL) URL.revokeObjectURL(AT_SOURCE_URL);
+  AT_SOURCE_URL = null;
+  document.querySelector('.at-source-modal')?.remove();
+}
+
+async function atShowSourceImage(imageIndex, box = null, dimensions = null, label = '') {
+  const batchId = AT.review?.batchId || AT.scan.batchId || localStorage.getItem(atBatchStorageKey());
+  if (!batchId || !Number.isInteger(Number(imageIndex))) return toast('A captura temporária de origem não está mais disponível.', 'warn');
+  atCloseSourcePreview();
+  try {
+    const response = await AdminCore.request(`${API}/alliance-tracker/extract-batches/${encodeURIComponent(batchId)}/images/${Number(imageIndex)}`, { timeout:15000 });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.erro || 'A captura temporária expirou ou foi removida.');
+    }
+    AT_SOURCE_URL = URL.createObjectURL(await response.blob());
+    const modal = document.createElement('div');
+    modal.className = 'at-source-modal';
+    const b = box && dimensions && Number(dimensions.width) > 0 && Number(dimensions.height) > 0
+      ? { left:Math.max(0,Number(box.left)||0)/Number(dimensions.width)*100, top:Math.max(0,Number(box.top)||0)/Number(dimensions.height)*100, width:Math.max(0,Number(box.width)||0)/Number(dimensions.width)*100, height:Math.max(0,Number(box.height)||0)/Number(dimensions.height)*100 }
+      : null;
+    modal.innerHTML = `<div class="at-source-panel"><div class="at-source-head"><div><strong>Origem temporária${label ? ` · ${esc(label)}` : ''}</strong><small>Esta imagem existe apenas durante a revisão do lote.</small></div><button class="at-x" aria-label="Fechar" onclick="atCloseSourcePreview()">×</button></div><div class="at-source-stage"><img src="${AT_SOURCE_URL}" alt="Screenshot temporário de origem">${b ? `<i class="at-source-box" style="left:${b.left}%;top:${b.top}%;width:${b.width}%;height:${b.height}%"></i>` : ''}</div></div>`;
+    modal.addEventListener('click', event => { if (event.target === modal) atCloseSourcePreview(); });
+    document.body.appendChild(modal);
+  } catch (err) { atCloseSourcePreview(); toast(err.message || 'Não foi possível abrir a captura temporária.', 'erro'); }
+}
+
+function atShowRowSource(index) {
+  const row = AT.review?.rows?.[index];
+  if (!row) return;
+  const imageIndex = atSourceImageIndex(row);
+  atShowSourceImage(imageIndex, row.ocrBox || null, row.ocrImageDimensions || null, row.name || `Linha ${index+1}`);
+}
+
+function atShowReviewItemSource(index) {
+  const item = AT.review?.reviewItems?.[index];
+  if (!item) return;
+  atShowSourceImage(atSourceImageIndex(item), item.ocrBox || null, item.ocrImageDimensions || null, item.name || item.suggestedName || atReviewReasonLabel(item.type));
 }
 
 function atRenderReview() {
@@ -834,12 +921,15 @@ function atRenderReview() {
   const type = r.snapshotType || 'power';
   const rows = Array.isArray(r.rows) ? r.rows : [];
   const pending = rows.filter(row => row.reviewRequired && !row.reviewed).length;
+  const coverageComplete = r.coverageComplete !== false;
+  if (!coverageComplete) r.completeList = false;
   if (!r.reviewMode) r.reviewMode = pending ? 'exceptions' : 'all';
   const visible = rows.map((row,index) => ({ row,index })).filter(item => r.reviewMode !== 'exceptions' || (item.row.reviewRequired && !item.row.reviewed));
   const m = r.metrics || {};
   const localRate = Number(m.localOnlyRate ?? 100);
   const reviewItems = Array.isArray(r.reviewItems) ? r.reviewItems : [];
-  const globalItems = reviewItems.filter(item => !item.name && !item.suggestedName);
+  const globalItems = reviewItems.map((item,index) => ({item,index})).filter(({item}) => !item.name && !item.suggestedName);
+  const sourceImages = Array.isArray(r.sourceImages) ? r.sourceImages : Array.from({ length:Number(r.imagesCount || AT.files.length || 0) }, (_,index) => ({index}));
 
   panel.innerHTML = `
     <div class="at-card">
@@ -850,8 +940,10 @@ function atRenderReview() {
         <div><span>Exceções</span><strong>${pending}</strong><small>linhas aguardando confirmação</small></div>
         <div><span>Duplicados</span><strong>${Number(m.duplicatesSkipped ?? r.duplicatesSkipped ?? 0)}</strong><small>screenshots não relidos</small></div>
       </div>
+      ${!coverageComplete ? `<div class="at-coverage-block"><strong>⚠ Cobertura incompleta</strong><span>Uma ou mais capturas não foram reconstruídas com segurança. A detecção de saídas está bloqueada para evitar remover membros por engano. Você pode corrigir/adicionar linhas e importar como atualização parcial ou refazer as capturas.</span></div>` : ''}
       ${(r.warnings || []).length ? `<div class="at-warnings">${r.warnings.map(w => `<div>⚠ ${esc(w)}</div>`).join('')}</div>` : ''}
-      ${globalItems.length ? `<div class="at-warnings">${globalItems.map(item => `<div>⚠ ${esc(item.message || atReviewReasonLabel(item.type))}</div>`).join('')}</div>` : ''}
+      ${globalItems.length ? `<div class="at-warnings">${globalItems.map(({item,index}) => `<div>⚠ ${esc(item.message || atReviewReasonLabel(item.type))}${atSourceImageIndex(item) != null ? ` <button class="at-origin-btn" onclick="atShowReviewItemSource(${index})">👁 Ver origem</button>` : ''}</div>`).join('')}</div>` : ''}
+      ${sourceImages.length ? `<div class="at-source-gallery"><span>Capturas temporárias:</span>${sourceImages.map((img,i) => `<button class="at-origin-btn" onclick="atShowSourceImage(${Number(img.index ?? i)},null,null,'Imagem ${Number(img.index ?? i)+1}')">Imagem ${Number(img.index ?? i)+1}</button>`).join('')}</div>` : ''}
       <div class="field-row">
         <div class="field"><label>Tipo detectado</label><select id="at-review-type" onchange="atChangeReviewType(this.value)"><option value="power" ${type==='power'?'selected':''}>Poder</option><option value="last_connection" ${type==='last_connection'?'selected':''}>Última conexão</option><option value="joined_at" ${type==='joined_at'?'selected':''}>Data de entrada</option></select></div>
         <div class="field"><label>Captura</label><input value="${esc(atFmtDate(r.capturedAt))}" disabled></div>
@@ -862,11 +954,12 @@ function atRenderReview() {
         ${pending ? `<button class="at-review-confirm-all" onclick="atConfirmAllExceptions()">✓ Confirmar exceções visíveis</button>` : ''}
       </div>
       ${r.reviewMode==='exceptions' && !pending ? '<div class="at-note"><strong>Nenhuma exceção pendente.</strong> Todas as linhas duvidosas já foram confirmadas. Use “Todas” para revisar a lista completa.</div>' : ''}
-      <div class="at-table-wrap"><table class="at-table at-review-table"><thead><tr><th>#</th><th>Nickname</th><th>${esc(AT_TYPE_LABEL[type])}</th>${type==='last_connection'?'<th>Online</th>':''}<th>Conf.</th><th>Revisão</th><th></th></tr></thead><tbody id="at-review-body">
+      ${!rows.length ? '<div class="at-note"><strong>Nenhuma linha foi reconstruída automaticamente.</strong> Abra as capturas acima e use “Adicionar linha” para inserir os membros manualmente. O lote continua seguro como atualização parcial.</div>' : ''}
+      <div class="at-table-wrap"><table class="at-table at-review-table"><thead><tr><th>#</th><th>Nickname</th><th>${esc(AT_TYPE_LABEL[type])}</th>${type==='last_connection'?'<th>Online</th>':''}<th>Conf.</th><th>Revisão</th><th>Origem</th><th></th></tr></thead><tbody id="at-review-body">
         ${visible.map(({row,index}) => atReviewRow(row,index,type)).join('')}
       </tbody></table></div>
       <button class="btn btn-ghost" onclick="atAddReviewRow()">+ Adicionar linha</button>
-      <label class="at-complete"><input id="at-complete" type="checkbox" ${r.completeList?'checked':''} onchange="AT.review.completeList=this.checked"><span><strong>Esta captura cobre a lista completa da Aliança</strong><small>Marque somente se você enviou todas as telas, do primeiro ao último membro. Isso habilita detecção de quem entrou ou saiu.</small></span></label>
+      <label class="at-complete ${!coverageComplete?'is-disabled':''}"><input id="at-complete" type="checkbox" ${coverageComplete && r.completeList?'checked':''} ${coverageComplete?'':'disabled'} onchange="AT.review.completeList=this.checked"><span><strong>Esta captura cobre a lista completa da Aliança</strong><small>${coverageComplete ? 'Marque somente se você enviou todas as telas, do primeiro ao último membro. Isso habilita detecção de quem entrou ou saiu.' : 'Bloqueado porque a leitura não comprovou cobertura completa. Isso impede falsas saídas.'}</small></span></label>
       <div class="at-actions"><button class="btn btn-ghost" onclick="atCancelReview()">Cancelar</button><button class="btn btn-gold" onclick="atConfirmImport()">💾 Confirmar importação</button></div>
     </div>`;
 }
@@ -879,7 +972,8 @@ function atReviewRow(row, i, type) {
   const review = row.reviewRequired
     ? `<label class="at-review-check ${row.reviewed?'is-ok':''}"><input data-field="reviewed" type="checkbox" ${row.reviewed?'checked':''} onchange="atToggleReview(${i},this.checked)"><span>${row.reviewed?'Confirmado':'Confirmar'}${reasons.length ? `<small>${esc(reasons.join(' · ')+alternatives)}</small>` : ''}</span></label>`
     : '<span class="at-safe-badge">✓ Seguro</span>';
-  return `<tr data-i="${i}" class="${row.reviewRequired && !row.reviewed ? 'at-row-exception' : ''}"><td>${i+1}</td><td><input class="at-cell" data-field="name" value="${esc(row.name || '')}"></td><td><input class="at-cell" data-field="value" ${type==='power'?'inputmode="numeric"':''} value="${esc(value)}" placeholder="${type==='power'?'3117901':'2026-08-13 23:57:06'}"></td>${type==='last_connection'?`<td><input data-field="online" type="checkbox" ${row.online?'checked':''}></td>`:''}<td><span class="at-confidence ${Number(row.confidence || 0) < .76 ? 'is-low' : ''}">${confidence}</span></td><td>${review}</td><td><button class="at-x" onclick="atRemoveReviewRow(${i})">×</button></td></tr>`;
+  const origin = atSourceImageIndex(row) != null ? `<button class="at-origin-btn" onclick="atShowRowSource(${i})">👁 Ver</button>` : '—';
+  return `<tr data-i="${i}" class="${row.reviewRequired && !row.reviewed ? 'at-row-exception' : ''}"><td>${i+1}</td><td><input class="at-cell" data-field="name" value="${esc(row.name || '')}"></td><td><input class="at-cell" data-field="value" ${type==='power'?'inputmode="numeric"':''} value="${esc(value)}" placeholder="${type==='power'?'3117901':'2026-08-13 23:57:06'}"></td>${type==='last_connection'?`<td><input data-field="online" type="checkbox" ${row.online?'checked':''}></td>`:''}<td><span class="at-confidence ${Number(row.confidence || 0) < .76 ? 'is-low' : ''}">${confidence}</span></td><td>${review}</td><td>${origin}</td><td><button class="at-x" onclick="atRemoveReviewRow(${i})">×</button></td></tr>`;
 }
 
 function atCollectReviewRows(typeOverride = null) {
@@ -919,8 +1013,14 @@ function atConfirmAllExceptions() {
 }
 
 function atChangeReviewType(type) {
-  AT.review.rows = atCollectReviewRows(AT.review.snapshotType);
+  const previous = AT.review.snapshotType;
+  AT.review.rows = atCollectReviewRows(previous);
   AT.review.snapshotType = type;
+  if (type !== previous) {
+    AT.review.coverageComplete = false;
+    AT.review.completeList = false;
+    AT.review.warnings = [...new Set([...(AT.review.warnings || []), 'O tipo foi alterado manualmente após o OCR. Para proteger a detecção de saídas, esta importação será tratada como parcial; refaça a leitura com o tipo correto para obter cobertura completa.'])];
+  }
   AT.review.reviewMode = 'all';
   renderAllianceDashboard();
 }
@@ -929,16 +1029,23 @@ function atRemoveReviewRow(index) {
   const rows = atCollectReviewRows(AT.review.snapshotType);
   rows.splice(index, 1);
   AT.review.rows = rows;
+  AT.review.coverageComplete = false;
+  AT.review.completeList = false;
+  AT.review.warnings = [...new Set([...(AT.review.warnings || []), 'Uma linha foi removida manualmente. Por segurança, esta importação passou a ser parcial e não detectará saídas.'])];
   renderAllianceDashboard();
 }
 
 function atAddReviewRow() {
   AT.review.rows = [...atCollectReviewRows(AT.review.snapshotType), { name: '', power: '', lastConnection: '', joinedAt: '', online: false, confidence:null, reviewRequired:true, reviewReasons:['manual_row'], reviewed:false }];
+  AT.review.coverageComplete = false;
+  AT.review.completeList = false;
+  AT.review.warnings = [...new Set([...(AT.review.warnings || []), 'Uma linha foi adicionada manualmente. Por segurança, esta importação passou a ser parcial e não detectará saídas.'])];
   AT.review.reviewMode = 'all';
   renderAllianceDashboard();
 }
 
 async function atCancelReview() {
+  atCloseSourcePreview();
   AT.review = null;
   AT.files = [];
   await atCancelBatch({ silent:true });
@@ -948,7 +1055,14 @@ async function atCancelReview() {
 async function atConfirmImport() {
   const type = document.getElementById('at-review-type')?.value || AT.review.snapshotType;
   const rows = atCollectReviewRows(type);
-  const completeList = Boolean(document.getElementById('at-complete')?.checked ?? AT.review.completeList);
+  let coverageComplete = AT.review.coverageComplete !== false;
+  const rowsBeforeCollect = Array.isArray(AT.review.rows) ? AT.review.rows.length : 0;
+  if (rows.length !== rowsBeforeCollect) {
+    coverageComplete = false;
+    AT.review.coverageComplete = false;
+    AT.review.completeList = false;
+  }
+  const completeList = coverageComplete && Boolean(document.getElementById('at-complete')?.checked ?? AT.review.completeList);
   if (!rows.length) return toast('Não há linhas para importar.', 'warn');
   if (rows.length > 120) return toast('A leitura ultrapassa o limite de 120 membros. Revise duplicações antes de importar.', 'warn');
   const unresolved = rows.filter(row => row.reviewRequired && !row.reviewed);
@@ -961,7 +1075,7 @@ async function atConfirmImport() {
   try {
     const d = await atJson(`${API}/alliance-tracker/alliances/${AT.alliance._id}/import`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, timeout: 30000,
-      body: JSON.stringify({ type, rows, completeList, capturedAt: AT.review.capturedAt, imagesCount: AT.review.imagesCount || AT.files.length }),
+      body: JSON.stringify({ type, rows, completeList, batchId: AT.review.batchId || AT.scan.batchId || null, capturedAt: AT.review.capturedAt, imagesCount: AT.review.imagesCount || AT.files.length }),
     });
     const s = d.summary || {};
     AT.review = null; AT.files = [];

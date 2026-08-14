@@ -35,3 +35,17 @@ test('importação da Aliança mostra narrativa de progresso e recuperação de 
   assert.match(admin, /extract-batches/);
   assert.match(css, /\.at-scan-story/);
 });
+
+test('Alliance Tracker avançado mostra ROI, métricas e revisão somente das exceções', () => {
+  const admin = read('api/admin/js/admin-alliances.js');
+  const css = read('api/admin/css/admin.css');
+  assert.match(admin, /Mapeando cabeçalho e tabela/);
+  assert.match(admin, /Pré-processamento adaptativo acionado/);
+  assert.match(admin, /Checkpoint OCR restaurado/);
+  assert.match(admin, /Exceções \(/);
+  assert.match(admin, /Confirmar exceções visíveis/);
+  assert.match(admin, /aiAvoidanceRate/);
+  assert.match(admin, /Duplicados/);
+  assert.match(css, /\.at-reader-metrics/);
+  assert.match(css, /\.at-row-exception/);
+});

@@ -10,7 +10,8 @@ import {
   parseRealmDate,
   scoreNicknameCandidate,
 } from '../utils/allianceTracker.js';
-import { detectSnapshotTypeFromOcr, parseAllianceOcr } from '../services/alliance/ocr.js';
+import { buildOcrRegions, detectSnapshotTypeFromOcr, imageDimensions, parseAllianceOcr } from '../services/alliance/ocr.js';
+import { reconcileOcrAndVision } from '../services/alliance/vision.js';
 
 
 function allianceOcrTsv(lines = []) {
@@ -222,6 +223,116 @@ test('lote temporário preserva resultados concluídos e descarta a imagem já p
     const restored = await loadImportBatch(batch.id, owner);
     assert.equal(restored.results.length, 1);
     assert.equal(restored.currentIndex, 1);
+  } finally {
+    await cancelImportBatch(batch.id, owner);
+  }
+});
+
+
+test('OCR avançado separa linhas seguras de exceções sem descartar a imagem inteira', () => {
+  const parsed = parseAllianceOcr({
+    text: 'Aliança Membros Poder',
+    tsv: allianceOcrTsv([
+      [{ text:'Daizu', conf:98, width:520 }, { text:'1,500,000', conf:98 }],
+      [{ text:'G⊙KU™', conf:96, width:520 }, { text:'3,117,901', conf:97 }],
+      [{ text:'JogadorDuvidoso', conf:62, width:520 }, { text:'2,000,000', conf:64 }],
+    ]),
+  });
+  assert.equal(parsed.accepted, false);
+  assert.equal(parsed.usable, true);
+  assert.equal(parsed.trustedRows.length, 2);
+  assert.equal(parsed.exceptions.length, 1);
+  assert.equal(parsed.rows.length, 3);
+});
+
+test('ROI é calculada a partir das dimensões do screenshot sem biblioteca externa de imagem', () => {
+  const png = Buffer.alloc(24);
+  Buffer.from([137,80,78,71,13,10,26,10]).copy(png, 0);
+  png.writeUInt32BE(1080, 16);
+  png.writeUInt32BE(2400, 20);
+  const dimensions = imageDimensions(png);
+  assert.deepEqual(dimensions, { width:1080, height:2400, format:'png' });
+  const regions = buildOcrRegions(dimensions);
+  assert.ok(regions.header.width < 1080);
+  assert.ok(regions.table.top > 0);
+  assert.ok(regions.table.height < 2400);
+});
+
+test('OCR seguro e IA divergente no mesmo valor viram exceção de nickname em vez de renomeação silenciosa', () => {
+  const merged = reconcileOcrAndVision({
+    snapshotType:'power', usable:true,
+    trustedRows:[{ name:'Daizu', power:1500000, confidence:.96 }],
+    rows:[{ name:'Daizu', power:1500000, confidence:.96 }], exceptions:[], warnings:[],
+  }, {
+    snapshotType:'power',
+    rows:[{ name:'Da1zu', power:1500000, confidence:.91 }], warnings:[],
+  });
+  assert.equal(merged.rows.length, 1);
+  assert.equal(merged.rows[0].reviewRequired, true);
+  assert.ok(merged.rows[0].nameAlternatives.includes('Daizu'));
+  assert.ok(merged.rows[0].nameAlternatives.includes('Da1zu'));
+  assert.equal(merged.reviewItems[0].type, 'nickname_conflict');
+});
+
+test('reconciliação do lote usa membros conhecidos apenas como evidência para revisão', () => {
+  const merged = mergeExtractedRows([
+    { snapshotType:'power', engine:'ocr', rows:[{ name:'Da1zu', power:1500000, confidence:.92 }], warnings:[] },
+  ], null, { knownNames:['Daizu'] });
+  assert.equal(merged.rows[0].name, 'Da1zu');
+  assert.equal(merged.rows[0].reviewRequired, true);
+  assert.equal(merged.rows[0].knownNameCandidate, 'Daizu');
+  assert.ok(merged.reviewItems.some(item => item.type === 'known_name_variant'));
+});
+
+test('lote ignora screenshot idêntico por hash e mantém contagem real de imagens únicas', async () => {
+  const { cancelImportBatch, createImportBatch, publicImportBatch } = await import('../services/alliance/importBatch.js');
+  const owner = 'teste-dedup';
+  const image = Buffer.from('mesmo screenshot');
+  const batch = await createImportBatch({
+    ownerUserId: owner,
+    files: [
+      { originalname:'a.png', mimetype:'image/png', size:image.length, buffer:image },
+      { originalname:'b.png', mimetype:'image/png', size:image.length, buffer:Buffer.from(image) },
+      { originalname:'c.png', mimetype:'image/png', size:5, buffer:Buffer.from('outro') },
+    ],
+  });
+  try {
+    const state = publicImportBatch(batch);
+    assert.equal(state.uploadedTotal, 3);
+    assert.equal(state.total, 2);
+    assert.equal(state.duplicatesSkipped, 1);
+  } finally {
+    await cancelImportBatch(batch.id, owner);
+  }
+});
+
+test('checkpoint OCR sobrevive à pausa e é removido quando a imagem conclui', async () => {
+  const {
+    appendImportBatchResult,
+    cancelImportBatch,
+    createImportBatch,
+    loadImportBatch,
+    publicImportBatch,
+    saveImportBatchOcrCheckpoint,
+  } = await import('../services/alliance/importBatch.js');
+  const owner = 'teste-checkpoint';
+  const batch = await createImportBatch({
+    ownerUserId: owner,
+    files:[{ originalname:'1.png', mimetype:'image/png', size:3, buffer:Buffer.from('one') }],
+  });
+  try {
+    await saveImportBatchOcrCheckpoint(batch, 0, {
+      snapshotType:'power', accepted:false, usable:true,
+      rows:[{ name:'Daizu', power:1 }], trustedRows:[{ name:'Daizu', power:1 }], exceptions:[],
+      rawText:'Daizu 1', headerText:'Poder',
+    });
+    let restored = await loadImportBatch(batch.id, owner);
+    assert.equal(publicImportBatch(restored).checkpoint.ocrReady, true);
+    assert.equal(restored.currentCheckpoint.ocr.rawText, 'Daizu 1');
+    await appendImportBatchResult(restored, { snapshotType:'power', rows:[{ name:'Daizu', power:1 }], engine:'ocr', warnings:[] });
+    restored = await loadImportBatch(batch.id, owner);
+    assert.equal(restored.currentCheckpoint, null);
+    assert.equal(restored.results.length, 1);
   } finally {
     await cancelImportBatch(batch.id, owner);
   }

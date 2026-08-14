@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename, rm, readdir, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -14,6 +14,10 @@ const nowIso = () => new Date().toISOString();
 const ownerKey = value => String(value || '');
 const batchDir = id => join(ROOT, id);
 const metaPath = id => join(batchDir(id), META_FILE);
+
+function screenshotHash(buffer) {
+  return createHash('sha256').update(buffer).digest('hex');
+}
 
 async function ensureRoot() {
   await mkdir(ROOT, { recursive: true, mode: 0o700 });
@@ -31,6 +35,14 @@ async function writeMeta(batch) {
 
 async function removeImageFiles(batch) {
   await Promise.all((batch.files || []).map(file => rm(join(batchDir(batch.id), file.storageName), { force: true }).catch(() => {})));
+}
+
+function compactCompletedResult(result = {}) {
+  const copy = { ...result };
+  // O texto OCR bruto só é necessário para retomar a imagem atual. Depois que a imagem
+  // conclui, guardamos apenas dados estruturados/diagnóstico e apagamos o screenshot.
+  if (copy.checkpoint) delete copy.checkpoint;
+  return copy;
 }
 
 export async function cleanupExpiredImportBatches() {
@@ -59,17 +71,33 @@ export async function createImportBatch({ files, ownerUserId, allianceId = null,
   await mkdir(dir, { recursive: true, mode: 0o700 });
 
   const storedFiles = [];
-  for (let index = 0; index < files.length; index += 1) {
-    const file = files[index];
+  const duplicates = [];
+  const hashes = new Map();
+  for (let uploadIndex = 0; uploadIndex < files.length; uploadIndex += 1) {
+    const file = files[uploadIndex];
+    const hash = screenshotHash(file.buffer);
+    if (hashes.has(hash)) {
+      duplicates.push({
+        uploadIndex,
+        name: String(file.originalname || `screenshot-${uploadIndex + 1}`).slice(0, 180),
+        duplicateOf: hashes.get(hash),
+      });
+      continue;
+    }
+
+    const index = storedFiles.length;
+    hashes.set(hash, index);
     const ext = file.mimetype === 'image/png' ? 'png' : file.mimetype === 'image/webp' ? 'webp' : 'jpg';
     const storageName = `${String(index).padStart(2, '0')}.${ext}`;
     await writeFile(join(dir, storageName), file.buffer, { mode:0o600 });
     storedFiles.push({
       index,
-      name: String(file.originalname || `screenshot-${index + 1}`).slice(0, 180),
+      uploadIndex,
+      name: String(file.originalname || `screenshot-${uploadIndex + 1}`).slice(0, 180),
       mimetype: file.mimetype,
       size: file.size,
       storageName,
+      contentHash: hash,
     });
   }
 
@@ -84,9 +112,13 @@ export async function createImportBatch({ files, ownerUserId, allianceId = null,
     status: 'ready',
     currentIndex: 0,
     processingStartedAt: null,
+    uploadedTotal: files.length,
     total: storedFiles.length,
+    duplicatesSkipped: duplicates.length,
+    duplicates,
     files: storedFiles,
     results: [],
+    currentCheckpoint: null,
     lastError: null,
     finalData: null,
   };
@@ -133,10 +165,25 @@ export async function markImportBatchProcessing(batch) {
   return writeMeta(batch);
 }
 
+export async function saveImportBatchOcrCheckpoint(batch, index, ocrCheckpoint) {
+  if (Number(index) !== batch.results.length || !ocrCheckpoint) return batch;
+  batch.currentCheckpoint = {
+    index: Number(index),
+    stage: 'ocr_complete',
+    savedAt: nowIso(),
+    ocr: ocrCheckpoint,
+  };
+  batch.updatedAt = batch.currentCheckpoint.savedAt;
+  batch.processingStartedAt = batch.processingStartedAt || batch.updatedAt;
+  batch.expiresAt = new Date(Date.now() + BATCH_TTL_MS).toISOString();
+  return writeMeta(batch);
+}
+
 export async function appendImportBatchResult(batch, result) {
   const completedIndex = batch.results.length;
-  batch.results.push(result);
+  batch.results.push(compactCompletedResult(result));
   batch.currentIndex = batch.results.length;
+  batch.currentCheckpoint = null;
   batch.updatedAt = nowIso();
   batch.processingStartedAt = batch.updatedAt;
   batch.expiresAt = new Date(Date.now() + BATCH_TTL_MS).toISOString();
@@ -159,6 +206,7 @@ export async function pauseImportBatch(batch, error = null) {
 export async function completeImportBatch(batch, finalData) {
   batch.status = 'completed';
   batch.currentIndex = batch.total;
+  batch.currentCheckpoint = null;
   batch.processingStartedAt = null;
   batch.updatedAt = nowIso();
   batch.expiresAt = new Date(Date.now() + COMPLETED_TTL_MS).toISOString();
@@ -189,12 +237,23 @@ export function publicImportBatch(batch) {
   return {
     batchId: batch.id,
     status: batch.status,
+    uploadedTotal: batch.uploadedTotal || batch.total,
     total: batch.total,
+    duplicatesSkipped: batch.duplicatesSkipped || 0,
     completed: batch.results.length,
     currentIndex: batch.currentIndex,
     capturedAt: batch.capturedAt,
     allianceId: batch.allianceId,
-    files: (batch.files || []).map(({ index, name, mimetype, size }) => ({ index, name, mimetype, size })),
+    files: (batch.files || []).map(({ index, uploadIndex, name, mimetype, size }) => ({ index, uploadIndex, name, mimetype, size })),
+    checkpoint: batch.currentCheckpoint ? {
+      index: batch.currentCheckpoint.index,
+      stage: batch.currentCheckpoint.stage,
+      savedAt: batch.currentCheckpoint.savedAt,
+      ocrReady: Boolean(batch.currentCheckpoint.ocr),
+      snapshotType: batch.currentCheckpoint.ocr?.snapshotType || null,
+      trustedRows: batch.currentCheckpoint.ocr?.trustedRows?.length || 0,
+      exceptions: batch.currentCheckpoint.ocr?.exceptions?.length || 0,
+    } : null,
     lastError: batch.lastError,
     finalData: batch.finalData,
     expiresAt: batch.expiresAt,

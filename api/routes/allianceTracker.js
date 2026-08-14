@@ -28,6 +28,7 @@ import {
   pauseImportBatch,
   publicImportBatch,
   readImportBatchImage,
+  saveImportBatchOcrCheckpoint,
 } from '../services/alliance/importBatch.js';
 
 const router = Router();
@@ -249,6 +250,15 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
     return true;
   };
   const apiKey = process.env.GROQ_API_KEY;
+  let knownNames = [];
+  if (batch.allianceId) {
+    const alliance = await workspaceFor(req, batch.allianceId).catch(() => null);
+    if (alliance) {
+      knownNames = (await AllianceMember.find({ allianceId: alliance._id, status: 'active' }).select('currentName').lean())
+        .map(member => member.currentName)
+        .filter(Boolean);
+    }
+  }
 
   if (batch.status === 'completed' && batch.finalData) {
     send({ type: 'start', imagesCount: batch.total, batchId: batch.id, completed: batch.total, resumed: true });
@@ -261,9 +271,16 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
     send({
       type: 'start',
       imagesCount: batch.total,
+      uploadedTotal: batch.uploadedTotal || batch.total,
+      duplicatesSkipped: batch.duplicatesSkipped || 0,
       batchId: batch.id,
       completed: batch.results.length,
       resumed: Boolean(resumeId),
+      checkpoint: batch.currentCheckpoint ? {
+        index: batch.currentCheckpoint.index,
+        stage: batch.currentCheckpoint.stage,
+        ocrReady: Boolean(batch.currentCheckpoint.ocr),
+      } : null,
     });
 
     for (let index = batch.results.length; index < batch.total; index += 1) {
@@ -293,10 +310,13 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
         name: file.name, batchId: batch.id,
       });
 
+      const savedOcr = batch.currentCheckpoint?.index === index ? batch.currentCheckpoint.ocr : null;
       const result = await extractAllianceScreenshot({
         apiKey,
         buffer: file.buffer,
         mimetype: file.mimetype,
+        ocrCheckpoint: savedOcr,
+        onCheckpoint: checkpoint => saveImportBatchOcrCheckpoint(batch, index, checkpoint),
         onProgress: progress => send({
           type: 'vision_progress', index, total: batch.total, completed: batch.results.length,
           batchId: batch.id, ...progress,
@@ -309,6 +329,10 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
         rows: result.rows.length, snapshotType: result.snapshotType, model: result.model,
         engine: result.engine || null, aiUsed: Boolean(result.aiUsed),
         ocrConfidence: result.ocrConfidence ?? null,
+        ocrPasses: result.ocrDiagnostics?.passesCount || 0,
+        trustedRows: result.ocrTrustedRows ?? result.ocrDiagnostics?.trustedRows ?? result.rows.length,
+        exceptions: result.ocrExceptions ?? result.ocrDiagnostics?.exceptions ?? result.reviewItems?.length ?? 0,
+        reviewItems: result.reviewItems?.length || 0,
         warnings: result.warnings?.length || 0, batchId: batch.id,
       });
 
@@ -323,7 +347,7 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
     }
 
     send({ type: 'merge_start', imagesCount: batch.results.length, completed: batch.results.length, total: batch.total, batchId: batch.id });
-    const merged = mergeExtractedRows(batch.results);
+    const merged = mergeExtractedRows(batch.results, null, { knownNames });
     if (!merged.rows.length) {
       const noRows = { erro: 'As imagens foram lidas, mas nenhum membro pôde ser confirmado. Tente uma captura mais nítida.', code: 'VISION_NO_ROWS', retryable: false };
       await pauseImportBatch(batch, noRows);
@@ -331,14 +355,32 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
       return res.end();
     }
 
+    const ocrImagesCount = batch.results.filter(r => r.engine === 'ocr').length;
+    const aiImagesCount = batch.results.filter(r => r.aiUsed).length;
+    const ocrParticipatedImages = batch.results.filter(r => r.ocrUsed !== false).length;
+    const totalOcrPasses = batch.results.reduce((sum, r) => sum + Number(r.ocrDiagnostics?.passesCount || 0), 0);
     const data = {
       ...merged,
       capturedAt: batch.capturedAt,
+      uploadedImagesCount: batch.uploadedTotal || batch.total,
       imagesCount: batch.total,
+      duplicatesSkipped: batch.duplicatesSkipped || 0,
       models: [...new Set(batch.results.map(r => r.model).filter(Boolean))],
       engines: [...new Set(batch.results.map(r => r.engine).filter(Boolean))],
-      ocrImagesCount: batch.results.filter(r => r.engine === 'ocr').length,
-      aiImagesCount: batch.results.filter(r => r.aiUsed).length,
+      ocrImagesCount,
+      aiImagesCount,
+      metrics: {
+        ...(merged.metrics || {}),
+        uploadedImages: batch.uploadedTotal || batch.total,
+        uniqueImages: batch.total,
+        duplicatesSkipped: batch.duplicatesSkipped || 0,
+        ocrOnlyImages: ocrImagesCount,
+        ocrParticipatedImages,
+        aiFallbackImages: aiImagesCount,
+        aiAvoidanceRate: batch.total ? Number((((batch.total - aiImagesCount) / batch.total) * 100).toFixed(1)) : 100,
+        totalOcrPasses,
+        reviewItemsCount: merged.reviewItems?.length || 0,
+      },
     };
     await completeImportBatch(batch, data);
     send({ type: 'done', data, batchId: batch.id, completed: batch.total, total: batch.total });

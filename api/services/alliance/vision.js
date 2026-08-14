@@ -1,4 +1,9 @@
-import { SNAPSHOT_TYPES } from '../../utils/allianceTracker.js';
+import {
+  SNAPSHOT_TYPES,
+  nameSimilarity,
+  normalizeMemberName,
+  sanitizeExtractedRow,
+} from '../../utils/allianceTracker.js';
 import { extractAllianceScreenshotWithOcr } from './ocr.js';
 
 const DEFAULT_MODEL = process.env.GROQ_VISION_MODEL || 'qwen/qwen3.6-27b';
@@ -107,19 +112,43 @@ Identifique o tipo pela coluna selecionada:
 - "Data de Entrada na Aliança" => snapshotType "joined_at"
 
 Regras críticas:
-1. Leia SOMENTE as linhas da tabela de membros. Ignore cabeçalho, chat na parte inferior, botões e textos "Conectado".
+1. Leia SOMENTE as linhas da tabela de membros. Ignore cabeçalho, chat na parte inferior, botões e textos "Conectado" fora da linha do membro.
 2. Preserve o nickname exatamente como aparece, incluindo símbolos como ™, ⊙, Ø, ♛, pontos e caracteres Unicode. Não traduza nem corrija nomes.
 3. Não invente linhas parcialmente escondidas. Se uma linha estiver cortada e o valor não puder ser confirmado, omita-a e registre um aviso.
 4. power deve ser inteiro sem separadores. Ex.: 3,117,901 => 3117901.
 5. Datas devem permanecer como texto exatamente no formato YYYY-MM-DD HH:mm:ss visto no jogo.
 6. Em Última Conexão, marque online=true quando a palavra Online aparecer na mesma linha.
 7. confidence é um número de 0 a 1 estimando a confiança de leitura daquela linha.
+8. Quando houver contexto de OCR local, use-o como evidência, mas confira a imagem. Não altere silenciosamente nicknames divergentes.
 
 Retorne SOMENTE um objeto JSON neste formato:
 {"snapshotType":"power|last_connection|joined_at","rows":[{"name":"...","power":123,"lastConnection":"YYYY-MM-DD HH:mm:ss","joinedAt":"YYYY-MM-DD HH:mm:ss","online":false,"confidence":0.98}],"warnings":[]}
 Inclua em cada linha apenas os campos relevantes ao tipo detectado.`;
 
-async function requestModel({ apiKey, buffer, mimetype, model, timeoutMs }) {
+function rowValueKey(row = {}, type = 'power') {
+  if (type === 'power') return row.power == null ? '' : String(row.power);
+  if (type === 'last_connection') return row.online ? 'online' : String(row.lastConnection || row.lastConnectionAt || '');
+  return String(row.joinedAt || '');
+}
+
+function fallbackContext(ocr = {}) {
+  const type = SNAPSHOT_TYPES.includes(ocr.snapshotType) ? ocr.snapshotType : null;
+  const trusted = (ocr.trustedRows || []).slice(0, 80).map(row => ({
+    name: row.name,
+    value: rowValueKey(row, type),
+    confidence: Number(Number(row.confidence || 0).toFixed(3)),
+  }));
+  const exceptions = (ocr.exceptions || []).slice(0, 20).map(item => ({
+    type: item.type,
+    name: item.name || null,
+    value: item.value || null,
+    confidence: item.confidence == null ? null : Number(Number(item.confidence).toFixed(3)),
+  }));
+  if (!type && !trusted.length && !exceptions.length) return '';
+  return `\n\nContexto do OCR local (não é fonte final; confirme visualmente): ${JSON.stringify({ snapshotType: type, trustedRows: trusted, exceptions })}`;
+}
+
+async function requestModel({ apiKey, buffer, mimetype, model, timeoutMs, ocr = null }) {
   const base64 = buffer.toString('base64');
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -133,7 +162,7 @@ async function requestModel({ apiKey, buffer, mimetype, model, timeoutMs }) {
         messages: [{
           role: 'user',
           content: [
-            { type: 'text', text: PROMPT },
+            { type: 'text', text: `${PROMPT}${fallbackContext(ocr)}` },
             { type: 'image_url', image_url: { url: `data:${mimetype};base64,${base64}` } },
           ],
         }],
@@ -164,6 +193,7 @@ async function extractAllianceScreenshotWithGroq({
   rateLimitRetries = DEFAULT_RATE_LIMIT_RETRIES,
   baseBackoffMs = DEFAULT_BACKOFF_MS,
   onProgress = null,
+  ocr = null,
 }) {
   if (!apiKey) {
     const error = new Error('O OCR local não teve confiança suficiente e a GROQ_API_KEY não está configurada no Render para usar a leitura visual de fallback.');
@@ -191,7 +221,7 @@ async function extractAllianceScreenshotWithGroq({
       });
 
       try {
-        const data = await requestModel({ apiKey, buffer, mimetype, model: currentModel, timeoutMs });
+        const data = await requestModel({ apiKey, buffer, mimetype, model: currentModel, timeoutMs, ocr });
         const parsed = extractJson(data.choices?.[0]?.message?.content || '');
         const snapshotType = SNAPSHOT_TYPES.includes(parsed.snapshotType) ? parsed.snapshotType : null;
         return {
@@ -249,6 +279,138 @@ async function extractAllianceScreenshotWithGroq({
   throw error;
 }
 
+function ocrFromCheckpoint(checkpoint = null) {
+  if (!checkpoint || typeof checkpoint !== 'object') return null;
+  return {
+    available: true,
+    accepted: Boolean(checkpoint.accepted),
+    usable: Boolean(checkpoint.usable),
+    reason: checkpoint.reason || null,
+    snapshotType: SNAPSHOT_TYPES.includes(checkpoint.snapshotType) ? checkpoint.snapshotType : null,
+    rows: Array.isArray(checkpoint.rows) ? checkpoint.rows : [],
+    trustedRows: Array.isArray(checkpoint.trustedRows) ? checkpoint.trustedRows : [],
+    exceptions: Array.isArray(checkpoint.exceptions) ? checkpoint.exceptions : [],
+    warnings: Array.isArray(checkpoint.warnings) ? checkpoint.warnings : [],
+    confidence: checkpoint.confidence ?? null,
+    diagnostics: checkpoint.diagnostics || {},
+    checkpoint,
+    engine: 'tesseract.js',
+    model: 'tesseract.js/eng-local',
+    restored: true,
+  };
+}
+
+function rowConfidence(row = {}) {
+  const value = Number(row.confidence);
+  return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.75;
+}
+
+function mergeFields(base = {}, incoming = {}, type = 'power') {
+  const merged = { ...base };
+  if (type === 'power' && incoming.power != null) merged.power = incoming.power;
+  if (type === 'last_connection') {
+    if (incoming.lastConnection) merged.lastConnection = incoming.lastConnection;
+    merged.online = Boolean(base.online || incoming.online);
+  }
+  if (type === 'joined_at' && incoming.joinedAt) merged.joinedAt = incoming.joinedAt;
+  merged.confidence = Math.max(rowConfidence(base), rowConfidence(incoming));
+  merged.sources = [...new Set([...(base.sources || [base.source].filter(Boolean)), ...(incoming.sources || [incoming.source].filter(Boolean))])];
+  return merged;
+}
+
+export function reconcileOcrAndVision(ocr = {}, vision = {}) {
+  const type = SNAPSHOT_TYPES.includes(vision.snapshotType) ? vision.snapshotType : ocr.snapshotType;
+  const reviewItems = [];
+  const warnings = [...(vision.warnings || [])];
+  const merged = [];
+  const consumedAi = new Set();
+  const aiRows = (vision.rows || []).map((raw, index) => ({
+    ...raw,
+    source: 'ai',
+    sources: ['ai'],
+    aiIndex: index,
+    confidence: rowConfidence(raw),
+  }));
+
+  const upsertExact = row => {
+    const key = normalizeMemberName(row.name);
+    const index = merged.findIndex(item => normalizeMemberName(item.name) === key);
+    if (index < 0) { merged.push(row); return merged.length - 1; }
+    merged[index] = mergeFields(merged[index], row, type);
+    return index;
+  };
+
+  for (const raw of (ocr.trustedRows || [])) {
+    const row = sanitizeExtractedRow(raw, type);
+    if (!row) continue;
+    const local = { ...raw, ...row, source: 'ocr', sources: ['ocr'], reviewRequired: false, reviewReasons: [] };
+    const exactIndex = aiRows.findIndex((ai, index) => !consumedAi.has(index) && normalizeMemberName(ai.name) === normalizeMemberName(local.name));
+    if (exactIndex >= 0) {
+      consumedAi.add(exactIndex);
+      upsertExact(mergeFields(local, aiRows[exactIndex], type));
+      continue;
+    }
+
+    const value = rowValueKey(local, type);
+    const evidenceIndex = aiRows.findIndex((ai, index) => {
+      if (consumedAi.has(index) || !value || rowValueKey(ai, type) !== value) return false;
+      return nameSimilarity(local.name, ai.name) >= 0.68;
+    });
+    if (evidenceIndex >= 0) {
+      consumedAi.add(evidenceIndex);
+      const ai = aiRows[evidenceIndex];
+      const chooseAi = rowConfidence(ai) > rowConfidence(local) + 0.08;
+      const canonical = chooseAi ? { ...ai } : { ...local };
+      canonical.sources = ['ocr', 'ai'];
+      canonical.reviewRequired = true;
+      canonical.reviewReasons = ['nickname_conflict'];
+      canonical.nameAlternatives = [...new Set([local.name, ai.name])];
+      upsertExact(canonical);
+      reviewItems.push({
+        type: 'nickname_conflict',
+        name: canonical.name,
+        alternatives: canonical.nameAlternatives,
+        suggestedName: canonical.name,
+        evidence: `Mesmo valor (${value}) lido com nicknames diferentes pelo OCR e pela IA.`,
+      });
+      continue;
+    }
+    upsertExact(local);
+  }
+
+  for (let index = 0; index < aiRows.length; index += 1) {
+    if (consumedAi.has(index)) continue;
+    const ai = aiRows[index];
+    const sanitized = sanitizeExtractedRow(ai, type);
+    if (!sanitized) continue;
+    const row = { ...ai, ...sanitized, source: 'ai', sources: ['ai'], reviewRequired: rowConfidence(ai) < 0.68, reviewReasons: rowConfidence(ai) < 0.68 ? ['low_ai_confidence'] : [] };
+    if (row.reviewRequired) reviewItems.push({ type: 'low_ai_confidence', name: row.name, confidence: rowConfidence(ai) });
+    upsertExact(row);
+  }
+
+  // Uma linha duvidosa do OCR só vira dado quando a IA a confirmou. Caso contrário ela
+  // permanece visível como exceção para revisão, em vez de ser descartada silenciosamente.
+  for (const raw of (ocr.rows || []).filter(row => row.reviewRequired)) {
+    const key = normalizeMemberName(raw.name);
+    if (merged.some(item => normalizeMemberName(item.name) === key)) continue;
+    const row = sanitizeExtractedRow(raw, type);
+    if (!row) continue;
+    const pending = { ...raw, ...row, source: 'ocr', sources: ['ocr'], reviewRequired: true, reviewReasons: ['ocr_not_confirmed_by_ai'] };
+    merged.push(pending);
+    reviewItems.push({ type: 'ocr_not_confirmed_by_ai', name: pending.name, confidence: rowConfidence(raw) });
+  }
+
+  if (ocr.snapshotType && vision.snapshotType && ocr.snapshotType !== vision.snapshotType) {
+    warnings.push(`OCR local indicou ${ocr.snapshotType}, mas a IA indicou ${vision.snapshotType}; confirme o tipo antes de importar.`);
+    reviewItems.push({ type: 'snapshot_type_conflict', ocr: ocr.snapshotType, ai: vision.snapshotType });
+    merged.forEach(row => {
+      row.reviewRequired = true;
+      row.reviewReasons = [...new Set([...(row.reviewReasons || []), 'snapshot_type_conflict'])];
+    });
+  }
+
+  return { snapshotType: type, rows: merged, warnings, reviewItems };
+}
 
 export async function extractAllianceScreenshot({
   apiKey,
@@ -259,25 +421,43 @@ export async function extractAllianceScreenshot({
   rateLimitRetries = DEFAULT_RATE_LIMIT_RETRIES,
   baseBackoffMs = DEFAULT_BACKOFF_MS,
   onProgress = null,
+  onCheckpoint = null,
+  ocrCheckpoint = null,
   ocrTimeoutMs = 90_000,
 } = {}) {
-  const ocr = await extractAllianceScreenshotWithOcr({
-    buffer,
-    timeoutMs: ocrTimeoutMs,
-    onProgress,
-  });
+  let ocr = ocrFromCheckpoint(ocrCheckpoint);
+  if (ocr) {
+    onProgress?.({
+      stage: 'ocr_checkpoint_restored',
+      engine: 'tesseract.js',
+      confidence: ocr.confidence,
+      rows: ocr.rows.length,
+      trustedRows: ocr.trustedRows.length,
+      exceptions: ocr.exceptions.length,
+    });
+  } else {
+    ocr = await extractAllianceScreenshotWithOcr({ buffer, timeoutMs: ocrTimeoutMs, onProgress });
+    if (ocr.checkpoint && onCheckpoint) {
+      try { await onCheckpoint(ocr.checkpoint); } catch (error) {
+        console.warn('[alliance-tracker] checkpoint OCR:', error?.message || error);
+      }
+    }
+  }
 
   if (ocr.accepted) {
     return {
       snapshotType: ocr.snapshotType,
-      rows: ocr.rows,
+      rows: ocr.trustedRows?.length ? ocr.trustedRows : ocr.rows,
       warnings: ocr.warnings || [],
+      reviewItems: [],
       model: ocr.model || 'tesseract.js/eng-local',
       engine: 'ocr',
       aiUsed: false,
       ocrUsed: true,
       ocrConfidence: ocr.confidence ?? null,
+      ocrDiagnostics: ocr.diagnostics || {},
       attempts: [],
+      checkpoint: { ocr: ocr.checkpoint || ocrCheckpoint || null },
     };
   }
 
@@ -291,21 +471,33 @@ export async function extractAllianceScreenshot({
       rateLimitRetries,
       baseBackoffMs,
       onProgress,
+      ocr,
     });
+    const reconciled = ocr.usable || (ocr.trustedRows || []).length
+      ? reconcileOcrAndVision(ocr, vision)
+      : { snapshotType: vision.snapshotType, rows: vision.rows, warnings: vision.warnings || [], reviewItems: [] };
     return {
       ...vision,
+      ...reconciled,
       engine: 'groq_fallback',
       aiUsed: true,
       ocrUsed: Boolean(ocr.available),
       ocrConfidence: ocr.confidence ?? null,
       ocrFallbackReason: ocr.reason || null,
+      ocrDiagnostics: ocr.diagnostics || {},
+      ocrTrustedRows: ocr.trustedRows?.length || 0,
+      ocrExceptions: ocr.exceptions?.length || 0,
+      checkpoint: { ocr: ocr.checkpoint || ocrCheckpoint || null },
     };
   } catch (error) {
     error.ocr = {
       available: Boolean(ocr.available),
       confidence: ocr.confidence ?? null,
       rows: Array.isArray(ocr.rows) ? ocr.rows.length : 0,
+      trustedRows: Array.isArray(ocr.trustedRows) ? ocr.trustedRows.length : 0,
+      exceptions: Array.isArray(ocr.exceptions) ? ocr.exceptions.length : 0,
       reason: ocr.reason || null,
+      checkpointSaved: Boolean(ocr.checkpoint || ocrCheckpoint),
     };
     throw error;
   }

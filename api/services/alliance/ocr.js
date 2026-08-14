@@ -6,15 +6,17 @@ import { SNAPSHOT_TYPES } from '../../utils/allianceTracker.js';
 
 const require = createRequire(import.meta.url);
 const DEFAULT_MIN_CONFIDENCE = 0.82;
+const DEFAULT_LINE_CONFIDENCE = 0.76;
 const DEFAULT_MIN_ROWS = 2;
 const DEFAULT_TIMEOUT_MS = 90_000;
 const OCR_CACHE_DIR = join(tmpdir(), 'guiadoa-tesseract-cache');
+const OCR_IDLE_MS = 5 * 60_000;
+const OCR_MAX_INTERNAL_RETRIES = 1;
 
 let workerPromise = null;
 let activeProgressSink = null;
 let idleTimer = null;
 let queue = Promise.resolve();
-const OCR_IDLE_MS = 5 * 60_000;
 
 function enabledByEnv() {
   return !['0', 'false', 'off', 'no'].includes(String(process.env.ALLIANCE_OCR_ENABLED || 'true').trim().toLowerCase());
@@ -39,11 +41,67 @@ export function normalizeOcrSearchText(value = '') {
 export function detectSnapshotTypeFromOcr(text = '') {
   const normalized = normalizeOcrSearchText(text);
   if (!normalized) return null;
-  // Colunas de data/conexão são mais específicas; deixe o termo genérico Poder/Power por último.
+  // Colunas de data/conexão são mais específicas; Poder/Power fica por último.
   if (/(data\s+de\s+entrada|entrada\s+na\s+alianca|join(?:ed)?\s+(?:at|date)|alliance\s+join)/.test(normalized)) return 'joined_at';
   if (/(ultima\s+conex|last\s+connection|last\s+login)/.test(normalized)) return 'last_connection';
   if (/\b(poder|power)\b/.test(normalized)) return 'power';
   return null;
+}
+
+export function imageDimensions(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 24) return null;
+  // PNG
+  if (buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) {
+    const width = buffer.readUInt32BE(16);
+    const height = buffer.readUInt32BE(20);
+    return width > 0 && height > 0 ? { width, height, format: 'png' } : null;
+  }
+  // JPEG
+  if (buffer[0] === 0xff && buffer[1] === 0xd8) {
+    const sof = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
+    let offset = 2;
+    while (offset + 9 < buffer.length) {
+      if (buffer[offset] !== 0xff) { offset += 1; continue; }
+      const marker = buffer[offset + 1];
+      if (marker === 0xd8 || marker === 0xd9) { offset += 2; continue; }
+      if (offset + 4 > buffer.length) break;
+      const length = buffer.readUInt16BE(offset + 2);
+      if (length < 2 || offset + 2 + length > buffer.length) break;
+      if (sof.has(marker) && length >= 7) {
+        const height = buffer.readUInt16BE(offset + 5);
+        const width = buffer.readUInt16BE(offset + 7);
+        return width > 0 && height > 0 ? { width, height, format: 'jpeg' } : null;
+      }
+      offset += 2 + length;
+    }
+  }
+  // WebP VP8X (outros subtipos continuam funcionando no OCR, apenas sem ROI calculada aqui).
+  if (buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP' && buffer.toString('ascii', 12, 16) === 'VP8X' && buffer.length >= 30) {
+    const width = 1 + buffer.readUIntLE(24, 3);
+    const height = 1 + buffer.readUIntLE(27, 3);
+    return width > 0 && height > 0 ? { width, height, format: 'webp' } : null;
+  }
+  return null;
+}
+
+export function buildOcrRegions(dimensions) {
+  if (!dimensions?.width || !dimensions?.height) return { header: null, table: null };
+  const { width, height } = dimensions;
+  // O layout do jogo é estável, mas usamos margens largas para tolerar aparelhos/resoluções diferentes.
+  const header = {
+    left: Math.max(0, Math.round(width * 0.03)),
+    top: Math.max(0, Math.round(height * 0.03)),
+    width: Math.max(1, Math.round(width * 0.94)),
+    height: Math.max(1, Math.round(height * 0.38)),
+  };
+  const tableTop = Math.round(height * 0.15);
+  const table = {
+    left: Math.max(0, Math.round(width * 0.015)),
+    top: Math.max(0, tableTop),
+    width: Math.max(1, Math.round(width * 0.97)),
+    height: Math.max(1, height - tableTop - Math.round(height * 0.025)),
+  };
+  return { header, table };
 }
 
 function parseTsv(tsv = '') {
@@ -60,9 +118,12 @@ function parseTsv(tsv = '') {
     if (!text) continue;
     const conf = Number(cols[index.conf]);
     const left = Number(cols[index.left]) || 0;
+    const top = Number(cols[index.top]) || 0;
+    const width = Number(cols[index.width]) || 0;
+    const height = Number(cols[index.height]) || 0;
     const key = [cols[index.page_num], cols[index.block_num], cols[index.par_num], cols[index.line_num]].join(':');
     const group = groups.get(key) || [];
-    group.push({ text, conf: Number.isFinite(conf) ? conf : 0, left });
+    group.push({ text, conf: Number.isFinite(conf) ? conf : 0, left, top, width, height });
     groups.set(key, group);
   }
 
@@ -70,20 +131,23 @@ function parseTsv(tsv = '') {
     words.sort((a, b) => a.left - b.left);
     const confident = words.filter(word => word.conf >= 0);
     const confidence = confident.length ? confident.reduce((sum, word) => sum + word.conf, 0) / confident.length / 100 : 0;
+    const minLeft = Math.min(...words.map(word => word.left));
+    const minTop = Math.min(...words.map(word => word.top));
+    const maxRight = Math.max(...words.map(word => word.left + word.width));
+    const maxBottom = Math.max(...words.map(word => word.top + word.height));
     return {
       text: words.map(word => word.text).join(' ').replace(/\s+/g, ' ').trim(),
       confidence: Math.max(0, Math.min(1, confidence)),
       words,
+      box: { left: minLeft, top: minTop, width: Math.max(1, maxRight - minLeft), height: Math.max(1, maxBottom - minTop) },
     };
   }).filter(line => line.text);
 }
 
 function normalizeValuePunctuation(value = '') {
   // Corrige apenas pontuação visualmente equivalente. Letras parecidas com dígitos
-  // não são convertidas: se o OCR estiver ambíguo, a imagem deve cair no fallback.
-  return String(value)
-    .replace(/[–—−]/g, '-')
-    .replace(/[：]/g, ':');
+  // não são convertidas: ambiguidade numérica deve ir ao fallback/revisão.
+  return String(value).replace(/[–—−]/g, '-').replace(/[：]/g, ':');
 }
 
 function dateCandidate(text = '') {
@@ -132,94 +196,172 @@ function suspiciousName(name = '') {
   return printable / Math.max(1, [...value].length) < 0.9;
 }
 
-export function parseAllianceOcr({ text = '', tsv = '', minRows = DEFAULT_MIN_ROWS, minConfidence = DEFAULT_MIN_CONFIDENCE } = {}) {
-  const snapshotType = detectSnapshotTypeFromOcr(text);
+function looksLikeDataLine(text = '', snapshotType = null) {
+  if (!text || !snapshotType) return false;
+  if (snapshotType === 'power') return /\d/.test(text) && text.length >= 4;
+  if (snapshotType === 'last_connection') return /\d{2}:\d{2}|online|conectado/i.test(text);
+  if (snapshotType === 'joined_at') return /20\d{2}[-/.]/.test(text);
+  return false;
+}
+
+function valueKey(row = {}, type = 'power') {
+  if (type === 'power') return row.power == null ? '' : String(row.power);
+  if (type === 'last_connection') return row.online ? 'online' : String(row.lastConnection || '');
+  return String(row.joinedAt || '');
+}
+
+export function parseAllianceOcr({
+  text = '',
+  tsv = '',
+  snapshotTypeHint = null,
+  minRows = DEFAULT_MIN_ROWS,
+  minConfidence = DEFAULT_MIN_CONFIDENCE,
+  lineMinConfidence = DEFAULT_LINE_CONFIDENCE,
+} = {}) {
+  const detectedFromText = detectSnapshotTypeFromOcr(text);
+  const snapshotType = SNAPSHOT_TYPES.includes(snapshotTypeHint) ? snapshotTypeHint : detectedFromText;
   const lines = parseTsv(tsv);
   const rows = [];
+  const exceptions = [];
   const warnings = [];
 
-  for (const line of lines) {
+  for (const [lineIndex, line] of lines.entries()) {
     const normalizedLine = normalizeOcrSearchText(line.text);
     if (!normalizedLine) continue;
     if (/^(alianca|alliance|membros?|members?|nome|name|poder|power)\b/.test(normalizedLine) && line.text.length < 80) continue;
 
+    let row = null;
+    let marker = null;
     if (snapshotType === 'power') {
-      const value = powerCandidate(line.text);
-      if (!value || value.index <= 0) continue;
-      const name = cleanOcrName(line.text.slice(0, value.index));
-      if (!name || suspiciousName(name)) continue;
-      rows.push({ name, power: value.value, confidence: line.confidence });
-      continue;
-    }
-
-    if (snapshotType === 'last_connection') {
+      marker = powerCandidate(line.text);
+      if (marker && marker.index > 0) {
+        const name = cleanOcrName(line.text.slice(0, marker.index));
+        if (name && !suspiciousName(name)) row = { name, power: marker.value, confidence: line.confidence };
+      }
+    } else if (snapshotType === 'last_connection') {
       const date = dateCandidate(line.text);
       const online = onlineCandidate(line.text);
-      const marker = date || online;
-      if (!marker || marker.index <= 0) continue;
-      const name = cleanOcrName(line.text.slice(0, marker.index));
-      if (!name || suspiciousName(name)) continue;
+      marker = date || online;
+      if (marker && marker.index > 0) {
+        const name = cleanOcrName(line.text.slice(0, marker.index));
+        if (name && !suspiciousName(name)) {
+          row = { name, ...(date ? { lastConnection: date.normalized } : {}), online: Boolean(online), confidence: line.confidence };
+        }
+      }
+    } else if (snapshotType === 'joined_at') {
+      marker = dateCandidate(line.text);
+      if (marker && marker.index > 0) {
+        const name = cleanOcrName(line.text.slice(0, marker.index));
+        if (name && !suspiciousName(name)) row = { name, joinedAt: marker.normalized, confidence: line.confidence };
+      }
+    }
+
+    if (row) {
+      const reviewRequired = Number(row.confidence || 0) < lineMinConfidence;
       rows.push({
-        name,
-        ...(date ? { lastConnection: date.normalized } : {}),
-        online: Boolean(online),
-        confidence: line.confidence,
+        ...row,
+        source: 'ocr',
+        reviewRequired,
+        reviewReasons: reviewRequired ? ['low_ocr_confidence'] : [],
+        ocrLine: lineIndex,
+        ocrBox: line.box,
       });
+      if (reviewRequired) {
+        exceptions.push({
+          type: 'low_confidence',
+          line: lineIndex,
+          name: row.name,
+          confidence: row.confidence,
+          value: valueKey(row, snapshotType),
+          text: line.text.slice(0, 180),
+        });
+      }
       continue;
     }
 
-    if (snapshotType === 'joined_at') {
-      const date = dateCandidate(line.text);
-      if (!date || date.index <= 0) continue;
-      const name = cleanOcrName(line.text.slice(0, date.index));
-      if (!name || suspiciousName(name)) continue;
-      rows.push({ name, joinedAt: date.normalized, confidence: line.confidence });
+    if (looksLikeDataLine(line.text, snapshotType) && line.confidence >= 0.35) {
+      exceptions.push({
+        type: 'unparsed_line',
+        line: lineIndex,
+        confidence: line.confidence,
+        text: line.text.slice(0, 180),
+      });
     }
   }
 
   const deduped = [];
-  const seen = new Set();
+  const seen = new Map();
   for (const row of rows) {
     const key = normalizeOcrSearchText(row.name);
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    deduped.push(row);
+    if (!key) continue;
+    const prior = seen.get(key);
+    if (!prior) {
+      seen.set(key, row);
+      deduped.push(row);
+      continue;
+    }
+    if (Number(row.confidence || 0) > Number(prior.confidence || 0)) {
+      const index = deduped.indexOf(prior);
+      if (index >= 0) deduped[index] = row;
+      seen.set(key, row);
+    }
   }
 
-  const averageConfidence = deduped.length
-    ? deduped.reduce((sum, row) => sum + Number(row.confidence || 0), 0) / deduped.length
+  const trustedRows = deduped.filter(row => !row.reviewRequired);
+  const averageConfidence = trustedRows.length
+    ? trustedRows.reduce((sum, row) => sum + Number(row.confidence || 0), 0) / trustedRows.length
     : 0;
-  const lowestConfidence = deduped.length
-    ? Math.min(...deduped.map(row => Number(row.confidence || 0)))
+  const lowestConfidence = trustedRows.length
+    ? Math.min(...trustedRows.map(row => Number(row.confidence || 0)))
     : 0;
 
   if (!snapshotType) warnings.push('OCR local não confirmou qual coluna da Alliance está selecionada.');
-  if (deduped.length < minRows) warnings.push(`OCR local confirmou apenas ${deduped.length} linha(s); o mínimo seguro é ${minRows}.`);
-  if (deduped.length && averageConfidence < minConfidence) warnings.push(`Confiança média do OCR local ficou em ${Math.round(averageConfidence * 100)}%.`);
+  if (trustedRows.length < minRows) warnings.push(`OCR local confirmou apenas ${trustedRows.length} linha(s) segura(s); o mínimo é ${minRows}.`);
+  if (trustedRows.length && averageConfidence < minConfidence) warnings.push(`Confiança média das linhas seguras ficou em ${Math.round(averageConfidence * 100)}%.`);
+  if (exceptions.length) warnings.push(`${exceptions.length} linha(s) ficaram como exceção e precisam de validação adicional.`);
 
   const accepted = Boolean(
     SNAPSHOT_TYPES.includes(snapshotType)
-    && deduped.length >= minRows
+    && trustedRows.length >= minRows
     && averageConfidence >= minConfidence
-    && lowestConfidence >= Math.max(0.58, minConfidence - 0.2)
+    && lowestConfidence >= Math.max(0.62, lineMinConfidence - 0.08)
+    && exceptions.length === 0
   );
+  const usable = Boolean(SNAPSHOT_TYPES.includes(snapshotType) && trustedRows.length >= minRows);
   const reason = accepted
     ? null
     : !SNAPSHOT_TYPES.includes(snapshotType)
       ? 'snapshot_type'
-      : deduped.length < minRows
+      : trustedRows.length < minRows
         ? 'rows'
-        : 'confidence';
+        : exceptions.length
+          ? 'exceptions'
+          : 'confidence';
+
+  const parsedRatio = lines.length ? deduped.length / Math.max(1, lines.filter(line => looksLikeDataLine(line.text, snapshotType)).length || deduped.length) : 0;
+  const qualityScore = Math.max(0, Math.min(1,
+    (SNAPSHOT_TYPES.includes(snapshotType) ? 0.2 : 0)
+    + Math.min(0.25, trustedRows.length * 0.025)
+    + averageConfidence * 0.45
+    + Math.min(0.1, parsedRatio * 0.1)
+    - Math.min(0.25, exceptions.length * 0.035)
+  ));
 
   return {
     accepted,
+    usable,
     reason,
     snapshotType,
+    detectedFromText,
     rows: deduped,
+    trustedRows,
+    exceptions,
     warnings,
     confidence: averageConfidence,
     lowestConfidence,
     linesCount: lines.length,
+    parsedRatio,
+    qualityScore,
   };
 }
 
@@ -257,20 +399,14 @@ async function getWorker() {
   if (workerPromise) return workerPromise;
   workerPromise = (async () => {
     await mkdir(OCR_CACHE_DIR, { recursive: true });
-    const { createWorker, PSM } = await import('tesseract.js');
-    const worker = await createWorker('eng', 1, {
+    const { createWorker } = await import('tesseract.js');
+    return createWorker('eng', 1, {
       langPath: resolveLangPath(),
       cachePath: OCR_CACHE_DIR,
       cacheMethod: 'none',
       logger: message => activeProgressSink?.(message),
       errorHandler: error => console.warn('[alliance-tracker] OCR local:', error?.message || error),
     });
-    await worker.setParameters({
-      tessedit_pageseg_mode: PSM?.AUTO || '3',
-      preserve_interword_spaces: '1',
-      user_defined_dpi: '180',
-    });
-    return worker;
   })().catch(error => {
     workerPromise = null;
     throw error;
@@ -284,10 +420,194 @@ function runQueued(task) {
   return next;
 }
 
-function progressEvent(message = {}) {
+function progressEvent(message = {}, meta = {}) {
   const status = String(message.status || 'recognizing text');
   const progress = Math.max(0, Math.min(1, Number(message.progress) || 0));
-  return { stage: 'ocr_progress', status, progress };
+  return { stage: 'ocr_progress', status, progress, ...meta };
+}
+
+function safeText(value = '', max = 6000) {
+  return String(value || '').replace(/\u0000/g, '').slice(0, max);
+}
+
+function passParameters(variant = 'standard', psm = '6') {
+  if (variant === 'adaptive') {
+    return {
+      tessedit_pageseg_mode: psm,
+      preserve_interword_spaces: '1',
+      user_defined_dpi: '300',
+      thresholding_method: '2', // Sauvola em Tesseract 5; ótimo para fundos/contraste irregulares.
+      thresholding_window_size: '0.33',
+      thresholding_kfactor: '0.34',
+    };
+  }
+  return {
+    tessedit_pageseg_mode: psm,
+    preserve_interword_spaces: '1',
+    user_defined_dpi: '220',
+    thresholding_method: '0',
+  };
+}
+
+async function recognizePass({ worker, buffer, rectangle = null, timeoutMs, variant, region, psm, onProgress }) {
+  onProgress?.({ stage: 'ocr_region', region, variant, rectangle: rectangle || null });
+  await worker.setParameters(passParameters(variant, psm));
+  let lastProgress = -1;
+  let lastStatus = '';
+  activeProgressSink = message => {
+    const event = progressEvent(message, { region, variant });
+    const bucket = Math.floor(event.progress * 10);
+    if (event.status !== lastStatus || bucket > lastProgress) {
+      lastStatus = event.status;
+      lastProgress = bucket;
+      onProgress?.(event);
+    }
+  };
+
+  let timer = null;
+  try {
+    const recognition = worker.recognize(
+      buffer,
+      { ...(rectangle ? { rectangle } : {}), rotateAuto: true },
+      { text: true, tsv: true },
+    );
+    const timed = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        const error = new Error(`OCR local excedeu o tempo na região ${region}.`);
+        error.code = 'OCR_TIMEOUT';
+        error.region = region;
+        reject(error);
+      }, timeoutMs);
+    });
+    const { data } = await Promise.race([recognition, timed]);
+    return {
+      text: safeText(data?.text || ''),
+      tsv: String(data?.tsv || ''),
+      region,
+      variant,
+    };
+  } finally {
+    if (timer) clearTimeout(timer);
+    activeProgressSink = null;
+  }
+}
+
+function chooseBestParse(candidates = []) {
+  return [...candidates].filter(Boolean).sort((a, b) => {
+    if (a.accepted !== b.accepted) return a.accepted ? -1 : 1;
+    if (a.usable !== b.usable) return a.usable ? -1 : 1;
+    if (a.exceptions.length !== b.exceptions.length) return a.exceptions.length - b.exceptions.length;
+    if (b.trustedRows.length !== a.trustedRows.length) return b.trustedRows.length - a.trustedRows.length;
+    return Number(b.qualityScore || 0) - Number(a.qualityScore || 0);
+  })[0] || null;
+}
+
+async function runOcrPipeline({ buffer, timeoutMs, minRows, minConfidence, lineMinConfidence, onProgress, forceFull = false }) {
+  const worker = await getWorker();
+  const dimensions = imageDimensions(buffer);
+  const regions = buildOcrRegions(dimensions);
+  const perPassTimeout = Math.max(12_000, Math.floor(timeoutMs / 3));
+  const passes = [];
+  const parsedCandidates = [];
+  let snapshotType = null;
+  let headerText = '';
+
+  onProgress?.({ stage: 'ocr_layout', dimensions, roi: Boolean(regions.header && !forceFull) });
+
+  if (regions.header && !forceFull) {
+    const headerPass = await recognizePass({
+      worker, buffer, rectangle: regions.header, timeoutMs: perPassTimeout,
+      variant: 'standard', region: 'header', psm: '11', onProgress,
+    });
+    passes.push({ region: 'header', variant: 'standard' });
+    headerText = headerPass.text;
+    snapshotType = detectSnapshotTypeFromOcr(headerText);
+    onProgress?.({ stage: 'ocr_header', snapshotType, textFound: Boolean(headerText), region: 'header' });
+  }
+
+  if (!snapshotType) {
+    const fullPass = await recognizePass({
+      worker, buffer, rectangle: null, timeoutMs: perPassTimeout,
+      variant: 'standard', region: 'full', psm: '3', onProgress,
+    });
+    passes.push({ region: 'full', variant: 'standard' });
+    headerText = `${headerText}\n${fullPass.text}`.trim();
+    snapshotType = detectSnapshotTypeFromOcr(headerText);
+    const parsedFull = parseAllianceOcr({
+      text: fullPass.text,
+      tsv: fullPass.tsv,
+      snapshotTypeHint: snapshotType,
+      minRows,
+      minConfidence,
+      lineMinConfidence,
+    });
+    parsedCandidates.push({ ...parsedFull, pass: 'full-standard', rawText: safeText(fullPass.text) });
+    onProgress?.({ stage: 'ocr_header', snapshotType, textFound: Boolean(fullPass.text), region: 'full' });
+    if (parsedFull.accepted) {
+      return { parsed: parsedFull, passes, rawText: safeText(fullPass.text), headerText: safeText(headerText, 1200), dimensions, regions };
+    }
+  }
+
+  if (snapshotType && regions.table && !forceFull) {
+    const tablePass = await recognizePass({
+      worker, buffer, rectangle: regions.table, timeoutMs: perPassTimeout,
+      variant: 'standard', region: 'table', psm: '6', onProgress,
+    });
+    passes.push({ region: 'table', variant: 'standard' });
+    const parsed = parseAllianceOcr({
+      text: `${headerText}\n${tablePass.text}`,
+      tsv: tablePass.tsv,
+      snapshotTypeHint: snapshotType,
+      minRows,
+      minConfidence,
+      lineMinConfidence,
+    });
+    parsedCandidates.push({ ...parsed, pass: 'table-standard', rawText: safeText(tablePass.text) });
+    if (parsed.accepted) {
+      return { parsed, passes, rawText: safeText(tablePass.text), headerText: safeText(headerText, 1200), dimensions, regions };
+    }
+
+    onProgress?.({ stage: 'ocr_variant', variant: 'adaptive', reason: parsed.reason, exceptions: parsed.exceptions.length });
+    const adaptivePass = await recognizePass({
+      worker, buffer, rectangle: regions.table, timeoutMs: perPassTimeout,
+      variant: 'adaptive', region: 'table', psm: '11', onProgress,
+    });
+    passes.push({ region: 'table', variant: 'adaptive' });
+    const adaptive = parseAllianceOcr({
+      text: `${headerText}\n${adaptivePass.text}`,
+      tsv: adaptivePass.tsv,
+      snapshotTypeHint: snapshotType,
+      minRows,
+      minConfidence,
+      lineMinConfidence,
+    });
+    parsedCandidates.push({ ...adaptive, pass: 'table-adaptive', rawText: safeText(adaptivePass.text) });
+  } else if (!parsedCandidates.length) {
+    const fullAdaptive = await recognizePass({
+      worker, buffer, rectangle: null, timeoutMs: perPassTimeout,
+      variant: 'adaptive', region: 'full', psm: '11', onProgress,
+    });
+    passes.push({ region: 'full', variant: 'adaptive' });
+    const parsed = parseAllianceOcr({
+      text: fullAdaptive.text,
+      tsv: fullAdaptive.tsv,
+      snapshotTypeHint: detectSnapshotTypeFromOcr(fullAdaptive.text),
+      minRows,
+      minConfidence,
+      lineMinConfidence,
+    });
+    parsedCandidates.push({ ...parsed, pass: 'full-adaptive', rawText: safeText(fullAdaptive.text) });
+  }
+
+  const best = chooseBestParse(parsedCandidates);
+  return {
+    parsed: best || parseAllianceOcr({ text: headerText, minRows, minConfidence, lineMinConfidence }),
+    passes,
+    rawText: safeText(best?.rawText || ''),
+    headerText: safeText(headerText, 1200),
+    dimensions,
+    regions,
+  };
 }
 
 export async function extractAllianceScreenshotWithOcr({
@@ -295,68 +615,99 @@ export async function extractAllianceScreenshotWithOcr({
   timeoutMs = DEFAULT_TIMEOUT_MS,
   minRows = envNumber('ALLIANCE_OCR_MIN_ROWS', DEFAULT_MIN_ROWS, 1, 20),
   minConfidence = envNumber('ALLIANCE_OCR_MIN_CONFIDENCE', DEFAULT_MIN_CONFIDENCE, 0.5, 0.99),
+  lineMinConfidence = envNumber('ALLIANCE_OCR_LINE_MIN_CONFIDENCE', DEFAULT_LINE_CONFIDENCE, 0.45, 0.99),
   onProgress = null,
 } = {}) {
   if (!enabledByEnv()) {
-    return { available: false, accepted: false, reason: 'disabled', warnings: ['OCR local desativado por configuração.'] };
+    return { available: false, accepted: false, usable: false, reason: 'disabled', warnings: ['OCR local desativado por configuração.'] };
   }
   if (!Buffer.isBuffer(buffer) || !buffer.length) {
-    return { available: false, accepted: false, reason: 'empty_image', warnings: ['Imagem vazia para OCR local.'] };
+    return { available: false, accepted: false, usable: false, reason: 'empty_image', warnings: ['Imagem vazia para OCR local.'] };
   }
 
   return runQueued(async () => {
-    onProgress?.({ stage: 'ocr_start', engine: 'tesseract.js' });
-    let timer = null;
+    onProgress?.({ stage: 'ocr_start', engine: 'tesseract.js', pipeline: 'roi-line-confidence' });
+    let lastError = null;
     try {
-      const worker = await getWorker();
-      let lastProgress = -1;
-      let lastStatus = '';
-      activeProgressSink = message => {
-        const event = progressEvent(message);
-        const bucket = Math.floor(event.progress * 10);
-        if (event.status !== lastStatus || bucket > lastProgress) {
-          lastStatus = event.status;
-          lastProgress = bucket;
-          onProgress?.(event);
+      for (let attempt = 0; attempt <= OCR_MAX_INTERNAL_RETRIES; attempt += 1) {
+        try {
+          const pipeline = await runOcrPipeline({
+            buffer,
+            timeoutMs,
+            minRows,
+            minConfidence,
+            lineMinConfidence,
+            onProgress,
+            forceFull: attempt > 0,
+          });
+          const parsed = pipeline.parsed;
+          onProgress?.({ stage: 'ocr_parsing', engine: 'tesseract.js', passes: pipeline.passes.length });
+          const result = {
+            available: true,
+            ...parsed,
+            engine: 'tesseract.js',
+            model: 'tesseract.js/eng-local',
+            diagnostics: {
+              passes: pipeline.passes,
+              passesCount: pipeline.passes.length,
+              roiUsed: Boolean(pipeline.regions?.header),
+              dimensions: pipeline.dimensions,
+              trustedRows: parsed.trustedRows?.length || 0,
+              exceptions: parsed.exceptions?.length || 0,
+              qualityScore: parsed.qualityScore || 0,
+            },
+            checkpoint: {
+              snapshotType: parsed.snapshotType,
+              rows: parsed.rows,
+              trustedRows: parsed.trustedRows,
+              exceptions: parsed.exceptions,
+              warnings: parsed.warnings,
+              confidence: parsed.confidence,
+              accepted: parsed.accepted,
+              usable: parsed.usable,
+              reason: parsed.reason,
+              diagnostics: {
+                passes: pipeline.passes,
+                passesCount: pipeline.passes.length,
+                roiUsed: Boolean(pipeline.regions?.header),
+                dimensions: pipeline.dimensions,
+                qualityScore: parsed.qualityScore || 0,
+              },
+              headerText: pipeline.headerText,
+              rawText: pipeline.rawText,
+            },
+          };
+          onProgress?.({
+            stage: parsed.accepted ? 'ocr_accepted' : 'ocr_fallback',
+            engine: 'tesseract.js',
+            confidence: parsed.confidence,
+            rows: parsed.rows.length,
+            trustedRows: parsed.trustedRows?.length || 0,
+            exceptions: parsed.exceptions?.length || 0,
+            reason: parsed.reason,
+            passes: pipeline.passes.length,
+          });
+          return result;
+        } catch (error) {
+          lastError = error;
+          if (attempt >= OCR_MAX_INTERNAL_RETRIES) throw error;
+          onProgress?.({ stage: 'ocr_retry', engine: 'tesseract.js', reason: error?.code || 'OCR_ERROR', retry: attempt + 1 });
+          await terminateWorker();
         }
-      };
-
-      const recognition = worker.recognize(buffer, {}, { text: true, tsv: true });
-      const timed = new Promise((_, reject) => {
-        timer = setTimeout(() => {
-          const error = new Error('OCR local excedeu o tempo de leitura.');
-          error.code = 'OCR_TIMEOUT';
-          reject(error);
-        }, timeoutMs);
-      });
-      const { data } = await Promise.race([recognition, timed]);
-      onProgress?.({ stage: 'ocr_parsing', engine: 'tesseract.js' });
-      const parsed = parseAllianceOcr({ text: data?.text || '', tsv: data?.tsv || '', minRows, minConfidence });
-      const result = {
-        available: true,
-        ...parsed,
-        engine: 'tesseract.js',
-        model: 'tesseract.js/eng-local',
-      };
-      onProgress?.({
-        stage: parsed.accepted ? 'ocr_accepted' : 'ocr_fallback',
-        engine: 'tesseract.js',
-        confidence: parsed.confidence,
-        rows: parsed.rows.length,
-        reason: parsed.reason,
-      });
-      return result;
+      }
+      throw lastError || new Error('OCR local não concluiu a leitura.');
     } catch (error) {
       await terminateWorker();
       onProgress?.({ stage: 'ocr_unavailable', engine: 'tesseract.js', reason: error?.code || 'OCR_ERROR' });
       return {
         available: false,
         accepted: false,
+        usable: false,
         reason: error?.code || 'error',
         warnings: [`OCR local indisponível: ${String(error?.message || error).slice(0, 180)}`],
+        diagnostics: { retries: OCR_MAX_INTERNAL_RETRIES, error: error?.code || 'OCR_ERROR' },
       };
     } finally {
-      if (timer) clearTimeout(timer);
       activeProgressSink = null;
       scheduleIdleTermination();
     }

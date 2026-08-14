@@ -145,3 +145,10 @@ npm run test:smoke
 ```
 
 O smoke test não cria, altera nem apaga dados.
+
+
+## Alliance Tracker privado
+
+O painel Admin possui um Alliance Tracker que lê screenshots de **Poder**, **Última Conexão** e **Data de Entrada**. Ele usa `GROQ_API_KEY` e aceita `GROQ_VISION_MODEL` como override do modelo visual (padrão: `qwen/qwen3.6-27b`).
+
+Os screenshots ficam apenas em memória durante a leitura; somente os dados revisados são persistidos. A primeira captura marcada como lista completa vira baseline. Capturas completas posteriores detectam entrada, saída e retorno, com limite de 120 membros.

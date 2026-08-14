@@ -4,6 +4,7 @@ import { limparCachesDeDadosLegados } from '../data/syncService.js';
 import AppErrorState from '../ui/AppErrorState.jsx';
 import { buildDiagnostic, classifyConnectionError } from '../errors/appErrors.js';
 import { useI18n } from '../hooks/useI18n.jsx';
+import DataSyncScene from './DataSyncScene.jsx';
 
 import { API_URL as API } from '../config/api.js';
 
@@ -83,13 +84,11 @@ export default function StartupGate({ children }) {
   const diagnostic = useMemo(() => erro ? buildDiagnostic({ code:erro.code, error:erro.raw, context:'Inicialização' }) : '', [erro]);
 
   if (carregando && !status) return (
-    <Tela>
-      <div style={{ textAlign:'center', padding:'8px 0' }}>
-        <div style={{ fontSize:42 }}>🛡️</div>
-        <h1 className="font-cinzel" style={{ color:C.TEXT_PRIMARY, margin:'10px 0 6px', fontSize:'1.08rem' }}>{t('app.setup.preparing')}</h1>
-        <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.8rem', margin:0 }}>{t('app.setup.syncing')}</p>
-      </div>
-    </Tela>
+    <DataSyncScene
+      title={t('app.setup.preparing')}
+      subtitle={t('app.setup.syncing')}
+      phase="connect"
+    />
   );
 
   if (erro && (!status || status.migracao?.estado === 'erro')) return (
@@ -99,14 +98,11 @@ export default function StartupGate({ children }) {
   );
 
   if (status?.migracao?.estado !== 'pronto') return (
-    <Tela>
-      <div style={{ textAlign:'center', padding:'8px 0' }}>
-        <div style={{ fontSize:40 }}>🔄</div>
-        <h2 className="font-cinzel" style={{ color:C.TEXT_PRIMARY, margin:'9px 0 5px', fontSize:'1rem' }}>{t('app.setup.content_title')}</h2>
-        <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.78rem', lineHeight:1.5, margin:0 }}>{t('app.setup.content_text')}</p>
-        <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.65rem', marginTop:9 }}>{t('app.setup.automatic')}</div>
-      </div>
-    </Tela>
+    <DataSyncScene
+      title={t('app.setup.content_title')}
+      subtitle={t('app.setup.content_text')}
+      phase="catalog"
+    />
   );
 
   if (status?.dados?.necessario) {

@@ -5,9 +5,12 @@ import Toast from '../ui/Toast.jsx';
 import { C } from '../theme.js';
 import { useI18n } from '../hooks/useI18n.jsx';
 import { DISPLAY_VERSION } from '../version.js';
+import { API_URL as API } from '../config/api.js';
 
 const CHANGELOG_CONFIG = [
-  { ver: DISPLAY_VERSION, icon: '🏰', key: 'latest', color: '#4E716A', count: 4 },
+  { ver: DISPLAY_VERSION, icon: '✦', key: 'latest', color: '#4E716A', count: 4 },
+  { ver: 'Beta 2.33', icon: '👥', key: 'history.2_33', color: '#5A7B72', count: 4 },
+  { ver: 'Beta 2.32', icon: '🏰', key: 'history.2_32', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.31', icon: '🐉', key: 'history.2_31', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.16', icon: '📜', key: 'history.2_16', color: '#5C7FA3', count: 4 },
   { ver: 'Beta 2.15', icon: '⚔️', key: 'history.2_15', color: '#5C7FA3', count: 4 },
@@ -158,6 +161,16 @@ const Sobre = () => {
         <button className="btn-gold btn-lg w-full" onClick={() => setOpenApoio(true)}>💎 {t('about.support_project')}</button>
         <button className="btn-navy btn-lg w-full" onClick={() => setOpenContato(true)}>📬 {t('about.support')}</button>
       </div>
+
+      <button
+        type="button"
+        className="about-admin-shortcut"
+        aria-label={t('about.admin_access')}
+        title={t('about.admin_access')}
+        onClick={() => window.open(`${API}/admin`, '_blank', 'noopener,noreferrer')}
+      >
+        ⚙
+      </button>
     </div>
   );
 };

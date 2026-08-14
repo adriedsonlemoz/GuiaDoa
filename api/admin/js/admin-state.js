@@ -28,6 +28,7 @@ const MODULOS = [
   { id:'pesquisas', icon:'🔬',  label:'Pesquisas',  desc:'Centro de Ciência e pesquisas',    ativo:true,  badge:'novo'  },
   { id:'ilhas',     icon:'🏝️',  label:'Ilhas',      desc:'Produção e territórios',           ativo:false, badge:'breve' },
   { id:'dicas',     icon:'💡',  label:'Dicas',        desc:'Tutoriais e guias da comunidade',   ativo:true,  badge:'novo'  },
+  { id:'alliances', icon:'🛡️',  label:'Aliança',      desc:'Tracker privado de membros e atividade', ativo:true, badge:'novo' },
 ];
 
 // ── Auth ─────────────────────────────────────────────────────────────────────

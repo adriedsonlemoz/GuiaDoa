@@ -26,6 +26,9 @@ export const COLLECTIONS = Object.freeze({
   dicas: collectionName('dicas'),
   dicasCategorias: collectionName('dicas_categorias'),
   config: collectionName('config'),
+  allianceWorkspaces: collectionName('alliance_workspaces'),
+  allianceMembers: collectionName('alliance_members'),
+  allianceSnapshots: collectionName('alliance_snapshots'),
 });
 
 export const COLLECTION_SUFFIXES = Object.freeze([
@@ -40,6 +43,9 @@ export const COLLECTION_SUFFIXES = Object.freeze([
   'dicas',
   'dicas_categorias',
   'config',
+  'alliance_workspaces',
+  'alliance_members',
+  'alliance_snapshots',
 ]);
 
 export function mongoConnectOptions() {

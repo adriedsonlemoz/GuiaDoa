@@ -14,6 +14,7 @@ import reinoRoutes from './routes/reinos.js';
 import assistenteRoutes from './routes/assistente.js';
 import dicasRoutes from './routes/dicas.js';
 import healthRoutes from './routes/health.js';
+import allianceTrackerRoutes from './routes/allianceTracker.js';
 import { APP_VERSION } from './version.js';
 import { requestContext, padronizarRespostasDeErro, erroGlobal } from './utils/apiError.js';
 
@@ -70,6 +71,7 @@ app.use('/api/pesquisas', pesquisaRoutes);
 app.use('/api/reinos', reinoRoutes);
 app.use('/api/assistente', assistenteRoutes);
 app.use('/api/dicas', dicasRoutes);
+app.use('/api/alliance-tracker', allianceTrackerRoutes);
 
 app.use('/admin', express.static(join(__dirname, 'admin')));
 app.get('/admin', (_, res) => res.sendFile(join(__dirname, 'admin', 'index.html')));

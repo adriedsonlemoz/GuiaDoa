@@ -87,3 +87,22 @@ test('importador visual usa Groq Vision sem persistir os screenshots', () => {
   assert.match(route, /files:\s*10/);
   assert.match(route, /fileSize:\s*6 \* 1024 \* 1024/);
 });
+
+test('leitor visual traduz erros do provedor em diagnósticos úteis', async () => {
+  const { friendlyVisionError, visionModelCandidates } = await import('../services/alliance/vision.js');
+  assert.equal(friendlyVisionError(401, '{"error":{"message":"invalid api key"}}').code, 'VISION_INVALID_KEY');
+  assert.equal(friendlyVisionError(429, '{"error":{"message":"rate limit"}}').retryable, true);
+  assert.equal(friendlyVisionError(404, '{"error":{"message":"model not found"}}').code, 'VISION_MODEL_UNAVAILABLE');
+  const models = visionModelCandidates('modelo/customizado');
+  assert.equal(models[0], 'modelo/customizado');
+  assert.ok(models.includes('qwen/qwen3.6-27b'));
+});
+
+test('Alliance Tracker possui rota progressiva para narrar a leitura real', () => {
+  const route = readFileSync(new URL('../routes/allianceTracker.js', import.meta.url), 'utf8');
+  assert.match(route, /extract-stream/);
+  assert.match(route, /application\/x-ndjson/);
+  assert.match(route, /image_start/);
+  assert.match(route, /merge_start/);
+  assert.match(route, /mapLimited\(req\.files, 1/);
+});

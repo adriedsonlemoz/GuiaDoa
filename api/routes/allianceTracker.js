@@ -17,7 +17,7 @@ import {
   sanitizeExtractedRow,
   scoreNicknameCandidate,
 } from '../utils/allianceTracker.js';
-import { extractAllianceScreenshot } from '../services/alliance/vision.js';
+import { extractAllianceScreenshot, serializeVisionError } from '../services/alliance/vision.js';
 
 const router = Router();
 const upload = multer({
@@ -151,22 +151,84 @@ async function mapLimited(items, limit, worker) {
   return results;
 }
 
+function logVisionError(error) {
+  if (error?.detail) console.error('[alliance-tracker] visão:', error.detail);
+}
+
 router.post('/extract', upload.array('images', 10), async (req, res) => {
   if (!req.files?.length) return res.status(400).json({ erro: 'Selecione pelo menos um screenshot.' });
   const apiKey = process.env.GROQ_API_KEY;
   try {
-    const results = await mapLimited(req.files, 2, async (file) => extractAllianceScreenshot({
+    // Sequencial de propósito: reduz estouros de limite e deixa a leitura mais previsível.
+    const results = await mapLimited(req.files, 1, async (file) => extractAllianceScreenshot({
       apiKey,
       buffer: file.buffer,
       mimetype: file.mimetype,
     }));
     const merged = mergeExtractedRows(results);
-    if (!merged.rows.length) return res.status(422).json({ erro: 'Nenhum membro pôde ser lido. Tente uma captura mais nítida.' });
+    if (!merged.rows.length) return res.status(422).json({ erro: 'Nenhum membro pôde ser lido. Tente uma captura mais nítida.', code: 'VISION_NO_ROWS' });
     res.json({ ...merged, imagesCount: req.files.length, models: [...new Set(results.map(r => r.model).filter(Boolean))] });
   } catch (error) {
-    if (error.name === 'AbortError') return res.status(504).json({ erro: 'A leitura dos screenshots demorou demais.' });
-    if (error.detail) console.error('[alliance-tracker] visão:', error.detail);
-    res.status(error.status || 502).json({ erro: error.message || 'Falha ao analisar screenshots.' });
+    if (error.name === 'AbortError') return res.status(504).json({ erro: 'A leitura dos screenshots demorou demais.', code: 'VISION_TIMEOUT', retryable: true });
+    logVisionError(error);
+    res.status(error.status || 502).json(serializeVisionError(error));
+  }
+});
+
+router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
+  if (!req.files?.length) return res.status(400).json({ erro: 'Selecione pelo menos um screenshot.' });
+
+  res.status(200);
+  res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders?.();
+
+  const send = payload => {
+    if (!res.destroyed) res.write(`${JSON.stringify(payload)}\n`);
+  };
+  const apiKey = process.env.GROQ_API_KEY;
+  const results = [];
+
+  try {
+    send({ type: 'start', imagesCount: req.files.length });
+    for (let index = 0; index < req.files.length; index += 1) {
+      const file = req.files[index];
+      send({ type: 'image_start', index, total: req.files.length, name: file.originalname });
+      const result = await extractAllianceScreenshot({
+        apiKey,
+        buffer: file.buffer,
+        mimetype: file.mimetype,
+        onProgress: progress => send({ type: 'vision_progress', index, total: req.files.length, ...progress }),
+      });
+      results.push(result);
+      send({
+        type: 'image_done', index, total: req.files.length, rows: result.rows.length,
+        snapshotType: result.snapshotType, model: result.model, warnings: result.warnings?.length || 0,
+      });
+    }
+
+    send({ type: 'merge_start', imagesCount: results.length });
+    const merged = mergeExtractedRows(results);
+    if (!merged.rows.length) {
+      send({ type: 'error', error: { erro: 'As imagens foram lidas, mas nenhum membro pôde ser confirmado. Tente uma captura mais nítida.', code: 'VISION_NO_ROWS', retryable: true } });
+      return res.end();
+    }
+
+    const data = {
+      ...merged,
+      imagesCount: req.files.length,
+      models: [...new Set(results.map(r => r.model).filter(Boolean))],
+    };
+    send({ type: 'done', data });
+    res.end();
+  } catch (error) {
+    logVisionError(error);
+    const payload = error.name === 'AbortError'
+      ? { erro: 'A leitura demorou demais e foi interrompida.', code: 'VISION_TIMEOUT', retryable: true }
+      : serializeVisionError(error);
+    send({ type: 'error', error: payload });
+    res.end();
   }
 });
 

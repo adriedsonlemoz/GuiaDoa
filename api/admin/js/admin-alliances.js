@@ -7,6 +7,7 @@ const AT = {
   tab: 'members',
   review: null,
   files: [],
+  scan: { running: false, progress: 0, lines: [] },
 };
 
 const AT_TYPE_LABEL = {
@@ -225,6 +226,16 @@ function atRenderImport() {
       <div class="field" style="max-width:300px"><label>Data/hora da captura</label><input id="at-captured" type="datetime-local" value="${local}"></div>
       <div class="at-note">As imagens são enviadas para leitura visual e <strong>não são salvas</strong> pelo GUIA. Antes de gravar qualquer dado você verá uma tabela para revisar nomes e valores.</div>
       <button id="at-read-btn" class="btn btn-gold" onclick="atExtract()" disabled>🔎 Ler screenshots</button>
+      <div id="at-scan-story" class="at-scan-story" hidden>
+        <div class="at-scan-head">
+          <div class="at-scan-orb"><span>◉</span></div>
+          <div><small id="at-scan-kicker">Preparando leitura</small><h4 id="at-scan-title">Vou organizar os screenshots antes de extrair os membros.</h4></div>
+        </div>
+        <p id="at-scan-text">Nada será salvo antes da sua revisão.</p>
+        <div class="at-scan-track"><i id="at-scan-bar"></i></div>
+        <div id="at-scan-progress" class="at-scan-progress">0%</div>
+        <div id="at-scan-log" class="at-scan-log"></div>
+      </div>
     </div>
     <div class="at-card"><h3>Como detectar entrada e saída</h3><p class="at-muted">No passo seguinte marque <strong>“lista completa”</strong> somente quando os screenshots cobrem todos os membros, do primeiro ao último. A primeira lista completa vira a base. A partir da próxima, quem aparecer de novo é marcado como entrada/retorno e quem desaparecer é marcado como saída.</p></div>`;
 }
@@ -237,25 +248,119 @@ function atFilesChanged(files) {
   if (btn) btn.disabled = !AT.files.length;
 }
 
+function atScanStory({ kicker, title, text, progress, line, tone = 'active' } = {}) {
+  const box = document.getElementById('at-scan-story');
+  if (!box) return;
+  box.hidden = false;
+  box.dataset.tone = tone;
+  if (kicker != null) document.getElementById('at-scan-kicker').textContent = kicker;
+  if (title != null) document.getElementById('at-scan-title').textContent = title;
+  if (text != null) document.getElementById('at-scan-text').textContent = text;
+  if (progress != null) {
+    const pct = Math.max(0, Math.min(100, Math.round(progress)));
+    AT.scan.progress = pct;
+    document.getElementById('at-scan-bar').style.width = `${pct}%`;
+    document.getElementById('at-scan-progress').textContent = `${pct}%`;
+  }
+  if (line) {
+    AT.scan.lines.push(line);
+    AT.scan.lines = AT.scan.lines.slice(-5);
+    document.getElementById('at-scan-log').innerHTML = AT.scan.lines.map((item, index) => `<div class="${index === AT.scan.lines.length - 1 ? 'is-current' : ''}"><span>${index === AT.scan.lines.length - 1 ? '›' : '✓'}</span>${esc(item)}</div>`).join('');
+  }
+}
+
+function atScanNarrate(event) {
+  const total = Math.max(1, Number(event.total || event.imagesCount || AT.files.length || 1));
+  const current = Number(event.index || 0) + 1;
+  if (event.type === 'start') {
+    return atScanStory({ kicker:'Imagens recebidas', title:`Recebi ${event.imagesCount} screenshot${event.imagesCount === 1 ? '' : 's'}.`, text:'Vou ler uma imagem por vez para evitar misturar membros ou estourar o limite do serviço.', progress:5, line:'Upload concluído. Iniciando leitura visual.' });
+  }
+  if (event.type === 'image_start') {
+    return atScanStory({ kicker:`Imagem ${current} de ${total}`, title:'Procurando a tabela de membros…', text:'Estou ignorando cabeçalho, chat e botões para focar apenas nos nomes e na coluna selecionada.', progress:10 + ((current - 1) / total) * 65, line:`Imagem ${current}: localizando nomes e valores.` });
+  }
+  if (event.type === 'vision_progress' && event.stage === 'provider') {
+    return atScanStory({ kicker:`Imagem ${current} de ${total}`, title:event.attempt > 1 ? 'Tentando um leitor visual alternativo…' : 'Lendo os detalhes do screenshot…', text:'Símbolos dos nicks, números e datas são preservados para você revisar antes de salvar.', progress:16 + ((current - 1) / total) * 65, line:event.attempt > 1 ? 'O primeiro leitor não respondeu; tentando uma alternativa.' : 'Leitor visual analisando a captura.' });
+  }
+  if (event.type === 'vision_progress' && event.stage === 'provider_failed') {
+    return atScanStory({ kicker:'Mudando de rota', title:'Esse leitor não conseguiu concluir a imagem.', text:event.retryable ? 'Vou tentar automaticamente uma alternativa antes de desistir.' : 'Não há outra alternativa disponível para esta tentativa.', line:event.retryable ? 'Falha temporária; alternando o modelo visual.' : 'O serviço visual recusou a leitura.' });
+  }
+  if (event.type === 'image_done') {
+    return atScanStory({ kicker:`Imagem ${current} concluída`, title:`Encontrei ${event.rows} linha${event.rows === 1 ? '' : 's'} nesta captura.`, text:event.warnings ? `Também encontrei ${event.warnings} ponto${event.warnings === 1 ? '' : 's'} que merece revisão.` : 'Agora sigo para a próxima imagem.', progress:10 + (current / total) * 70, line:`Imagem ${current}: ${event.rows} membro(s) reconhecido(s).` });
+  }
+  if (event.type === 'merge_start') {
+    return atScanStory({ kicker:'Organizando resultado', title:'Cruzando nomes repetidos entre os screenshots…', text:'Linhas sobrepostas são unidas para que o mesmo membro não apareça duas vezes.', progress:88, line:'Removendo duplicações e montando uma lista única.' });
+  }
+  if (event.type === 'done') {
+    const rows = event.data?.rows?.length || 0;
+    return atScanStory({ kicker:'Leitura concluída', title:`${rows} membro${rows === 1 ? '' : 's'} pronto${rows === 1 ? '' : 's'} para revisão.`, text:'Nenhum dado foi gravado ainda. Confira os nicks e valores na próxima tela.', progress:100, line:'Tudo pronto. Abrindo revisão.', tone:'success' });
+  }
+}
+
+function atScanFailure(error = {}) {
+  const code = error.code ? `Código: ${error.code}` : 'A leitura não foi concluída.';
+  atScanStory({
+    kicker:'A leitura parou aqui',
+    title:error.erro || error.message || 'Não consegui concluir o screenshot.',
+    text:error.retryable ? 'Isso parece temporário. Você pode tentar novamente sem perder as imagens selecionadas.' : `${code}. Verifique a configuração indicada e tente novamente.`,
+    progress:AT.scan.progress || 8,
+    line:error.retryable ? 'Interrupção temporária; tentativa pode ser repetida.' : code,
+    tone:'error',
+  });
+}
+
 async function atExtract() {
   if (!AT.files.length) return toast('Selecione pelo menos um screenshot.', 'warn');
   const btn = document.getElementById('at-read-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Lendo screenshots…'; }
+  AT.scan = { running:true, progress:0, lines:[] };
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Acompanhando leitura…'; }
+  atScanStory({ kicker:'Começando', title:'Preparando os screenshots…', text:'Primeiro envio as imagens; depois acompanho a leitura de cada uma.', progress:2, line:'Preparando envio.' });
   try {
     const fd = new FormData();
     AT.files.forEach(file => fd.append('images', file));
-    const r = await fetch(`${API}/alliance-tracker/extract`, {
-      method: 'POST', headers: { Authorization: `Bearer ${AdminCore.getToken()}` }, body: fd, signal: AbortSignal.timeout(150000),
+    const response = await fetch(`${API}/alliance-tracker/extract-stream`, {
+      method:'POST', headers:{ Authorization:`Bearer ${AdminCore.getToken()}` }, body:fd, signal:AbortSignal.timeout(180000),
     });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.erro || d.mensagem || 'Falha ao ler screenshots.');
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!response.ok || !response.body || !contentType.includes('application/x-ndjson')) {
+      const d = await response.json().catch(() => ({}));
+      throw { ...d, erro:d.erro || d.mensagem || `Falha HTTP ${response.status}` };
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let result = null;
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), { stream:!done });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const raw of lines) {
+        if (!raw.trim()) continue;
+        const event = JSON.parse(raw);
+        if (event.type === 'error') throw event.error || { erro:'Falha durante a leitura visual.' };
+        atScanNarrate(event);
+        if (event.type === 'done') result = event.data;
+      }
+      if (done) break;
+    }
+    if (!result) throw { erro:'O serviço terminou sem devolver uma lista para revisão.', code:'VISION_EMPTY_STREAM', retryable:true };
+
     const capturedRaw = document.getElementById('at-captured')?.value;
     const capturedAt = capturedRaw ? new Date(capturedRaw).toISOString() : new Date().toISOString();
-    AT.review = { ...d, capturedAt, completeList: false };
+    AT.review = { ...result, capturedAt, completeList:false };
+    await new Promise(resolve => setTimeout(resolve, 350));
     atRenderReview();
   } catch (err) {
-    toast(err.message, 'erro');
-    if (btn) { btn.disabled = false; btn.textContent = '🔎 Ler screenshots'; }
+    const normalized = err?.name === 'TimeoutError'
+      ? { erro:'A leitura demorou mais de 3 minutos e foi interrompida.', code:'VISION_CLIENT_TIMEOUT', retryable:true }
+      : (err || {});
+    atScanFailure(normalized);
+    toast(normalized.erro || normalized.message || 'Falha ao ler screenshots.', 'erro');
+    if (btn) { btn.disabled = false; btn.textContent = '↻ Tentar leitura novamente'; }
+  } finally {
+    AT.scan.running = false;
   }
 }
 

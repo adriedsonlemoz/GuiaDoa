@@ -18,3 +18,15 @@ test('Admin exige revisão antes de confirmar dados extraídos e explicita lista
   assert.match(admin, /Confirmar importação/);
   assert.match(admin, /Confirmar troca/);
 });
+
+test('importação da Aliança mostra narrativa de progresso e recuperação de falhas', () => {
+  const admin = read('api/admin/js/admin-alliances.js');
+  const css = read('api/admin/css/admin.css');
+  assert.match(admin, /at-scan-story/);
+  assert.match(admin, /Procurando a tabela de membros/);
+  assert.match(admin, /Tentando um leitor visual alternativo/);
+  assert.match(admin, /Tudo pronto\. Abrindo revisão/);
+  assert.match(admin, /extract-stream/);
+  assert.match(admin, /Tentar leitura novamente/);
+  assert.match(css, /\.at-scan-story/);
+});

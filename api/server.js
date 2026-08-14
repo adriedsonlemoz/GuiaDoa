@@ -38,7 +38,7 @@ mongoose.connect(process.env.MONGO_URI, mongoConnectOptions())
 
     const conteudo = await executarMigracoesConteudo();
     if (conteudo.ok && !conteudo.ignorada) {
-      console.log(`📚  Conteúdo:      ${conteudo.inseridas || 0} dica(s) inserida(s), ${conteudo.adaptadas || 0} adaptada(s), ${conteudo.tropasAtualizadas || 0} tropa(s) classificadas`);
+      console.log(`📚  Conteúdo:      ${conteudo.inseridas || 0} dica(s), ${conteudo.tropasAtualizadas || 0} tropa(s) classificadas, ${conteudo.campanhaInseridas || 0} local(is) PvE inserido(s)`);
     } else if (!conteudo.ok) {
       console.error(`⚠️   Migração de conteúdo falhou: ${conteudo.erro}`);
     }

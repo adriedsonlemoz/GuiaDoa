@@ -2,11 +2,16 @@ import AppConfig from '../models/AppConfig.js';
 import CategoriaDica from '../models/CategoriaDica.js';
 import Dica from '../models/Dica.js';
 import Tropa from '../models/Tropa.js';
+import CampanhaLocal from '../models/CampanhaLocal.js';
 import { DICAS_SEED } from '../seeds/dicas.js';
 import { tacticalMetadata } from '../seeds/tropasTaticas.js';
+import { ANTROPOS_SEED, SAVANA_SEED } from '../seeds/campanha.js';
+import { mesclarSeed } from '../utils/seedMerge.js';
 
 const MIGRATION_KEY = 'content:dicas:beta-2.14';
 const TROOPS_TACTICAL_KEY = 'content:tropas-taticas:beta-2.15';
+const CAMPANHA_ANTROPOS_KEY = 'content:campanha-antropos:beta-2.44';
+const CAMPANHA_CAMPOS_KEY = 'content:campanha-campos:beta-2.45';
 
 const INICIANTE_CATEGORY = {
   slug: 'iniciante',
@@ -120,16 +125,101 @@ async function migrarTropasTaticas() {
   }
 }
 
+
+async function migrarCampanhaAntropos() {
+  const aplicado = await AppConfig.findOne({ chave:CAMPANHA_ANTROPOS_KEY }).lean();
+  if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, inseridas:0, completadas:0, preservadas:0 };
+
+  await AppConfig.findOneAndUpdate(
+    { chave:CAMPANHA_ANTROPOS_KEY },
+    { $set:{ migracaoEstado:'executando', migracaoVersao:'1', ultimoErro:'', atualizadoEm:new Date() } },
+    { upsert:true, setDefaultsOnInsert:true },
+  );
+
+  try {
+    const relatorio = { inseridas:0, completadas:0, preservadas:0 };
+    for (const seed of ANTROPOS_SEED) {
+      const r = await mesclarSeed(CampanhaLocal, { slug:seed.slug }, seed, { mergeArrays:{ tropas:'nome', recursos:'tipo' } });
+      relatorio.inseridas += r.inserido || 0;
+      relatorio.completadas += r.completado || 0;
+      relatorio.preservadas += r.preservado || 0;
+    }
+    await AppConfig.findOneAndUpdate(
+      { chave:CAMPANHA_ANTROPOS_KEY },
+      { $set:{ migracaoEstado:'pronto', migracaoVersao:'1', migracaoEm:new Date(), atualizadoEm:new Date(), ultimoErro:'', relatorioMigracao:{ campanha:relatorio } } },
+      { upsert:true, setDefaultsOnInsert:true },
+    );
+    return { ok:true, ignorada:false, ...relatorio };
+  } catch (err) {
+    await AppConfig.findOneAndUpdate({ chave:CAMPANHA_ANTROPOS_KEY }, { $set:{ migracaoEstado:'erro', ultimoErro:err.message, atualizadoEm:new Date() } }, { upsert:true, setDefaultsOnInsert:true }).catch(()=>{});
+    return { ok:false, erro:err.message, inseridas:0, completadas:0, preservadas:0 };
+  }
+}
+
+
+async function garantirIndiceCampanhaPorSubtipo() {
+  try {
+    const indices = await CampanhaLocal.collection.indexes();
+    const antigo = indices.find(idx => idx?.key?.categoria === 1 && idx?.key?.nivel === 1 && Object.keys(idx.key).length === 2);
+    if (antigo?.name) await CampanhaLocal.collection.dropIndex(antigo.name);
+  } catch (err) {
+    if (err?.code !== 26 && err?.codeName !== 'NamespaceNotFound') throw err;
+  }
+  await CampanhaLocal.collection.createIndex(
+    { categoria:1, subtipo:1, nivel:1 },
+    { unique:true, partialFilterExpression:{ nivel:{ $type:'number' } }, name:'categoria_1_subtipo_1_nivel_1' },
+  );
+}
+
+async function migrarCampanhaCampos() {
+  const aplicado = await AppConfig.findOne({ chave:CAMPANHA_CAMPOS_KEY }).lean();
+  if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, inseridas:0, completadas:0, preservadas:0 };
+
+  await AppConfig.findOneAndUpdate(
+    { chave:CAMPANHA_CAMPOS_KEY },
+    { $set:{ migracaoEstado:'executando', migracaoVersao:'1', ultimoErro:'', atualizadoEm:new Date() } },
+    { upsert:true, setDefaultsOnInsert:true },
+  );
+
+  try {
+    await garantirIndiceCampanhaPorSubtipo();
+    const relatorio = { inseridas:0, completadas:0, preservadas:0 };
+    for (const seed of SAVANA_SEED) {
+      const r = await mesclarSeed(CampanhaLocal, { slug:seed.slug }, seed, {
+        mergeArrays:{ tropas:'nome', recursos:'tipo', recompensas:'codigo' },
+      });
+      relatorio.inseridas += r.inserido || 0;
+      relatorio.completadas += r.completado || 0;
+      relatorio.preservadas += r.preservado || 0;
+    }
+    await AppConfig.findOneAndUpdate(
+      { chave:CAMPANHA_CAMPOS_KEY },
+      { $set:{ migracaoEstado:'pronto', migracaoVersao:'1', migracaoEm:new Date(), atualizadoEm:new Date(), ultimoErro:'', relatorioMigracao:{ campos:relatorio } } },
+      { upsert:true, setDefaultsOnInsert:true },
+    );
+    return { ok:true, ignorada:false, ...relatorio };
+  } catch (err) {
+    await AppConfig.findOneAndUpdate({ chave:CAMPANHA_CAMPOS_KEY }, { $set:{ migracaoEstado:'erro', ultimoErro:err.message, atualizadoEm:new Date() } }, { upsert:true, setDefaultsOnInsert:true }).catch(()=>{});
+    return { ok:false, erro:err.message, inseridas:0, completadas:0, preservadas:0 };
+  }
+}
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
   const tropas = await migrarTropasTaticas();
   if (!tropas.ok) return tropas;
+  const campanha = await migrarCampanhaAntropos();
+  if (!campanha.ok) return campanha;
+  const campos = await migrarCampanhaCampos();
+  if (!campos.ok) return campos;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && tropas.ignorada),
+    ignorada:Boolean(dicas.ignorada && tropas.ignorada && campanha.ignorada && campos.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     tropasAtualizadas:tropas.atualizadas || 0,
+    campanhaInseridas:(campanha.inseridas || 0) + (campos.inseridas || 0),
+    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0),
   };
 }

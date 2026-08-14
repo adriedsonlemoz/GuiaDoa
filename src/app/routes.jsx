@@ -29,6 +29,7 @@ import Pesquisas from '../components/pesquisas/Pesquisas.jsx';
 import Dicas from '../components/Dicas.jsx';
 import PesquisaDetalhe from '../components/pesquisas/PesquisaDetalhe.jsx';
 import TorneioPocoes from '../components/torneios/TorneioPocoes.jsx';
+import CampanhaMapa from '../components/CampanhaMapa.jsx';
 
 const BASE_LABELS = {
   torneios: { key: 'home.botao.torneios', icon: '🏆' },
@@ -58,6 +59,7 @@ const BASE_LABELS = {
   pesquisas: { key: 'home.botao.pesquisas', icon: '🔬' },
   dicas: { key: 'home.botao.dicas', icon: '💡' },
   pocoes_antigas: { key: 'torneio.titulo.pocoes_antigas', icon: '🧪' },
+  campanha: { key: 'campaign.title', icon: '🗺️' },
 };
 
 export function renderRoute(route, setRoute) {
@@ -90,6 +92,7 @@ export function renderRoute(route, setRoute) {
     case 'pesquisas': return <Pesquisas setRoute={setRoute} />;
     case 'dicas': return <Dicas setRoute={setRoute} />;
     case 'pocoes_antigas': return <TorneioPocoes />;
+    case 'campanha': return <CampanhaMapa />;
     default:
       if (route.startsWith('pesquisa_')) {
         return <PesquisaDetalhe slug={route.replace('pesquisa_', '')} />;

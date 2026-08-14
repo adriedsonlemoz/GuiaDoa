@@ -29,6 +29,7 @@ const MODULOS = [
   { id:'ilhas',     icon:'🏝️',  label:'Ilhas',      desc:'Produção e territórios',           ativo:false, badge:'breve' },
   { id:'dicas',     icon:'💡',  label:'Dicas',        desc:'Tutoriais e guias da comunidade',   ativo:true,  badge:'novo'  },
   { id:'alliances', icon:'🛡️',  label:'Aliança',      desc:'Tracker privado de membros e atividade', ativo:true, badge:'novo' },
+  { id:'campanha',  icon:'🗺️',  label:'Mapa & Campanha', desc:'PvE, tropas, recursos e estratégias', ativo:true, badge:'novo' },
 ];
 
 // ── Auth ─────────────────────────────────────────────────────────────────────

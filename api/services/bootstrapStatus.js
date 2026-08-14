@@ -8,6 +8,7 @@ const MODULOS_BOOTSTRAP = [
   { id: 'categoriasDicas', label: 'Categorias de dicas', icon: '💡', model: 'CategoriaDica', essencial: true },
   { id: 'itens', label: 'Itens', icon: '🎒', model: 'Item', essencial: false },
   { id: 'dicas', label: 'Dicas', icon: '📖', model: 'Dica', essencial: false },
+  { id: 'campanha', label: 'Mapa & Campanha', icon: '🗺️', model: 'CampanhaLocal', essencial: false },
 ];
 
 async function buscarConfig(Model) {

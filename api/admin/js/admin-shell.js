@@ -17,6 +17,7 @@ function irModulo(id) {
   if (id === 'reinos')    { carregarReinos(); }
   if (id === 'dicas')     { carregarDicas(); }
   if (id === 'alliances') { carregarAliancas(); }
+  if (id === 'campanha')  { carregarCampanha(); }
 }
 
 function setBreadcrumb(items) {

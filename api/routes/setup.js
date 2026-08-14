@@ -16,6 +16,7 @@ import Pesquisa    from '../models/Pesquisa.js';
 import Reino       from '../models/Reino.js';
 import CategoriaDica from '../models/CategoriaDica.js';
 import Dica        from '../models/Dica.js';
+import CampanhaLocal from '../models/CampanhaLocal.js';
 import { autenticar, exigirAdmin } from '../middleware/auth.js';
 import { decidirAcessoSetup } from '../security/setupAccess.js';
 import { obterBootstrapStatus } from '../services/bootstrapStatus.js';
@@ -57,7 +58,7 @@ const setupInicialOuAdmin = async (req, res, next) => {
 router.get('/bootstrap-status', async (_req, res) => {
   try {
     const status = await obterBootstrapStatus({
-      User, Tropa, Nivel, Dragao, Edificio, Item, Pesquisa, Reino, CategoriaDica, Dica,
+      User, Tropa, Nivel, Dragao, Edificio, Item, Pesquisa, Reino, CategoriaDica, Dica, CampanhaLocal,
       AppConfig,
     }, { setupKeyObrigatoria: SETUP_KEY_OBRIGATORIA });
     res.json(status);

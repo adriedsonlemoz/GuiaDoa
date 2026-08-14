@@ -8,7 +8,9 @@ import { DISPLAY_VERSION } from '../version.js';
 import { API_URL as API } from '../config/api.js';
 
 const CHANGELOG_CONFIG = [
-  { ver: DISPLAY_VERSION, icon: '✦', key: 'latest', color: '#4E716A', count: 4 },
+  { ver: DISPLAY_VERSION, icon: '🌾', key: 'latest', color: '#4E716A', count: 4 },
+  { ver: 'Beta 2.44', icon: '🗺️', key: 'history.2_44', color: '#5A7B72', count: 4 },
+  { ver: 'Beta 2.43', icon: '🗺️', key: 'history.2_43', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.42', icon: '◌', key: 'history.2_42', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.41', icon: '◎', key: 'history.2_41', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.40', icon: '◈', key: 'history.2_40', color: '#5A7B72', count: 4 },

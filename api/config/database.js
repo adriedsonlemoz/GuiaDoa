@@ -29,6 +29,7 @@ export const COLLECTIONS = Object.freeze({
   allianceWorkspaces: collectionName('alliance_workspaces'),
   allianceMembers: collectionName('alliance_members'),
   allianceSnapshots: collectionName('alliance_snapshots'),
+  allianceOcrCorrections: collectionName('alliance_ocr_corrections'),
 });
 
 export const COLLECTION_SUFFIXES = Object.freeze([
@@ -46,6 +47,7 @@ export const COLLECTION_SUFFIXES = Object.freeze([
   'alliance_workspaces',
   'alliance_members',
   'alliance_snapshots',
+  'alliance_ocr_corrections',
 ]);
 
 export function mongoConnectOptions() {

@@ -678,7 +678,7 @@ export async function extractAllianceScreenshotWithOcr({
             },
           };
           onProgress?.({
-            stage: parsed.accepted ? 'ocr_accepted' : 'ocr_fallback',
+            stage: parsed.accepted ? 'ocr_accepted' : 'ocr_review',
             engine: 'tesseract.js',
             confidence: parsed.confidence,
             rows: parsed.rows.length,

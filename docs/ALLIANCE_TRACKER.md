@@ -4,64 +4,70 @@ O Alliance Tracker é uma ferramenta privada do painel administrativo. Ele não 
 
 ## Objetivo
 
-Criar histórico da Aliança a partir de screenshots da tela **Aliança > Membros** do jogo. O importador reconhece três colunas:
+Criar histórico da Alliance a partir de screenshots da tela **Aliança > Membros** do jogo. O importador reconhece três colunas:
 
 - Poder
 - Última Conexão
 - Data de Entrada na Aliança
 
-A leitura usa um pipeline único e conservador: **screenshot → regiões de interesse (ROI) → OCR local → validação linha a linha → reconciliação → Groq somente nas exceções**. O OCR roda no próprio backend com Tesseract.js e os dados locais de idioma inglês instalados junto das dependências da API; portanto, uma captura que passa pela validação local não gera chamada à IA visual.
+Desde a Beta 2.42, a leitura de screenshots é **100% local**: **screenshot → regiões de interesse (ROI) → OCR Tesseract.js → resolvedor local do GUIA DOA → validação linha a linha → reconciliação → revisão manual**. O Alliance Tracker não chama Groq nem qualquer outro leitor visual externo.
 
-Na Beta 2.40, o leitor tenta primeiro uma região ampla do cabeçalho para identificar **Poder**, **Última Conexão** ou **Data de Entrada**. Depois lê somente a região da tabela. Se a primeira leitura não for suficiente, uma segunda passada local usa segmentação e binarização adaptativas antes de qualquer IA. O parser mede confiança por linha: linhas seguras são preservadas mesmo quando outras linhas da mesma captura ficam duvidosas. Ele não tenta adivinhar letras parecidas com números.
+O OCR roda no backend com Tesseract.js e os dados de idioma instalados nas dependências da API. O resolvedor local cruza nickname, aliases conhecidos, poder anterior, data de entrada e correções manuais já confirmadas. Similaridades comuns de OCR são apenas evidência: correção automática exige pontuação alta e margem segura sobre outros candidatos.
 
-Quando restam exceções, a Groq recebe a captura como fallback com o resultado OCR seguro como contexto, e o backend reconcilia as duas leituras sem apagar silenciosamente divergências de nickname. Nomes conflitantes, baixa confiança e variações parecidas com membros já conhecidos ficam marcados para confirmação manual no Admin. O modelo pode ser trocado sem alterar código através de `GROQ_VISION_MODEL`. A leitura continua sequencial, uma imagem por vez. Em HTTP 429 do fallback Groq, o serviço respeita `Retry-After` quando disponível e aplica retry/backoff automático antes de tentar o modelo alternativo.
+Se uma linha, valor ou cabeçalho não puder ser reconstruído com segurança, o módulo **não inventa o dado e não interrompe o lote**. O caso fica marcado para revisão manual, as linhas seguras são preservadas e a próxima imagem é processada normalmente. O Admin pode confirmar, corrigir, remover ou adicionar linhas antes da importação.
 
-Configuração opcional do OCR no backend:
+Na Beta 2.41, esse resolvedor local já existia, mas ainda havia um fallback externo restrito a falhas estruturais. A Beta 2.42 removeu esse fallback por completo.
 
-- `ALLIANCE_OCR_ENABLED=true` — desativa apenas em caso de diagnóstico;
+## Configuração opcional do OCR
+
+- `ALLIANCE_OCR_ENABLED=true` — desative apenas para diagnóstico;
 - `ALLIANCE_OCR_MIN_CONFIDENCE=0.82` — confiança média mínima das linhas seguras;
 - `ALLIANCE_OCR_LINE_MIN_CONFIDENCE=0.76` — confiança mínima por linha antes de marcá-la como exceção;
-- `ALLIANCE_OCR_MIN_ROWS=2` — mínimo de linhas seguras para considerar o OCR local utilizável.
+- `ALLIANCE_OCR_MIN_ROWS=2` — mínimo de linhas para o parser considerar a leitura local utilizável.
 
-Se o OCR resolver a captura, a Groq não é necessária. Se o OCR rejeitar uma leitura ambígua e não houver `GROQ_API_KEY`, o lote informa que o fallback não está configurado em vez de inventar valores.
+Não existe configuração de modelo visual ou chave de IA para o Alliance Tracker. `GROQ_API_KEY`, se configurada no backend, pertence a recursos separados como o Assistente e não participa da importação da Alliance.
 
 ## Privacidade e armazenamento
 
-Durante um lote ativo, os screenshots são mantidos somente em armazenamento temporário do backend para que a leitura possa sobreviver a refresh/reconexão do Admin. Screenshots idênticos no mesmo envio são detectados por hash SHA-256 e não são processados duas vezes. Quando o OCR de uma imagem termina, um checkpoint temporário preserva apenas texto/linhas/diagnóstico necessários para que uma reconexão não obrigue o Tesseract a reler aquela captura antes do fallback. Ao concluir a imagem, o screenshot e o OCR bruto deixam de ser necessários: fica somente o resultado estruturado. Assim que o lote conclui ou é cancelado, todos os arquivos temporários restantes são removidos. Lotes abandonados expiram automaticamente. O MongoDB continua recebendo somente os dados estruturados que o administrador revisa e confirma.
+Durante um lote ativo, screenshots são mantidos somente no armazenamento temporário do backend para permitir recuperação após refresh/reconexão. Screenshots idênticos no mesmo envio são detectados por SHA-256 e não são processados duas vezes.
+
+Quando o OCR conclui uma imagem, um checkpoint temporário preserva apenas texto/linhas/diagnóstico necessários para a retomada. Quando aquela imagem termina, o screenshot e o OCR bruto são descartados; fica apenas o resultado estruturado. Ao concluir ou cancelar o lote, arquivos temporários restantes são removidos. Lotes abandonados expiram automaticamente.
+
+O MongoDB recebe somente dados estruturados revisados/confirmados e a memória de correções de nickname. Screenshots nunca viram memória permanente.
 
 Coleções:
 
 - `guiadoa_alliance_workspaces`
 - `guiadoa_alliance_members`
 - `guiadoa_alliance_snapshots`
-
+- `guiadoa_alliance_ocr_corrections` — memória estruturada de correções manuais de nickname; nunca armazena screenshot.
 
 ## Validação avançada e revisão por exceções
 
-- o OCR mede confiança em cada linha, em vez de decidir apenas pela média da imagem;
-- linhas seguras são preservadas quando outras linhas precisam de fallback;
+- confiança é medida por linha, e não apenas pela média da imagem;
+- linhas seguras são preservadas mesmo quando outras ficam inconclusivas;
 - sobreposições entre screenshots são unidas sem duplicar membros;
-- mesmo valor + nickname parecido em duas leituras gera **conflito de nickname**, nunca renomeação silenciosa;
-- a lista atual de membros da Alliance é usada apenas como evidência para destacar grafias parecidas;
-- mais de 120 linhas gera alerta estrutural e impede confirmação até a lista ser corrigida;
-- o Admin abre primeiro em **Exceções** quando há dúvidas, mas permite alternar para **Todas**;
-- exceções precisam ser confirmadas manualmente antes de salvar;
-- o resumo do lote mostra imagens únicas, duplicadas, resolvidas só por OCR, fallbacks de IA e percentual de imagens resolvidas sem IA.
+- mesmo valor + nickname parecido em leituras diferentes gera conflito para confirmação, nunca renomeação silenciosa;
+- a lista atual de membros serve como evidência para sugestões locais;
+- correções confirmadas pelo Admin podem ser reaproveitadas em leituras futuras;
+- mais de 120 membros gera alerta e impede importação até a lista ser corrigida;
+- o Admin abre primeiro em **Exceções** quando existem dúvidas, com acesso à lista completa em **Todas**;
+- uma imagem totalmente inconclusiva vira caso de revisão manual e não derruba as outras imagens;
+- o resumo do lote mostra processamento local, duplicatas, correções locais e imagens que exigiram revisão manual.
 
-O OCR também tem recuperação própria: timeout/erro do worker reinicia o Tesseract uma vez e tenta uma leitura local limpa antes de acionar a Groq.
+O OCR tem recuperação própria: timeout/erro do worker reinicia o Tesseract uma vez e tenta uma leitura local limpa. Se ainda assim não concluir, a imagem vai para revisão manual e o lote continua.
 
-## Rate limit e retomada
+## Progresso e retomada
 
-- HTTP 429 não cancela imediatamente o lote;
-- `Retry-After` é respeitado quando o provedor o envia;
-- sem `Retry-After`, é aplicado backoff exponencial automático;
-- a narrativa mostra **“Limite temporário atingido → aguardando → tentando novamente”**;
+- as imagens são processadas uma por vez;
 - o progresso usa imagens realmente concluídas, por exemplo `3/7`;
-- se todas as tentativas da imagem falharem, o lote fica pausado;
-- **Continuar leitura** retoma da próxima imagem pendente, sem reler as anteriores;
+- resultados já concluídos não são relidos;
+- o checkpoint do OCR pode ser reaproveitado após reconexão;
+- **Continuar leitura** retoma da próxima imagem pendente;
+- se o backend ainda estiver finalizando a tentativa anterior, um clique coloca o Admin em acompanhamento automático e a retomada acontece assim que o lock for liberado;
 - o identificador do lote é mantido no Admin para recuperação após refresh/reconexão.
 
-A retomada usa armazenamento temporário local da instância do backend. Ela foi projetada para refresh e reconexões normais; uma reinicialização/substituição da instância do Render pode invalidar um lote ainda não concluído.
+A retomada usa armazenamento temporário local da instância do backend. Uma reinicialização/substituição da instância do Render pode invalidar um lote ainda não concluído.
 
 ## Entrada e saída
 
@@ -75,8 +81,8 @@ Capturas parciais nunca marcam membros ausentes como saída.
 
 ## Troca de nickname
 
-O sistema apenas sugere uma possível troca usando sinais como poder próximo. A união de históricos exige confirmação manual no Admin.
+O sistema apenas sugere uma possível troca usando sinais como nome, histórico e poder próximo. A união de históricos exige confirmação manual no Admin.
 
 ## Limite
 
-O módulo aplica o limite de 120 membros por Aliança.
+O módulo aplica o limite de 120 membros por Alliance.

@@ -7,7 +7,7 @@ const AT = {
   tab: 'members',
   review: null,
   files: [],
-  scan: { running: false, progress: 0, lines: [], batchId: null, completed: 0, total: 0, status: null, canContinue: false, restoring: false },
+  scan: { running: false, progress: 0, lines: [], batchId: null, completed: 0, total: 0, status: null, canContinue: false, restoring: false, following: false },
 };
 
 const AT_TYPE_LABEL = {
@@ -123,7 +123,7 @@ async function atSwitchAlliance(id) {
   AT.alliance = found;
   AT.review = null;
   AT.files = [];
-  AT.scan = { running:false, progress:0, lines:[], batchId:null, completed:0, total:0, status:null, canContinue:false, restoring:false };
+  AT.scan = { running:false, progress:0, lines:[], batchId:null, completed:0, total:0, status:null, canContinue:false, restoring:false, following:false };
   localStorage.setItem('doa_admin_alliance_id', id);
   await atLoadDashboard();
 }
@@ -241,7 +241,7 @@ function atRenderImport() {
       <input id="at-files" type="file" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="atFilesChanged(this.files)">
       <div id="at-file-list" class="at-file-list">Nenhuma imagem selecionada.</div>
       <div class="field" style="max-width:300px"><label>Data/hora da captura</label><input id="at-captured" type="datetime-local" value="${local}"></div>
-      <div class="at-note"><strong>Menos dependência de IA:</strong> cada imagem passa primeiro pelo OCR local do backend. A Groq é chamada somente como fallback. Durante um lote ativo, os screenshots ficam temporariamente no backend para permitir retomada e são apagados ao concluir/cancelar.</div>
+      <div class="at-note"><strong>Leitura 100% local:</strong> OCR + resolvedor próprio usam histórico da Alliance e correções já confirmadas. Nenhuma IA externa é chamada. Dúvidas ou trechos não reconstruídos seguem para sua revisão manual, sem interromper o lote.</div>
       <button id="at-read-btn" class="btn btn-gold" onclick="atExtract(false)" disabled>🔎 Ler screenshots</button>
       <div id="at-scan-story" class="at-scan-story" hidden>
         <div class="at-scan-head">
@@ -253,7 +253,7 @@ function atRenderImport() {
         <div id="at-scan-progress" class="at-scan-progress">0/0 imagens concluídas · 0%</div>
         <div id="at-scan-log" class="at-scan-log"></div>
         <div id="at-scan-actions" class="at-scan-actions" hidden>
-          <button id="at-continue-btn" class="btn btn-gold" onclick="atExtract(true)">▶ Continuar leitura</button>
+          <button id="at-continue-btn" class="btn btn-gold" onclick="atContinueReading()">▶ Continuar leitura</button>
           <button class="btn btn-ghost" onclick="atCancelBatch()">Cancelar lote</button>
         </div>
       </div>
@@ -351,7 +351,7 @@ function atScanNarrate(event) {
     return atScanStory({
       kicker:`Imagem ${current} de ${total} · OCR local`,
       title:'Lendo no próprio backend, sem IA…',
-      text:'O Tesseract tenta reconhecer a tabela primeiro. A Groq ainda não foi chamada.',
+      text:'O Tesseract reconhece a tabela localmente no backend. Nenhuma IA externa participa desta leitura.',
       progress:realProgress, completed, total,
       line:'OCR local iniciado; nenhuma chamada de IA até aqui.',
     });
@@ -434,72 +434,64 @@ function atScanNarrate(event) {
     const confidence = Math.round((Number(event.confidence) || 0) * 100);
     return atScanStory({
       kicker:`Imagem ${current} de ${total} · OCR aprovado`,
-      title:'Leitura local suficiente — IA não será usada nesta imagem.',
+      title:'Leitura local suficiente — imagem resolvida.',
       text:`${event.trustedRows ?? event.rows ?? 0} linha(s) seguras, ${event.exceptions || 0} exceção(ões), confiança média de ${confidence}%.`,
       progress:realProgress, completed, total,
-      line:`OCR local aprovado (${confidence}%); Groq dispensada nesta imagem.`,
+      line:`OCR local aprovado (${confidence}%); imagem resolvida localmente.`,
     });
   }
-  if (event.type === 'vision_progress' && event.stage === 'ocr_fallback') {
+  if (event.type === 'vision_progress' && event.stage === 'local_resolver') {
+    const auto = Number(event.autoResolved || 0);
+    const pending = Number(event.pendingRows || 0);
+    return atScanStory({
+      kicker:`Imagem ${current} de ${total} · resolvedor local`,
+      title:auto ? `${auto} inconsistência(s) resolvida(s) sem IA externa.` : 'Cruzando OCR com o histórico da Alliance…',
+      text:`O GUIA DOA comparou nomes, aliases e dados anteriores localmente. ${pending ? `${pending} linha(s) ainda precisam de confirmação.` : 'Nenhuma inconsistência de nickname ficou pendente.'}`,
+      progress:realProgress, completed, total,
+      line:`Resolvedor local: ${auto} resolvida(s) · ${Number(event.suggested || 0)} sugestão(ões) · ${pending} pendente(s).`,
+    });
+  }
+  if (event.type === 'vision_progress' && event.stage === 'local_manual_review') {
+    return atScanStory({
+      kicker:`Imagem ${current} de ${total} · revisão local`,
+      title:'As dúvidas restantes vão para sua revisão.',
+      text:'O leitor local preservou tudo que conseguiu. As inconsistências restantes serão destacadas para você confirmar depois, sem interromper as próximas imagens.',
+      progress:realProgress, completed, total,
+      line:'Exceções preservadas para revisão manual; seguindo sem IA externa.',
+    });
+  }
+  if (event.type === 'vision_progress' && event.stage === 'ocr_review') {
     const confidence = Math.round((Number(event.confidence) || 0) * 100);
     return atScanStory({
-      kicker:`Imagem ${current} de ${total} · fallback`,
-      title:'OCR local ficou em dúvida → usando IA só nesta imagem.',
-      text:`O OCR preservou ${event.trustedRows || 0} linha(s) seguras e isolou ${event.exceptions || 0} exceção(ões), com ${confidence}% de confiança média. A Groq entra apenas para completar/validar o que ficou duvidoso.`,
+      kicker:`Imagem ${current} de ${total} · revisão necessária`,
+      title:'OCR local ficou em dúvida — preservando o que foi reconhecido.',
+      text:`Foram preservadas ${event.trustedRows || 0} linha(s) seguras e ${event.exceptions || 0} exceção(ões), com confiança média de ${confidence}%. O lote continuará e as dúvidas aparecerão na revisão final.`,
       progress:realProgress, completed, total,
-      line:'OCR local não atingiu o nível seguro; acionando fallback visual.',
+      line:'OCR local inconclusivo; dados parciais preservados para revisão manual.',
     });
   }
   if (event.type === 'vision_progress' && event.stage === 'ocr_unavailable') {
     return atScanStory({
-      kicker:`Imagem ${current} de ${total} · fallback`,
-      title:'OCR local indisponível → usando o leitor visual de reserva.',
-      text:'O lote continua normalmente. A Groq será usada apenas porque o OCR local não pôde concluir esta imagem.',
+      kicker:`Imagem ${current} de ${total} · revisão necessária`,
+      title:'OCR local não conseguiu concluir esta imagem.',
+      text:'Esta captura será marcada para revisão manual e o lote seguirá para a próxima imagem. Nenhuma IA externa será chamada.',
       progress:realProgress, completed, total,
-      line:'OCR local indisponível; seguindo com fallback visual.',
+      line:'OCR local indisponível nesta captura; seguindo para revisão manual.',
     });
   }
-  if (event.type === 'vision_progress' && event.stage === 'provider') {
+  if (event.type === 'vision_progress' && event.stage === 'local_complete') {
     return atScanStory({
-      kicker:`Imagem ${current} de ${total}`,
-      title:event.attempt > 1 ? 'Tentando um modelo de IA alternativo…' : 'IA visual validando esta imagem…',
-      text:'O fallback por IA só chegou aqui porque o OCR local não foi considerado seguro para esta captura.',
+      kicker:`Imagem ${current} de ${total} · concluída localmente`,
+      title:'Leitor local concluiu esta imagem.',
+      text:'OCR, histórico e resolvedor próprio foram suficientes. Nenhum serviço externo foi usado.',
       progress:realProgress, completed, total,
-      line:event.attempt > 1 ? 'Tentativas no modelo anterior terminaram; usando a alternativa de IA.' : 'Groq usada como fallback desta captura.',
-    });
-  }
-  if (event.type === 'vision_progress' && event.stage === 'rate_limit') {
-    const waitText = atWaitLabel(event.waitMs);
-    return atScanStory({
-      kicker:`Imagem ${current} de ${total} · limite temporário`,
-      title:'Limite temporário atingido → aguardando',
-      text:`O serviço pediu uma pausa de ${waitText}. ${completed}/${total} imagens concluídas continuam preservadas.`,
-      progress:realProgress, completed, total,
-      line:`Limite temporário atingido → aguardando ${waitText}.`,
-    });
-  }
-  if (event.type === 'vision_progress' && event.stage === 'retrying') {
-    return atScanStory({
-      kicker:`Imagem ${current} de ${total} · tentativa ${event.retry}/${event.maxRetries}`,
-      title:'Aguardando concluído → tentando novamente',
-      text:'A mesma imagem será retomada automaticamente; nenhuma captura concluída será lida outra vez.',
-      progress:realProgress, completed, total,
-      line:'Limite temporário atingido → aguardando → tentando novamente.',
-    });
-  }
-  if (event.type === 'vision_progress' && event.stage === 'provider_failed') {
-    return atScanStory({
-      kicker:'Mudando de rota',
-      title:'Esse leitor não conseguiu concluir a imagem.',
-      text:event.retryable ? 'As tentativas automáticas terminaram neste modelo; vou usar a alternativa configurada.' : 'Todas as alternativas desta tentativa foram esgotadas.',
-      progress:realProgress, completed, total,
-      line:event.retryable ? 'Tentativas do modelo esgotadas; alternando o leitor visual.' : 'O serviço visual não concluiu a imagem.',
+      line:'Imagem resolvida 100% localmente.',
     });
   }
   if (event.type === 'image_done') {
     const done = Math.max(completed, current);
     const pct = Math.round((done / total) * 100);
-    const source = event.engine === 'ocr' ? 'OCR local, sem IA' : event.aiUsed ? 'IA usada como fallback' : 'leitura concluída';
+    const source = event.engine === 'ocr' ? 'OCR local' : event.engine === 'local_resolver' ? 'resolvedor local' : event.engine === 'local_resolver_review' ? 'leitura local + revisão manual' : 'leitura local';
     return atScanStory({
       kicker:`${done}/${total} imagens concluídas`,
       title:`Encontrei ${event.rows} linha${event.rows === 1 ? '' : 's'} nesta captura.`,
@@ -520,12 +512,12 @@ function atScanNarrate(event) {
   if (event.type === 'done') {
     const rows = event.data?.rows?.length || 0;
     const ocrCount = Number(event.data?.ocrImagesCount || 0);
-    const aiCount = Number(event.data?.aiImagesCount || 0);
     const m = event.data?.metrics || {};
-    const sourceText = aiCount ? `${ocrCount} imagem(ns) resolvida(s) só com OCR local; IA foi necessária em ${aiCount}.` : `As ${ocrCount || total} imagem(ns) foram resolvidas por OCR local; nenhuma chamada de IA foi necessária.`;
+    const manualImages = Number(m.manualReviewImages || 0);
+    const sourceText = `As ${ocrCount || total} imagem(ns) foram processadas apenas pelo leitor local. ${manualImages ? `${manualImages} imagem(ns) deixaram pontos para sua revisão.` : 'Nenhuma imagem ficou pendente estruturalmente.'}`;
     const duplicateText = Number(m.duplicatesSkipped || 0) ? ` ${m.duplicatesSkipped} screenshot(s) repetido(s) foram ignorados.` : '';
     return atScanStory({
-      kicker:`${total}/${total} imagens concluídas · ${Number(m.aiAvoidanceRate ?? 100)}% sem IA`,
+      kicker:`${total}/${total} imagens concluídas · 100% local`,
       title:`${rows} membro${rows === 1 ? '' : 's'} pronto${rows === 1 ? '' : 's'} para revisão.`,
       text:`${sourceText}${duplicateText} ${Number(m.reviewItemsCount || 0)} exceção(ões) ficaram destacadas. Os screenshots temporários já foram apagados do backend.`,
       progress:100, completed:total, total,
@@ -641,13 +633,76 @@ async function atCancelBatch({ silent = false } = {}) {
     }
   }
   atRememberBatch(null);
-  AT.scan = { running:false, progress:0, lines:[], batchId:null, completed:0, total:0, status:null, canContinue:false, restoring:false };
+  AT.scan = { running:false, progress:0, lines:[], batchId:null, completed:0, total:0, status:null, canContinue:false, restoring:false, following:false };
   if (!silent) {
     AT.files = [];
     toast('Lote temporário cancelado. Os screenshots foram removidos.');
     atRenderImport();
   }
   return true;
+}
+
+function atSleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+async function atContinueReading() {
+  const batchId = AT.scan.batchId || localStorage.getItem(atBatchStorageKey());
+  if (!batchId) return toast('Não há lote pausado para continuar.', 'warn');
+  if (AT.scan.running || AT.scan.following) return;
+  AT.scan.following = true;
+  atScanActions(true, false);
+  const continueBtn = document.getElementById('at-continue-btn');
+  if (continueBtn) { continueBtn.disabled = true; continueBtn.textContent = '⏳ Aguardando lote…'; }
+  try {
+    while (true) {
+      let state;
+      try {
+        state = await atJson(`${API}/alliance-tracker/extract-batches/${encodeURIComponent(batchId)}`);
+      } catch (err) {
+        if (err?.status === 404 || err?.code === 'VISION_BATCH_NOT_FOUND') {
+          atRememberBatch(null);
+          return toast('O lote temporário expirou. Selecione os screenshots novamente.', 'warn');
+        }
+        atScanStory({
+          kicker:'Reconectando ao lote', title:'A conexão oscilou; vou tentar novamente.',
+          text:'O identificador do lote continua preservado. Não é necessário clicar outra vez.',
+          progress:AT.scan.total ? (AT.scan.completed/AT.scan.total)*100 : 0, completed:AT.scan.completed, total:AT.scan.total,
+          line:'Falha temporária ao consultar o lote → nova tentativa automática.',
+        });
+        await atSleep(1800);
+        continue;
+      }
+      atRememberBatch(state.batchId || batchId);
+      AT.scan.completed = Number(state.completed || 0);
+      AT.scan.total = Number(state.total || 0);
+      AT.scan.status = state.status;
+      AT.scan.lastError = state.lastError || null;
+      if (state.status === 'completed' && state.finalData) {
+        AT.review = { ...state.finalData, capturedAt: state.finalData.capturedAt || state.capturedAt, completeList:false };
+        return atRenderReview();
+      }
+      if (state.status === 'paused' || state.status === 'ready') {
+        atScanStory({
+          kicker:'Lote liberado', title:`Retomando automaticamente da imagem ${AT.scan.completed + 1}…`,
+          text:'Você já pediu para continuar; agora que o processamento anterior foi liberado, não precisa clicar novamente.',
+          progress:AT.scan.total ? (AT.scan.completed/AT.scan.total)*100 : 0, completed:AT.scan.completed, total:AT.scan.total,
+          line:'Lock liberado → retomando leitura automaticamente.',
+        });
+        AT.scan.following = false;
+        return atExtract(true);
+      }
+      atScanStory({
+        kicker:'Continuar leitura solicitado', title:`${AT.scan.completed}/${AT.scan.total} imagens concluídas · aguardando a imagem atual`,
+        text:'O backend ainda está finalizando ou liberando a tentativa anterior. Assim que o lock sair, a leitura continuará automaticamente.',
+        progress:AT.scan.total ? (AT.scan.completed/AT.scan.total)*100 : 0, completed:AT.scan.completed, total:AT.scan.total,
+        line:'Continuação registrada → acompanhando o lote automaticamente.',
+      });
+      await atSleep(Math.max(1000, Math.min(5000, Number(state.retryAfterMs || 1600))));
+    }
+  } finally {
+    AT.scan.following = false;
+    const btn = document.getElementById('at-continue-btn');
+    if (btn) { btn.disabled = false; btn.textContent = '▶ Continuar leitura'; }
+  }
 }
 
 async function atExtract(resume = false) {
@@ -746,7 +801,7 @@ async function atExtract(resume = false) {
       });
       atScanActions(true, false);
       atLockBatchInput(true);
-      setTimeout(() => void atRestoreBatch(), 1500);
+      setTimeout(() => void atContinueReading(), Math.max(1000, Number(normalized.retryAfterMs || 1500)));
     } else {
       atScanFailure(normalized);
       toast(normalized.erro || normalized.message || 'Falha ao ler screenshots.', 'erro');
@@ -761,11 +816,14 @@ async function atExtract(resume = false) {
 function atReviewReasonLabel(reason) {
   return ({
     low_ocr_confidence:'OCR com confiança baixa',
-    low_ai_confidence:'IA com confiança baixa',
-    ocr_not_confirmed_by_ai:'OCR não confirmado pela IA',
-    nickname_conflict:'Nickname divergente entre leituras',
+    nickname_conflict:'Nickname divergente entre capturas',
     known_name_variant:'Parecido com membro já conhecido',
     snapshot_type_conflict:'Tipo da captura divergente',
+    local_resolver_suggestion:'Sugestão do resolvedor local',
+    snapshot_type_manual:'Tipo da captura requer confirmação',
+    image_manual_entry:'Imagem requer entrada manual',
+    structural_manual_review:'Trecho não reconstruído pelo OCR',
+    local_manual_review:'Confirmação manual do leitor local',
   })[reason] || String(reason || 'Revisão necessária').replaceAll('_',' ');
 }
 
@@ -779,16 +837,16 @@ function atRenderReview() {
   if (!r.reviewMode) r.reviewMode = pending ? 'exceptions' : 'all';
   const visible = rows.map((row,index) => ({ row,index })).filter(item => r.reviewMode !== 'exceptions' || (item.row.reviewRequired && !item.row.reviewed));
   const m = r.metrics || {};
-  const aiAvoidance = Number(m.aiAvoidanceRate ?? (r.imagesCount ? ((r.imagesCount - Number(r.aiImagesCount || 0)) / r.imagesCount) * 100 : 100));
+  const localRate = Number(m.localOnlyRate ?? 100);
   const reviewItems = Array.isArray(r.reviewItems) ? r.reviewItems : [];
   const globalItems = reviewItems.filter(item => !item.name && !item.suggestedName);
 
   panel.innerHTML = `
     <div class="at-card">
-      <div class="at-review-head"><div><h3>Revisar leitura</h3><p class="at-muted">${rows.length} membro(s) únicos em ${r.imagesCount || AT.files.length} imagem(ns). ${Number(r.aiImagesCount || 0) ? `OCR local: ${Number(r.ocrImagesCount || 0)} · IA fallback: ${Number(r.aiImagesCount || 0)}` : 'Leitura concluída sem IA visual.'}</p></div><button class="btn btn-ghost" onclick="atCancelReview()">← Voltar</button></div>
+      <div class="at-review-head"><div><h3>Revisar leitura</h3><p class="at-muted">${rows.length} membro(s) únicos em ${r.imagesCount || AT.files.length} imagem(ns). Leitura concluída 100% localmente.</p></div><button class="btn btn-ghost" onclick="atCancelReview()">← Voltar</button></div>
       <div class="at-reader-metrics">
-        <div><span>Sem IA</span><strong>${Math.round(aiAvoidance)}%</strong><small>${Number(m.ocrOnlyImages ?? r.ocrImagesCount ?? 0)} imagem(ns)</small></div>
-        <div><span>Fallback IA</span><strong>${Number(m.aiFallbackImages ?? r.aiImagesCount ?? 0)}</strong><small>somente quando necessário</small></div>
+        <div><span>Leitura local</span><strong>${Math.round(localRate)}%</strong><small>${Number(m.localAutoResolved || 0)} correção(ões) local(is)</small></div>
+        <div><span>Revisão manual</span><strong>${Number(m.manualReviewImages || 0)}</strong><small>imagem(ns) com alguma dúvida</small></div>
         <div><span>Exceções</span><strong>${pending}</strong><small>linhas aguardando confirmação</small></div>
         <div><span>Duplicados</span><strong>${Number(m.duplicatesSkipped ?? r.duplicatesSkipped ?? 0)}</strong><small>screenshots não relidos</small></div>
       </div>
@@ -817,7 +875,7 @@ function atReviewRow(row, i, type) {
   const value = type === 'power' ? (row.power ?? '') : type === 'last_connection' ? (row.lastConnection || '') : (row.joinedAt || '');
   const confidence = Number.isFinite(Number(row.confidence)) ? `${Math.round(Number(row.confidence) * 100)}%` : '—';
   const reasons = (row.reviewReasons || []).map(atReviewReasonLabel);
-  const alternatives = Array.isArray(row.nameAlternatives) && row.nameAlternatives.length > 1 ? ` · ${row.nameAlternatives.join(' / ')}` : row.knownNameCandidate ? ` · conhecido: ${row.knownNameCandidate}` : '';
+  const alternatives = Array.isArray(row.nameAlternatives) && row.nameAlternatives.length > 1 ? ` · ${row.nameAlternatives.join(' / ')}` : row.resolverSuggestion ? ` · sugestão local: ${row.resolverSuggestion}` : row.knownNameCandidate ? ` · conhecido: ${row.knownNameCandidate}` : '';
   const review = row.reviewRequired
     ? `<label class="at-review-check ${row.reviewed?'is-ok':''}"><input data-field="reviewed" type="checkbox" ${row.reviewed?'checked':''} onchange="atToggleReview(${i},this.checked)"><span>${row.reviewed?'Confirmado':'Confirmar'}${reasons.length ? `<small>${esc(reasons.join(' · ')+alternatives)}</small>` : ''}</span></label>`
     : '<span class="at-safe-badge">✓ Seguro</span>';
@@ -908,7 +966,7 @@ async function atConfirmImport() {
     const s = d.summary || {};
     AT.review = null; AT.files = [];
     await atCancelBatch({ silent:true });
-    toast(s.baseline ? `Base criada com ${s.rows} membros.` : `Importado: +${s.joined} entrou · -${s.left} saiu · ${s.returned} voltou.`);
+    toast((s.baseline ? `Base criada com ${s.rows} membros.` : `Importado: +${s.joined} entrou · -${s.left} saiu · ${s.returned} voltou.`) + (s.learnedCorrections ? ` · ${s.learnedCorrections} correção(ões) ensinada(s) ao leitor local.` : ''));
     AT.tab = 'changes';
     await atLoadDashboard();
   } catch (err) { toast(err.message, 'erro'); }
@@ -952,7 +1010,7 @@ function atRenderConfig() {
   panel.innerHTML = `<div class="at-card" style="max-width:600px"><h3>Configuração</h3>
     <div class="field"><label>Nome da Aliança</label><input id="at-cfg-name" maxlength="80" value="${esc(AT.alliance.name)}"></div>
     <div class="field-row"><div class="field"><label>Realm</label><input id="at-cfg-realm" maxlength="80" value="${esc(AT.alliance.realm || '')}"></div><div class="field"><label>UTC do realm</label><input id="at-cfg-utc" type="number" min="-12" max="14" value="${esc(AT.alliance.utcOffset || 0)}"></div></div>
-    <div class="at-note">Os dados estruturados ficam no banco. Screenshots só existem temporariamente durante um lote de leitura e são removidos ao concluir ou cancelar. O navegador guarda apenas referências de interface e o lote retomável ativo.</div>
+    <div class="at-note">Os dados estruturados ficam no banco. O resolvedor local também aprende somente correções de nickname confirmadas por você; screenshots não viram memória. Eles existem temporariamente durante o lote e são removidos ao concluir ou cancelar.</div>
     <button class="btn btn-gold" onclick="atSaveConfig()">💾 Salvar configuração</button>
   </div>`;
 }

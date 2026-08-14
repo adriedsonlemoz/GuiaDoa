@@ -11,7 +11,8 @@ import {
   scoreNicknameCandidate,
 } from '../utils/allianceTracker.js';
 import { buildOcrRegions, detectSnapshotTypeFromOcr, imageDimensions, parseAllianceOcr } from '../services/alliance/ocr.js';
-import { reconcileOcrAndVision } from '../services/alliance/vision.js';
+import { extractAllianceScreenshot } from '../services/alliance/vision.js';
+import { resolveAllianceOcrLocally, weightedNicknameSimilarity } from '../services/alliance/localResolver.js';
 
 
 function allianceOcrTsv(lines = []) {
@@ -130,7 +131,7 @@ test('troca de nick por poder próximo é apenas sugerida, nunca unida automatic
   assert.match(route, /merge-members/);
 });
 
-test('importador usa OCR local primeiro, Groq somente como fallback e armazenamento temporário', () => {
+test('importador da Alliance é 100% local e mantém armazenamento temporário', () => {
   const ocr = readFileSync(new URL('../services/alliance/ocr.js', import.meta.url), 'utf8');
   const vision = readFileSync(new URL('../services/alliance/vision.js', import.meta.url), 'utf8');
   const route = readFileSync(new URL('../routes/allianceTracker.js', import.meta.url), 'utf8');
@@ -139,8 +140,9 @@ test('importador usa OCR local primeiro, Groq somente como fallback e armazename
   assert.match(ocr, /@tesseract\.js-data\/eng/);
   assert.match(ocr, /parseAllianceOcr/);
   assert.match(vision, /extractAllianceScreenshotWithOcr/);
-  assert.match(vision, /qwen\/qwen3\.6-27b/);
-  assert.match(vision, /image_url/);
+  assert.match(vision, /resolveAllianceOcrLocally/);
+  assert.doesNotMatch(vision, /api\.groq\.com|GROQ_API_KEY|image_url|fetch\(/);
+  assert.doesNotMatch(route, /GROQ_API_KEY/);
   assert.match(route, /memoryStorage\(\)/);
   assert.doesNotMatch(route, /cloudinary\.uploader/);
   assert.match(batch, /tmpdir\(\)/);
@@ -150,15 +152,28 @@ test('importador usa OCR local primeiro, Groq somente como fallback e armazename
   assert.match(route, /fileSize:\s*6 \* 1024 \* 1024/);
 });
 
-test('leitor visual traduz erros do provedor em diagnósticos úteis', async () => {
-  const { friendlyVisionError, parseRetryAfter, visionModelCandidates } = await import('../services/alliance/vision.js');
-  assert.equal(friendlyVisionError(401, '{"error":{"message":"invalid api key"}}').code, 'VISION_INVALID_KEY');
-  assert.equal(friendlyVisionError(429, '{"error":{"message":"rate limit"}}').retryable, true);
-  assert.equal(friendlyVisionError(404, '{"error":{"message":"model not found"}}').code, 'VISION_MODEL_UNAVAILABLE');
-  assert.equal(parseRetryAfter('2.5'), 2500);
-  const models = visionModelCandidates('modelo/customizado');
-  assert.equal(models[0], 'modelo/customizado');
-  assert.ok(models.includes('qwen/qwen3.6-27b'));
+test('falha estrutural local vira revisão manual e nunca chama provedor externo', async () => {
+  const originalFetch = global.fetch;
+  let calls = 0;
+  global.fetch = async () => { calls += 1; throw new Error('não deveria chamar rede'); };
+  try {
+    const result = await extractAllianceScreenshot({
+      buffer:Buffer.from('imagem'),
+      ocrCheckpoint:{
+        snapshotType:'power', accepted:false, usable:false, reason:'rows',
+        rows:[{ name:'Daizu', power:1500000, confidence:.82, reviewRequired:true, reviewReasons:['low_ocr_confidence'] }],
+        trustedRows:[], exceptions:[{ type:'structural_gap', name:'linha incompleta' }], warnings:[], confidence:.82,
+      },
+      knownMembers:[{ currentName:'Daizu', latestPower:1500000 }],
+    });
+    assert.equal(calls, 0);
+    assert.equal(result.aiUsed, false);
+    assert.equal(result.localOnly, true);
+    assert.equal(result.manualReviewRequired, true);
+    assert.ok(result.reviewItems.length >= 1);
+  } finally {
+    global.fetch = originalFetch;
+  }
 });
 
 test('Alliance Tracker possui rota progressiva e retomável para narrar a leitura real', () => {
@@ -174,28 +189,17 @@ test('Alliance Tracker possui rota progressiva e retomável para narrar a leitur
   assert.match(route, /aiImagesCount/);
 });
 
-test('rate limit respeita Retry-After e tenta novamente a mesma imagem antes de falhar', async () => {
-  const { extractAllianceScreenshot } = await import('../services/alliance/vision.js');
-  const originalFetch = global.fetch;
-  const events = [];
-  let calls = 0;
-  global.fetch = async () => {
-    calls += 1;
-    if (calls === 1) return new Response('{"error":{"message":"rate limit"}}', { status:429, headers:{ 'retry-after':'0' } });
-    return new Response(JSON.stringify({ choices:[{ message:{ content:JSON.stringify({ snapshotType:'power', rows:[{ name:'Teste', power:123 }], warnings:[] }) } }] }), { status:200, headers:{ 'content-type':'application/json' } });
-  };
-  try {
-    const result = await extractAllianceScreenshot({
-      apiKey:'teste', buffer:Buffer.from('imagem'), rateLimitRetries:2, baseBackoffMs:1,
-      onProgress:event => events.push(event.stage),
-    });
-    assert.equal(calls, 2);
-    assert.equal(result.rows[0].name, 'Teste');
-    assert.ok(events.includes('rate_limit'));
-    assert.ok(events.includes('retrying'));
-  } finally {
-    global.fetch = originalFetch;
-  }
+test('leitor local preserva imagem inconclusiva para revisão sem interromper por indisponibilidade externa', async () => {
+  const result = await extractAllianceScreenshot({
+    buffer:Buffer.from('imagem'),
+    ocrCheckpoint:{
+      snapshotType:null, accepted:false, usable:false, reason:'snapshot_type', rows:[], trustedRows:[], exceptions:[], warnings:['tipo não confirmado'], confidence:.5,
+    },
+  });
+  assert.equal(result.aiUsed, false);
+  assert.equal(result.engine, 'local_resolver_review');
+  assert.equal(result.manualReviewRequired, true);
+  assert.ok(result.reviewItems.some(item => item.type === 'snapshot_type_manual'));
 });
 
 test('lote temporário preserva resultados concluídos e descarta a imagem já processada', async () => {
@@ -256,22 +260,6 @@ test('ROI é calculada a partir das dimensões do screenshot sem biblioteca exte
   assert.ok(regions.header.width < 1080);
   assert.ok(regions.table.top > 0);
   assert.ok(regions.table.height < 2400);
-});
-
-test('OCR seguro e IA divergente no mesmo valor viram exceção de nickname em vez de renomeação silenciosa', () => {
-  const merged = reconcileOcrAndVision({
-    snapshotType:'power', usable:true,
-    trustedRows:[{ name:'Daizu', power:1500000, confidence:.96 }],
-    rows:[{ name:'Daizu', power:1500000, confidence:.96 }], exceptions:[], warnings:[],
-  }, {
-    snapshotType:'power',
-    rows:[{ name:'Da1zu', power:1500000, confidence:.91 }], warnings:[],
-  });
-  assert.equal(merged.rows.length, 1);
-  assert.equal(merged.rows[0].reviewRequired, true);
-  assert.ok(merged.rows[0].nameAlternatives.includes('Daizu'));
-  assert.ok(merged.rows[0].nameAlternatives.includes('Da1zu'));
-  assert.equal(merged.reviewItems[0].type, 'nickname_conflict');
 });
 
 test('reconciliação do lote usa membros conhecidos apenas como evidência para revisão', () => {
@@ -336,4 +324,67 @@ test('checkpoint OCR sobrevive à pausa e é removido quando a imagem conclui', 
   } finally {
     await cancelImportBatch(batch.id, owner);
   }
+});
+
+
+test('resolvedor local corrige nickname com histórico + poder sem chamar IA externa', () => {
+  const result = resolveAllianceOcrLocally({
+    ocr: {
+      snapshotType:'power', usable:true, reason:'exceptions',
+      rows:[
+        { name:'Da1zu', power:1500000, confidence:.92, reviewRequired:true, reviewReasons:['low_ocr_confidence'] },
+        { name:'G⊙KU™', power:3117901, confidence:.97, reviewRequired:false, reviewReasons:[] },
+      ],
+      trustedRows:[{ name:'G⊙KU™', power:3117901, confidence:.97 }],
+      exceptions:[{ type:'low_confidence', name:'Da1zu', confidence:.92 }], warnings:[],
+    },
+    knownMembers:[
+      { currentName:'Daizu', latestPower:1500000 },
+      { currentName:'G⊙KU™', latestPower:3117901 },
+    ],
+  });
+  assert.equal(result.accepted, true);
+  assert.equal(result.rows.find(row => row.ocrOriginalName === 'Da1zu').name, 'Daizu');
+  assert.equal(result.rows.find(row => row.name === 'Daizu').resolverResolved, true);
+  assert.equal(result.resolver.autoResolved, 1);
+  assert.equal(result.resolver.structuralExceptions, 0);
+});
+
+test('resolvedor local aprende correção confirmada sem transformar confusão em regra global', () => {
+  assert.ok(weightedNicknameSimilarity('Da1zu', 'Daizu') > .8);
+  const result = resolveAllianceOcrLocally({
+    ocr: {
+      snapshotType:'power', usable:true, reason:'exceptions',
+      rows:[
+        { name:'MIDNlGHT', power:500000, confidence:.91, reviewRequired:true, reviewReasons:['low_ocr_confidence'] },
+        { name:'Outro', power:100000, confidence:.97, reviewRequired:false, reviewReasons:[] },
+      ],
+      trustedRows:[{ name:'Outro', power:100000, confidence:.97 }],
+      exceptions:[{ type:'low_confidence', name:'MIDNlGHT', confidence:.91 }], warnings:[],
+    },
+    corrections:[{ observedName:'MIDNlGHT', confirmedName:'MIDNIGHT', count:3 }],
+  });
+  assert.equal(result.rows[0].name, 'MIDNIGHT');
+  assert.equal(result.rows[0].ocrOriginalName, 'MIDNlGHT');
+  assert.equal(result.resolver.autoResolved, 1);
+});
+
+test('falhas estruturais permanecem locais e viram exceção para revisão manual', () => {
+  const result = resolveAllianceOcrLocally({
+    ocr:{ snapshotType:'power', usable:true, accepted:false, reason:'exceptions', rows:[
+      { name:'Daizu', power:1500000, confidence:.95, reviewRequired:false, reviewReasons:[] },
+      { name:'Outro', power:100000, confidence:.95, reviewRequired:false, reviewReasons:[] },
+    ], trustedRows:[], exceptions:[{ type:'structural_gap', name:'linha ilegível' }], warnings:[] },
+  });
+  assert.equal(result.accepted, false);
+  assert.equal(result.resolver.structuralExceptions, 1);
+});
+
+test('rota aprende apenas correções de OCR confirmadas e usa coleção prefixada', () => {
+  const route = readFileSync(new URL('../routes/allianceTracker.js', import.meta.url), 'utf8');
+  const db = readFileSync(new URL('../config/database.js', import.meta.url), 'utf8');
+  assert.match(route, /AllianceOcrCorrection/);
+  assert.match(route, /ocrOriginalName/);
+  assert.match(route, /bulkWrite/);
+  assert.match(db, /alliance_ocr_corrections/);
 });

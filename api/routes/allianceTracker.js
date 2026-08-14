@@ -4,6 +4,7 @@ import multer from 'multer';
 import AllianceWorkspace from '../models/AllianceWorkspace.js';
 import AllianceMember from '../models/AllianceMember.js';
 import AllianceSnapshot from '../models/AllianceSnapshot.js';
+import AllianceOcrCorrection from '../models/AllianceOcrCorrection.js';
 import { autenticar, exigirAdmin } from '../middleware/auth.js';
 import {
   ALLIANCE_MEMBER_LIMIT,
@@ -169,23 +170,24 @@ function logVisionError(error) {
 
 router.post('/extract', upload.array('images', 10), async (req, res) => {
   if (!req.files?.length) return res.status(400).json({ erro: 'Selecione pelo menos um screenshot.' });
-  const apiKey = process.env.GROQ_API_KEY;
   try {
-    // Sequencial de propósito: reduz estouros de limite e deixa a leitura mais previsível.
+    // Sequencial de propósito: mantém uso de CPU/memória previsível e preserva a narrativa por imagem.
     const results = await mapLimited(req.files, 1, async (file) => extractAllianceScreenshot({
-      apiKey,
       buffer: file.buffer,
       mimetype: file.mimetype,
     }));
     const merged = mergeExtractedRows(results);
-    if (!merged.rows.length) return res.status(422).json({ erro: 'Nenhum membro pôde ser lido. Tente uma captura mais nítida.', code: 'VISION_NO_ROWS' });
+    if (!merged.rows.length && !merged.reviewItems?.length) {
+      merged.reviewItems = [{ type:'image_manual_entry', message:'Nenhuma linha pôde ser reconstruída automaticamente; revise e adicione os dados manualmente.' }];
+      merged.warnings = [...new Set([...(merged.warnings || []), 'Leitura local inconclusiva; revisão manual necessária.'])];
+    }
     res.json({
       ...merged,
       imagesCount: req.files.length,
       models: [...new Set(results.map(r => r.model).filter(Boolean))],
       engines: [...new Set(results.map(r => r.engine).filter(Boolean))],
       ocrImagesCount: results.filter(r => r.engine === 'ocr').length,
-      aiImagesCount: results.filter(r => r.aiUsed).length,
+      aiImagesCount: 0,
     });
   } catch (error) {
     if (error.name === 'AbortError') return res.status(504).json({ erro: 'A leitura dos screenshots demorou demais.', code: 'VISION_TIMEOUT', retryable: true });
@@ -229,6 +231,7 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
       erro: 'Este lote ainda está processando a imagem atual. O progresso já concluído continua preservado.',
       code: 'VISION_BATCH_BUSY',
       retryable: true,
+      retryAfterMs: 1500,
       ...publicImportBatch(batch),
     });
   }
@@ -249,14 +252,25 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
     res.write(`${JSON.stringify(payload)}\n`);
     return true;
   };
-  const apiKey = process.env.GROQ_API_KEY;
   let knownNames = [];
+  let resolverMembers = [];
+  let resolverCorrections = [];
   if (batch.allianceId) {
     const alliance = await workspaceFor(req, batch.allianceId).catch(() => null);
     if (alliance) {
-      knownNames = (await AllianceMember.find({ allianceId: alliance._id, status: 'active' }).select('currentName').lean())
-        .map(member => member.currentName)
-        .filter(Boolean);
+      [resolverMembers, resolverCorrections] = await Promise.all([
+        AllianceMember.find({ allianceId: alliance._id })
+          .select('currentName aliases status latestPower joinedAt joinedAtRaw lastConnectionAt lastConnectionRaw updatedAt')
+          .sort({ status: 1, updatedAt: -1 })
+          .limit(500)
+          .lean(),
+        AllianceOcrCorrection.find({ allianceId: alliance._id })
+          .select('observedName confirmedName count lastConfirmedAt')
+          .sort({ count: -1, lastConfirmedAt: -1 })
+          .limit(500)
+          .lean(),
+      ]);
+      knownNames = resolverMembers.map(member => member.currentName).filter(Boolean);
     }
   }
 
@@ -312,10 +326,11 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
 
       const savedOcr = batch.currentCheckpoint?.index === index ? batch.currentCheckpoint.ocr : null;
       const result = await extractAllianceScreenshot({
-        apiKey,
         buffer: file.buffer,
         mimetype: file.mimetype,
         ocrCheckpoint: savedOcr,
+        knownMembers: resolverMembers,
+        corrections: resolverCorrections,
         onCheckpoint: checkpoint => saveImportBatchOcrCheckpoint(batch, index, checkpoint),
         onProgress: progress => send({
           type: 'vision_progress', index, total: batch.total, completed: batch.results.length,
@@ -333,6 +348,10 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
         trustedRows: result.ocrTrustedRows ?? result.ocrDiagnostics?.trustedRows ?? result.rows.length,
         exceptions: result.ocrExceptions ?? result.ocrDiagnostics?.exceptions ?? result.reviewItems?.length ?? 0,
         reviewItems: result.reviewItems?.length || 0,
+        localResolverUsed: Boolean(result.localResolverUsed),
+        localResolved: Number(result.localResolver?.autoResolved || 0),
+        localSuggested: Number(result.localResolver?.suggested || 0),
+        localPending: Number(result.localResolver?.pendingRows || 0),
         warnings: result.warnings?.length || 0, batchId: batch.id,
       });
 
@@ -348,17 +367,23 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
 
     send({ type: 'merge_start', imagesCount: batch.results.length, completed: batch.results.length, total: batch.total, batchId: batch.id });
     const merged = mergeExtractedRows(batch.results, null, { knownNames });
-    if (!merged.rows.length) {
-      const noRows = { erro: 'As imagens foram lidas, mas nenhum membro pôde ser confirmado. Tente uma captura mais nítida.', code: 'VISION_NO_ROWS', retryable: false };
-      await pauseImportBatch(batch, noRows);
-      send({ type: 'error', error: { ...noRows, batchId: batch.id, completed: batch.results.length, total: batch.total, currentIndex: batch.results.length } });
-      return res.end();
+    if (!merged.rows.length && !merged.reviewItems?.length) {
+      merged.reviewItems = [{
+        type: 'image_manual_entry',
+        message: 'Nenhuma linha pôde ser reconstruída automaticamente. O lote foi concluído para que você possa informar os dados manualmente na revisão.',
+      }];
+      merged.warnings = [...new Set([...(merged.warnings || []), 'Nenhuma linha foi confirmada automaticamente; use a revisão manual para adicionar os dados.'])];
     }
 
-    const ocrImagesCount = batch.results.filter(r => r.engine === 'ocr').length;
-    const aiImagesCount = batch.results.filter(r => r.aiUsed).length;
+    const pureOcrImagesCount = batch.results.filter(r => r.engine === 'ocr').length;
+    const ocrImagesCount = batch.results.filter(r => !r.aiUsed).length;
+    const aiImagesCount = 0;
+    const manualReviewImages = batch.results.filter(r => r.manualReviewRequired).length;
     const ocrParticipatedImages = batch.results.filter(r => r.ocrUsed !== false).length;
     const totalOcrPasses = batch.results.reduce((sum, r) => sum + Number(r.ocrDiagnostics?.passesCount || 0), 0);
+    const localResolverImages = batch.results.filter(r => r.localResolverUsed).length;
+    const localAutoResolved = batch.results.reduce((sum, r) => sum + Number(r.localResolver?.autoResolved || 0), 0);
+    const localSuggested = batch.results.reduce((sum, r) => sum + Number(r.localResolver?.suggested || 0), 0);
     const data = {
       ...merged,
       capturedAt: batch.capturedAt,
@@ -375,10 +400,17 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
         uniqueImages: batch.total,
         duplicatesSkipped: batch.duplicatesSkipped || 0,
         ocrOnlyImages: ocrImagesCount,
+        pureOcrImages: pureOcrImagesCount,
         ocrParticipatedImages,
-        aiFallbackImages: aiImagesCount,
-        aiAvoidanceRate: batch.total ? Number((((batch.total - aiImagesCount) / batch.total) * 100).toFixed(1)) : 100,
+        aiFallbackImages: 0,
+        aiAvoidanceRate: 100,
+        localOnlyRate: 100,
+        manualReviewImages,
         totalOcrPasses,
+        localResolverImages,
+        localAutoResolved,
+        localSuggested,
+        learnedCorrectionsAvailable: resolverCorrections.length,
         reviewItemsCount: merged.reviewItems?.length || 0,
       },
     };
@@ -413,6 +445,10 @@ router.post('/alliances/:id/import', async (req, res) => {
   const completeList = Boolean(req.body?.completeList);
   const imagesCount = Math.max(0, Math.min(20, Number(req.body?.imagesCount) || 0));
   const rawRows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+  const correctionCandidates = rawRows
+    .filter(raw => raw?.reviewed && raw?.ocrOriginalName && cleanMemberName(raw.ocrOriginalName) && cleanMemberName(raw.name))
+    .map(raw => ({ observedName: cleanMemberName(raw.ocrOriginalName), confirmedName: cleanMemberName(raw.name) }))
+    .filter(item => item.observedName && item.confirmedName && normalizeMemberName(item.observedName) !== normalizeMemberName(item.confirmedName));
   const rowsMap = new Map();
   rawRows.forEach(raw => {
     const row = sanitizeExtractedRow(raw, type);
@@ -568,6 +604,30 @@ router.post('/alliances/:id/import', async (req, res) => {
     changes,
     createdBy: req.usuario.id,
   });
+  if (correctionCandidates.length) {
+    const dedupedCorrections = new Map();
+    for (const item of correctionCandidates) {
+      const key = `${normalizeMemberName(item.observedName)}\u0000${normalizeMemberName(item.confirmedName)}`;
+      dedupedCorrections.set(key, item);
+    }
+    const confirmedAt = new Date();
+    await AllianceOcrCorrection.bulkWrite([...dedupedCorrections.values()].map(item => ({
+      updateOne: {
+        filter: {
+          allianceId: alliance._id,
+          normalizedObserved: normalizeMemberName(item.observedName),
+          normalizedConfirmed: normalizeMemberName(item.confirmedName),
+        },
+        update: {
+          $set: { observedName: item.observedName, confirmedName: item.confirmedName, lastConfirmedAt: confirmedAt, createdBy: req.usuario.id },
+          $setOnInsert: { firstConfirmedAt: confirmedAt },
+          $inc: { count: 1 },
+        },
+        upsert: true,
+      },
+    })), { ordered: false }).catch(error => console.warn('[alliance-tracker] aprendizado OCR:', error.message));
+  }
+
   alliance.updatedAt = new Date();
   await alliance.save();
 
@@ -581,6 +641,7 @@ router.post('/alliances/:id/import', async (req, res) => {
       left: changes.filter(c => c.type === 'left').length,
       returned: changes.filter(c => c.type === 'returned').length,
       nicknameCandidates: changes.filter(c => c.type === 'nickname_candidate').length,
+      learnedCorrections: correctionCandidates.length,
     },
   });
 });

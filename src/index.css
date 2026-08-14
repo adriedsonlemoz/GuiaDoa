@@ -1057,9 +1057,8 @@
   border-radius:22px;
   display:grid;
   place-items:center;
-  background:
-    linear-gradient(145deg,#3f6e68,#294c49 62%,#213e3c);
-  border:2px solid #9e8348;
+  background:linear-gradient(145deg,#173f3b,#0b2927);
+  border:1px solid rgba(184,149,75,.72);
   box-shadow:
     0 9px 24px rgba(31,58,55,.26),
     inset 0 0 0 5px rgba(239,225,177,.08);
@@ -1078,12 +1077,9 @@
   border-color:rgba(166,137,72,.20);
   animation-delay:.6s;
 }
-.sync-core-mark {
-  color:#f6ebc8;
-  font-weight:1000;
-  font-size:1rem;
-  letter-spacing:2px;
-  text-shadow:0 1px 2px rgba(0,0,0,.35);
+.sync-core-logo {
+  width:72px; height:72px; object-fit:cover; border-radius:18px;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.28));
 }
 .sync-core-dot {
   position:absolute;
@@ -1373,4 +1369,13 @@
   .sync-pulse-line,
   .sync-signal span,
   .sync-live-glyph { animation:none !important; }
+}
+
+.game-topbar-brand-icon {
+  width:34px; height:34px; object-fit:cover; border-radius:8px;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.28));
+}
+.about-brand-icon {
+  display:block; width:88px; height:88px; object-fit:cover; margin:0 auto 10px;
+  border-radius:18px; filter:drop-shadow(0 6px 10px rgba(31,58,55,.22));
 }

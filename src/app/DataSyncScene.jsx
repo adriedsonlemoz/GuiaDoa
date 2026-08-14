@@ -41,7 +41,7 @@ export default function DataSyncScene({
           <div className="sync-pulse-line sync-pulse-line-b" />
 
           <div className={`sync-core sync-core-${phase}`}>
-            <span className="sync-core-mark">DOA</span>
+            <img className="sync-core-logo" src="/img/app-icon.png" alt="" />
             <span className="sync-core-dot" />
           </div>
 

@@ -32,7 +32,7 @@ const GuiaApp = () => {
   };
 
   const title = isHome ? 'GUIA DOA' : (currentRoute?.label || 'GUIA DOA');
-  const rightIcon = isHome ? '🛡️' : (currentRoute?.icon || '◆');
+  const rightIcon = isHome ? null : (currentRoute?.icon || '◆');
 
   return (
     <>
@@ -68,7 +68,7 @@ const GuiaApp = () => {
           {isHome ? '🏰' : '‹'}
         </button>
         <div className="game-topbar-title">{title}</div>
-        <div className="game-topbar-side" aria-hidden="true">{rightIcon}</div>
+        <div className="game-topbar-side" aria-hidden="true">{isHome ? <img className="game-topbar-brand-icon" src="/img/app-icon.png" alt="" /> : rightIcon}</div>
       </header>
 
       <main className="game-page">

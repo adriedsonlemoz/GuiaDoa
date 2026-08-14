@@ -9,6 +9,7 @@ import { API_URL as API } from '../config/api.js';
 
 const CHANGELOG_CONFIG = [
   { ver: DISPLAY_VERSION, icon: '✦', key: 'latest', color: '#4E716A', count: 4 },
+  { ver: 'Beta 2.34', icon: '✦', key: 'history.2_34', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.33', icon: '👥', key: 'history.2_33', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.32', icon: '🏰', key: 'history.2_32', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.31', icon: '🐉', key: 'history.2_31', color: '#5A7B72', count: 4 },
@@ -106,7 +107,7 @@ const Sobre = () => {
       <div className="tw-card mb-3">
         <GameHeader title={t('about.app_title')} />
         <div className="p-4 text-center bg-aoe-card">
-          <p className="text-5xl leading-none mb-2 m-0" style={{ filter: 'drop-shadow(1px 2px 3px rgba(62,47,28,0.2))' }}>🛡️</p>
+          <img className="about-brand-icon" src="/img/app-icon.png" alt="GUIA DOA" />
           <div className="inline-flex items-center gap-2 mb-1">
             <p className="font-cinzel font-bold text-lg uppercase tracking-widest m-0" style={{ color: C.ACCENT_DEEP }}>{DISPLAY_VERSION}</p>
             <span className="font-nunito font-black text-[0.58rem] px-2 py-0.5 rounded-full text-white" style={{ background: C.SUCCESS, letterSpacing: '0.5px' }}>{t('about.new')}</span>

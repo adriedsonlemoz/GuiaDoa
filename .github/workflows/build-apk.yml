@@ -118,11 +118,15 @@ jobs:
       - name: 🔄 Capacitor sync
         run: npx cap sync android
 
-      # ── 13. Permissão Gradle ─────────────────────────────────────────────────
+      # ── 13. Aplicar ícone oficial do GUIA DOA ─────────────────────────────────
+      - name: 🐉 Aplicar ícone Android
+        run: node scripts/apply-android-icon.mjs
+
+      # ── 14. Permissão Gradle ─────────────────────────────────────────────────
       - name: 🔐 Permissão gradlew
         run: chmod +x android/gradlew
 
-      # ── 14a. Build DEBUG ─────────────────────────────────────────────────────
+      # ── 15a. Build DEBUG ─────────────────────────────────────────────────────
       - name: 🛠️ Build APK Debug
         if: ${{ github.event.inputs.build_type != 'release' }}
         run: |
@@ -132,7 +136,7 @@ jobs:
             --stacktrace \
             -Dorg.gradle.jvmargs="-Xmx2048m"
 
-      # ── 14b. Build RELEASE (requer keystore) ─────────────────────────────────
+      # ── 15b. Build RELEASE (requer keystore) ─────────────────────────────────
       - name: 🔏 Build APK Release
         if: ${{ github.event.inputs.build_type == 'release' }}
         run: |
@@ -147,7 +151,7 @@ jobs:
           KEY_ALIAS:        ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD:     ${{ secrets.KEY_PASSWORD }}
 
-      # ── 15. Localizar APK gerado ─────────────────────────────────────────────
+      # ── 16. Localizar APK gerado ─────────────────────────────────────────────
       - name: 🔍 Localizar APK
         id: find_apk
         run: |
@@ -156,7 +160,7 @@ jobs:
           echo "APK encontrado: $APK"
           ls -lh "$APK"
 
-      # ── 15. Upload do APK ────────────────────────────────────────────────────
+      # ── 17. Upload do APK ────────────────────────────────────────────────────
       - name: 📤 Upload APK
         uses: actions/upload-artifact@v4
         with:
@@ -165,7 +169,7 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
-      # ── 17. Sumário no GitHub ────────────────────────────────────────────────
+      # ── 18. Sumário no GitHub ────────────────────────────────────────────────
       - name: 📋 Sumário do build
         if: always()
         run: |

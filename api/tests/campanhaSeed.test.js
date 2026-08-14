@@ -50,26 +50,42 @@ test('estratégias começam vazias e não são inventadas pelo seed', () => {
 });
 
 
-test('Antropos Nv.1–4 recebem guia inicial de Arqueiros com valores escolhidos para teste mobile', () => {
-  const expected = {
-    1:[60,147,33,1,1,2],
-    2:[320,600,50,1,1,2],
-    3:[600,1815,72,4,4,5],
-    4:[2000,2420,100,4,4,5],
-  };
-  for (const [nivelStr, values] of Object.entries(expected)) {
-    const nivel = Number(nivelStr);
-    const entry = ANTROPOS_SEED.find(x => x.nivel === nivel);
+test('Antropos Nv.1–10 recebem estratégias confirmadas e não criam Nv.11', () => {
+  assert.deepEqual(ANTROPOS_SEED.map(x => x.nivel), [1,2,3,4,5,6,7,8,9,10]);
+  assert.equal(ANTROPOS_SEED.some(x => x.nivel === 11), false);
+  assert.ok(ANTROPOS_SEED.every(x => x.guiasAtaque.length >= 5));
+  assert.ok(ANTROPOS_SEED.flatMap(x => x.guiasAtaque).every(g => g.status === 'confirmado'));
+
+  const lbmExpected = { 1:60,2:320,3:600,4:2000,5:5000,6:7000,7:25000,8:45000,9:70000,10:100000 };
+  for (const [nivelStr, qty] of Object.entries(lbmExpected)) {
+    const entry = ANTROPOS_SEED.find(x => x.nivel === Number(nivelStr));
     const guide = entry.guiasAtaque.find(x => x.codigo === 'arqueiros-lbm');
-    assert.ok(guide, `guia LBM ausente no nível ${nivel}`);
-    assert.equal(guide.status, 'validacao');
+    assert.equal(guide.quantidade, qty);
+    assert.equal(guide.resultado, 'sem_perdas');
     assert.equal(guide.tropaPrincipal, 'Arqueiros');
-    assert.equal(guide.quantidade, values[0]);
-    assert.equal(guide.apoios.find(x=>x.nome==='Carregadores').quantidade, values[1]);
-    assert.equal(guide.apoios.find(x=>x.nome==='Transportes Blindados').quantidade, values[2]);
-    assert.equal(guide.pesquisas.find(x=>x.nome==='Metalurgia').nivel, values[3]);
-    assert.equal(guide.pesquisas.find(x=>x.nome==='Medicina').nivel, values[4]);
-    assert.equal(guide.pesquisas.find(x=>x.nome==='Calibração de Armas').nivel, values[5]);
   }
-  assert.ok(ANTROPOS_SEED.filter(x=>x.nivel>=5).every(x => x.guiasAtaque.length === 0));
+
+  const n1 = ANTROPOS_SEED.find(x => x.nivel === 1);
+  const lbm1 = n1.guiasAtaque.find(x => x.codigo === 'arqueiros-lbm');
+  assert.equal(lbm1.apoios.find(x=>x.nome==='Carregadores').quantidade, 147);
+  assert.equal(lbm1.apoios.find(x=>x.nome==='Transportes Blindados').quantidade, 33);
+  assert.equal(lbm1.pesquisas.find(x=>x.nome==='Calibração de Armas').nivel, 2);
+
+  const n9 = ANTROPOS_SEED.find(x => x.nivel === 9);
+  const risky = n9.guiasAtaque.filter(x => x.resultado === 'possiveis_perdas');
+  assert.equal(risky.length, 2);
+  assert.ok(risky.every(x => x.codigo.startsWith('dragoes-ataque-rapido-ssd')));
+  assert.equal(n9.guiasAtaque.find(x=>x.codigo==='arqueiros-lbm-dragao-alt-2').quantidade, 38000);
+
+  const n10 = ANTROPOS_SEED.find(x => x.nivel === 10);
+  assert.equal(n10.guiasAtaque.find(x=>x.codigo==='arqueiros-lbm-dragao').quantidade, 89999);
+  assert.equal(n10.guiasAtaque.find(x=>x.codigo==='lava-jaws-lj8').quantidade, 3500);
+  assert.equal(n10.guiasAtaque.find(x=>x.codigo==='dragoes-combate-bd').quantidade, 110000);
+});
+
+test('Fangtooth Nv.4 preserva quantidade ausente em vez de inventar dado', () => {
+  const guide = ANTROPOS_SEED.find(x => x.nivel === 4).guiasAtaque.find(x => x.codigo === 'fangtooth-ft');
+  assert.equal(guide.quantidade, null);
+  assert.equal(guide.resultado, 'incompleto');
+  assert.match(guide.passos[0], /não foi informada/i);
 });

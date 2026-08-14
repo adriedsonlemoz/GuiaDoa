@@ -56,10 +56,14 @@ test('lista de níveis usa uma coluna e destaca Fedor', () => {
   assert.match(source, /campaign\.fedor_tactic/);
 });
 
-test('frontend exibe guias estruturados, tática por Fedor e teste de tropas especiais', () => {
+test('frontend exibe guias estruturados, resultado de perdas e tropas especiais confirmadas', () => {
   const source = read('src/components/CampanhaMapa.jsx');
   assert.match(source, /AttackGuidesBlock/);
   assert.match(source, /guiasAtaque/);
   assert.match(source, /SPECIAL_TEST_TROOPS/);
   assert.match(source, /Carregadores|Transportes Blindados|campaign\.choose_one_support/);
+  assert.match(source, /campaign\.zero_loss/);
+  assert.match(source, /campaign\.possible_losses/);
+  assert.match(source, /campaign-guide-companion/);
+  assert.match(source, /campaign\.ranged_speed_warning/);
 });

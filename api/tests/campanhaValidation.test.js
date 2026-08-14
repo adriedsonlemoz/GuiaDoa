@@ -42,7 +42,7 @@ test('normaliza guia estruturado de ataque com apoios e pesquisas', () => {
   const out = normalizarCampanhaPayload({
     categoria:'antropos', nivel:1, nome:'Campo de Antropos — Nv. 1',
     guiasAtaque:[{
-      codigo:'arqueiros-lbm', titulo:'Arqueiros (LBM)', status:'validacao', tropaPrincipal:'Arqueiros', quantidade:60,
+      codigo:'arqueiros-lbm', titulo:'Arqueiros (LBM)', status:'confirmado', resultado:'sem_perdas', complemento:'Grande Dragão', tropaPrincipal:'Arqueiros', quantidade:60,
       apoios:[{nome:'Carregadores',quantidade:147,alternativa:'transporte'},{nome:'Transportes Blindados',quantidade:33,alternativa:'transporte'}],
       pesquisas:[{nome:'Metalurgia',nivel:1},{nome:'Medicina',nivel:1},{nome:'Calibração de Armas',nivel:2}],
       passos:['Teste primeiro.'], fonte:{tipo:'comunidade',url:'https://example.com',descricao:'Fonte de teste'},
@@ -52,7 +52,9 @@ test('normaliza guia estruturado de ataque com apoios e pesquisas', () => {
   assert.equal(out.guiasAtaque[0].codigo, 'arqueiros-lbm');
   assert.equal(out.guiasAtaque[0].apoios.length, 2);
   assert.equal(out.guiasAtaque[0].pesquisas[2].nivel, 2);
-  assert.equal(out.guiasAtaque[0].status, 'validacao');
+  assert.equal(out.guiasAtaque[0].status, 'confirmado');
+  assert.equal(out.guiasAtaque[0].resultado, 'sem_perdas');
+  assert.equal(out.guiasAtaque[0].complemento, 'Grande Dragão');
 });
 
 test('rejeita guia estruturado sem título ou com pesquisa inválida', () => {

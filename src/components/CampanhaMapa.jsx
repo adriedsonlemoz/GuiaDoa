@@ -26,7 +26,14 @@ const RESOURCE_KEYS = {
   seeds:'troops.resource.seeds', geodes:'troops.resource.geodes', sulfur:'troops.resource.sulfur',
 };
 
-const SPECIAL_TEST_TROOPS = ['Fada da Selva','Centauros Infernais','Sapo Tóxico','Esmagadores Colossais','Caçador de Almas','Medusa'];
+const SPECIAL_TEST_TROOPS = [
+  { pt:'Fada da Selva', en:'Forest Fairy' },
+  { pt:'Centauros Infernais', en:'Infernal Centaurs' },
+  { pt:'Sapo Tóxico', en:'Toxic Toad' },
+  { pt:'Esmagadores Colossais', en:'Colossal Smashers' },
+  { pt:'Caçador de Almas', en:'Soul Hunter' },
+  { pt:'Medusa', en:'Snake-headed Maiden' },
+];
 
 function Loading({ t }) {
   return <div className="campaign-loading"><span className="spinner" /> {t('campaign.loading')}</div>;
@@ -104,6 +111,8 @@ function LevelList({ category, entries, onOpen, onBack, t, locale, content, titl
           const fedor = (entry.tropas || []).find(troop => troop.nome === 'Fedor');
           const sampleResources = (entry.recursos || []).slice(0, 5);
           const rewards = entry.recompensas || [];
+          const safeGuides = (entry.guiasAtaque || []).filter(guide => guide.resultado === 'sem_perdas').length;
+          const riskyGuides = (entry.guiasAtaque || []).filter(guide => guide.resultado === 'possiveis_perdas').length;
           return (
             <button type="button" className="campaign-level-card" key={entry.slug} onClick={() => onOpen(entry)}>
               <div className="campaign-level-top">
@@ -118,6 +127,7 @@ function LevelList({ category, entries, onOpen, onBack, t, locale, content, titl
                 {entry.campo?.producaoHora != null && <span>↗ {fmt.format(entry.campo.producaoHora)}/h</span>}
               </div>
               {rewards.length > 0 && <span className="campaign-reward-mini">◇ {t('campaign.reward_count', { count:rewards.length })}</span>}
+              {(safeGuides > 0 || riskyGuides > 0) && <div className="campaign-guide-mini-row">{safeGuides > 0 && <span className="campaign-guide-mini-safe">✓ {t('campaign.zero_loss_count', { count:safeGuides })}</span>}{riskyGuides > 0 && <span className="campaign-guide-mini-risk">⚠ {t('campaign.risk_count', { count:riskyGuides })}</span>}</div>}
               <span className="campaign-open">{t('campaign.open')} ›</span>
             </button>
           );
@@ -136,7 +146,7 @@ function FedorTactic({ entry, t, locale }) {
     <div className="campaign-guide-card campaign-guide-fedor">
       <div className="campaign-guide-head">
         <strong>🕵️ {t('campaign.fedor_tactic')}</strong>
-        <span className="campaign-guide-status">{t('campaign.validation')}</span>
+        <span className="campaign-guide-status is-confirmed">{t('campaign.confirmed')}</span>
       </div>
       <p>{t('campaign.fedor_explain', { count:fmt.format(fedor.quantidade) })}</p>
       <div className="campaign-guide-formula">
@@ -151,19 +161,19 @@ function FedorTactic({ entry, t, locale }) {
   );
 }
 
-function SpecialTroopsTactic({ t }) {
+function SpecialTroopsTactic({ t, locale }) {
   return (
     <div className="campaign-guide-card">
       <div className="campaign-guide-head">
         <strong>✨ {t('campaign.special_troops')}</strong>
-        <span className="campaign-guide-status">{t('campaign.validation')}</span>
+        <span className="campaign-guide-result is-safe">✓ {t('campaign.zero_loss')}</span>
       </div>
       <p>{t('campaign.special_troops_intro')}</p>
       <div className="campaign-special-list">
-        {SPECIAL_TEST_TROOPS.map(name => <span key={name}>500 · {name}</span>)}
+        {SPECIAL_TEST_TROOPS.map(item => <span key={item.pt}>500 · {locale === 'pt-BR' ? item.pt : item.en}</span>)}
       </div>
       <div className="campaign-research-chips">
-        <span>Metalurgia 4+</span><span>Medicina 4+</span><span>Calibração de Armas 4+</span>
+        <span>{locale === 'pt-BR' ? 'Metalurgia' : 'Metallurgy'} 4+</span><span>{locale === 'pt-BR' ? 'Medicina' : 'Medicine'} 4+</span><span>{locale === 'pt-BR' ? 'Calibração de Armas' : 'Weapons Calibration'} 4+</span>
       </div>
       <p className="campaign-guide-note">{t('campaign.special_troops_note')}</p>
       <p className="campaign-guide-note">{t('campaign.recovery_note')}</p>
@@ -177,28 +187,43 @@ function AttackGuide({ guide, t, locale }) {
   const summary = translated.resumo || guide.resumo;
   const steps = translated.passos || guide.passos || [];
   const notes = translated.observacoes || guide.observacoes;
+  const mainTroop = translated.tropaPrincipal || guide.tropaPrincipal;
+  const complement = translated.complemento || guide.complemento || '';
   const fmt = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   const displayName = item => (locale !== 'pt-BR' ? item?.i18n?.[locale]?.nome : '') || item?.nome || '';
+  const resultMeta = guide.resultado === 'sem_perdas'
+    ? { key:'campaign.zero_loss', icon:'✓', cls:'is-safe' }
+    : guide.resultado === 'possiveis_perdas'
+      ? { key:'campaign.possible_losses', icon:'⚠', cls:'is-risk' }
+      : guide.resultado === 'incompleto'
+        ? { key:'campaign.incomplete_method', icon:'!', cls:'is-incomplete' }
+        : null;
   return (
-    <div className="campaign-guide-card">
+    <div className={`campaign-guide-card ${resultMeta?.cls || ''}`}>
       <div className="campaign-guide-head">
-        <strong>🏹 {title}</strong>
-        <span className={`campaign-guide-status ${guide.status === 'confirmado' ? 'is-confirmed' : ''}`}>{guide.status === 'confirmado' ? t('campaign.confirmed') : t('campaign.validation')}</span>
+        <strong>⚔️ {title}</strong>
+        {resultMeta
+          ? <span className={`campaign-guide-result ${resultMeta.cls}`}>{resultMeta.icon} {t(resultMeta.key)}</span>
+          : <span className={`campaign-guide-status ${guide.status === 'confirmado' ? 'is-confirmed' : ''}`}>{guide.status === 'confirmado' ? t('campaign.confirmed') : t('campaign.validation')}</span>}
       </div>
       {summary && <p>{summary}</p>}
-      {guide.tropaPrincipal && guide.quantidade != null && (
-        <div className="campaign-main-march"><span>{t('campaign.main_troop')}</span><strong>{fmt.format(guide.quantidade)} · {guide.tropaPrincipal}</strong></div>
+      {mainTroop && (
+        <div className="campaign-main-march">
+          <span>{t('campaign.main_troop')}</span>
+          <strong>{guide.quantidade == null ? t('campaign.quantity_pending') : fmt.format(guide.quantidade)} · {mainTroop}</strong>
+        </div>
       )}
+      {complement && <div className="campaign-guide-companion"><span>{t('campaign.companion')}</span><strong>{complement}</strong></div>}
       {(guide.apoios || []).length > 0 && (
         <div className="campaign-support-options">
-          <small>{t('campaign.choose_one_support')}</small>
+          <small>{guide.apoios.length > 1 ? t('campaign.choose_one_support') : t('campaign.support')}</small>
           <div>{guide.apoios.map((x,i) => <React.Fragment key={`${x.nome}-${i}`}><span><b>{fmt.format(x.quantidade)}</b> {displayName(x)}</span>{i < guide.apoios.length - 1 && <em>{t('campaign.or')}</em>}</React.Fragment>)}</div>
         </div>
       )}
       {(guide.pesquisas || []).length > 0 && <div className="campaign-research-chips">{guide.pesquisas.map((x,i)=><span key={`${x.nome}-${i}`}>{displayName(x)} {x.nivel}+</span>)}</div>}
       {steps.length > 0 && <div className="campaign-guide-list"><strong>{t('campaign.steps')}</strong>{steps.map((x,i)=><span key={i}>{i+1}. {x}</span>)}</div>}
       {notes && <p className="campaign-guide-note">{notes}</p>}
-      {guide.fonte?.descricao && <p className="campaign-community-source">{t('campaign.community_source')}: {guide.fonte.descricao}</p>}
+      {guide.fonte?.descricao && <p className="campaign-community-source">{t('campaign.community_source')}: {guide.fonte?.tipo === 'usuario+comunidade' ? t('campaign.confirmed_community_source') : guide.fonte.descricao}</p>}
     </div>
   );
 }
@@ -210,9 +235,10 @@ function AttackGuidesBlock({ entry, t, locale }) {
   return (
     <section className="campaign-report-section campaign-attack-section">
       <h3>{t('campaign.how_to_attack')}</h3>
+      {entry.categoria === 'antropos' && <div className="campaign-combat-warning">⚠ {t('campaign.ranged_speed_warning')}</div>}
       {showCommon && <FedorTactic entry={entry} t={t} locale={locale} />}
       {guides.map(guide => <AttackGuide key={guide.codigo} guide={guide} t={t} locale={locale} />)}
-      {showCommon && <SpecialTroopsTactic t={t} />}
+      {showCommon && <SpecialTroopsTactic t={t} locale={locale} />}
     </section>
   );
 }

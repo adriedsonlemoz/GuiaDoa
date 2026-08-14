@@ -32,3 +32,9 @@ test('merge de seed preenche dados faltantes sem substituir dados cadastrados', 
   assert.equal(patch.niveis[0].extra, 5);
   assert.equal(patch.niveis[1].nivel, 2);
 });
+
+test('merge de array ausente aceita conteúdo novo sem sobrescrever edições futuras', () => {
+  const r = mesclarArrayObjetos(undefined, [{ codigo:'arqueiros-lbm', titulo:'Arqueiros' }], 'codigo');
+  assert.equal(r.length, 1);
+  assert.equal(r[0].codigo, 'arqueiros-lbm');
+});

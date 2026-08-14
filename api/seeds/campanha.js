@@ -9,6 +9,55 @@ const recursos = (stone, metals, wood, gold, food) => [
 const tropa = (nome, quantidade) => ({ nome, quantidade });
 const r = (valor, exibicao, exato = true) => ({ valor, exibicao, exato });
 
+
+const ANTHROPUS_COMMUNITY_URL = 'https://dragonsofatlantis.fandom.com/wiki/Anthropus_Camps';
+
+const LBM_TESTE = Object.freeze({
+  1:{ arqueiros:60,   carregadores:147,  transportes:33,  met:1, med:1, wc:2 },
+  2:{ arqueiros:320,  carregadores:600,  transportes:50,  met:1, med:1, wc:2 },
+  3:{ arqueiros:600,  carregadores:1815, transportes:72,  met:4, med:4, wc:5 },
+  4:{ arqueiros:2000, carregadores:2420, transportes:100, met:4, med:4, wc:5 },
+});
+
+function guiaArqueiros(nivel) {
+  const cfg = LBM_TESTE[nivel];
+  if (!cfg) return [];
+  return [{
+    codigo:'arqueiros-lbm',
+    titulo:'Arqueiros (LBM)',
+    resumo:'Configuração comunitária antiga usada como ponto inicial de teste no mobile. Use uma das opções de transporte, não as duas ao mesmo tempo.',
+    status:'validacao',
+    tropaPrincipal:'Arqueiros',
+    quantidade:cfg.arqueiros,
+    apoios:[
+      { nome:'Carregadores', quantidade:cfg.carregadores, alternativa:'transporte', i18n:{ 'en-US':{ nome:'Porters' } } },
+      { nome:'Transportes Blindados', quantidade:cfg.transportes, alternativa:'transporte', i18n:{ 'en-US':{ nome:'Armored Transports' } } },
+    ],
+    pesquisas:[
+      { nome:'Metalurgia', nivel:cfg.met, i18n:{ 'en-US':{ nome:'Metallurgy' } } },
+      { nome:'Medicina', nivel:cfg.med, i18n:{ 'en-US':{ nome:'Medicine' } } },
+      { nome:'Calibração de Armas', nivel:cfg.wc, i18n:{ 'en-US':{ nome:'Weapons Calibration' } } },
+    ],
+    passos:[
+      `Envie ${cfg.arqueiros} Arqueiros.`,
+      `Escolha apenas um apoio: ${cfg.carregadores} Carregadores OU ${cfg.transportes} Transportes Blindados.`,
+      'Confira as pesquisas mínimas antes de atacar.',
+    ],
+    observacoes:'Estratégia em validação no jogo mobile atual. General, bônus e outras diferenças de conta podem alterar o resultado; teste primeiro antes de tratar como sem perdas garantidas.',
+    fonte:{ tipo:'comunidade', url:ANTHROPUS_COMMUNITY_URL, descricao:'Dragons of Atlantis Wiki — Anthropus Camps; valores Nv.1–4 escolhidos pelo usuário para teste no mobile.' },
+    i18n:{ 'en-US':{
+      titulo:'Longbowmen (LBM)',
+      resumo:'Legacy community setup used as an initial mobile test. Use one transport option, not both at the same time.',
+      passos:[
+        `Send ${cfg.arqueiros} Longbowmen.`,
+        `Choose only one support option: ${cfg.carregadores} Porters OR ${cfg.transportes} Armored Transports.`,
+        'Check the minimum research levels before attacking.',
+      ],
+      observacoes:'Strategy under validation in the current mobile game. General, bonuses and account differences may change the result; test it before treating it as guaranteed zero-loss.',
+    } },
+  }];
+}
+
 /**
  * Dados confirmados a partir dos relatórios de batalha enviados em 14/08/2026.
  * As imagens não fazem parte do seed. Quando o jogo abrevia um valor de recurso,
@@ -70,6 +119,7 @@ export const ANTROPOS_SEED = [
   ...item,
   i18n:{ 'en-US': { nome:`Anthropus Camp — Lv. ${item.nivel}` } },
   estrategia:{ publicada:false, titulo:'', resumo:'', passos:[], requisitos:[], observacoes:'', i18n:{} },
+  guiasAtaque:guiaArqueiros(item.nivel),
   recompensas:[],
   fonte:{ tipo:'screenshot', data:'2026-08-14', descricao:'Relatório de batalha do jogo', verificado:true },
 }));
@@ -107,6 +157,7 @@ const savana = (nivel, tropas, producaoHora) => ({
   recompensas:savanaRewards(nivel),
   i18n:{ 'en-US': { nome:`Savannah — Lv. ${nivel}` } },
   estrategia:{ publicada:false, titulo:'', resumo:'', passos:[], requisitos:[], observacoes:'', i18n:{} },
+  guiasAtaque:[],
   fonte:{ tipo:'screenshot', data:'2026-08-14', descricao:'Tela do campo e relatório de batalha do jogo', verificado:true },
 });
 

@@ -12,10 +12,11 @@ async function obterLean(Model, filtro) {
 }
 
 export function mesclarArrayObjetos(existente = [], seed = [], chave) {
-  if (!Array.isArray(existente) || !Array.isArray(seed) || !chave) return existente;
-  const porChave = new Map(existente.map(item => [String(item?.[chave]), item]));
-  let mudou = false;
-  const resultado = existente.map(item => ({ ...item }));
+  if (!Array.isArray(seed) || !chave) return existente;
+  const base = Array.isArray(existente) ? existente : [];
+  const porChave = new Map(base.map(item => [String(item?.[chave]), item]));
+  let mudou = !Array.isArray(existente) && seed.length > 0;
+  const resultado = base.map(item => ({ ...item }));
   const posicoes = new Map(resultado.map((item, i) => [String(item?.[chave]), i]));
 
   for (const seedItem of seed) {
@@ -33,7 +34,7 @@ export function mesclarArrayObjetos(existente = [], seed = [], chave) {
     resultado[posicoes.get(k)] = combinado;
   }
 
-  return mudou ? resultado : existente;
+  return mudou ? resultado : base;
 }
 
 /** Insere se ausente; se já existir, preenche somente campos vazios. Nunca apaga edição existente. */

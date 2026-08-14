@@ -36,3 +36,26 @@ test('rejeita quantidade de tropa inválida e estratégia publicada vazia', () =
 test('resume categorias futuras com zero sem criar registros falsos', () => {
   assert.deepEqual(resumoCategorias([{categoria:'antropos'},{categoria:'antropos'},{categoria:'campos'}]), {antropos:2,campos:1,zyrvorthian:0,grodz:0});
 });
+
+
+test('normaliza guia estruturado de ataque com apoios e pesquisas', () => {
+  const out = normalizarCampanhaPayload({
+    categoria:'antropos', nivel:1, nome:'Campo de Antropos — Nv. 1',
+    guiasAtaque:[{
+      codigo:'arqueiros-lbm', titulo:'Arqueiros (LBM)', status:'validacao', tropaPrincipal:'Arqueiros', quantidade:60,
+      apoios:[{nome:'Carregadores',quantidade:147,alternativa:'transporte'},{nome:'Transportes Blindados',quantidade:33,alternativa:'transporte'}],
+      pesquisas:[{nome:'Metalurgia',nivel:1},{nome:'Medicina',nivel:1},{nome:'Calibração de Armas',nivel:2}],
+      passos:['Teste primeiro.'], fonte:{tipo:'comunidade',url:'https://example.com',descricao:'Fonte de teste'},
+    }],
+  });
+  assert.equal(out.guiasAtaque.length, 1);
+  assert.equal(out.guiasAtaque[0].codigo, 'arqueiros-lbm');
+  assert.equal(out.guiasAtaque[0].apoios.length, 2);
+  assert.equal(out.guiasAtaque[0].pesquisas[2].nivel, 2);
+  assert.equal(out.guiasAtaque[0].status, 'validacao');
+});
+
+test('rejeita guia estruturado sem título ou com pesquisa inválida', () => {
+  assert.throws(() => normalizarCampanhaPayload({categoria:'antropos',nivel:1,nome:'X',guiasAtaque:[{codigo:'x'}]}), /Guia de ataque inválido/i);
+  assert.throws(() => normalizarCampanhaPayload({categoria:'antropos',nivel:1,nome:'X',guiasAtaque:[{titulo:'X',pesquisas:[{nome:'Metalurgia',nivel:-1}]}]}), /Pesquisa inválida/i);
+});

@@ -26,6 +26,8 @@ const RESOURCE_KEYS = {
   seeds:'troops.resource.seeds', geodes:'troops.resource.geodes', sulfur:'troops.resource.sulfur',
 };
 
+const SPECIAL_TEST_TROOPS = ['Fada da Selva','Centauros Infernais','Sapo Tóxico','Esmagadores Colossais','Caçador de Almas','Medusa'];
+
 function Loading({ t }) {
   return <div className="campaign-loading"><span className="spinner" /> {t('campaign.loading')}</div>;
 }
@@ -99,6 +101,7 @@ function LevelList({ category, entries, onOpen, onBack, t, locale, content, titl
       <div className="campaign-level-grid">
         {entries.map(entry => {
           const totalTroops = (entry.tropas || []).reduce((sum, troop) => sum + Number(troop.quantidade || 0), 0);
+          const fedor = (entry.tropas || []).find(troop => troop.nome === 'Fedor');
           const sampleResources = (entry.recursos || []).slice(0, 5);
           const rewards = entry.recompensas || [];
           return (
@@ -109,6 +112,7 @@ function LevelList({ category, entries, onOpen, onBack, t, locale, content, titl
               </div>
               <strong>{content(entry, 'nome')}</strong>
               <span className="campaign-enemy-total">☠️ {fmt.format(totalTroops)} {t('campaign.enemy_troops_short')}</span>
+              {fedor && <span className="campaign-fedor-mini">⚠ {t('campaign.fedor')}: {fmt.format(fedor.quantidade)}</span>}
               <div className="campaign-resource-mini">
                 {sampleResources.map(r => <span key={r.tipo}>{RESOURCE_ICONS[r.tipo] || '◆'} {r.exibicao}</span>)}
                 {entry.campo?.producaoHora != null && <span>↗ {fmt.format(entry.campo.producaoHora)}/h</span>}
@@ -123,7 +127,97 @@ function LevelList({ category, entries, onOpen, onBack, t, locale, content, titl
   );
 }
 
-function StrategyBlock({ strategy, t, locale }) {
+
+function FedorTactic({ entry, t, locale }) {
+  const fmt = useMemo(() => new Intl.NumberFormat(locale), [locale]);
+  const fedor = (entry.tropas || []).find(troop => troop.nome === 'Fedor');
+  if (!fedor?.quantidade) return null;
+  return (
+    <div className="campaign-guide-card campaign-guide-fedor">
+      <div className="campaign-guide-head">
+        <strong>🕵️ {t('campaign.fedor_tactic')}</strong>
+        <span className="campaign-guide-status">{t('campaign.validation')}</span>
+      </div>
+      <p>{t('campaign.fedor_explain', { count:fmt.format(fedor.quantidade) })}</p>
+      <div className="campaign-guide-formula">
+        <span><b>{fmt.format(fedor.quantidade)}+</b><small>{t('campaign.spies')}</small></span>
+        <i>→</i>
+        <span><b>1</b><small>{t('campaign.spy')}</small></span>
+        <i>+</i>
+        <span><b>{t('campaign.offensive_troop')}</b><small>{t('campaign.attack')}</small></span>
+      </div>
+      <p className="campaign-guide-note">{t('campaign.fedor_note')}</p>
+    </div>
+  );
+}
+
+function SpecialTroopsTactic({ t }) {
+  return (
+    <div className="campaign-guide-card">
+      <div className="campaign-guide-head">
+        <strong>✨ {t('campaign.special_troops')}</strong>
+        <span className="campaign-guide-status">{t('campaign.validation')}</span>
+      </div>
+      <p>{t('campaign.special_troops_intro')}</p>
+      <div className="campaign-special-list">
+        {SPECIAL_TEST_TROOPS.map(name => <span key={name}>500 · {name}</span>)}
+      </div>
+      <div className="campaign-research-chips">
+        <span>Metalurgia 4+</span><span>Medicina 4+</span><span>Calibração de Armas 4+</span>
+      </div>
+      <p className="campaign-guide-note">{t('campaign.special_troops_note')}</p>
+      <p className="campaign-guide-note">{t('campaign.recovery_note')}</p>
+    </div>
+  );
+}
+
+function AttackGuide({ guide, t, locale }) {
+  const translated = locale !== 'pt-BR' ? guide?.i18n?.[locale] || {} : {};
+  const title = translated.titulo || guide.titulo;
+  const summary = translated.resumo || guide.resumo;
+  const steps = translated.passos || guide.passos || [];
+  const notes = translated.observacoes || guide.observacoes;
+  const fmt = useMemo(() => new Intl.NumberFormat(locale), [locale]);
+  const displayName = item => (locale !== 'pt-BR' ? item?.i18n?.[locale]?.nome : '') || item?.nome || '';
+  return (
+    <div className="campaign-guide-card">
+      <div className="campaign-guide-head">
+        <strong>🏹 {title}</strong>
+        <span className={`campaign-guide-status ${guide.status === 'confirmado' ? 'is-confirmed' : ''}`}>{guide.status === 'confirmado' ? t('campaign.confirmed') : t('campaign.validation')}</span>
+      </div>
+      {summary && <p>{summary}</p>}
+      {guide.tropaPrincipal && guide.quantidade != null && (
+        <div className="campaign-main-march"><span>{t('campaign.main_troop')}</span><strong>{fmt.format(guide.quantidade)} · {guide.tropaPrincipal}</strong></div>
+      )}
+      {(guide.apoios || []).length > 0 && (
+        <div className="campaign-support-options">
+          <small>{t('campaign.choose_one_support')}</small>
+          <div>{guide.apoios.map((x,i) => <React.Fragment key={`${x.nome}-${i}`}><span><b>{fmt.format(x.quantidade)}</b> {displayName(x)}</span>{i < guide.apoios.length - 1 && <em>{t('campaign.or')}</em>}</React.Fragment>)}</div>
+        </div>
+      )}
+      {(guide.pesquisas || []).length > 0 && <div className="campaign-research-chips">{guide.pesquisas.map((x,i)=><span key={`${x.nome}-${i}`}>{displayName(x)} {x.nivel}+</span>)}</div>}
+      {steps.length > 0 && <div className="campaign-guide-list"><strong>{t('campaign.steps')}</strong>{steps.map((x,i)=><span key={i}>{i+1}. {x}</span>)}</div>}
+      {notes && <p className="campaign-guide-note">{notes}</p>}
+      {guide.fonte?.descricao && <p className="campaign-community-source">{t('campaign.community_source')}: {guide.fonte.descricao}</p>}
+    </div>
+  );
+}
+
+function AttackGuidesBlock({ entry, t, locale }) {
+  const guides = entry.guiasAtaque || [];
+  const showCommon = entry.categoria === 'antropos' || entry.categoria === 'campos';
+  if (!guides.length && !showCommon) return null;
+  return (
+    <section className="campaign-report-section campaign-attack-section">
+      <h3>{t('campaign.how_to_attack')}</h3>
+      {showCommon && <FedorTactic entry={entry} t={t} locale={locale} />}
+      {guides.map(guide => <AttackGuide key={guide.codigo} guide={guide} t={t} locale={locale} />)}
+      {showCommon && <SpecialTroopsTactic t={t} />}
+    </section>
+  );
+}
+
+function StrategyBlock({ strategy, t, locale, hasGuides = false }) {
   const translated = locale !== 'pt-BR' ? strategy?.i18n?.[locale] || {} : {};
   const published = Boolean(strategy?.publicada);
   const title = translated.titulo || strategy?.titulo || t('campaign.how_to_attack');
@@ -131,6 +225,7 @@ function StrategyBlock({ strategy, t, locale }) {
   const steps = translated.passos || strategy?.passos || [];
   const requirements = translated.requisitos || strategy?.requisitos || [];
   const notes = translated.observacoes || strategy?.observacoes || '';
+  if (!published && hasGuides) return null;
   if (!published) {
     return (
       <div className="campaign-strategy campaign-strategy-pending">
@@ -233,7 +328,8 @@ function Detail({ entry, onBack, t, locale, content }) {
           </div>
         </section>
 
-        <StrategyBlock strategy={entry.estrategia} t={t} locale={locale} />
+        <AttackGuidesBlock entry={entry} t={t} locale={locale} />
+        <StrategyBlock strategy={entry.estrategia} t={t} locale={locale} hasGuides={(entry.guiasAtaque || []).length > 0 || entry.categoria === 'antropos' || entry.categoria === 'campos'} />
         <div className="campaign-source-foot">{t('campaign.source')}: {entry.fonte?.descricao || t('campaign.source_screenshot')} · {entry.fonte?.data || '—'}</div>
       </div>
     </div>

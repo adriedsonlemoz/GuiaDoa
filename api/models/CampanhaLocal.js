@@ -40,6 +40,39 @@ const EstrategiaSchema = new mongoose.Schema({
   i18n:{ type:mongoose.Schema.Types.Mixed, default:{} },
 }, { _id:false });
 
+
+const GuiaApoioSchema = new mongoose.Schema({
+  nome:{ type:String, required:true, trim:true },
+  quantidade:{ type:Number, required:true, min:0 },
+  alternativa:{ type:String, default:'', trim:true },
+  i18n:{ type:mongoose.Schema.Types.Mixed, default:{} },
+}, { _id:false });
+
+const GuiaPesquisaSchema = new mongoose.Schema({
+  nome:{ type:String, required:true, trim:true },
+  nivel:{ type:Number, required:true, min:0, max:99 },
+  i18n:{ type:mongoose.Schema.Types.Mixed, default:{} },
+}, { _id:false });
+
+const GuiaAtaqueSchema = new mongoose.Schema({
+  codigo:{ type:String, required:true, trim:true },
+  titulo:{ type:String, required:true, trim:true },
+  resumo:{ type:String, default:'', trim:true },
+  status:{ type:String, enum:['validacao','confirmado'], default:'validacao' },
+  tropaPrincipal:{ type:String, default:'', trim:true },
+  quantidade:{ type:Number, default:null, min:0 },
+  apoios:{ type:[GuiaApoioSchema], default:[] },
+  pesquisas:{ type:[GuiaPesquisaSchema], default:[] },
+  passos:{ type:[String], default:[] },
+  observacoes:{ type:String, default:'', trim:true },
+  fonte:{
+    tipo:{ type:String, default:'manual', trim:true },
+    url:{ type:String, default:'', trim:true },
+    descricao:{ type:String, default:'', trim:true },
+  },
+  i18n:{ type:mongoose.Schema.Types.Mixed, default:{} },
+}, { _id:false });
+
 const CampanhaLocalSchema = new mongoose.Schema({
   slug:{ type:String, required:true, unique:true, trim:true },
   categoria:{ type:String, required:true, enum:['antropos','campos','zyrvorthian','grodz'], index:true },
@@ -53,6 +86,7 @@ const CampanhaLocalSchema = new mongoose.Schema({
   recompensas:{ type:[RecompensaSchema], default:[] },
   campo:{ type:CampoSchema, default:() => ({}) },
   estrategia:{ type:EstrategiaSchema, default:() => ({}) },
+  guiasAtaque:{ type:[GuiaAtaqueSchema], default:[] },
   fonte:{
     tipo:{ type:String, default:'manual' },
     data:{ type:String, default:'' },

@@ -48,3 +48,28 @@ test('estratégias começam vazias e não são inventadas pelo seed', () => {
   assert.ok([...ANTROPOS_SEED,...SAVANA_SEED].every(x => x.estrategia?.publicada === false));
   assert.ok([...ANTROPOS_SEED,...SAVANA_SEED].every(x => x.estrategia?.passos?.length === 0));
 });
+
+
+test('Antropos Nv.1–4 recebem guia inicial de Arqueiros com valores escolhidos para teste mobile', () => {
+  const expected = {
+    1:[60,147,33,1,1,2],
+    2:[320,600,50,1,1,2],
+    3:[600,1815,72,4,4,5],
+    4:[2000,2420,100,4,4,5],
+  };
+  for (const [nivelStr, values] of Object.entries(expected)) {
+    const nivel = Number(nivelStr);
+    const entry = ANTROPOS_SEED.find(x => x.nivel === nivel);
+    const guide = entry.guiasAtaque.find(x => x.codigo === 'arqueiros-lbm');
+    assert.ok(guide, `guia LBM ausente no nível ${nivel}`);
+    assert.equal(guide.status, 'validacao');
+    assert.equal(guide.tropaPrincipal, 'Arqueiros');
+    assert.equal(guide.quantidade, values[0]);
+    assert.equal(guide.apoios.find(x=>x.nome==='Carregadores').quantidade, values[1]);
+    assert.equal(guide.apoios.find(x=>x.nome==='Transportes Blindados').quantidade, values[2]);
+    assert.equal(guide.pesquisas.find(x=>x.nome==='Metalurgia').nivel, values[3]);
+    assert.equal(guide.pesquisas.find(x=>x.nome==='Medicina').nivel, values[4]);
+    assert.equal(guide.pesquisas.find(x=>x.nome==='Calibração de Armas').nivel, values[5]);
+  }
+  assert.ok(ANTROPOS_SEED.filter(x=>x.nivel>=5).every(x => x.guiasAtaque.length === 0));
+});

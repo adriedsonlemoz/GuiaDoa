@@ -42,5 +42,24 @@ test('Admin oferece recompensas e domínio do campo sem armazenar screenshots', 
   assert.match(admin, /mcAddReward/);
   assert.match(admin, /mc-field-production/);
   assert.match(admin, /nome confirmado/);
+  assert.match(admin, /mcAddGuide/);
+  assert.match(admin, /guiasAtaque/);
   assert.doesNotMatch(admin, /base64|FileReader|image\/png/);
+});
+
+
+test('lista de níveis usa uma coluna e destaca Fedor', () => {
+  const css = read('src/index.css');
+  const source = read('src/components/CampanhaMapa.jsx');
+  assert.match(css, /campaign-level-grid\{display:grid;grid-template-columns:1fr/);
+  assert.match(source, /campaign-fedor-mini/);
+  assert.match(source, /campaign\.fedor_tactic/);
+});
+
+test('frontend exibe guias estruturados, tática por Fedor e teste de tropas especiais', () => {
+  const source = read('src/components/CampanhaMapa.jsx');
+  assert.match(source, /AttackGuidesBlock/);
+  assert.match(source, /guiasAtaque/);
+  assert.match(source, /SPECIAL_TEST_TROOPS/);
+  assert.match(source, /Carregadores|Transportes Blindados|campaign\.choose_one_support/);
 });

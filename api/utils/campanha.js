@@ -37,6 +37,62 @@ function normalizarRecompensas(input) {
   });
 }
 
+
+function normalizarGuiasAtaque(input) {
+  const codigos = new Set();
+  return (Array.isArray(input) ? input : []).slice(0, 30).map((item, index) => {
+    const titulo = cleanString(item?.titulo, 160);
+    const codigo = slugifyCampanha(cleanString(item?.codigo, 100) || titulo || `guia-${index + 1}`);
+    const quantidade = item?.quantidade === '' || item?.quantidade == null ? null : Number(item.quantidade);
+    if (!codigo || codigos.has(codigo) || !titulo) {
+      throw Object.assign(new Error(`Guia de ataque inválido ou duplicado na linha ${index + 1}.`), { status:400 });
+    }
+    if (quantidade != null && (!Number.isSafeInteger(quantidade) || quantidade < 0)) {
+      throw Object.assign(new Error(`Quantidade principal inválida no guia ${index + 1}.`), { status:400 });
+    }
+    const apoios = (Array.isArray(item?.apoios) ? item.apoios : []).slice(0, 12).map((apoio, apoioIndex) => {
+      const nome = cleanString(apoio?.nome, 100);
+      const qtd = Number(apoio?.quantidade);
+      if (!nome || !Number.isSafeInteger(qtd) || qtd < 0) {
+        throw Object.assign(new Error(`Apoio inválido no guia ${index + 1}, linha ${apoioIndex + 1}.`), { status:400 });
+      }
+      return {
+        nome,
+        quantidade:qtd,
+        alternativa:cleanString(apoio?.alternativa, 60),
+        i18n:apoio?.i18n && typeof apoio.i18n === 'object' ? apoio.i18n : {},
+      };
+    });
+    const pesquisas = (Array.isArray(item?.pesquisas) ? item.pesquisas : []).slice(0, 12).map((pesquisa, pesquisaIndex) => {
+      const nome = cleanString(pesquisa?.nome, 100);
+      const nivel = Number(pesquisa?.nivel);
+      if (!nome || !Number.isSafeInteger(nivel) || nivel < 0 || nivel > 99) {
+        throw Object.assign(new Error(`Pesquisa inválida no guia ${index + 1}, linha ${pesquisaIndex + 1}.`), { status:400 });
+      }
+      return { nome, nivel, i18n:pesquisa?.i18n && typeof pesquisa.i18n === 'object' ? pesquisa.i18n : {} };
+    });
+    codigos.add(codigo);
+    return {
+      codigo,
+      titulo,
+      resumo:cleanString(item?.resumo, 1200),
+      status:item?.status === 'confirmado' ? 'confirmado' : 'validacao',
+      tropaPrincipal:cleanString(item?.tropaPrincipal, 100),
+      quantidade,
+      apoios,
+      pesquisas,
+      passos:cleanLines(item?.passos, 30, 400),
+      observacoes:cleanString(item?.observacoes, 1600),
+      fonte:item?.fonte && typeof item.fonte === 'object' ? {
+        tipo:cleanString(item.fonte.tipo, 40) || 'manual',
+        url:cleanString(item.fonte.url, 500),
+        descricao:cleanString(item.fonte.descricao, 300),
+      } : { tipo:'manual', url:'', descricao:'' },
+      i18n:item?.i18n && typeof item.i18n === 'object' ? item.i18n : {},
+    };
+  });
+}
+
 export function normalizarCampanhaPayload(body = {}, { parcial = false } = {}) {
   const categoria = cleanString(body.categoria, 32).toLowerCase();
   if (!CAMPANHA_CATEGORIAS.includes(categoria)) throw Object.assign(new Error('Categoria inválida.'), { status:400 });
@@ -104,6 +160,7 @@ export function normalizarCampanhaPayload(body = {}, { parcial = false } = {}) {
   };
 
   const recompensas = normalizarRecompensas(body.recompensas);
+  const guiasAtaque = normalizarGuiasAtaque(body.guiasAtaque);
 
   const slugBase = cleanString(body.slug, 120)
     || (subtipo && nivelRaw != null ? `${categoria}-${subtipo}-${nivelRaw}` : `${categoria}-${nivelRaw ?? nome}`);
@@ -115,7 +172,7 @@ export function normalizarCampanhaPayload(body = {}, { parcial = false } = {}) {
     ordem:Number.isFinite(Number(body.ordem)) ? Number(body.ordem) : (nivelRaw ?? 0),
     ativo:body.ativo !== false,
     tropas, recursos, recompensas, campo,
-    estrategia,
+    estrategia, guiasAtaque,
     i18n:body.i18n && typeof body.i18n === 'object' ? body.i18n : {},
     fonte:body.fonte && typeof body.fonte === 'object' ? {
       tipo:cleanString(body.fonte.tipo, 30) || 'manual',

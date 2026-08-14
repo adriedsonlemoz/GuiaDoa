@@ -12,6 +12,7 @@ const MIGRATION_KEY = 'content:dicas:beta-2.14';
 const TROOPS_TACTICAL_KEY = 'content:tropas-taticas:beta-2.15';
 const CAMPANHA_ANTROPOS_KEY = 'content:campanha-antropos:beta-2.44';
 const CAMPANHA_CAMPOS_KEY = 'content:campanha-campos:beta-2.45';
+const CAMPANHA_STRATEGY_KEY = 'content:campanha-estrategias:beta-2.46';
 
 const INICIANTE_CATEGORY = {
   slug: 'iniciante',
@@ -204,6 +205,37 @@ async function migrarCampanhaCampos() {
   }
 }
 
+
+async function migrarCampanhaEstrategias() {
+  const aplicado = await AppConfig.findOne({ chave:CAMPANHA_STRATEGY_KEY }).lean();
+  if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, inseridas:0, completadas:0, preservadas:0 };
+
+  await AppConfig.findOneAndUpdate(
+    { chave:CAMPANHA_STRATEGY_KEY },
+    { $set:{ migracaoEstado:'executando', migracaoVersao:'1', ultimoErro:'', atualizadoEm:new Date() } },
+    { upsert:true, setDefaultsOnInsert:true },
+  );
+
+  try {
+    const relatorio = { inseridas:0, completadas:0, preservadas:0 };
+    for (const seed of ANTROPOS_SEED.filter(x => (x.guiasAtaque || []).length)) {
+      const r = await mesclarSeed(CampanhaLocal, { slug:seed.slug }, { guiasAtaque:seed.guiasAtaque }, { mergeArrays:{ guiasAtaque:'codigo' } });
+      relatorio.inseridas += r.inserido || 0;
+      relatorio.completadas += r.completado || 0;
+      relatorio.preservadas += r.preservado || 0;
+    }
+    await AppConfig.findOneAndUpdate(
+      { chave:CAMPANHA_STRATEGY_KEY },
+      { $set:{ migracaoEstado:'pronto', migracaoVersao:'1', migracaoEm:new Date(), atualizadoEm:new Date(), ultimoErro:'', relatorioMigracao:{ estrategias:relatorio } } },
+      { upsert:true, setDefaultsOnInsert:true },
+    );
+    return { ok:true, ignorada:false, ...relatorio };
+  } catch (err) {
+    await AppConfig.findOneAndUpdate({ chave:CAMPANHA_STRATEGY_KEY }, { $set:{ migracaoEstado:'erro', ultimoErro:err.message, atualizadoEm:new Date() } }, { upsert:true, setDefaultsOnInsert:true }).catch(()=>{});
+    return { ok:false, erro:err.message, inseridas:0, completadas:0, preservadas:0 };
+  }
+}
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
@@ -213,13 +245,15 @@ export async function executarMigracoesConteudo() {
   if (!campanha.ok) return campanha;
   const campos = await migrarCampanhaCampos();
   if (!campos.ok) return campos;
+  const estrategias = await migrarCampanhaEstrategias();
+  if (!estrategias.ok) return estrategias;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && tropas.ignorada && campanha.ignorada && campos.ignorada),
+    ignorada:Boolean(dicas.ignorada && tropas.ignorada && campanha.ignorada && campos.ignorada && estrategias.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     tropasAtualizadas:tropas.atualizadas || 0,
     campanhaInseridas:(campanha.inseridas || 0) + (campos.inseridas || 0),
-    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0),
+    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (estrategias.completadas || 0),
   };
 }

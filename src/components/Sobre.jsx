@@ -9,6 +9,7 @@ import { API_URL as API } from '../config/api.js';
 
 const CHANGELOG_CONFIG = [
   { ver: DISPLAY_VERSION, icon: '◇', key: 'latest', color: '#4E716A', count: 4 },
+  { ver: 'Beta 2.50', icon: '🧭', key: 'history.2_50', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.49', icon: '✨', key: 'history.2_49', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.48', icon: '🎒', key: 'history.2_48', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.47', icon: '⚔️', key: 'history.2_47', color: '#5A7B72', count: 4 },

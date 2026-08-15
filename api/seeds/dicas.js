@@ -1,408 +1,470 @@
 export const DICAS_SEED = [
   {
     slug: 'guia-inicial-construcoes',
-    titulo: '🐉 Guia Inicial de Construções',
-    resumo: 'Uma base flexível para organizar construções, proteger tropas, acelerar treinamento e preparar a conta para torneios.',
+    titulo: '🐉 Guia para Início de Realm',
+    resumo: 'Um roteiro prático para os primeiros dias: cidade, população, tropas, dragões, Campos, Antropos, defesa e rotina de crescimento.',
     categoria: 'iniciante',
     tipo: 'guia',
-    leituraMin: 8,
+    leituraMin: 10,
     destaque: true,
     ativo: true,
     ordem: 0,
     relacionados: {
-      modulos: ['ilhas', 'edificios', 'tropas', 'dragoes'],
-      edificios: ['FonteDaCura', 'Casa', 'Fabrica', 'Viveiro', 'Sentinela'],
-      tropas: ['Hoplita', 'Ogros de Granito', 'Espelhos de Fogo'],
-      dragoes: ['dragao_agua', 'dragao_terra', 'grande_dragao'],
+      modulos: ['edificios', 'ilhas', 'tropas', 'pesquisas', 'dragoes', 'campanha', 'itens', 'torneios'],
+      edificios: ['FonteDaCura', 'Guarnicao', 'Casa', 'Cofre', 'Teatro', 'Viveiro'],
+      tropas: ['Dragões de Ataque Rápido', 'Dragões de Combate', 'Medusa', 'Esmagadores Colossais', 'Sapo Tóxico', 'Centauros Infernais', 'Fada da Selva', 'Caçador de Almas'],
+      dragoes: ['dragao_agua', 'dragao_beladona', 'dragao_terra', 'dragao_fogo'],
       pesquisas: [],
       reinos: [],
     },
-    conteudo: `«⚠️ Este guia é apenas uma sugestão, não uma regra da Alliance.
-Cada jogador pode adaptar as construções ao seu estilo de jogo.»
+    conteudo: `«⚠️ Este guia é uma orientação para começar bem, não uma regra da Alliance.
+Adapte a cidade e a ordem de evolução ao seu estilo de jogo, ao tempo disponível e ao objetivo da conta.»
 
-🏰 Ilha Principal — 25 espaços
+🧭 Rota rápida para os primeiros dias
 
-Uma configuração inicial sugerida:
-
-- 💧 14 Fontes
-- ⚔️ 5 Guarnições
-- 🏠 1 Casa
-- 👁️ 1 Sentinela
-- 🔨 1 Forja
-- 🏭 1 Fábrica
-- 🔐 1 Cofre — opcional
-- 🌱 1 Viveiro — opcional
-
-Total: 25 espaços
-
-O Cofre e o Viveiro não são obrigatórios. Caso não sejam importantes para sua estratégia, esses espaços podem ser utilizados para outras construções.
+- Dia 1 → comece com 1 Casa e decida se quer priorizar Guarnições, Fontes de Cura ou equilíbrio entre as duas.
+- Dia {{agua_dia}} → o Dragão da Água libera 4 espaços adicionais; uma boa opção é usá-los para completar 5 Casas no total.
+- Todos os dias → construa, pesquise, treine, ataque Campos e Antropos e evolua seus dragões aos poucos.
+- Guarde recursos, aceleradores e itens quando puder aproveitar melhor em torneios.
+- Não aumente poder apenas por aumentar: priorize desbloqueios e melhorias que tragam benefício real.
 
 ---
 
-💧 Fontes ou ⚔️ Guarnições?
+🏰 Guarnições, Fontes, Cofre e Teatro
 
-Essa é uma das escolhas mais importantes da sua cidade.
+Uma das primeiras decisões é definir o equilíbrio entre treinamento e recuperação.
 
-💧 Mais Fontes = mais tropas salvas
+⚔️ Mais Guarnições = melhor capacidade de treinamento
 
-Quanto mais Fontes você construir e evoluir, maior será a quantidade de tropas que poderá proteger.
+As Guarnições são usadas para treinar tropas. Ter mais Guarnições permite distribuir melhor o treinamento e desenvolver o exército mais rapidamente.
 
-Como exemplo, uma Fonte no nível 35 pode salvar {{fonte_n35}} tropas.
+💧 Mais Fontes de Cura = maior capacidade de recuperação
 
-Se sua prioridade é manter um grande exército e reduzir suas perdas, priorize Fontes.
+As Fontes aumentam a quantidade de tropas que podem ser atendidas na recuperação. Como referência conectada ao módulo de Edifícios, uma Fonte no Nv.35 possui capacidade para {{fonte_n35}} tropas.
 
-⚔️ Mais Guarnições = treinamento mais rápido
+⚖️ Não existe uma única configuração correta
 
-Quanto mais Guarnições você possuir e evoluir, melhor será sua capacidade de treinamento de tropas.
+Mais Guarnições → prioriza produção de tropas
+Mais Fontes → prioriza preservação e recuperação do exército
+Equilíbrio → mantém os dois benefícios sem especializar totalmente a cidade
 
-Se você pretende produzir grandes quantidades de tropas constantemente, priorize Guarnições.
+🔐 Cofre e 🎭 Teatro são opcionais para o desenvolvimento inicial.
 
-⚖️ Você escolhe o equilíbrio
+O Cofre protege parte dos recursos armazenados e o Teatro aumenta a felicidade da população, mas ambos ocupam espaço. Construa se esses efeitos fizerem sentido para a sua conta.
 
-Não existe um número obrigatório.
-
-Mais Fontes → mais proteção de tropas
-Mais Guarnições → melhor treinamento
-Mais produção → maior independência de recursos
-
-Quanto mais você possuir de cada construção, maior será o benefício correspondente.
+⚠️ O Viveiro é diferente: ele pode ser necessário para desbloquear tropas dracônicas. Por exemplo, Dragões de Ataque Rápido exigem Viveiro Nv.{{ssd_viveiro}} e Dragões de Combate exigem Viveiro Nv.{{bd_viveiro}}.
 
 ---
 
-🏝️ Ilhas adicionais
+🏠 Casas e população
 
-Uma maneira organizada de desenvolver as três ilhas é especializá-las.
+Não é necessário preencher vários espaços com Casas logo no começo.
 
-Uma sugestão:
+Comece com 1 Casa.
 
-- ⚔️ 1 ilha dedicada às Guarnições
-- 💧 2 ilhas dedicadas às Fontes
+Quando o Dragão da Água for liberado no dia {{agua_dia}}, os 4 espaços adicionais podem ser usados para construir mais 4 Casas.
 
-Cada ilha começa com 6 espaços e, através das expansões, pode chegar a 12 espaços.
+1 Casa inicial + 4 Casas do Dragão da Água → 5 Casas
 
-Com todas as expansões, seguindo essa estratégia:
+As Casas fornecem população. Essa população é usada tanto no treinamento de tropas quanto como trabalhadores na produção de recursos.
 
-- ⚔️ Ilha de Guarnições → 12 Guarnições
-- 💧 Ilha de Fontes → 12 Fontes
-- 💧 Ilha de Fontes → 12 Fontes
-
-Somando com a Ilha Principal:
-
-💧 38 Fontes
-
-⚔️ 17 Guarnições
-
-No nível 35, 38 Fontes = aproximadamente {{fontes_38}} tropas protegidas, sem considerar bônus adicionais.
-
-Novamente: essa distribuição é apenas uma sugestão.
+A ideia é preservar os espaços iniciais para construções mais importantes e ampliar as Casas quando os espaços extras estiverem disponíveis.
 
 ---
 
-🐉💧 Dragão da Água — +4 espaços
+🏝️ Ilhas adicionais e especialização
 
-No segundo dia, o Dragão da Água é liberado e disponibiliza 4 espaços adicionais para construções.
+Quando suas ilhas secundárias estiverem disponíveis, você pode especializá-las em vez de repetir a mesma distribuição em todas.
 
-Uma boa utilização desses espaços é:
+Uma sugestão possível:
 
-🏠 4 Casas
+- 1 ilha focada em Guarnições
+- 2 ilhas focadas em Fontes de Cura
 
-Como já temos 1 Casa na Ilha Principal, isso resulta em:
+Com todas as expansões, uma configuração desse tipo pode chegar a 38 Fontes e 17 Guarnições contando a cidade principal.
 
-🏠 5 Casas no total
+No Nv.35, 38 Fontes representam aproximadamente {{fontes_38}} tropas de capacidade antes de bônus adicionais.
 
-As Casas fornecem população, que é importante principalmente para:
-
-- ⚔️ Treinar tropas
-- 🌾 Trabalhar na produção de recursos
-
-Portanto, mesmo uma conta que não seja focada em produção precisa considerar sua necessidade de população para manter o treinamento de tropas.
+Isso é apenas um exemplo. Quem prefere treinamento intenso pode inverter a prioridade e construir mais Guarnições.
 
 ---
 
-🌾 Produção de recursos
+🐉 Dragões, Campos e Antropos
 
-Produzir recursos é uma escolha de cada jogador.
+Capture e desenvolva seus dragões aos poucos. Não é necessário tentar obter tudo nos primeiros dias.
 
-Quem deseja maior independência pode dedicar mais espaços às construções de produção.
+Campos de níveis mais altos são importantes para fragmentos, itens e evolução. O catálogo atual do GUIA confirma, por exemplo, fragmentos do Dragão Beladona em Campos de Floresta do Nv.{{beladona_min}} ao Nv.{{beladona_max}}.
 
-Quem consegue recursos através de farming, eventos ou outras fontes pode preferir utilizar esses espaços para Fontes ou Guarnições.
+Confira sempre a ficha de cada dragão: nem todos possuem a mesma forma de obtenção.
 
-Não existe uma configuração universal.
+Ataque Campos diariamente sempre que puder. Eles podem fornecer Carnes para evolução de dragões e outros itens úteis durante o crescimento.
 
----
+Também não ignore os Antropos. O módulo Mapa & Campanha já possui os níveis 1–10 com:
 
-💎 Jogadores que utilizam Rubis
+- composição inimiga
+- recursos obtidos
+- itens/recompensas possíveis
+- marchas confirmadas sem perdas
 
-Para jogadores que utilizam Rubis para acelerar treinamento e desenvolvimento, investir mais em Fontes pode ser especialmente interessante.
-
-Se você consegue acelerar a reposição ou o treinamento quando necessário, preservar o exército que já possui pode valer mais do que dedicar muitos espaços às Guarnições.
-
----
-
-⚔️ Tropas — prioridade inicial
-
-Tente focar inicialmente em desbloquear:
-
-Hoplitas ou Ogros
-
-Não tenha pressa com os Espelhos. Eles podem ficar para uma etapa posterior.
-
-É melhor desenvolver uma base sólida primeiro do que gastar recursos tentando desbloquear tudo rapidamente.
+Use esse módulo antes de atacar para escolher o nível e a marcha adequada ao que sua conta já possui.
 
 ---
 
-📦 Guarde recursos e itens
+⚔️ Tropas para começar
 
-Sempre que possível, acumule recursos, aceleradores e itens para os torneios.
+Duas tropas muito úteis para o início são:
 
-Isso pode fazer com que você fique temporariamente abaixo de outros jogadores em poder — principalmente nos primeiros dias.
+🐲 Dragões de Ataque Rápido
 
-Não tem problema.
+Requisitos atuais cadastrados no GUIA:
 
-Em vez de gastar tudo imediatamente apenas para aumentar poder, você poderá utilizar esses recursos durante torneios, evoluir sua conta e ainda receber recompensas pelo progresso.
+- Guarnição Nv.{{ssd_guarnicao}}
+- Viveiro Nv.{{ssd_viveiro}}
+- Formação Rápida Nv.{{ssd_formacao}}
+- Dragoria Nv.{{ssd_dragoria}}
+
+🐲 Dragões de Combate
+
+Requisitos atuais cadastrados no GUIA:
+
+- Guarnição Nv.{{bd_guarnicao}}
+- Forja Nv.{{bd_forja}}
+- Viveiro Nv.{{bd_viveiro}}
+- Formação Rápida Nv.{{bd_formacao}}
+- Dragoria Nv.{{bd_dragoria}}
+
+Os Dragões de Ataque Rápido chegam antes e já ajudam nos primeiros ataques. Os Dragões de Combate exigem uma estrutura maior, mas são um próximo passo natural.
+
+Depois, escolha seus próximos desbloqueios de acordo com a estratégia. Hoplitas e Ogros de Granito podem ser objetivos úteis; não existe necessidade de correr para Espelhos de Fogo antes de a base estar preparada.
 
 ---
 
-🛡️ Não defenda todos os ataques
+✨ Tropas que simplificam o farming
 
-Você não precisa defender automaticamente todo jogador que atacar sua cidade.
+Conforme o jogo avança, algumas tropas tornam o farming muito mais simples.
 
-Contra um adversário muito mais forte, pode ser melhor evitar a defesa e preservar suas tropas.
+O método já confirmado no Mapa & Campanha utiliza 500 unidades de qualquer uma destas tropas em alvos compatíveis:
 
-Perder alguns recursos pode custar muito menos do que perder um exército que levou horas ou dias para ser treinado.
+- Medusa
+- Esmagadores Colossais
+- Sapo Tóxico
+- Centauros Infernais
+- Fada da Selva
+- Caçador de Almas
 
-Também evite aumentar excessivamente o nível do Castelo apenas para ganhar poder.
+Para essa configuração, mantenha pelo menos:
 
-🏰 Castelos de nível alto chamam atenção, especialmente no início de um Realm.
+- Metalurgia Nv.4
+- Medicina Nv.4
+- Calibração de Armas Nv.4
 
-Evolua quando houver uma vantagem real para sua conta.
+Com essas tropas você deixa de depender tanto das unidades iniciais e pode farmar com mais segurança. Consulte o nível do alvo no Mapa & Campanha antes de enviar a marcha.
 
 ---
 
-🐲 Dragões
+🛡️ Não defenda ataques sem necessidade
 
-Uma prioridade inicial sugerida:
+Esse é um dos cuidados mais importantes no começo do Realm.
 
-🌍 Dragão da Terra → DEFESA
+Não defenda automaticamente todo ataque que chegar à sua cidade.
 
-Priorize seu desenvolvimento pensando em fortalecer sua defesa.
+Contra um adversário muito mais forte, perder alguns recursos pode custar muito menos do que perder um exército que levou horas ou dias para ser treinado.
 
-🔥 Dragão do Fogo → ATAQUE
+No início, recursos, população e tropas ainda são limitados. Uma defesa mal escolhida pode atrasar bastante o desenvolvimento.
 
-Priorize seu desenvolvimento pensando em suas marchas ofensivas.
+Escolha suas batalhas. Defenda quando existir uma razão real para isso, não apenas porque recebeu um ataque.
+
+Também evite evoluir o Castelo apenas para aumentar poder. Castelos altos chamam atenção e o poder por si só não substitui tropas, pesquisas e uma cidade bem organizada.
+
+---
+
+📦 Guarde recursos e itens para o momento certo
+
+Não é necessário consumir imediatamente tudo o que a conta recebe.
+
+Sempre que possível, acumule:
+
+- recursos
+- aceleradores
+- itens de evolução
+- recompensas que possam ser usadas durante torneios
+
+Você pode ficar temporariamente atrás de outros jogadores em poder, mas usar esses itens durante um torneio permite evoluir a conta e ainda receber recompensas pelo mesmo progresso.
+
+---
+
+💎 Se você utiliza Rubis
+
+Quem utiliza Rubis para acelerar treinamento e evolução pode considerar uma cidade com mais Fontes de Cura.
+
+Se o treinamento pode ser acelerado quando necessário, preservar o exército já construído pode ser mais valioso do que dedicar todos os espaços disponíveis a Guarnições.
+
+Isso não torna uma configuração obrigatória; apenas muda o equilíbrio entre velocidade de reposição e capacidade de recuperação.
+
+---
+
+📈 Rotina simples de crescimento
+
+Uma rotina consistente vale mais do que tentar fazer tudo de uma vez.
+
+- mantenha construções evoluindo
+- avance pesquisas úteis para seus próximos desbloqueios
+- mantenha tropas em treinamento
+- ataque Campos e Antropos diariamente
+- desenvolva os dragões gradualmente
+- guarde itens quando houver vantagem em usar durante torneios
+- confira o Mapa & Campanha antes de farmar níveis mais altos
+- evite batalhas que não trazem benefício
+
+Cresça no seu ritmo. O objetivo dos primeiros dias é construir uma base que continue funcionando quando o Realm estiver mais competitivo.
 
 ---
 
 ⚠️ Resumo
 
-Não existe uma construção perfeita para todos.
+Mais Fontes → maior capacidade de recuperação
 
-💧 Quer salvar mais tropas? → Mais Fontes
+Mais Guarnições → treinamento mais forte
 
-⚔️ Quer treinar mais rápido? → Mais Guarnições
+1 Casa no início → mais 4 quando liberar o Dragão da Água
 
-🌾 Quer produzir seus próprios recursos? → Mais construções de produção
+Campos + Antropos → farming diário, recursos, itens e progressão
 
-🏠 Precisa de população? → Casas
+Dragões de Ataque Rápido → ótimo primeiro objetivo de tropa dracônica
 
-A configuração deste guia é apenas um ponto de partida.
+Dragões de Combate → próximo passo quando a estrutura permitir
 
-Planeje sua conta para o longo prazo. Não se preocupe em ser o jogador com maior poder nos primeiros dias do Realm. Guarde recursos, aproveite os torneios e desenvolva sua conta de acordo com seu próprio estilo de jogo. 🐉`,
+500 tropas especiais + pesquisas adequadas → farming sem perdas em alvos compatíveis
+
+Evitar defesas ruins → preserva o recurso mais caro do início: seu exército
+
+Não existe necessidade de fazer tudo imediatamente. Desenvolva uma base sólida, aproveite os sistemas do jogo e, acima de tudo, divirta-se. 🐉`,
     i18n: {
       'en-US': {
-        titulo: '🐉 Beginner Building Guide',
-        resumo: 'A flexible starting plan for organizing buildings, protecting troops, speeding up training, and preparing your account for tournaments.',
-        conteudo: `«⚠️ This guide is only a suggestion, not an Alliance rule.
-Every player can adapt the building setup to their own playstyle.»
+        titulo: '🐉 Beginner Realm Guide',
+        resumo: 'A practical roadmap for the first days: city layout, population, troops, dragons, Fields, Anthropus, defense, and steady growth.',
+        conteudo: `«⚠️ This guide is a starting recommendation, not an Alliance rule.
+Adapt your city and upgrade order to your playstyle, available time, and account goals.»
 
-🏰 Main City — 25 spaces
+🧭 Quick route for the first days
 
-A suggested starting setup:
-
-- 💧 14 Fountains
-- ⚔️ 5 Garrisons
-- 🏠 1 House
-- 👁️ 1 Sentinel
-- 🔨 1 Forge
-- 🏭 1 Factory
-- 🔐 1 Vault — optional
-- 🌱 1 Nursery — optional
-
-Total: 25 spaces
-
-The Vault and Nursery are not mandatory. If they are not important to your strategy, those spaces can be used for other buildings.
+- Day 1 → start with 1 House and decide whether to prioritize Garrisons, Healing Fountains, or a balance between both.
+- Day {{agua_dia}} → the Water Dragon unlocks 4 additional spaces; using them to reach 5 Houses total is a strong option.
+- Every day → build, research, train, attack Fields and Anthropus, and develop your dragons gradually.
+- Save resources, speedups, and items when they can be used more efficiently during tournaments.
+- Do not raise power only for the number itself: prioritize unlocks and upgrades that provide a real benefit.
 
 ---
 
-💧 Fountains or ⚔️ Garrisons?
+🏰 Garrisons, Fountains, Vault, and Theater
 
-This is one of the most important choices in your city.
+One of the first decisions is balancing training and recovery.
 
-💧 More Fountains = more troops protected
+⚔️ More Garrisons = stronger training capacity
 
-The more Fountains you build and upgrade, the more troops you can protect.
+Garrisons are used to train troops. Having more Garrisons lets you distribute training better and develop your army faster.
 
-As an example, a level 35 Fountain can protect {{fonte_n35}} troops.
+💧 More Healing Fountains = greater recovery capacity
 
-If your priority is keeping a large army and reducing losses, prioritize Fountains.
+Fountains increase the amount of troops that can be handled during recovery. Using the value currently connected to the Buildings module, a Lv.35 Fountain has capacity for {{fonte_n35}} troops.
 
-⚔️ More Garrisons = faster training
+⚖️ There is no single correct setup
 
-The more Garrisons you own and upgrade, the better your troop training capacity becomes.
+More Garrisons → prioritizes troop production
+More Fountains → prioritizes army preservation and recovery
+Balanced setup → keeps both benefits without fully specializing the city
 
-If you plan to produce large quantities of troops constantly, prioritize Garrisons.
+🔐 Vault and 🎭 Theater are optional for early development.
 
-⚖️ You choose the balance
+The Vault protects part of your stored resources and the Theater increases population happiness, but both use building space. Build them when those effects are valuable to your account.
 
-There is no mandatory number.
-
-More Fountains → more troop protection
-More Garrisons → better training
-More production → greater resource independence
-
-The more you have of each building, the greater the corresponding benefit.
+⚠️ The Nursery is different: it may be required to unlock dragon troops. Swift Strike Dragons require a Lv.{{ssd_viveiro}} Nursery and Battle Dragons require a Lv.{{bd_viveiro}} Nursery.
 
 ---
 
-🏝️ Additional islands
+🏠 Houses and population
 
-One organized way to develop the three islands is to specialize them.
+You do not need to fill many spaces with Houses at the beginning.
 
-A suggestion:
+Start with 1 House.
 
-- ⚔️ 1 island dedicated to Garrisons
-- 💧 2 islands dedicated to Fountains
+When the Water Dragon unlocks on day {{agua_dia}}, its 4 additional spaces can be used for 4 more Houses.
 
-Each island starts with 6 spaces and can reach 12 through expansions.
+1 starting House + 4 Water Dragon Houses → 5 Houses
 
-With all expansions, following this strategy:
+Houses provide population. Population is used both for troop training and as workers in resource production.
 
-- ⚔️ Garrison Island → 12 Garrisons
-- 💧 Fountain Island → 12 Fountains
-- 💧 Fountain Island → 12 Fountains
-
-Combined with the Main City:
-
-💧 38 Fountains
-
-⚔️ 17 Garrisons
-
-At level 35, 38 Fountains = approximately {{fontes_38}} protected troops, before additional bonuses.
-
-Again: this distribution is only a suggestion.
+The idea is to preserve early spaces for more important buildings and expand Houses when the additional spaces become available.
 
 ---
 
-🐉💧 Water Dragon — +4 spaces
+🏝️ Additional islands and specialization
 
-On the second day, the Water Dragon unlocks and provides 4 additional building spaces.
+When your secondary islands become available, you can specialize them instead of repeating the same layout everywhere.
 
-A good use for these spaces is:
+One possible plan:
 
-🏠 4 Houses
+- 1 island focused on Garrisons
+- 2 islands focused on Healing Fountains
 
-Since we already have 1 House in the Main City, this results in:
+With all expansions, a setup like this can reach 38 Fountains and 17 Garrisons when combined with the Main City.
 
-🏠 5 Houses total
+At Lv.35, 38 Fountains represent approximately {{fontes_38}} troops of capacity before additional bonuses.
 
-Houses provide population, which is especially important for:
-
-- ⚔️ Training troops
-- 🌾 Working in resource production
-
-Therefore, even an account that is not focused on production should consider its population needs to maintain troop training.
+This is only an example. Players focused on heavy training can reverse the priority and build more Garrisons.
 
 ---
 
-🌾 Resource production
+🐉 Dragons, Fields, and Anthropus
 
-Producing resources is a choice for each player.
+Capture and develop your dragons gradually. There is no need to obtain everything during the first days.
 
-Players who want greater independence can dedicate more spaces to production buildings.
+Higher-level Fields are important for fragments, items, and progression. The current GUIA catalog confirms, for example, Belladonna Dragon fragments in Forest Fields from Lv.{{beladona_min}} to Lv.{{beladona_max}}.
 
-Players who obtain resources through farming, events, or other sources may prefer to use those spaces for Fountains or Garrisons.
+Always check each dragon's page: not every dragon has the same acquisition method.
 
-There is no universal setup.
+Attack Fields daily whenever possible. They can provide Meat for dragon progression and other useful items while the account grows.
 
----
+Do not ignore Anthropus either. The Map & Campaign module already contains levels 1–10 with:
 
-💎 Players who use Rubies
+- enemy composition
+- obtained resources
+- possible items/rewards
+- confirmed zero-loss marches
 
-For players who use Rubies to accelerate training and development, investing more in Fountains can be especially useful.
-
-If you can accelerate replacement or training when needed, preserving the army you already have may be worth more than dedicating many spaces to Garrisons.
-
----
-
-⚔️ Troops — early priority
-
-Try to focus first on unlocking:
-
-Hoplites or Ogres
-
-Do not rush Mirrors. They can wait until a later stage.
-
-It is better to build a solid foundation first than to spend resources trying to unlock everything quickly.
+Use that module before attacking to choose a level and a march that matches what your account already owns.
 
 ---
 
-📦 Save resources and items
+⚔️ Troops to start with
 
-Whenever possible, stockpile resources, speedups, and items for tournaments.
+Two very useful early troops are:
 
-This may temporarily leave you below other players in power, especially during the first days.
+🐲 Swift Strike Dragons
 
-That is fine.
+Current requirements stored in GUIA:
 
-Instead of spending everything immediately just to raise power, you can use those resources during tournaments, develop your account, and earn rewards from the same progress.
+- Garrison Lv.{{ssd_guarnicao}}
+- Nursery Lv.{{ssd_viveiro}}
+- Rapid Formation Lv.{{ssd_formacao}}
+- Dragonry Lv.{{ssd_dragoria}}
+
+🐲 Battle Dragons
+
+Current requirements stored in GUIA:
+
+- Garrison Lv.{{bd_guarnicao}}
+- Forge Lv.{{bd_forja}}
+- Nursery Lv.{{bd_viveiro}}
+- Rapid Formation Lv.{{bd_formacao}}
+- Dragonry Lv.{{bd_dragoria}}
+
+Swift Strike Dragons arrive earlier and already help with the first attacks. Battle Dragons require more infrastructure but are a natural next step.
+
+After that, choose further unlocks according to your strategy. Hoplites and Granite Ogres can be useful goals; there is no need to rush Fire Mirrors before the account foundation is ready.
 
 ---
 
-🛡️ Do not defend every attack
+✨ Troops that simplify farming
 
-You do not need to automatically defend against every player who attacks your city.
+As the game progresses, some troops make farming much easier.
 
-Against a much stronger opponent, avoiding the defense and preserving your troops may be the better choice.
+The setup already confirmed in Map & Campaign uses 500 units of any of these troops on compatible targets:
 
-Losing some resources can cost far less than losing an army that took hours or days to train.
+- Snake-headed Maiden
+- Colossal Smashers
+- Toxic Toad
+- Infernal Centaurs
+- Forest Fairy
+- Soul Hunter
 
-Also avoid raising your Castle level excessively just to gain power.
+For this setup, keep at least:
 
-🏰 High-level Castles attract attention, especially early in a Realm.
+- Metallurgy Lv.4
+- Medicine Lv.4
+- Weapons Calibration Lv.4
 
-Upgrade when there is a real advantage for your account.
+With these troops you become less dependent on early units and can farm more safely. Check the target level in Map & Campaign before sending the march.
 
 ---
 
-🐲 Dragons
+🛡️ Do not defend attacks without a reason
 
-A suggested early priority:
+This is one of the most important precautions at the beginning of a Realm.
 
-🌍 Earth Dragon → DEFENSE
+Do not automatically defend every attack that reaches your city.
 
-Prioritize its development with strengthening your defense in mind.
+Against a much stronger opponent, losing some resources may cost far less than losing an army that took hours or days to train.
 
-🔥 Fire Dragon → ATTACK
+Early on, resources, population, and troops are still limited. A poorly chosen defense can delay development significantly.
 
-Prioritize its development with offensive marches in mind.
+Choose your battles. Defend when there is a real reason to do so, not simply because an attack arrived.
+
+Also avoid upgrading the Castle only to increase power. High-level Castles attract attention, and power by itself does not replace troops, research, and a well-organized city.
+
+---
+
+📦 Save resources and items for the right moment
+
+You do not need to consume everything the account receives immediately.
+
+Whenever possible, stockpile:
+
+- resources
+- speedups
+- evolution items
+- rewards that can be used during tournaments
+
+You may temporarily stay below other players in power, but using those items during a tournament lets you develop the account while also receiving rewards for the same progress.
+
+---
+
+💎 If you use Rubies
+
+Players who use Rubies to accelerate training and development may consider a city with more Healing Fountains.
+
+If training can be accelerated when needed, preserving the army you already built may be more valuable than dedicating every available space to Garrisons.
+
+This does not make one setup mandatory; it simply changes the balance between replacement speed and recovery capacity.
+
+---
+
+📈 Simple growth routine
+
+Consistency is more valuable than trying to do everything at once.
+
+- keep buildings upgrading
+- advance research needed for your next unlocks
+- keep troops training
+- attack Fields and Anthropus daily
+- develop dragons gradually
+- save items when tournaments provide extra value
+- check Map & Campaign before farming higher levels
+- avoid battles that provide no meaningful benefit
+
+Grow at your own pace. The goal of the first days is to build a foundation that continues working when the Realm becomes more competitive.
 
 ---
 
 ⚠️ Summary
 
-There is no perfect building setup for everyone.
+More Fountains → greater recovery capacity
 
-💧 Want to protect more troops? → More Fountains
+More Garrisons → stronger training
 
-⚔️ Want to train faster? → More Garrisons
+1 House at the start → 4 more when the Water Dragon unlocks
 
-🌾 Want to produce your own resources? → More production buildings
+Fields + Anthropus → daily farming, resources, items, and progression
 
-🏠 Need population? → Houses
+Swift Strike Dragons → excellent first dragon-troop goal
 
-This guide's setup is only a starting point.
+Battle Dragons → next step when the infrastructure is ready
 
-Plan your account for the long term. Do not worry about being the highest-power player during the first days of the Realm. Save resources, take advantage of tournaments, and develop your account according to your own playstyle. 🐉`,
+500 special troops + appropriate research → zero-loss farming on compatible targets
+
+Avoiding bad defenses → protects the most expensive early resource: your army
+
+There is no need to do everything immediately. Build a solid foundation, use the game's systems well, and above all, have fun. 🐉`,
       },
     },
   },

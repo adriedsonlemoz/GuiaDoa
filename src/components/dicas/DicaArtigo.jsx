@@ -14,8 +14,8 @@ const typeIcon = { guia: '🧭', tutorial: '📘', dica: '💡' };
 const DicaArtigo = ({ dica, catInfo, onClose, setRoute }) => {
   const [lightboxIdx, setLightboxIdx] = useState(null);
   const { t, content, locale } = useI18n();
-  const { edificios } = useGameData();
-  const gameVariables = buildDicaGameVariables(edificios, locale);
+  const { edificios, tropas, dragoes } = useGameData();
+  const gameVariables = buildDicaGameVariables(edificios, tropas, dragoes, locale);
   const titulo = content(dica, 'titulo');
   const resumo = content(dica, 'resumo');
   const conteudo = content(dica, 'conteudo');
@@ -73,7 +73,7 @@ const DicaArtigo = ({ dica, catInfo, onClose, setRoute }) => {
         </header>
 
         <div style={{ padding: '0 12px' }}>
-          <GuideContentRenderer content={conteudo} variables={gameVariables} />
+          <GuideContentRenderer content={conteudo} variables={gameVariables} collapsible={dica.slug === 'guia-inicial-construcoes'} />
           <DicaGameContext dica={dica} setRoute={navegar} />
         </div>
       </main>

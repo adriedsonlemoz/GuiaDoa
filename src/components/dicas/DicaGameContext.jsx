@@ -15,6 +15,7 @@ const MODULES = {
   itens: { icon: '🎒', route: 'itens', labelKey: 'items.title' },
   niveis: { icon: '📈', route: 'niveis', labelKey: 'levels.title' },
   torneios: { icon: '🏆', route: 'torneios', labelKey: 'home.botao.torneios' },
+  campanha: { icon: '🗺️', route: 'campanha', labelKey: 'campaign.title' },
 };
 
 const fmt = (n, locale) => Number(n || 0).toLocaleString(locale);
@@ -24,7 +25,7 @@ export default function DicaGameContext({ dica, setRoute }) {
   const { t, content, locale } = useI18n();
   const rel = dica.relacionados || {};
 
-  const { capacidadeFonte35: capacidade } = useMemo(() => buildDicaGameVariables(edificios, locale), [edificios, locale]);
+  const { capacidadeFonte35: capacidade } = useMemo(() => buildDicaGameVariables(edificios, tropas, dragoes, locale), [edificios, tropas, dragoes, locale]);
 
   const entidades = useMemo(() => {
     const out = [];
@@ -40,7 +41,7 @@ export default function DicaGameContext({ dica, setRoute }) {
       const item = edificios.find(edificio => edificio.slug === slug);
       if (item) out.push({ icon: item.icone || '🏰', label: content(item, 'nome'), route: 'edificios' });
     });
-    return out.slice(0, 8);
+    return out.slice(0, 12);
   }, [rel, tropas, dragoes, edificios, content]);
 
   const modulos = (rel.modulos || []).map(id => ({ id, ...MODULES[id] })).filter(x => x.route);

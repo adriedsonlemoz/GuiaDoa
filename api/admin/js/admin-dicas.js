@@ -9,7 +9,7 @@ let DI_EDITANDO = null; // dica sendo editada
 
 const DI_MODULOS = [
   ['ilhas','🏝️ Cidade/Ilhas'], ['edificios','🏰 Edifícios'], ['tropas','⚔️ Tropas'],
-  ['dragoes','🐉 Dragões'], ['pesquisas','🔬 Pesquisas'], ['itens','🎒 Itens'],
+  ['dragoes','🐉 Dragões'], ['pesquisas','🔬 Pesquisas'], ['campanha','🗺️ Mapa & Campanha'], ['itens','🎒 Itens'],
   ['niveis','📈 Níveis'], ['torneios','🏆 Torneios'],
 ];
 const diCsv = value => String(value || '').split(',').map(v=>v.trim()).filter(Boolean);

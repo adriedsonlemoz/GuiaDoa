@@ -77,7 +77,7 @@ function ContentBlock({ lines }) {
   return out;
 }
 
-export default function GuideContentRenderer({ content, variables }) {
+export default function GuideContentRenderer({ content, variables, collapsible = false }) {
   const sections = splitSections(applyDicaVariables(content, variables));
   return (
     <div>
@@ -93,6 +93,26 @@ export default function GuideContentRenderer({ content, variables }) {
           );
         }
         const hasTitle = isHeading(first);
+        if (collapsible && hasTitle) {
+          return (
+            <details
+              key={index}
+              open={index === 1}
+              style={{ margin: index ? '12px 0 0' : 0, borderRadius: 14, border: `1px solid ${C.BORDER_SOFT}`, background: C.BG_CARD, boxShadow: '0 3px 12px rgba(62,47,28,.06)', overflow: 'hidden' }}
+            >
+              <summary
+                className="font-cinzel"
+                style={{ cursor: 'pointer', listStyle: 'none', padding: '14px 15px', color: C.TEXT_PRIMARY, fontSize: '.94rem', lineHeight: 1.35, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: 'rgba(200,168,74,.06)' }}
+              >
+                <span>{first}</span>
+                <span aria-hidden="true" style={{ color: C.ACCENT_DEEP, fontSize: '1rem', flexShrink: 0 }}>⌄</span>
+              </summary>
+              <div style={{ padding: '2px 15px 15px', borderTop: `1px solid ${C.BORDER_SOFT}` }}>
+                <ContentBlock lines={lines.slice(1)} />
+              </div>
+            </details>
+          );
+        }
         return (
           <section key={index} style={{ margin: index ? '18px 0 0' : 0, padding: '16px 15px', borderRadius: 14, border: `1px solid ${C.BORDER_SOFT}`, background: C.BG_CARD, boxShadow: '0 3px 12px rgba(62,47,28,.06)' }}>
             {hasTitle && (

@@ -2,15 +2,21 @@ import { Router } from 'express';
 import Tropa       from '../models/Tropa.js';
 import { autenticar } from '../middleware/auth.js';
 import { sanitizeContentI18n } from '../utils/contentI18n.js';
+import { normalizeCombatProfile } from '../utils/troopCombatProfile.js';
 
 const router = Router();
-const I18N_FIELDS = ['nome', 'desc', 'desbloqueioFonte', 'desbloqueioObservacao'];
+const I18N_FIELDS = [
+  'nome', 'desc', 'desbloqueioFonte', 'desbloqueioObservacao',
+  'combateForteContra', 'combateFracoContra', 'combateHabilidades',
+  'combateFuncaoRecomendada', 'combateObservacoesEstrategicas',
+  'combatePrioridadeAlvo', 'combateFonteInformacao',
+];
 const FUNCOES = new Set(['ataque','defesa','farming','suporte','equilibrada']);
 const CATEGORIAS = new Set(['infantaria','distancia','cavalaria','dragao','pesada','transporte','outro']);
 
 function normalizeBody(body = {}) {
   const desbloqueio = body.desbloqueio && typeof body.desbloqueio === 'object' ? body.desbloqueio : {};
-  return {
+  const normalized = {
     ...body,
     imagem: String(body.imagem || '').trim(),
     categoria: CATEGORIAS.has(body.categoria) ? body.categoria : 'outro',
@@ -23,6 +29,15 @@ function normalizeBody(body = {}) {
     },
     i18n: sanitizeContentI18n(body.i18n, I18N_FIELDS),
   };
+
+  // Não injeta um perfil vazio em clientes antigos: se o payload não conhece o campo,
+  // o MongoDB preserva qualquer classificação tática já cadastrada.
+  if (body.perfilCombate && typeof body.perfilCombate === 'object') {
+    normalized.perfilCombate = normalizeCombatProfile(body.perfilCombate);
+  } else {
+    delete normalized.perfilCombate;
+  }
+  return normalized;
 }
 
 // GET /api/tropas — lista (com busca, paginação e ordenação)
@@ -73,7 +88,7 @@ router.get('/:id', autenticar, async (req, res) => {
 // POST /api/tropas — criar
 router.post('/', autenticar, async (req, res) => {
   try {
-    const tropa = new Tropa({ ...normalizeBody(req.body), taxonomiaVersao: 1, atualizadoEm: new Date() });
+    const tropa = new Tropa({ ...normalizeBody(req.body), taxonomiaVersao: 1, taxonomiaCombateVersao: 1, atualizadoEm: new Date() });
     await tropa.save();
     res.status(201).json(tropa);
   } catch (err) {
@@ -88,7 +103,7 @@ router.put('/:id', autenticar, async (req, res) => {
   try {
     const tropa = await Tropa.findByIdAndUpdate(
       req.params.id,
-      { ...normalizeBody(req.body), taxonomiaVersao: 1, atualizadoEm: new Date() },
+      { ...normalizeBody(req.body), taxonomiaVersao: 1, taxonomiaCombateVersao: 1, atualizadoEm: new Date() },
       { new: true, runValidators: true }
     );
     if (!tropa) return res.status(404).json({ erro: 'Tropa não encontrada' });

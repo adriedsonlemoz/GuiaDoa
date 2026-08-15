@@ -5,6 +5,7 @@ import RelatedTroopTips from './RelatedTroopTips.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
 import { GameInfoTable, GameSectionTitle } from '../shared/GameChrome.jsx';
 import TroopTrainingPlanner from './TroopTrainingPlanner.jsx';
+import TroopCombatDetails from './TroopCombatDetails.jsx';
 
 export default function TropaModal({ tropa, onFechar, onOpenTips, onOpenTournament }) {
   const { t, content, locale } = useI18n();
@@ -61,6 +62,8 @@ export default function TropaModal({ tropa, onFechar, onOpenTips, onOpenTourname
         <div className="game-modal-content">
           <GameSectionTitle>{t('troops.attributes').toUpperCase()}</GameSectionTitle>
           <GameInfoTable rows={rows} />
+
+          <TroopCombatDetails troop={tropa} />
 
           <TroopTrainingPlanner troop={tropa} onOpenTournament={onOpenTournament} />
 

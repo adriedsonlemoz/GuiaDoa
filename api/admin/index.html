@@ -139,6 +139,66 @@
           </div>
         </div>
       </div>
+      <details class="admin-collapse">
+        <summary>⚔️ Dados de combate, counters e evidências <span>opcional</span></summary>
+        <div class="admin-collapse-body">
+          <div class="grid3">
+            <div class="field"><label>Tipo oficial</label><select id="f-combat-official"><option value="">Não informado</option><option value="supply">Supply / Suprimento</option><option value="mounted">Mounted / Montada</option><option value="foot">Foot / Infantaria</option><option value="ranged">Ranged / Distância</option></select></div>
+            <div class="field"><label>Tier</label><input id="f-combat-tier" type="number" min="1" max="99" placeholder="Ex.: 4"></div>
+            <div class="field"><label>Confiança geral</label><select id="f-combat-confidence"><option value="">Não informada</option><option value="confirmado">🟢 Confirmado</option><option value="experimental">🟡 Experimental</option><option value="hipotese">🔴 Hipótese</option></select></div>
+          </div>
+          <div class="field"><label>Funções táticas</label><div class="admin-check-row">
+            <label><input id="f-combat-role-melee" type="checkbox"> ⚔️ Melee</label>
+            <label><input id="f-combat-role-ranged" type="checkbox"> 🏹 Ranged</label>
+            <label><input id="f-combat-role-speed" type="checkbox"> 💨 Speed</label>
+            <label><input id="f-combat-role-tank" type="checkbox"> 🛡️ Tank</label>
+            <label><input id="f-combat-role-supply" type="checkbox"> 📦 Supply</label>
+          </div></div>
+          <div class="grid2">
+            <div class="field"><label>Forte contra <span class="field-hint">um por linha</span></label><textarea id="f-combat-strong" placeholder="Nome ou categoria"></textarea></div>
+            <div class="field"><label>Fraco contra <span class="field-hint">um por linha</span></label><textarea id="f-combat-weak" placeholder="Nome ou categoria"></textarea></div>
+          </div>
+          <div class="field"><label>Habilidades especiais <span class="field-hint">uma por linha</span></label><textarea id="f-combat-skills" placeholder="Somente habilidades conhecidas"></textarea></div>
+          <div class="grid2">
+            <div class="field"><label>Como usar / função recomendada</label><textarea id="f-combat-recommended" placeholder="Uso estratégico recomendado"></textarea></div>
+            <div class="field"><label>Prioridade de alvo</label><textarea id="f-combat-target" placeholder="Deixe vazio quando desconhecida"></textarea></div>
+          </div>
+          <div class="field"><label>Observações estratégicas</label><textarea id="f-combat-notes" placeholder="Resultados, limites e hipóteses"></textarea></div>
+          <div class="field"><label>Fonte / origem da informação</label><textarea id="f-combat-source" placeholder="Fonte oficial, relatório, teste, comunidade..."></textarea></div>
+
+          <div class="admin-subtitle">Confiança por grupo de informação</div>
+          <div class="grid3">
+            <div class="field"><label>Tipo oficial</label><select id="f-conf-official"></select></div>
+            <div class="field"><label>Funções táticas</label><select id="f-conf-roles"></select></div>
+            <div class="field"><label>Atributos numéricos</label><select id="f-conf-attributes"></select></div>
+          </div>
+          <div class="grid3">
+            <div class="field"><label>Counters</label><select id="f-conf-counters"></select></div>
+            <div class="field"><label>Habilidades</label><select id="f-conf-skills"></select></div>
+            <div class="field"><label>Tier</label><select id="f-conf-tier"></select></div>
+          </div>
+          <div class="grid3">
+            <div class="field"><label>Como usar</label><select id="f-conf-recommended"></select></div>
+            <div class="field"><label>Observações</label><select id="f-conf-notes"></select></div>
+            <div class="field"><label>Prioridade de alvo</label><select id="f-conf-target"></select></div>
+          </div>
+
+          <details class="admin-collapse admin-collapse-nested">
+            <summary>🌐 English — combate <span>opcional</span></summary>
+            <div class="admin-collapse-body">
+              <div class="grid2">
+                <div class="field"><label>Strong against</label><textarea id="f-en-combat-strong" placeholder="One per line"></textarea></div>
+                <div class="field"><label>Weak against</label><textarea id="f-en-combat-weak" placeholder="One per line"></textarea></div>
+              </div>
+              <div class="field"><label>Special abilities</label><textarea id="f-en-combat-skills" placeholder="One per line"></textarea></div>
+              <div class="grid2"><div class="field"><label>How to use</label><textarea id="f-en-combat-recommended"></textarea></div><div class="field"><label>Target priority</label><textarea id="f-en-combat-target"></textarea></div></div>
+              <div class="field"><label>Strategic notes</label><textarea id="f-en-combat-notes"></textarea></div>
+              <div class="field"><label>Information source</label><textarea id="f-en-combat-source"></textarea></div>
+            </div>
+          </details>
+        </div>
+      </details>
+
       <div class="grid3">
         <div class="field"><label>Poder ⭐</label><input id="f-poder" type="number" min="0" placeholder="0"></div>
         <div class="field"><label>Vida ❤️</label><input id="f-vida" type="number" min="0" placeholder="0"></div>

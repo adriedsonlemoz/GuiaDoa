@@ -83,6 +83,50 @@ function filtrarTipo(v){TIPO=v;PAGINA=1;carregarTropas();}
 function ordenarPor(c){if(ORDENAR===c)DIR=DIR==='1'?'-1':'1';else{ORDENAR=c;DIR='1';}carregarTropas();}
 function irPagina(n){if(n<1||n>TOTAL_PAG)return;PAGINA=n;carregarTropas();}
 
+const COMBAT_ROLES=['melee','ranged','speed','tank','supply'];
+const CONF_SELECTS=['official','roles','attributes','counters','skills','tier','recommended','notes','target'];
+const CONF_OPTIONS='<option value="">Não informada</option><option value="confirmado">🟢 Confirmado</option><option value="experimental">🟡 Experimental</option><option value="hipotese">🔴 Hipótese</option>';
+const splitLines=v=>[...new Set(String(v||'').split(/\n|,/).map(x=>x.trim()).filter(Boolean))];
+const joinLines=v=>Array.isArray(v)?v.filter(Boolean).join('\n'):'';
+
+function prepararConfiancaCombate(){
+  CONF_SELECTS.forEach(id=>{const el=document.getElementById(`f-conf-${id}`);if(el&&!el.options.length)el.innerHTML=CONF_OPTIONS;});
+}
+function limparPerfilCombate(){
+  prepararConfiancaCombate();
+  ['combat-tier','combat-strong','combat-weak','combat-skills','combat-recommended','combat-target','combat-notes','combat-source','en-combat-strong','en-combat-weak','en-combat-skills','en-combat-recommended','en-combat-target','en-combat-notes','en-combat-source'].forEach(id=>document.getElementById(`f-${id}`).value='');
+  document.getElementById('f-combat-official').value='';
+  document.getElementById('f-combat-confidence').value='';
+  COMBAT_ROLES.forEach(role=>document.getElementById(`f-combat-role-${role}`).checked=false);
+  CONF_SELECTS.forEach(id=>document.getElementById(`f-conf-${id}`).value='');
+}
+function preencherPerfilCombate(t){
+  limparPerfilCombate();
+  const p=t.perfilCombate||{};
+  const c=p.confiancaCampos||{};
+  document.getElementById('f-combat-official').value=p.tipoOficial||'';
+  document.getElementById('f-combat-tier').value=p.tier??'';
+  document.getElementById('f-combat-confidence').value=p.confianca||'';
+  COMBAT_ROLES.forEach(role=>document.getElementById(`f-combat-role-${role}`).checked=(p.funcoesTaticas||[]).includes(role));
+  document.getElementById('f-combat-strong').value=joinLines(p.forteContra);
+  document.getElementById('f-combat-weak').value=joinLines(p.fracoContra);
+  document.getElementById('f-combat-skills').value=joinLines(p.habilidadesEspeciais);
+  document.getElementById('f-combat-recommended').value=p.funcaoRecomendada||'';
+  document.getElementById('f-combat-target').value=p.prioridadeAlvo||'';
+  document.getElementById('f-combat-notes').value=p.observacoesEstrategicas||'';
+  document.getElementById('f-combat-source').value=p.fonteInformacao||'';
+  const map={official:'tipoOficial',roles:'funcoesTaticas',attributes:'atributos',counters:'counters',skills:'habilidades',tier:'tier',recommended:'funcaoRecomendada',notes:'observacoesEstrategicas',target:'prioridadeAlvo'};
+  Object.entries(map).forEach(([id,key])=>document.getElementById(`f-conf-${id}`).value=c[key]||'');
+  const en=t.i18n?.['en-US']||{};
+  document.getElementById('f-en-combat-strong').value=joinLines(en.combateForteContra);
+  document.getElementById('f-en-combat-weak').value=joinLines(en.combateFracoContra);
+  document.getElementById('f-en-combat-skills').value=joinLines(en.combateHabilidades);
+  document.getElementById('f-en-combat-recommended').value=en.combateFuncaoRecomendada||'';
+  document.getElementById('f-en-combat-target').value=en.combatePrioridadeAlvo||'';
+  document.getElementById('f-en-combat-notes').value=en.combateObservacoesEstrategicas||'';
+  document.getElementById('f-en-combat-source').value=en.combateFonteInformacao||'';
+}
+
 // ── Modal CRUD ────────────────────────────────────────────────────────────────
 function abrirModalNova(){
   EDITANDO_ID=null;
@@ -94,6 +138,7 @@ function abrirModalNova(){
   document.getElementById('f-categoria').value='outro';
   ['ataque','defesa','farming','suporte','equilibrada'].forEach(role=>document.getElementById(`f-role-${role}`).checked=role==='equilibrada');
   document.getElementById('f-unlock-tipo').value='';
+  limparPerfilCombate();
   abrirModal('modal-tropa');
 }
 
@@ -124,10 +169,15 @@ function editarTropa(t){
   document.getElementById('f-en-desc').value=t.i18n?.['en-US']?.desc||'';
   document.getElementById('f-en-unlock-fonte').value=t.i18n?.['en-US']?.desbloqueioFonte||'';
   document.getElementById('f-en-unlock-observacao').value=t.i18n?.['en-US']?.desbloqueioObservacao||'';
+  preencherPerfilCombate(t);
   abrirModal('modal-tropa');
 }
 
 async function salvarTropa(){
+  const confidenceMap={official:'tipoOficial',roles:'funcoesTaticas',attributes:'atributos',counters:'counters',skills:'habilidades',tier:'tier',recommended:'funcaoRecomendada',notes:'observacoesEstrategicas',target:'prioridadeAlvo'};
+  const confiancaCampos={};
+  Object.entries(confidenceMap).forEach(([id,key])=>{confiancaCampos[key]=document.getElementById(`f-conf-${id}`).value;});
+  const tierRaw=document.getElementById('f-combat-tier').value;
   const body={
     nome:     document.getElementById('f-nome').value.trim(),
     tipo:     document.getElementById('f-tipo').value,
@@ -145,6 +195,20 @@ async function salvarTropa(){
     car:      +document.getElementById('f-car').value||0,
     imagem:   document.getElementById('f-imagem').value.trim(),
     desc:     document.getElementById('f-desc').value.trim(),
+    perfilCombate:{
+      tipoOficial:document.getElementById('f-combat-official').value,
+      funcoesTaticas:COMBAT_ROLES.filter(role=>document.getElementById(`f-combat-role-${role}`).checked),
+      tier:tierRaw===''?null:+tierRaw,
+      forteContra:splitLines(document.getElementById('f-combat-strong').value),
+      fracoContra:splitLines(document.getElementById('f-combat-weak').value),
+      habilidadesEspeciais:splitLines(document.getElementById('f-combat-skills').value),
+      funcaoRecomendada:document.getElementById('f-combat-recommended').value.trim(),
+      prioridadeAlvo:document.getElementById('f-combat-target').value.trim(),
+      observacoesEstrategicas:document.getElementById('f-combat-notes').value.trim(),
+      fonteInformacao:document.getElementById('f-combat-source').value.trim(),
+      confianca:document.getElementById('f-combat-confidence').value,
+      confiancaCampos,
+    },
     desbloqueio: {
       tipo: document.getElementById('f-unlock-tipo').value,
       nivel: document.getElementById('f-unlock-nivel').value,
@@ -156,9 +220,17 @@ async function salvarTropa(){
       desc: document.getElementById('f-en-desc').value.trim(),
       desbloqueioFonte: document.getElementById('f-en-unlock-fonte').value.trim(),
       desbloqueioObservacao: document.getElementById('f-en-unlock-observacao').value.trim(),
+      combateForteContra: splitLines(document.getElementById('f-en-combat-strong').value),
+      combateFracoContra: splitLines(document.getElementById('f-en-combat-weak').value),
+      combateHabilidades: splitLines(document.getElementById('f-en-combat-skills').value),
+      combateFuncaoRecomendada: document.getElementById('f-en-combat-recommended').value.trim(),
+      combatePrioridadeAlvo: document.getElementById('f-en-combat-target').value.trim(),
+      combateObservacoesEstrategicas: document.getElementById('f-en-combat-notes').value.trim(),
+      combateFonteInformacao: document.getElementById('f-en-combat-source').value.trim(),
     } },
   };
   if(!body.nome) return toast('Preencha o nome da tropa!','warn');
+  if(body.perfilCombate.tier!==null&&(body.perfilCombate.tier<1||body.perfilCombate.tier>99)) return toast('Tier deve ficar entre 1 e 99.','warn');
   try {
     const r=await fetch(EDITANDO_ID?`${API}/tropas/${EDITANDO_ID}`:`${API}/tropas`,{method:EDITANDO_ID?'PUT':'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${TOKEN}`},body:JSON.stringify(body)});
     const d=await r.json();

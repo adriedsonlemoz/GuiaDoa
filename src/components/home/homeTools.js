@@ -1,5 +1,6 @@
 export const HOME_TOOLS = [
   { id: 'tropas', icon: '⚔️', tKey: 'home.botao.tropas', subKey: 'home.botao.tropas.sub', cor: '#5C7FA3' },
+  { id: 'mecanicas_combate', icon: '🛡️', tKey: 'home.botao.combate', subKey: 'home.botao.combate.sub', cor: '#496D65' },
   { id: 'dragoes', icon: '🐉', tKey: 'home.botao.dragoes', subKey: 'home.botao.dragoes.sub', cor: '#5A8A5C' },
   { id: 'edificios', icon: '🏗️', tKey: 'home.botao.edificios', subKey: 'home.botao.edificios.sub', cor: '#8B6BAE' },
   { id: 'pesquisas', icon: '🔬', tKey: 'home.botao.pesquisas', subKey: 'home.botao.pesquisas.sub', cor: '#5A8A7A' },

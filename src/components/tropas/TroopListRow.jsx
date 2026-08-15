@@ -1,6 +1,11 @@
 import React from 'react';
 import { useI18n } from '../../hooks/useI18n.jsx';
 import { getIcone, getTipoAtaque, fmtFull } from './tropaUtils.js';
+import { explicitTacticalRoles } from './troopCatalogUtils.js';
+
+const ROLE_ICONS = { melee:'⚔️', ranged:'🏹', speed:'💨', tank:'🛡️', supply:'📦' };
+const TYPE_KEYS = { supply:'troops.official_type.supply', mounted:'troops.official_type.mounted', foot:'troops.official_type.foot', ranged:'troops.official_type.ranged' };
+const CONF_ICONS = { confirmado:'🟢', experimental:'🟡', hipotese:'🔴' };
 
 export default function TroopListRow({ troop, onOpen, compareMode = false, selected = false, onSelect }) {
   const { t, content, locale } = useI18n();
@@ -10,6 +15,11 @@ export default function TroopListRow({ troop, onOpen, compareMode = false, selec
   const unlock = troop.desbloqueio || {};
   const unlockSource = content({ desbloqueioFonte:unlock.fonte, i18n:troop.i18n }, 'desbloqueioFonte') || unlock.fonte;
   const power = Number(troop.poder) || 0;
+  const profile = troop.perfilCombate || {};
+  const tacticalRoles = explicitTacticalRoles(troop);
+  const attack = Math.max(Number(troop.atqPerto) || 0, Number(troop.atqDist) || 0);
+  const attackIcon = (Number(troop.atqDist) || 0) > (Number(troop.atqPerto) || 0) ? '🏹' : '⚔️';
+  const compactStats = [['❤️',troop.vida],['🛡️',troop.def],[attackIcon,attack],['⚡',troop.vel],['🎯',troop.alcance]].filter(([,value]) => Number(value) > 0);
 
   const handleClick = () => {
     if (compareMode) onSelect?.();
@@ -34,6 +44,15 @@ export default function TroopListRow({ troop, onOpen, compareMode = false, selec
         <div className="game-list-meta">
           {type.label}{troop.tipo === 'especial' ? ` • ${t('troops.special')}` : ''}
         </div>
+        {(profile.tipoOficial || tacticalRoles.length || profile.tier) ? (
+          <div className="troop-card-tags">
+            {profile.tipoOficial ? <span>{t(TYPE_KEYS[profile.tipoOficial])}</span> : null}
+            {profile.tier ? <span>T{profile.tier}</span> : null}
+            {tacticalRoles.slice(0, 3).map(role => <span key={role}>{ROLE_ICONS[role]} {t(`troops.tactical.${role}`)}</span>)}
+            {profile.confianca ? <span title={t(`troops.confidence.${profile.confianca === 'confirmado' ? 'confirmed' : profile.confianca === 'experimental' ? 'experimental' : 'hypothesis'}`)}>{CONF_ICONS[profile.confianca]} {t(`troops.confidence.short.${profile.confianca === 'confirmado' ? 'confirmed' : profile.confianca === 'experimental' ? 'experimental' : 'hypothesis'}`)}</span> : null}
+          </div>
+        ) : null}
+        {compactStats.length ? <div className="troop-card-stats">{compactStats.map(([icon,value],index)=><span key={`${icon}-${index}`}>{icon} {fmtFull(Number(value), locale)}</span>)}</div> : null}
         {description ? <p className="game-list-copy">{description}</p> : null}
         {unlockSource ? (
           <div className="game-badge">🔓 {unlockSource}{unlock.nivel ? ` • ${t('common.level_short')} ${unlock.nivel}` : ''}</div>

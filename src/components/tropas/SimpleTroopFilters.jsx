@@ -3,20 +3,29 @@ import { useI18n } from '../../hooks/useI18n.jsx';
 
 const FILTERS = [
   ['all', 'troops.filter.all'],
-  ['ranged', 'troops.filter.ranged'],
-  ['melee', 'troops.filter.melee'],
-  ['special', 'troops.filter.special'],
+  ['melee', 'troops.tactical.melee'],
+  ['ranged', 'troops.tactical.ranged'],
+  ['speed', 'troops.tactical.speed'],
+  ['tank', 'troops.tactical.tank'],
+  ['supply', 'troops.tactical.supply'],
 ];
 
 export default function SimpleTroopFilters({ search, setSearch, filter, setFilter }) {
   const { t } = useI18n();
   return (
-    <div style={{ display:'grid', gap:7 }}>
-      <div className="game-filter-row">
-        <span className="game-filter-label">{t('common.filter')}:</span>
-        <select className="game-field" value={filter} onChange={event => setFilter(event.target.value)}>
-          {FILTERS.map(([id, key]) => <option key={id} value={id}>{t(key)}</option>)}
-        </select>
+    <div className="troop-filter-stack">
+      <div className="troop-role-filters" role="group" aria-label={t('common.filter')}>
+        {FILTERS.map(([id, key]) => (
+          <button
+            key={id}
+            type="button"
+            className={`troop-role-filter${filter === id ? ' is-active' : ''}`}
+            onClick={() => setFilter(id)}
+            aria-pressed={filter === id}
+          >
+            {t(key)}
+          </button>
+        ))}
       </div>
       <div className="game-filter-row">
         <span aria-hidden="true" style={{ color:'#6b5431' }}>⌕</span>

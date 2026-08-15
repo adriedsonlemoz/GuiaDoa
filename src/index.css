@@ -1428,3 +1428,59 @@
 
 /* Beta 2.50 · amostras de itens/recursos e níveis no verde do jogo */
 .campaign-level-card:focus-visible .campaign-level-badge{outline:2px solid #fff;outline-offset:1px}
+
+/* ── Troop combat taxonomy · Beta 2.53 ─────────────────────────────────── */
+.troop-filter-stack { display:grid; gap:7px; }
+.troop-role-filters {
+  display:flex; gap:5px; overflow-x:auto; padding:1px 1px 3px; scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.troop-role-filters::-webkit-scrollbar { display:none; }
+.troop-role-filter {
+  flex:0 0 auto; min-height:30px; padding:5px 9px; border:1px solid #9d916b; border-radius:4px;
+  background:linear-gradient(180deg,rgba(244,238,215,.95),rgba(222,211,175,.95)); color:#5b5748;
+  font:800 .62rem/1 var(--ui-font); cursor:pointer; white-space:nowrap;
+}
+.troop-role-filter.is-active { border-color:#315b56; background:linear-gradient(180deg,#47736e,#315b56); color:#fff8e7; }
+.troop-card-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+.troop-card-tags span {
+  display:inline-flex; align-items:center; min-height:20px; padding:2px 5px; border:1px solid rgba(79,98,83,.25); border-radius:3px;
+  background:rgba(236,230,204,.72); color:#4d5d50; font-size:.53rem; font-weight:800; line-height:1.05;
+}
+.troop-combat-details { margin-top:10px; border:1px solid #9b8c63; border-radius:5px; background:rgba(239,232,207,.66); overflow:hidden; }
+.troop-combat-details > summary {
+  list-style:none; display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:39px; padding:7px 10px;
+  cursor:pointer; color:#314840; background:linear-gradient(180deg,rgba(224,214,181,.96),rgba(207,195,155,.96));
+  font:850 .69rem/1.2 var(--ui-font);
+}
+.troop-combat-details > summary::-webkit-details-marker { display:none; }
+.troop-combat-details > summary::after { content:'⌄'; color:#6a634e; font-size:.9rem; margin-left:auto; }
+.troop-combat-details[open] > summary::after { content:'⌃'; }
+.troop-combat-details > summary .troop-confidence { margin-left:4px; }
+.troop-combat-body { display:grid; gap:7px; padding:9px; }
+.troop-combat-summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+.troop-combat-summary > span { padding:7px 8px; border:1px solid rgba(104,92,61,.2); border-radius:4px; background:rgba(248,243,224,.62); }
+.troop-combat-summary > span.is-wide { grid-column:1/-1; }
+.troop-combat-summary small { display:block; color:#81775f; font-size:.5rem; font-weight:850; text-transform:uppercase; letter-spacing:.03em; }
+.troop-combat-summary b { display:block; margin-top:2px; color:#37493f; font-size:.66rem; line-height:1.3; }
+.troop-combat-block { padding:8px; border-left:3px solid rgba(71,115,110,.45); background:rgba(248,243,224,.5); }
+.troop-combat-block-head { display:flex; align-items:flex-start; justify-content:space-between; gap:7px; }
+.troop-combat-block-head strong { color:#3e4b43; font-size:.64rem; }
+.troop-combat-block p { margin:5px 0 0; color:#665f50; font-size:.63rem; line-height:1.42; }
+.troop-combat-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+.troop-combat-chips span { padding:3px 6px; border-radius:3px; background:rgba(216,207,176,.85); color:#554f42; font-size:.58rem; font-weight:750; }
+.troop-confidence { display:inline-flex; align-items:center; gap:2px; color:#665f50; font-size:.5rem; font-weight:850; line-height:1.15; }
+.troop-confidence-legend { display:grid; gap:3px; padding-top:3px; color:#746b58; font-size:.52rem; line-height:1.25; }
+@media (min-width:520px) {
+  .troop-role-filters { flex-wrap:wrap; overflow:visible; }
+  .troop-confidence-legend { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+.troop-card-stats{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px;color:#6d6858;font-size:.52rem;font-weight:780;line-height:1.15}.troop-card-stats span{white-space:nowrap}
+
+/* ── Combat Mechanics · Beta 2.54 ───────────────────────────────────────── */
+.combat-page{max-width:680px;margin:0 auto;padding-bottom:18px;animation:reveal-up .25s ease both}.combat-methodology-card,.combat-evidence-callout,.combat-case-card{border:1px solid #998b62;border-radius:6px;background:linear-gradient(180deg,rgba(241,235,211,.96),rgba(225,216,185,.92));box-shadow:inset 0 1px 0 rgba(255,255,255,.45);padding:11px}.combat-methodology-card{margin-bottom:12px;border-left:4px solid #4e716a}.combat-methodology-head,.combat-evidence-callout-head,.combat-case-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.combat-methodology-head{justify-content:flex-start}.combat-methodology-head strong,.combat-evidence-callout-head strong,.combat-case-head strong{color:#35483f;font:850 .72rem/1.25 var(--ui-font)}.combat-methodology-card p,.combat-evidence-callout p,.combat-case-card p{margin:6px 0 0;color:#625d50;font-size:.65rem;line-height:1.48}.combat-confidence-legend{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.combat-confidence{display:inline-flex;align-items:center;min-height:22px;padding:3px 6px;border:1px solid rgba(92,84,61,.22);border-radius:4px;background:rgba(249,245,228,.68);color:#665f50;font-size:.53rem;font-weight:850;line-height:1.1}.combat-confidence.is-confirmado{border-color:rgba(54,115,72,.32)}.combat-confidence.is-experimental{border-color:rgba(173,128,31,.36)}.combat-confidence.is-hipotese{border-color:rgba(150,73,62,.32)}
+.combat-role-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:4px}.combat-role-card{display:flex;gap:8px;min-width:0;padding:9px;border:1px solid #aaa077;border-radius:5px;background:rgba(239,232,207,.76)}.combat-role-card:last-child{grid-column:1/-1}.combat-role-icon{flex:0 0 auto;font-size:1.35rem;line-height:1}.combat-role-card strong{display:block;color:#33463e;font-size:.66rem;line-height:1.2}.combat-role-card p{margin:4px 0 0;color:#6a6455;font-size:.58rem;line-height:1.4}.combat-factor-list{display:grid;gap:6px}.combat-factor-card{overflow:hidden;border:1px solid #a79b73;border-radius:5px;background:rgba(241,235,211,.72)}.combat-factor-card>summary{list-style:none;display:flex;align-items:center;gap:7px;min-height:36px;padding:7px 9px;cursor:pointer;color:#394a42}.combat-factor-card>summary::-webkit-details-marker{display:none}.combat-factor-card>summary strong{font-size:.64rem;flex:1}.combat-chevron{font-size:.78rem;transition:transform .15s ease}.combat-factor-card[open] .combat-chevron{transform:rotate(180deg)}.combat-factor-card p{margin:0;padding:0 9px 9px 32px;color:#696254;font-size:.59rem;line-height:1.45}.combat-evidence-callout{border-left:4px solid #c39732}.combat-evidence-callout p+p{padding-top:6px;border-top:1px solid rgba(126,94,47,.14)}
+.combat-evidence-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:7px}.combat-evidence-summary span{min-width:0;padding:7px 4px;border:1px solid #aaa077;border-radius:4px;background:rgba(239,232,207,.72);text-align:center}.combat-evidence-summary b{display:block;color:#315b56;font-size:.84rem;line-height:1}.combat-evidence-summary small{display:block;margin-top:4px;color:#716957;font-size:.48rem;font-weight:750;line-height:1.15}.combat-troop-evidence-list{display:grid;gap:6px}.combat-troop-evidence-card{padding:8px;border:1px solid rgba(133,122,88,.55);border-radius:5px;background:rgba(247,242,224,.72)}.combat-troop-evidence-head{display:flex;align-items:flex-start;justify-content:space-between;gap:7px}.combat-troop-name-wrap{display:flex;align-items:center;gap:7px;min-width:0}.combat-troop-name-wrap img,.combat-troop-placeholder{width:34px;height:34px;flex:0 0 34px;border:1px solid #9d916b;border-radius:4px;object-fit:cover;background:#ddd2ad;display:grid;place-items:center}.combat-troop-name-wrap strong{display:block;color:#35473f;font-size:.65rem;line-height:1.2}.combat-role-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}.combat-role-tags span{padding:2px 4px;border-radius:3px;background:rgba(217,207,173,.85);color:#655e4e;font-size:.48rem;font-weight:800}.combat-troop-evidence-card>p{margin:6px 0 0;color:#696254;font-size:.58rem;line-height:1.42}.combat-empty{margin:0;padding:12px;text-align:center;color:#77705e;font-size:.62rem}
+.combat-case-grid{display:grid;gap:8px;margin-top:14px}.combat-case-card{border-left:4px solid #c39732}.combat-case-card.is-hypothesis{border-left-color:#9b5b50}.combat-kicker{display:block;margin-bottom:2px;color:#89784e;font-size:.48rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em}.combat-case-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:8px}.combat-case-stats span{min-width:0;padding:6px 3px;border-radius:4px;background:rgba(247,242,224,.78);text-align:center}.combat-case-stats b{display:block;color:#40564b;font-size:.7rem}.combat-case-stats small{display:block;margin-top:2px;color:#746d5b;font-size:.45rem;line-height:1.15}.combat-case-conclusion{padding-top:7px;border-top:1px solid rgba(126,94,47,.16);font-weight:700}.combat-report-steps{display:grid;gap:5px;margin:0;padding:0;list-style:none}.combat-report-steps li{display:flex;align-items:flex-start;gap:8px;padding:7px 8px;border:1px solid rgba(144,132,96,.55);border-radius:4px;background:rgba(242,236,215,.68)}.combat-report-steps li>span{display:grid;place-items:center;width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#456c66;color:#fff7e5;font-size:.55rem;font-weight:900}.combat-report-steps p{margin:1px 0 0;color:#625d50;font-size:.59rem;line-height:1.4}.combat-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:12px}
+@media(min-width:560px){.combat-role-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.combat-role-card:last-child{grid-column:auto}.combat-troop-evidence-list{grid-template-columns:repeat(2,minmax(0,1fr))}.combat-case-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:380px){.combat-evidence-summary,.combat-case-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.combat-role-grid{grid-template-columns:1fr}.combat-role-card:last-child{grid-column:auto}}

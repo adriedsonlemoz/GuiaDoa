@@ -3,6 +3,7 @@ import React from 'react';
 import Home from '../components/Home.jsx';
 import Torneios from '../components/Torneios.jsx';
 import Tropas from '../components/Tropas.jsx';
+import MecanicasCombate from '../components/MecanicasCombate.jsx';
 import TropaComparar from '../components/tropas/TropaComparar.jsx';
 import CalculosTropas from '../components/CalculosTropas.jsx';
 import Edificios from '../components/Edificios.jsx';
@@ -34,6 +35,7 @@ import CampanhaMapa from '../components/CampanhaMapa.jsx';
 const BASE_LABELS = {
   torneios: { key: 'home.botao.torneios', icon: '🏆' },
   tropas: { key: 'home.botao.tropas', icon: '⚔️' },
+  mecanicas_combate: { key: 'home.botao.combate', icon: '🛡️' },
   tropas_lista: { key: 'home.botao.tropas.sub', icon: '📖' },
   tropas_comparar: { key: 'troops.compare', icon: '⚖️' },
   calculostropas: { key: 'troops.simulator', icon: '🧮' },
@@ -67,6 +69,7 @@ export function renderRoute(route, setRoute) {
     case 'home': return <Home setRoute={setRoute} />;
     case 'torneios': return <Torneios setRoute={setRoute} />;
     case 'tropas': return <Tropas setRoute={setRoute} />;
+    case 'mecanicas_combate': return <MecanicasCombate setRoute={setRoute} />;
     case 'tropas_lista': return <Tropas setRoute={setRoute} />;
     case 'tropas_comparar': return <TropaComparar />;
     case 'calculostropas': return <CalculosTropas setRoute={setRoute} />;

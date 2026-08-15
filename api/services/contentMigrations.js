@@ -14,6 +14,7 @@ const CAMPANHA_ANTROPOS_KEY = 'content:campanha-antropos:beta-2.44';
 const CAMPANHA_CAMPOS_KEY = 'content:campanha-campos:beta-2.45';
 const CAMPANHA_STRATEGY_KEY = 'content:campanha-estrategias:beta-2.46';
 const CAMPANHA_STRATEGY_CONFIRMED_KEY = 'content:campanha-estrategias-confirmadas:beta-2.47';
+const CAMPANHA_REWARDS_KEY = 'content:campanha-recompensas:beta-2.48';
 
 const INICIANTE_CATEGORY = {
   slug: 'iniciante',
@@ -287,6 +288,46 @@ async function migrarCampanhaEstrategiasConfirmadas() {
   }
 }
 
+
+async function migrarCampanhaRecompensas() {
+  const aplicado = await AppConfig.findOne({ chave:CAMPANHA_REWARDS_KEY }).lean();
+  if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, inseridas:0, completadas:0, preservadas:0 };
+
+  await AppConfig.findOneAndUpdate(
+    { chave:CAMPANHA_REWARDS_KEY },
+    { $set:{ migracaoEstado:'executando', migracaoVersao:'1', ultimoErro:'', atualizadoEm:new Date() } },
+    { upsert:true, setDefaultsOnInsert:true },
+  );
+
+  try {
+    const relatorio = { inseridas:0, completadas:0, preservadas:0 };
+    for (const seed of ANTROPOS_SEED) {
+      const r = await mesclarSeed(
+        CampanhaLocal,
+        { slug:seed.slug },
+        { recompensas:seed.recompensas, fonte:seed.fonte },
+        { mergeArrays:{ recompensas:'codigo' } },
+      );
+      relatorio.inseridas += r.inserido || 0;
+      relatorio.completadas += r.completado || 0;
+      relatorio.preservadas += r.preservado || 0;
+    }
+    await AppConfig.findOneAndUpdate(
+      { chave:CAMPANHA_REWARDS_KEY },
+      { $set:{ migracaoEstado:'pronto', migracaoVersao:'1', migracaoEm:new Date(), atualizadoEm:new Date(), ultimoErro:'', relatorioMigracao:{ recompensasAntropos:relatorio } } },
+      { upsert:true, setDefaultsOnInsert:true },
+    );
+    return { ok:true, ignorada:false, ...relatorio };
+  } catch (err) {
+    await AppConfig.findOneAndUpdate(
+      { chave:CAMPANHA_REWARDS_KEY },
+      { $set:{ migracaoEstado:'erro', ultimoErro:err.message, atualizadoEm:new Date() } },
+      { upsert:true, setDefaultsOnInsert:true },
+    ).catch(()=>{});
+    return { ok:false, erro:err.message, inseridas:0, completadas:0, preservadas:0 };
+  }
+}
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
@@ -300,13 +341,15 @@ export async function executarMigracoesConteudo() {
   if (!estrategias.ok) return estrategias;
   const estrategiasConfirmadas = await migrarCampanhaEstrategiasConfirmadas();
   if (!estrategiasConfirmadas.ok) return estrategiasConfirmadas;
+  const recompensas = await migrarCampanhaRecompensas();
+  if (!recompensas.ok) return recompensas;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && tropas.ignorada && campanha.ignorada && campos.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada),
+    ignorada:Boolean(dicas.ignorada && tropas.ignorada && campanha.ignorada && campos.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && recompensas.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     tropasAtualizadas:tropas.atualizadas || 0,
     campanhaInseridas:(campanha.inseridas || 0) + (campos.inseridas || 0),
-    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0),
+    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (recompensas.completadas || 0),
   };
 }

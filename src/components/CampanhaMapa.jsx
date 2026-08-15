@@ -39,6 +39,22 @@ function Loading({ t }) {
   return <div className="campaign-loading"><span className="spinner" /> {t('campaign.loading')}</div>;
 }
 
+function CollapsibleSection({ title, meta = '', defaultOpen = false, className = '', children }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className={`campaign-report-section campaign-collapsible ${className} ${open ? 'is-open' : 'is-closed'}`}>
+      <button type="button" className="campaign-collapse-trigger" onClick={() => setOpen(value => !value)} aria-expanded={open}>
+        <span>{title}</span>
+        <span className="campaign-collapse-side">
+          {meta && <small>{meta}</small>}
+          <b aria-hidden="true">{open ? '⌃' : '⌄'}</b>
+        </span>
+      </button>
+      {open && <div className="campaign-collapse-body">{children}</div>}
+    </section>
+  );
+}
+
 function CategoryLanding({ counts, onSelect, t }) {
   return (
     <>
@@ -71,7 +87,7 @@ function CategoryLanding({ counts, onSelect, t }) {
 function FieldLanding({ entries, onSelect, onBack, t }) {
   return (
     <div>
-      <button type="button" className="campaign-back" onClick={onBack}>‹ {t('campaign.categories')}</button>
+      <button type="button" className="campaign-back" onClick={onBack}>↩ {t('campaign.categories')}</button>
       <div className="tw-card mb-3">
         <GameHeader title={`🌲 ${t('campaign.category.fields')}`} />
         <div className="campaign-section-copy">{t('campaign.fields_intro')}</div>
@@ -100,7 +116,7 @@ function LevelList({ category, entries, onOpen, onBack, t, locale, content, titl
   const fmt = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   return (
     <div>
-      <button type="button" className="campaign-back" onClick={onBack}>‹ {category === 'campos' ? t('campaign.field_types') : t('campaign.categories')}</button>
+      <button type="button" className="campaign-back" onClick={onBack}>↩ {category === 'campos' ? t('campaign.field_types') : t('campaign.categories')}</button>
       <div className="tw-card mb-3">
         <GameHeader title={title || `${cat?.icon || '◆'} ${t(cat?.title || 'campaign.title')}`} />
         <div className="campaign-section-copy">{category === 'campos' ? t('campaign.field_levels_intro') : t(cat?.desc || 'campaign.intro')}</div>
@@ -232,14 +248,16 @@ function AttackGuidesBlock({ entry, t, locale }) {
   const guides = entry.guiasAtaque || [];
   const showCommon = entry.categoria === 'antropos' || entry.categoria === 'campos';
   if (!guides.length && !showCommon) return null;
+  const safe = guides.filter(guide => guide.resultado === 'sem_perdas').length;
+  const risky = guides.filter(guide => guide.resultado === 'possiveis_perdas').length;
+  const meta = [safe ? `${safe} ✓` : '', risky ? `${risky} ⚠` : ''].filter(Boolean).join(' · ');
   return (
-    <section className="campaign-report-section campaign-attack-section">
-      <h3>{t('campaign.how_to_attack')}</h3>
+    <CollapsibleSection title={t('campaign.how_to_attack')} meta={meta} className="campaign-attack-section">
       {entry.categoria === 'antropos' && <div className="campaign-combat-warning">⚠ {t('campaign.ranged_speed_warning')}</div>}
       {showCommon && <FedorTactic entry={entry} t={t} locale={locale} />}
       {guides.map(guide => <AttackGuide key={guide.codigo} guide={guide} t={t} locale={locale} />)}
       {showCommon && <SpecialTroopsTactic t={t} locale={locale} />}
-    </section>
+    </CollapsibleSection>
   );
 }
 
@@ -274,19 +292,21 @@ function StrategyBlock({ strategy, t, locale, hasGuides = false }) {
 
 function RewardsBlock({ rewards, t, locale }) {
   return (
-    <section className="campaign-report-section">
-      <h3>{t('campaign.possible_rewards')}</h3>
+    <CollapsibleSection title={t('campaign.possible_rewards')} meta={rewards.length ? String(rewards.length) : '—'}>
       {rewards.length ? (
         <div className="campaign-reward-grid">
           {rewards.map((reward, index) => {
             const translated = locale !== 'pt-BR' ? reward?.i18n?.[locale] || {} : {};
             const name = translated.nome || reward.nome || '';
             return (
-              <div className={`campaign-reward ${reward.nomeConfirmado ? 'is-named' : 'is-symbolic'}`} key={reward.codigo || index}>
-                <span className="campaign-reward-symbol">{reward.simbolo || `R${index + 1}`}</span>
+              <div className={`campaign-reward ${reward.nomeConfirmado ? 'is-named' : 'is-symbolic'} ${reward.imagem ? 'has-image' : ''}`} key={reward.codigo || index}>
+                {reward.imagem ? (
+                  <img className="campaign-reward-image" src={reward.imagem} alt={name || t('campaign.reward_unknown')} loading="lazy" />
+                ) : (
+                  <span className="campaign-reward-symbol">{reward.simbolo || `R${index + 1}`}</span>
+                )}
                 <div>
                   <strong>{name || t('campaign.reward_unknown')}</strong>
-                  {reward.quantidade != null && <small>× {reward.quantidade}</small>}
                   {!reward.nomeConfirmado && <small>{t('campaign.reward_name_pending')}</small>}
                 </div>
               </div>
@@ -295,7 +315,7 @@ function RewardsBlock({ rewards, t, locale }) {
         </div>
       ) : <p className="campaign-reward-empty">{t('campaign.rewards_pending')}</p>}
       <p className="campaign-reward-note">{t('campaign.reward_note')}</p>
-    </section>
+    </CollapsibleSection>
   );
 }
 
@@ -306,7 +326,7 @@ function Detail({ entry, onBack, t, locale, content }) {
   const principal = entry.campo?.recursoPrincipal || '';
   return (
     <div>
-      <button type="button" className="campaign-back" onClick={onBack}>‹ {t('campaign.levels')}</button>
+      <button type="button" className="campaign-back" onClick={onBack}>↩ {t('campaign.levels')}</button>
       <div className="campaign-report-card">
         <div className="campaign-report-ribbon">{content(entry, 'nome')}</div>
         <div className="campaign-report-summary">
@@ -316,8 +336,7 @@ function Detail({ entry, onBack, t, locale, content }) {
         </div>
 
         {entry.categoria === 'campos' && (principal || entry.campo?.producaoHora != null) && (
-          <section className="campaign-report-section campaign-domain-section">
-            <h3>{t('campaign.field_domain')}</h3>
+          <CollapsibleSection title={t('campaign.field_domain')} defaultOpen>
             <div className="campaign-domain-card">
               <span className="campaign-domain-icon">{RESOURCE_ICONS[principal] || '◆'}</span>
               <div>
@@ -326,11 +345,10 @@ function Detail({ entry, onBack, t, locale, content }) {
                 <span>{t('campaign.production_when_conquered')}</span>
               </div>
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
-        <section className="campaign-report-section">
-          <h3>{t('campaign.resources')}</h3>
+        <CollapsibleSection title={t('campaign.resources')} meta={String((entry.recursos || []).length)}>
           <div className="campaign-resources-grid">
             {(entry.recursos || []).map(resource => (
               <div className="campaign-resource" key={resource.tipo}>
@@ -340,19 +358,18 @@ function Detail({ entry, onBack, t, locale, content }) {
             ))}
           </div>
           {(entry.recursos || []).some(r => !r.exato) && <p className="campaign-abbrev-note">{t('campaign.abbrev_note')}</p>}
-        </section>
+        </CollapsibleSection>
 
         <RewardsBlock rewards={rewards} t={t} locale={locale} />
 
-        <section className="campaign-report-section">
-          <div className="campaign-section-heading"><h3>{t('campaign.enemy_composition')}</h3><span>{fmt.format(totalTroops)}</span></div>
+        <CollapsibleSection title={t('campaign.enemy_composition')} meta={fmt.format(totalTroops)}>
           <div className="campaign-troop-table">
             <div className="campaign-troop-head"><span>{t('campaign.troop')}</span><span>{t('campaign.quantity')}</span></div>
             {(entry.tropas || []).map((troop, index) => (
               <div className="campaign-troop-row" key={`${troop.nome}-${index}`}><span>{troop.nome}</span><strong>{fmt.format(troop.quantidade)}</strong></div>
             ))}
           </div>
-        </section>
+        </CollapsibleSection>
 
         <AttackGuidesBlock entry={entry} t={t} locale={locale} />
         <StrategyBlock strategy={entry.estrategia} t={t} locale={locale} hasGuides={(entry.guiasAtaque || []).length > 0 || entry.categoria === 'antropos' || entry.categoria === 'campos'} />

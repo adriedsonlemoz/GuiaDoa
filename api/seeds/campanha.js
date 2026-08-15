@@ -10,6 +10,45 @@ const tropa = (nome, quantidade) => ({ nome, quantidade });
 const r = (valor, exibicao, exato = true) => ({ valor, exibicao, exato });
 
 
+const recompensaAntropos = (codigo, nome, imagem, nomeEn) => ({
+  codigo,
+  simbolo:'',
+  nome,
+  imagem,
+  quantidade:null,
+  nomeConfirmado:true,
+  i18n:{ 'en-US': { nome:nomeEn } },
+});
+
+const ANTROPOS_REWARDS = Object.freeze({
+  AMULETO_NEVOA: recompensaAntropos('amuleto-nevoa-malva', 'Amuleto da Névoa Malva', '/assets/items/anthropus/amuleto-nevoa-malva.webp', 'Mauve Mist Amulet'),
+  PEDRA_NEVOA: recompensaAntropos('pedra-nevoa-malva', 'Pedra da Névoa Malva', '/assets/items/anthropus/pedra-nevoa-malva.webp', 'Mauve Mist Stone'),
+  AMULETO_SOL: recompensaAntropos('amuleto-brilho-sol', 'Amuleto do Brilho do Sol', '/assets/items/anthropus/amuleto-brilho-sol.webp', 'Sun Radiance Amulet'),
+  PEDRA_SOL: recompensaAntropos('pedra-brilho-sol', 'Pedra do Brilho do Sol', '/assets/items/anthropus/pedra-brilho-sol.webp', 'Sun Radiance Stone'),
+  AMULETO_OCEANO: recompensaAntropos('amuleto-luz-oceano', 'Amuleto da Luz do Oceano', '/assets/items/anthropus/amuleto-luz-oceano.webp', 'Ocean Light Amulet'),
+  PEDRA_OCEANO: recompensaAntropos('pedra-luz-oceano', 'Pedra da Luz do Oceano', '/assets/items/anthropus/pedra-luz-oceano.webp', 'Ocean Light Stone'),
+  AMULETO_BOSQUE: recompensaAntropos('amuleto-florescer-bosque', 'Amuleto do Florescer do Bosque', '/assets/items/anthropus/amuleto-florescer-bosque.webp', 'Grove Bloom Amulet'),
+  PEDRA_BOSQUE: recompensaAntropos('pedra-florescer-bosque', 'Pedra do Florescer do Bosque', '/assets/items/anthropus/pedra-florescer-bosque.webp', 'Grove Bloom Stone'),
+  FAISCA_DOURADA: recompensaAntropos('pedra-faisca-dourada', 'Pedra da Faísca Dourada', '/assets/items/anthropus/pedra-faisca-dourada.webp', 'Golden Spark Stone'),
+  OBSIDIANA: recompensaAntropos('obsidiana', 'Obsidiana', '/assets/items/anthropus/obsidiana.webp', 'Obsidian'),
+  ESSENCIA_FURIA: recompensaAntropos('essencia-furia', 'Essência da Fúria', '/assets/items/anthropus/essencia-furia.webp', 'Essence of Fury'),
+  LEMBRANCAS: recompensaAntropos('lembrancas-antigas', 'Lembranças Antigas', '/assets/items/anthropus/lembrancas-antigas.webp', 'Ancient Memories'),
+});
+
+const recompensasAntropos = (nivel) => ({
+  1:[ANTROPOS_REWARDS.AMULETO_NEVOA, ANTROPOS_REWARDS.PEDRA_NEVOA, ANTROPOS_REWARDS.LEMBRANCAS],
+  2:[ANTROPOS_REWARDS.PEDRA_NEVOA, ANTROPOS_REWARDS.LEMBRANCAS],
+  3:[ANTROPOS_REWARDS.AMULETO_SOL, ANTROPOS_REWARDS.PEDRA_SOL, ANTROPOS_REWARDS.LEMBRANCAS],
+  4:[ANTROPOS_REWARDS.PEDRA_SOL, ANTROPOS_REWARDS.LEMBRANCAS],
+  5:[ANTROPOS_REWARDS.PEDRA_OCEANO, ANTROPOS_REWARDS.LEMBRANCAS],
+  6:[ANTROPOS_REWARDS.AMULETO_OCEANO, ANTROPOS_REWARDS.PEDRA_OCEANO, ANTROPOS_REWARDS.LEMBRANCAS],
+  7:[ANTROPOS_REWARDS.PEDRA_OCEANO, ANTROPOS_REWARDS.LEMBRANCAS],
+  8:[ANTROPOS_REWARDS.PEDRA_BOSQUE, ANTROPOS_REWARDS.LEMBRANCAS],
+  9:[ANTROPOS_REWARDS.AMULETO_BOSQUE, ANTROPOS_REWARDS.PEDRA_BOSQUE, ANTROPOS_REWARDS.LEMBRANCAS],
+  10:[ANTROPOS_REWARDS.FAISCA_DOURADA, ANTROPOS_REWARDS.OBSIDIANA, ANTROPOS_REWARDS.ESSENCIA_FURIA, ANTROPOS_REWARDS.LEMBRANCAS],
+}[nivel] || []);
+
+
 const ANTHROPUS_COMMUNITY_URL = 'https://dragonsofatlantis.fandom.com/wiki/Anthropus_Camps';
 
 const I18N_TROOPS = Object.freeze({
@@ -269,10 +308,12 @@ function guiasAntropos(nivel) {
 }
 
 /**
- * Dados confirmados a partir dos relatórios de batalha enviados em 14/08/2026.
- * As imagens não fazem parte do seed. Quando o jogo abrevia um valor de recurso,
- * `exibicao` preserva literalmente o que aparece no relatório e `exato=false`
- * evita tratar a normalização numérica como um valor oficial preciso.
+ * Dados confirmados a partir dos relatórios de batalha e telas de recompensa
+ * enviados em 14/08/2026. Os screenshots completos não fazem parte do projeto:
+ * somente recortes dos ícones dos itens foram preservados como assets locais.
+ * Quando o jogo abrevia um valor de recurso, `exibicao` preserva literalmente
+ * o que aparece no relatório e `exato=false` evita tratar a normalização
+ * numérica como um valor oficial preciso.
  */
 export const ANTROPOS_SEED = [
   {
@@ -330,8 +371,8 @@ export const ANTROPOS_SEED = [
   i18n:{ 'en-US': { nome:`Anthropus Camp — Lv. ${item.nivel}` } },
   estrategia:{ publicada:false, titulo:'', resumo:'', passos:[], requisitos:[], observacoes:'', i18n:{} },
   guiasAtaque:guiasAntropos(item.nivel),
-  recompensas:[],
-  fonte:{ tipo:'screenshot', data:'2026-08-14', descricao:'Relatório de batalha do jogo', verificado:true },
+  recompensas:recompensasAntropos(item.nivel),
+  fonte:{ tipo:'screenshot', data:'2026-08-14', descricao:'Relatório de batalha + tela de recompensas do jogo', verificado:true },
 }));
 
 

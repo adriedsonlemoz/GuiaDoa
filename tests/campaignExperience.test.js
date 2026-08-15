@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 const read = p => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
 test('Mapa & Campanha está acessível na Home e possui rota dedicada', () => {
@@ -66,4 +66,27 @@ test('frontend exibe guias estruturados, resultado de perdas e tropas especiais 
   assert.match(source, /campaign\.possible_losses/);
   assert.match(source, /campaign-guide-companion/);
   assert.match(source, /campaign\.ranged_speed_warning/);
+});
+
+
+test('detalhes do Mapa & Campanha usam tópicos recolhíveis e voltar interno à direita', () => {
+  const source = read('src/components/CampanhaMapa.jsx');
+  const css = read('src/index.css');
+  assert.match(source, /function CollapsibleSection/);
+  assert.match(source, /campaign-collapse-trigger/);
+  assert.match(source, /aria-expanded/);
+  assert.match(css, /\.campaign-back\{[^}]*margin-left:auto/);
+  assert.match(css, /\.campaign-back\{[^}]*color:#3f7656/);
+});
+
+test('recompensas de Antropos exibem imagens locais sem quantidade fixa no frontend', () => {
+  const source = read('src/components/CampanhaMapa.jsx');
+  const css = read('src/index.css');
+  assert.match(source, /campaign-reward-image/);
+  assert.match(source, /reward\.imagem/);
+  assert.doesNotMatch(source, /reward\.quantidade != null/);
+  assert.match(css, /\.campaign-reward-image/);
+  for (const asset of ['obsidiana.webp','lembrancas-antigas.webp','essencia-furia.webp','amuleto-nevoa-malva.webp']) {
+    assert.equal(existsSync(`public/assets/items/anthropus/${asset}`), true);
+  }
 });

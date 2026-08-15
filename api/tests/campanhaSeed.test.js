@@ -89,3 +89,26 @@ test('Fangtooth Nv.4 preserva quantidade ausente em vez de inventar dado', () =>
   assert.equal(guide.resultado, 'incompleto');
   assert.match(guide.passos[0], /não foi informada/i);
 });
+
+
+test('Antropos Nv.1–10 registram recompensas confirmadas sem fixar quantidade de drop', () => {
+  const expected = {
+    1:['amuleto-nevoa-malva','pedra-nevoa-malva','lembrancas-antigas'],
+    2:['pedra-nevoa-malva','lembrancas-antigas'],
+    3:['amuleto-brilho-sol','pedra-brilho-sol','lembrancas-antigas'],
+    4:['pedra-brilho-sol','lembrancas-antigas'],
+    5:['pedra-luz-oceano','lembrancas-antigas'],
+    6:['amuleto-luz-oceano','pedra-luz-oceano','lembrancas-antigas'],
+    7:['pedra-luz-oceano','lembrancas-antigas'],
+    8:['pedra-florescer-bosque','lembrancas-antigas'],
+    9:['amuleto-florescer-bosque','pedra-florescer-bosque','lembrancas-antigas'],
+    10:['pedra-faisca-dourada','obsidiana','essencia-furia','lembrancas-antigas'],
+  };
+  for (const entry of ANTROPOS_SEED) {
+    assert.deepEqual(entry.recompensas.map(x => x.codigo), expected[entry.nivel]);
+    assert.ok(entry.recompensas.every(x => x.quantidade == null));
+    assert.ok(entry.recompensas.every(x => x.nomeConfirmado && x.nome));
+    assert.ok(entry.recompensas.every(x => x.imagem?.startsWith('/assets/items/anthropus/')));
+  }
+  assert.ok(ANTROPOS_SEED.every(x => x.recompensas.some(r => r.codigo === 'lembrancas-antigas')));
+});

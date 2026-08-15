@@ -29,6 +29,7 @@ function normalizarRecompensas(input) {
       codigo,
       simbolo,
       nome,
+      imagem:cleanString(item?.imagem, 500),
       quantidade,
       nomeConfirmado:Boolean(item?.nomeConfirmado && nome),
       observacao:cleanString(item?.observacao, 400),

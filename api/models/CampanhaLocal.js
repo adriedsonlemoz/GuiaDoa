@@ -18,6 +18,7 @@ const RecompensaSchema = new mongoose.Schema({
   codigo:{ type:String, required:true, trim:true },
   simbolo:{ type:String, default:'', trim:true },
   nome:{ type:String, default:'', trim:true },
+  imagem:{ type:String, default:'', trim:true },
   quantidade:{ type:Number, default:null, min:0 },
   nomeConfirmado:{ type:Boolean, default:false },
   observacao:{ type:String, default:'', trim:true },

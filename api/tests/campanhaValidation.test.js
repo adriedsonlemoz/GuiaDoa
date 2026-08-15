@@ -61,3 +61,13 @@ test('rejeita guia estruturado sem título ou com pesquisa inválida', () => {
   assert.throws(() => normalizarCampanhaPayload({categoria:'antropos',nivel:1,nome:'X',guiasAtaque:[{codigo:'x'}]}), /Guia de ataque inválido/i);
   assert.throws(() => normalizarCampanhaPayload({categoria:'antropos',nivel:1,nome:'X',guiasAtaque:[{titulo:'X',pesquisas:[{nome:'Metalurgia',nivel:-1}]}]}), /Pesquisa inválida/i);
 });
+
+
+test('recompensa aceita imagem local e mantém quantidade opcional', () => {
+  const out = normalizarCampanhaPayload({
+    categoria:'antropos', nivel:10, nome:'Campo de Antropos — Nv. 10',
+    recompensas:[{codigo:'obsidiana',nome:'Obsidiana',imagem:'/assets/items/anthropus/obsidiana.webp',nomeConfirmado:true}],
+  });
+  assert.equal(out.recompensas[0].imagem, '/assets/items/anthropus/obsidiana.webp');
+  assert.equal(out.recompensas[0].quantidade, null);
+});

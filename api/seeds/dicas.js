@@ -1,3 +1,392 @@
+import { ANTROPOS_SEED } from './campanha.js';
+
+
+const fmtGuideNumber = (value, locale = 'pt-BR') => new Intl.NumberFormat(locale).format(Number(value || 0));
+
+function localField(item, field, locale) {
+  if (!item) return '';
+  if (locale !== 'pt-BR') return item?.i18n?.[locale]?.[field] || item?.[field] || '';
+  return item?.[field] || '';
+}
+
+function guideResearchText(guide, locale) {
+  return (guide?.pesquisas || []).map(item => `${localField(item, 'nome', locale)} ${item.nivel}`).join(' · ');
+}
+
+function guideSupportText(guide, locale) {
+  const items = guide?.apoios || [];
+  if (!items.length) return '';
+  const joiner = locale === 'pt-BR' ? ' OU ' : ' OR ';
+  return items.map(item => `${fmtGuideNumber(item.quantidade, locale)} ${localField(item, 'nome', locale)}`).join(joiner);
+}
+
+function attackGuideRows(codePrefix, locale = 'pt-BR') {
+  const levelWord = locale === 'pt-BR' ? 'Nv.' : 'Lv.';
+  const risk = locale === 'pt-BR' ? '⚠ possíveis perdas' : '⚠ possible losses';
+  const safe = locale === 'pt-BR' ? '✓ sem perdas' : '✓ zero loss';
+  const rows = [];
+  for (const entry of ANTROPOS_SEED) {
+    const guides = (entry.guiasAtaque || []).filter(g => codePrefix === 'dragoes-ataque-rapido-ssd'
+      ? String(g.codigo || '').startsWith(codePrefix)
+      : String(g.codigo || '') === codePrefix);
+    guides.forEach((guide, idx) => {
+      const troop = localField(guide, 'tropaPrincipal', locale) || guide.tropaPrincipal;
+      const main = guide.quantidade == null
+        ? (locale === 'pt-BR' ? 'quantidade pendente' : 'amount pending')
+        : `${fmtGuideNumber(guide.quantidade, locale)} ${troop}`;
+      const support = guideSupportText(guide, locale);
+      const companion = localField(guide, 'complemento', locale);
+      const research = guideResearchText(guide, locale);
+      const result = guide.resultado === 'possiveis_perdas' ? risk : guide.resultado === 'sem_perdas' ? safe : '';
+      const alt = idx > 0 ? (locale === 'pt-BR' ? ' alternativa' : ' alternative') : '';
+      const pieces = [main, support, companion].filter(Boolean).join(' + ');
+      rows.push(`- ${levelWord} ${entry.nivel}${alt} → ${pieces}${research ? ` | ${research}` : ''}${result ? ` | ${result}` : ''}`);
+    });
+  }
+  return rows.join('\n');
+}
+
+function fedorRows(locale = 'pt-BR') {
+  const levelWord = locale === 'pt-BR' ? 'Nv.' : 'Lv.';
+  const none = locale === 'pt-BR' ? 'sem Fedor' : 'no Fedor';
+  return ANTROPOS_SEED.map(entry => {
+    const fedor = (entry.tropas || []).find(t => t.nome === 'Fedor');
+    return `- ${levelWord} ${entry.nivel} → ${fedor ? fmtGuideNumber(fedor.quantidade, locale) : none}`;
+  }).join('\n');
+}
+
+const ANTROPOS_ATTACK_TUTORIAL_PT = `«⚠️ Este tutorial usa as marchas confirmadas que já estão cadastradas em Mapa & Campanha para Antropos Nv.1–10.
+Se a sua pesquisa estiver abaixo do nível indicado, não trate a marcha como segura. No mobile não existe Antropos Nv.11 neste guia.»
+
+🧭 Antes de apertar Atacar
+
+Se você nunca atacou Antropos, pense em quatro perguntas simples:
+
+- Qual é o nível exato do Antropos?
+- Qual método sem perdas você já consegue montar?
+- Suas pesquisas atingem os níveis mínimos da receita?
+- Você está misturando tropas que não deveriam estar juntas?
+
+Abra Mapa & Campanha → Antropos → escolha o nível. A ficha já mostra inimigos, recursos, itens possíveis e as marchas confirmadas.
+
+Regra para iniciante: se você não consegue cumprir a receita inteira, desça um nível. É melhor farmar um Antropos mais baixo sem perdas do que improvisar uma marcha e perder horas de treinamento.
+
+---
+
+🕵️ Fedor e espionagem: por que ele merece atenção
+
+No método tradicional, Fedor é a quantidade que usamos como referência para a espionagem.
+
+Espione primeiro com a mesma quantidade de Espiões que existem de Fedor, ou mais. Depois envie a marcha principal com 1 Espião + sua tropa ofensiva.
+
+Esse 1 Espião é a perda esperada da marcha; a ideia é preservar a tropa principal quando a configuração estiver correta.
+
+Quantidade de Fedor cadastrada em cada nível:
+
+${fedorRows('pt-BR')}
+
+Exemplo: Antropos Nv.6 possui 10.000 Fedor → espione com 10.000 Espiões ou mais → depois envie 1 Espião + a marcha ofensiva escolhida.
+
+Se você usar uma das tropas especiais de 500 unidades explicadas abaixo, não precisa fazer essa espionagem prévia.
+
+---
+
+✨ Caminho mais simples: 500 tropas especiais
+
+Se você já desbloqueou uma destas tropas, este é o método mais fácil de entender para farming:
+
+- 500 Medusas
+- 500 Esmagadores Colossais
+- 500 Sapos Tóxicos
+- 500 Centauros Infernais
+- 500 Fadas da Selva
+- 500 Caçadores de Almas
+
+Para a configuração cadastrada no GUIA, mantenha no mínimo:
+
+- Metalurgia Nv.4
+- Medicina Nv.4
+- Calibração de Armas Nv.4
+
+Com essas condições atendidas, o método está marcado como sem perdas e dispensa espionagem prévia.
+
+Se você ainda não possui essas tropas, use um dos métodos abaixo.
+
+---
+
+🏹 Método com Arqueiros (LBM)
+
+Arqueiros são um dos métodos mais acessíveis porque funcionam com apoio de transporte e pesquisas específicas.
+
+Nos níveis em que aparecem duas opções de apoio, use Carregadores OU Transportes Blindados — nunca os dois juntos. Se optar por Transportes Blindados, o guia permite até 10% a mais como margem extra de segurança.
+
+Não misture Arqueiros, que são tropas de ataque à distância, com tropas rápidas de combate corpo a corpo como SSD/BD na mesma marcha. Essa combinação pode causar perdas nas tropas rápidas.
+
+Marchas confirmadas:
+
+${attackGuideRows('arqueiros-lbm', 'pt-BR')}
+
+Como ler uma linha: “Nv.3 → 600 Arqueiros + 1.815 Carregadores OU 72 Transportes Blindados | Metalurgia 4 · Medicina 4 · Calibração de Armas 5” significa que você escolhe apenas uma das duas opções de transporte e precisa ter pelo menos esses níveis de pesquisa.
+
+---
+
+🔥 Método com Lava Jaws (LJ)
+
+Lava Jaws exigem quantidades muito menores de tropas principais, mas usam Transportes Blindados como apoio.
+
+Marchas cadastradas:
+
+${attackGuideRows('lava-jaws-lj8', 'pt-BR')}
+
+A referência confirmada informa que as pesquisas relevantes devem estar em níveis altos, 9 ou 10, mas não detalha nesta tabela quais pesquisas correspondem a cada marcha. O GUIA não inventa esse detalhe: trate Lava Jaws como método de conta mais avançada e confira suas pesquisas de combate antes de enviar.
+
+---
+
+🐲 Método com Dragões de Ataque Rápido (SSD)
+
+Dragões de Ataque Rápido são uma ótima ponte entre o começo do Realm e marchas mais avançadas. Aqui a quantidade sozinha não basta: Metalurgia, Medicina e a pesquisa de dragões indicada na receita fazem parte do método.
+
+Marchas cadastradas:
+
+${attackGuideRows('dragoes-ataque-rapido-ssd', 'pt-BR')}
+
+Atenção especial ao Nv.9: as duas configurações cadastradas estão marcadas como POSSÍVEIS PERDAS. Não trate Antropos Nv.9 com SSD como marcha garantida sem perdas.
+
+No Nv.10, o método cadastrado usa 200.000 SSD + Serpente Mefítica e exige Metalurgia 10, Medicina 10 e Dragoria 9.
+
+Nunca misture SSD com Arqueiros ou outras tropas de ataque à distância na mesma marcha. O próprio conjunto de estratégias do projeto alerta que essa mistura pode provocar perdas nas tropas rápidas.
+
+---
+
+🔬 O que as pesquisas fazem
+
+As pesquisas não são decoração da receita. Se o método pede um nível, trate aquele número como mínimo.
+
+🔩 Metalurgia
+Cada nível aumenta ataque e defesa das tropas em 5%, conforme o cadastro atual do módulo Pesquisas.
+
+💊 Medicina
+Cada nível aumenta a Vida das tropas em 5%.
+
+🎯 Calibração de Armas
+Aumenta o alcance das tropas de longo alcance. Por isso aparece principalmente nas receitas de Arqueiros.
+
+🐉 Dragoria
+Nas receitas de SSD, siga o nível indicado para a pesquisa de dragões. Não substitua esse requisito por outra pesquisa só porque o número é parecido.
+
+Exemplo: se a receita pede Metalurgia 7, Medicina 7 e Dragoria 8 e você possui 7 / 6 / 8, a marcha ainda NÃO atende ao método confirmado porque Medicina está abaixo do mínimo.
+
+---
+
+🧠 Qual método escolher?
+
+Use esta ordem simples:
+
+- Tem Medusa, Esmagador Colossal, Sapo Tóxico, Centauro Infernal, Fada da Selva ou Caçador de Almas? → 500 unidades + pesquisas 4/4/4 é o caminho mais simples.
+- Não tem? Veja se consegue montar a receita de Lava Jaws do nível.
+- Não tem Lava Jaws? Confira a tabela de Arqueiros e use os transportes corretos.
+- Está no começo e já desbloqueou SSD? Use a receita exata do nível e confira todas as pesquisas antes de enviar.
+- Nenhuma receita cabe na sua conta? Ataque um nível mais baixo.
+
+A melhor marcha não é a que tem mais poder; é a que atende aos requisitos sem desperdiçar tropas.
+
+---
+
+❌ Erros que mais causam perdas
+
+- Atacar um nível diferente do que você consultou.
+- Ignorar uma pesquisa porque “falta só um nível”.
+- Misturar Carregadores e Transportes Blindados quando a receita manda escolher um deles.
+- Misturar Arqueiros com SSD/BD na mesma marcha.
+- Copiar a quantidade da tropa principal e esquecer o apoio.
+- Usar SSD no Nv.9 achando que a receita é garantida sem perdas.
+- Aumentar ou trocar a composição no improviso sem saber o efeito.
+
+Se estiver em dúvida, volte ao Mapa & Campanha e compare sua marcha linha por linha com o método cadastrado.
+
+---
+
+✅ Checklist de 20 segundos
+
+Antes de enviar:
+
+- Nível do Antropos correto? ✓
+- Quantidade da tropa principal correta? ✓
+- Apoio correto? ✓
+- Pesquisas iguais ou acima do mínimo? ✓
+- Nenhuma tropa incompatível misturada? ✓
+- O método está marcado como “Sem perdas”? ✓
+
+Se todas as respostas forem sim, envie a marcha. Se alguma for não, ajuste primeiro.
+
+Depois do ataque, confira o relatório. Ele é a melhor confirmação de que sua configuração continua funcionando na sua conta e no Realm atual.`;
+
+const ANTROPOS_ATTACK_TUTORIAL_EN = `«⚠️ This tutorial uses the confirmed marches already stored in Map & Campaign for Anthropus Lv.1–10.
+If your research is below the listed level, do not treat the march as safe. This mobile guide does not include Anthropus Lv.11.»
+
+🧭 Before tapping Attack
+
+If you have never attacked Anthropus, ask four simple questions:
+
+- What is the exact Anthropus level?
+- Which zero-loss method can you already build?
+- Do your research levels meet the recipe minimums?
+- Are you mixing troops that should not be used together?
+
+Open Map & Campaign → Anthropus → choose the level. The page already shows enemies, resources, possible items, and confirmed marches.
+
+Beginner rule: if you cannot meet the full recipe, attack a lower level. Farming a lower Anthropus without losses is better than improvising and losing hours of training.
+
+---
+
+🕵️ Fedor and scouting: why it matters
+
+In the traditional method, the Fedor amount is used as the scouting reference.
+
+Scout first with the same number of Spies as Fedor, or more. Then send the main march with 1 Spy + your offensive troop.
+
+That 1 Spy is the expected march loss; the goal is to preserve the main troops when the setup is correct.
+
+Fedor amount stored for each level:
+
+${fedorRows('en-US')}
+
+Example: Anthropus Lv.6 has 10,000 Fedor → scout with 10,000 Spies or more → then send 1 Spy + your chosen offensive march.
+
+If you use one of the 500-unit special troop methods below, prior scouting is not required.
+
+---
+
+✨ Easiest route: 500 special troops
+
+If you have already unlocked one of these troops, this is the easiest farming method to understand:
+
+- 500 Snake-headed Maidens
+- 500 Colossal Smashers
+- 500 Toxic Toads
+- 500 Infernal Centaurs
+- 500 Forest Fairies
+- 500 Soul Hunters
+
+For the setup stored in GUIA, keep at least:
+
+- Metallurgy Lv.4
+- Medicine Lv.4
+- Weapons Calibration Lv.4
+
+With those requirements met, this method is marked as zero loss and does not require prior scouting.
+
+If you do not own these troops yet, use one of the methods below.
+
+---
+
+🏹 Longbowmen (LBM) method
+
+Longbowmen are one of the more accessible methods because they work with transport support and specific research levels.
+
+When two support options are shown, use Porters OR Armored Transports — never both. If using Armored Transports, the guide allows up to 10% extra as an additional safety margin.
+
+Do not mix ranged Longbowmen with fast melee troops such as SSD/BD in the same march. That combination may cause losses among the speed troops.
+
+Confirmed marches:
+
+${attackGuideRows('arqueiros-lbm', 'en-US')}
+
+How to read a line: “Lv.3 → 600 Longbowmen + 1,815 Porters OR 72 Armored Transports | Metallurgy 4 · Medicine 4 · Weapons Calibration 5” means you choose only one transport option and must meet at least those research levels.
+
+---
+
+🔥 Lava Jaws (LJ) method
+
+Lava Jaws need far fewer main troops but use Armored Transports as support.
+
+Stored marches:
+
+${attackGuideRows('lava-jaws-lj8', 'en-US')}
+
+The confirmed reference says relevant research should be at high levels, 9 or 10, but this table does not specify the exact research mix for each march. GUIA does not invent that detail: treat Lava Jaws as an advanced-account method and check your combat research before sending.
+
+---
+
+🐲 Swift Strike Dragons (SSD) method
+
+Swift Strike Dragons are a useful bridge between early Realm development and advanced marches. Quantity alone is not enough: Metallurgy, Medicine, and the dragon research listed in the recipe are part of the method.
+
+Stored marches:
+
+${attackGuideRows('dragoes-ataque-rapido-ssd', 'en-US')}
+
+Pay special attention to Lv.9: both stored setups are marked as POSSIBLE LOSSES. Do not treat SSD against Anthropus Lv.9 as a guaranteed zero-loss march.
+
+At Lv.10, the stored method uses 200,000 SSD + Mephitic Serpent and requires Metallurgy 10, Medicine 10, and Dragonry 9.
+
+Never mix SSD with Longbowmen or other ranged troops in the same march. The project's own strategy set warns that this combination may cause speed-troop losses.
+
+---
+
+🔬 What the research does
+
+Research is not decoration in a recipe. If a method lists a level, treat it as a minimum.
+
+🔩 Metallurgy
+Each level increases troop attack and defense by 5%, according to the current Research module data.
+
+💊 Medicine
+Each level increases troop Life by 5%.
+
+🎯 Weapons Calibration
+Increases the range of ranged troops. That is why it appears mainly in Longbowmen recipes.
+
+🐉 Dragonry
+For SSD recipes, follow the listed dragon-research level. Do not replace that requirement with another research just because the number looks similar.
+
+Example: if the recipe requires Metallurgy 7, Medicine 7, and Dragonry 8 and you have 7 / 6 / 8, the confirmed method is NOT met because Medicine is below the minimum.
+
+---
+
+🧠 Which method should I choose?
+
+Use this simple order:
+
+- Have Snake-headed Maiden, Colossal Smasher, Toxic Toad, Infernal Centaur, Forest Fairy, or Soul Hunter? → 500 units + 4/4/4 research is the easiest route.
+- No? Check whether you can build the Lava Jaws recipe for the level.
+- No Lava Jaws? Check the Longbowmen table and use the correct transport.
+- Still early and already unlocked SSD? Use the exact recipe for the level and verify every research requirement.
+- None of the recipes fit your account? Attack a lower level.
+
+The best march is not the one with the most power; it is the one that meets the requirements without wasting troops.
+
+---
+
+❌ Mistakes that most often cause losses
+
+- Attacking a different level from the one you checked.
+- Ignoring a research requirement because it is “only one level short”.
+- Mixing Porters and Armored Transports when the recipe says to choose one.
+- Mixing Longbowmen with SSD/BD in the same march.
+- Copying the main troop amount and forgetting support troops.
+- Using SSD at Lv.9 as if it were guaranteed zero loss.
+- Changing the composition without understanding the effect.
+
+When in doubt, return to Map & Campaign and compare your march line by line with the stored method.
+
+---
+
+✅ 20-second checklist
+
+Before sending:
+
+- Correct Anthropus level? ✓
+- Correct main troop amount? ✓
+- Correct support? ✓
+- Research at or above the minimum? ✓
+- No incompatible troops mixed together? ✓
+- Is the method marked “Zero loss”? ✓
+
+If every answer is yes, send the march. If any answer is no, fix it first.
+
+After the attack, check the battle report. It is the best confirmation that the setup still works for your account and current Realm.`;
+
 export const DICAS_SEED = [
   {
     slug: 'guia-inicial-construcoes',
@@ -465,6 +854,33 @@ Battle Dragons → next step when the infrastructure is ready
 Avoiding bad defenses → protects the most expensive early resource: your army
 
 There is no need to do everything immediately. Build a solid foundation, use the game's systems well, and above all, have fun. 🐉`,
+      },
+    },
+  },
+  {
+    slug: 'tutorial-atacar-antropos',
+    titulo: '⚔️ Como Atacar Antropos sem Perdas',
+    resumo: 'Tutorial para iniciantes com decisão passo a passo, espionagem contra Fedor, 500 tropas especiais, Arqueiros, Lava Jaws, SSD e as pesquisas mínimas de cada método.',
+    categoria: 'iniciante',
+    tipo: 'tutorial',
+    leituraMin: 14,
+    destaque: true,
+    ativo: true,
+    ordem: 1,
+    relacionados: {
+      modulos: ['campanha', 'tropas', 'pesquisas', 'itens'],
+      edificios: [],
+      tropas: ['Espiões', 'Arqueiros', 'Carregadores', 'Transportes Blindados', 'Dragões de Ataque Rápido', 'Medusa', 'Esmagadores Colossais', 'Sapo Tóxico', 'Centauros Infernais', 'Fada da Selva', 'Caçador de Almas'],
+      dragoes: [],
+      pesquisas: ['Metalurgia', 'Medicina', 'Calibração de Armas', 'Dragoria'],
+      reinos: [],
+    },
+    conteudo: ANTROPOS_ATTACK_TUTORIAL_PT,
+    i18n: {
+      'en-US': {
+        titulo: '⚔️ How to Attack Anthropus Without Losses',
+        resumo: 'A beginner-friendly step-by-step tutorial covering Fedor scouting, 500-unit special troops, Longbowmen, Lava Jaws, SSD, and the minimum research for each method.',
+        conteudo: ANTROPOS_ATTACK_TUTORIAL_EN,
       },
     },
   },

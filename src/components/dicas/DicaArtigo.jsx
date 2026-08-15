@@ -73,7 +73,7 @@ const DicaArtigo = ({ dica, catInfo, onClose, setRoute }) => {
         </header>
 
         <div style={{ padding: '0 12px' }}>
-          <GuideContentRenderer content={conteudo} variables={gameVariables} collapsible={dica.slug === 'guia-inicial-construcoes'} />
+          <GuideContentRenderer content={conteudo} variables={gameVariables} collapsible={['guia-inicial-construcoes', 'tutorial-atacar-antropos'].includes(dica.slug)} />
           <DicaGameContext dica={dica} setRoute={navegar} />
         </div>
       </main>

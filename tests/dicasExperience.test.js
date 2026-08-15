@@ -25,6 +25,7 @@ test('guia inicial cruza dados atuais do jogo sem fixar números no frontend', (
   assert.match(contexto, /campaign\.title/);
   assert.match(contexto, /Explore|explore_modules/);
   assert.match(artigo, /collapsible=.*guia-inicial-construcoes/);
+  assert.match(artigo, /tutorial-atacar-antropos/);
 });
 
 test('variáveis do tutorial refletem requisitos atuais de tropas e dragões', () => {

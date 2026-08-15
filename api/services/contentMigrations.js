@@ -10,6 +10,7 @@ import { mesclarSeed } from '../utils/seedMerge.js';
 
 const MIGRATION_KEY = 'content:dicas:beta-2.14';
 const REALM_BEGINNER_GUIDE_KEY = 'content:dicas-guia-inicio-realm:beta-2.51';
+const ANTHROPUS_ATTACK_TUTORIAL_KEY = 'content:dicas-tutorial-antropos:beta-2.52';
 const TROOPS_TACTICAL_KEY = 'content:tropas-taticas:beta-2.15';
 const CAMPANHA_ANTROPOS_KEY = 'content:campanha-antropos:beta-2.44';
 const CAMPANHA_CAMPOS_KEY = 'content:campanha-campos:beta-2.45';
@@ -135,6 +136,58 @@ async function migrarGuiaInicioRealm() {
   } catch (err) {
     await AppConfig.findOneAndUpdate(
       { chave:REALM_BEGINNER_GUIDE_KEY },
+      { $set:{ migracaoEstado:'erro', ultimoErro:err.message, atualizadoEm:new Date() } },
+      { upsert:true, setDefaultsOnInsert:true },
+    ).catch(()=>{});
+    return { ok:false, erro:err.message, atualizadas:0 };
+  }
+}
+
+
+async function migrarTutorialAntropos() {
+  const aplicado = await AppConfig.findOne({ chave:ANTHROPUS_ATTACK_TUTORIAL_KEY }).lean();
+  if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, atualizadas:0 };
+
+  await AppConfig.findOneAndUpdate(
+    { chave:ANTHROPUS_ATTACK_TUTORIAL_KEY },
+    { $set:{ migracaoEstado:'executando', migracaoVersao:'1', ultimoErro:'', atualizadoEm:new Date() } },
+    { upsert:true, setDefaultsOnInsert:true },
+  );
+
+  try {
+    const seed = DICAS_SEED.find(item => item.slug === 'tutorial-atacar-antropos');
+    if (!seed) throw new Error('Seed do tutorial de Antropos não encontrado.');
+    const atual = await Dica.findOne({ slug:seed.slug }).lean();
+    if (!atual) {
+      await Dica.create(seed);
+    } else {
+      await Dica.updateOne(
+        { slug:seed.slug },
+        { $set:{
+          titulo:seed.titulo,
+          resumo:seed.resumo,
+          categoria:seed.categoria,
+          tipo:seed.tipo,
+          leituraMin:seed.leituraMin,
+          destaque:seed.destaque,
+          ativo:seed.ativo,
+          ordem:seed.ordem,
+          relacionados:seed.relacionados,
+          conteudo:seed.conteudo,
+          i18n:seed.i18n,
+          atualizadoEm:new Date(),
+        } },
+      );
+    }
+    await AppConfig.findOneAndUpdate(
+      { chave:ANTHROPUS_ATTACK_TUTORIAL_KEY },
+      { $set:{ migracaoEstado:'pronto', migracaoVersao:'1', migracaoEm:new Date(), atualizadoEm:new Date(), ultimoErro:'', relatorioMigracao:{ tutorialAntropos:{ atualizadas:1 } } } },
+      { upsert:true, setDefaultsOnInsert:true },
+    );
+    return { ok:true, ignorada:false, atualizadas:1 };
+  } catch (err) {
+    await AppConfig.findOneAndUpdate(
+      { chave:ANTHROPUS_ATTACK_TUTORIAL_KEY },
       { $set:{ migracaoEstado:'erro', ultimoErro:err.message, atualizadoEm:new Date() } },
       { upsert:true, setDefaultsOnInsert:true },
     ).catch(()=>{});
@@ -435,6 +488,8 @@ export async function executarMigracoesConteudo() {
   if (!dicas.ok) return dicas;
   const guiaInicioRealm = await migrarGuiaInicioRealm();
   if (!guiaInicioRealm.ok) return guiaInicioRealm;
+  const tutorialAntropos = await migrarTutorialAntropos();
+  if (!tutorialAntropos.ok) return tutorialAntropos;
   const tropas = await migrarTropasTaticas();
   if (!tropas.ok) return tropas;
   const campanha = await migrarCampanhaAntropos();
@@ -451,10 +506,11 @@ export async function executarMigracoesConteudo() {
   if (!recompensas.ok) return recompensas;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tropas.ignorada && campanha.ignorada && campos.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && campanha.ignorada && campos.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
+    tutorialAntroposAtualizado:tutorialAntropos.atualizadas || 0,
     tropasAtualizadas:tropas.atualizadas || 0,
     campanhaInseridas:(campanha.inseridas || 0) + (campos.inseridas || 0),
     campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (estrategiasPolidas.atualizadas || 0) + (recompensas.completadas || 0),

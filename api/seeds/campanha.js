@@ -210,8 +210,8 @@ function guiaLbm(nivel) {
       hasChoice ? `Use ${cfg.porter} Porters OR ${cfg.at} Armored Transports; do not use both together.` : `Use ${cfg.at} Armored Transports.`,
       'If using Armored Transports, up to 10% extra may be added as an additional safety margin.',
     ],
-    observacoes:'Evite misturar tropas de ataque à distância com tropas rápidas de combate corpo a corpo na mesma marcha; essa combinação pode causar perdas nas tropas rápidas. A referência histórica também alerta para RNG e interação com o Dragão do Vento em marchas de LBM.',
-    notesEn:'Avoid mixing ranged troops with fast melee troops in the same march; that combination can cause losses among the speed troops. The historical reference also warns about RNG and Wind Dragon interaction in LBM marches.',
+    observacoes:'Evite misturar tropas de ataque à distância com tropas rápidas de combate corpo a corpo na mesma marcha; essa combinação pode causar perdas nas tropas rápidas.',
+    notesEn:'Avoid mixing ranged troops with fast melee troops in the same march; that combination can cause losses among the speed troops.',
   })];
 }
 
@@ -226,8 +226,8 @@ function guiasLbmDragao(nivel) {
     complemento:cfg.companion, complementoEn:cfg.companionEn,
     passos:[`Envie ${cfg.qty} Arqueiros + ${cfg.at} Transportes Blindados.`, `Inclua ${cfg.companion}.`],
     stepsEn:[`Send ${cfg.qty} Longbowmen + ${cfg.at} Armored Transports.`, `Include ${cfg.companionEn}.`],
-    observacoes:'Método alternativo com dragão. Evite combinar esta marcha à distância com SSD/BD/Banshees na mesma batalha. A referência histórica alerta para RNG e Dragão do Vento em LBM.',
-    notesEn:'Alternative dragon method. Avoid combining this ranged march with SSD/BD/Banshees in the same battle. The historical reference warns about RNG and Wind Dragon interaction with LBM.',
+    observacoes:'Evite combinar esta marcha de ataque à distância com SSD/BD/Banshees na mesma batalha.',
+    notesEn:'Avoid combining this ranged march with SSD/BD/Banshees in the same battle.',
   }));
 }
 
@@ -276,8 +276,8 @@ function guiasFt(nivel) {
     apoios:[apoio('Arqueiros', cfg.lbm, 'alcance')], pesquisas:pesquisasPadrao(cfg), resultado:cfg.resultado || 'sem_perdas',
     passos:[incomplete ? 'A quantidade de Fangtooth não foi informada para este nível na tabela fornecida.' : `Envie ${cfg.qty} Fangtooth (FT).`, `Inclua ${cfg.lbm} Arqueiro(s) para estender o campo de batalha.`],
     stepsEn:[incomplete ? 'The Fangtooth amount was not provided for this level in the supplied table.' : `Send ${cfg.qty} Fangtooth (FT).`, `Include ${cfg.lbm} Longbowmen to extend the battlefield.`],
-    observacoes:'Dragões compatíveis na referência: Grande, Terra/Pedra, Fogo, Gelo e Helio. Incompatíveis: Água, Vento e Serpente. A quantidade do Nv.4 permanece pendente e não foi inventada.',
-    notesEn:'Compatible dragons in the reference: Great, Stone, Fire, Frost and Helio. Incompatible: Water, Wind and Serpent. The Lv.4 FT amount remains pending and was not invented.',
+    observacoes:incomplete ? 'A quantidade de Fangtooth do Nv.4 permanece pendente e não foi inventada.' : 'O Arqueiro de apoio estende o campo de batalha para favorecer o Fangtooth.',
+    notesEn:incomplete ? 'The Lv.4 Fangtooth amount remains pending and was not invented.' : 'The supporting Longbowman extends the battlefield to favor Fangtooth.',
   })];
 }
 
@@ -288,9 +288,8 @@ function guiasLj(nivel) {
     codigo:'lava-jaws-lj8', titulo:'Lava Jaws (LJ)', titleEn:'Lava Jaws (LJ)',
     tropaPrincipal:'Lava Jaws (LJ)', quantidade:cfg.qty,
     apoios:[apoio('Transportes Blindados', cfg.at, 'transporte')],
-    complemento:'GD/ED opcional', complementoEn:'Optional GD/ED',
-    passos:[`Envie ${cfg.qty} Lava Jaws + ${cfg.at} Transportes Blindados.`, 'Grande Dragão ou Dragão Elemental pode ser adicionado com segurança segundo a referência.'],
-    stepsEn:[`Send ${cfg.qty} Lava Jaws + ${cfg.at} Armored Transports.`, 'A Great Dragon or Elemental Dragon may be added safely according to the reference.'],
+    passos:[`Envie ${cfg.qty} Lava Jaws + ${cfg.at} Transportes Blindados.`],
+    stepsEn:[`Send ${cfg.qty} Lava Jaws + ${cfg.at} Armored Transports.`],
     observacoes:'A referência indica pesquisas relevantes nos níveis 9 ou 10, sem detalhar nesta tabela quais pesquisas correspondem a cada marcha. O GUIA não inventa esse detalhe.',
     notesEn:'The reference says relevant research should be level 9 or 10 but does not specify the exact research mix in this table. GUIA does not invent that detail.',
   })];

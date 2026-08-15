@@ -112,3 +112,13 @@ test('Antropos Nv.1–10 registram recompensas confirmadas sem fixar quantidade 
   }
   assert.ok(ANTROPOS_SEED.every(x => x.recompensas.some(r => r.codigo === 'lembrancas-antigas')));
 });
+
+
+test('descrições oficiais da Beta 2.50 removem referências opcionais a dragões e mantêm marchas confirmadas', () => {
+  const guides = ANTROPOS_SEED.flatMap(x => x.guiasAtaque);
+  assert.ok(guides.every(g => g.status === 'confirmado'));
+  assert.ok(guides.every(g => !/Dragão do Vento|Wind Dragon|Dragões compatíveis|Compatible dragons/i.test(`${g.observacoes || ''} ${g.i18n?.['en-US']?.observacoes || ''}`)));
+  const lava = guides.find(g => g.codigo === 'lava-jaws-lj8');
+  assert.equal(lava.complemento || '', '');
+  assert.equal(lava.passos.some(x => /Grande Dragão|Dragão Elemental/i.test(x)), false);
+});

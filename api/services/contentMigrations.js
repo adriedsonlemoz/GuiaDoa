@@ -15,6 +15,7 @@ const CAMPANHA_CAMPOS_KEY = 'content:campanha-campos:beta-2.45';
 const CAMPANHA_STRATEGY_KEY = 'content:campanha-estrategias:beta-2.46';
 const CAMPANHA_STRATEGY_CONFIRMED_KEY = 'content:campanha-estrategias-confirmadas:beta-2.47';
 const CAMPANHA_REWARDS_KEY = 'content:campanha-recompensas:beta-2.48';
+const CAMPANHA_STRATEGY_POLISH_KEY = 'content:campanha-estrategias-polimento:beta-2.50';
 
 const INICIANTE_CATEGORY = {
   slug: 'iniciante',
@@ -289,6 +290,54 @@ async function migrarCampanhaEstrategiasConfirmadas() {
 }
 
 
+async function migrarCampanhaEstrategiasPolidas() {
+  const aplicado = await AppConfig.findOne({ chave:CAMPANHA_STRATEGY_POLISH_KEY }).lean();
+  if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, atualizadas:0, guias:0 };
+
+  await AppConfig.findOneAndUpdate(
+    { chave:CAMPANHA_STRATEGY_POLISH_KEY },
+    { $set:{ migracaoEstado:'executando', migracaoVersao:'1', ultimoErro:'', atualizadoEm:new Date() } },
+    { upsert:true, setDefaultsOnInsert:true },
+  );
+
+  try {
+    let atualizadas = 0;
+    let guias = 0;
+    for (const seed of ANTROPOS_SEED) {
+      const atual = await CampanhaLocal.findOne({ slug:seed.slug }).lean();
+      if (!atual) {
+        await CampanhaLocal.create(seed);
+        atualizadas += 1;
+        guias += seed.guiasAtaque?.length || 0;
+        continue;
+      }
+      const oficiais = seed.guiasAtaque || [];
+      const codigosOficiais = new Set(oficiais.map(x => x.codigo));
+      const personalizados = (atual.guiasAtaque || []).filter(x => !codigosOficiais.has(x.codigo));
+      await CampanhaLocal.updateOne(
+        { slug:seed.slug },
+        { $set:{ guiasAtaque:[...oficiais, ...personalizados], atualizadoEm:new Date() } },
+      );
+      atualizadas += 1;
+      guias += oficiais.length;
+    }
+    await AppConfig.findOneAndUpdate(
+      { chave:CAMPANHA_STRATEGY_POLISH_KEY },
+      { $set:{ migracaoEstado:'pronto', migracaoVersao:'1', migracaoEm:new Date(), atualizadoEm:new Date(), ultimoErro:'', relatorioMigracao:{ estrategiasPolidas:{ atualizadas, guias } } } },
+      { upsert:true, setDefaultsOnInsert:true },
+    );
+    return { ok:true, ignorada:false, atualizadas, guias };
+  } catch (err) {
+    await AppConfig.findOneAndUpdate(
+      { chave:CAMPANHA_STRATEGY_POLISH_KEY },
+      { $set:{ migracaoEstado:'erro', ultimoErro:err.message, atualizadoEm:new Date() } },
+      { upsert:true, setDefaultsOnInsert:true },
+    ).catch(()=>{});
+    return { ok:false, erro:err.message, atualizadas:0, guias:0 };
+  }
+}
+
+
 async function migrarCampanhaRecompensas() {
   const aplicado = await AppConfig.findOne({ chave:CAMPANHA_REWARDS_KEY }).lean();
   if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, inseridas:0, completadas:0, preservadas:0 };
@@ -341,15 +390,17 @@ export async function executarMigracoesConteudo() {
   if (!estrategias.ok) return estrategias;
   const estrategiasConfirmadas = await migrarCampanhaEstrategiasConfirmadas();
   if (!estrategiasConfirmadas.ok) return estrategiasConfirmadas;
+  const estrategiasPolidas = await migrarCampanhaEstrategiasPolidas();
+  if (!estrategiasPolidas.ok) return estrategiasPolidas;
   const recompensas = await migrarCampanhaRecompensas();
   if (!recompensas.ok) return recompensas;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && tropas.ignorada && campanha.ignorada && campos.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && recompensas.ignorada),
+    ignorada:Boolean(dicas.ignorada && tropas.ignorada && campanha.ignorada && campos.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     tropasAtualizadas:tropas.atualizadas || 0,
     campanhaInseridas:(campanha.inseridas || 0) + (campos.inseridas || 0),
-    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (recompensas.completadas || 0),
+    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (estrategiasPolidas.atualizadas || 0) + (recompensas.completadas || 0),
   };
 }

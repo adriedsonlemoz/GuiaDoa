@@ -60,7 +60,7 @@ test('frontend exibe guias estruturados, resultado de perdas e tropas especiais 
   const source = read('src/components/CampanhaMapa.jsx');
   assert.match(source, /AttackGuidesBlock/);
   assert.match(source, /guiasAtaque/);
-  assert.match(source, /SPECIAL_TEST_TROOPS/);
+  assert.match(source, /SPECIAL_SAFE_TROOPS/);
   assert.match(source, /Carregadores|Transportes Blindados|campaign\.choose_one_support/);
   assert.match(source, /campaign\.zero_loss/);
   assert.match(source, /campaign\.possible_losses/);
@@ -89,4 +89,23 @@ test('recompensas de Antropos exibem imagens locais sem quantidade fixa no front
   for (const asset of ['obsidiana.webp','lembrancas-antigas.webp','essencia-furia.webp','amuleto-nevoa-malva.webp']) {
     assert.equal(existsSync(`public/assets/items/anthropus/${asset}`), true);
   }
+});
+
+
+test('Beta 2.50 mostra prévia de recursos e itens nos cards e usa nível verde', () => {
+  const source = read('src/components/CampanhaMapa.jsx');
+  const css = read('src/index.css');
+  assert.match(source, /campaign-card-preview/);
+  assert.match(source, /campaign-reward-preview/);
+  assert.match(source, /campaign\.items_preview/);
+  assert.match(css, /campaign-level-badge\{[^}]*color:#fff[^}]*#46c65b/);
+});
+
+test('métodos sem perdas são priorizados antes dos casos com risco e da tática de Fedor', () => {
+  const source = read('src/components/CampanhaMapa.jsx');
+  const special = source.indexOf('<SpecialTroopsTactic');
+  const safe = source.indexOf('safeGuides.map');
+  const fedor = source.indexOf('<FedorTactic');
+  const other = source.indexOf('otherGuides.map');
+  assert.ok(special >= 0 && safe > special && fedor > safe && other > fedor);
 });

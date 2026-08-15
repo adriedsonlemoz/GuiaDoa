@@ -26,7 +26,7 @@ const RESOURCE_KEYS = {
   seeds:'troops.resource.seeds', geodes:'troops.resource.geodes', sulfur:'troops.resource.sulfur',
 };
 
-const SPECIAL_TEST_TROOPS = [
+const SPECIAL_SAFE_TROOPS = [
   { pt:'Fada da Selva', en:'Forest Fairy' },
   { pt:'Centauros Infernais', en:'Infernal Centaurs' },
   { pt:'Sapo Tóxico', en:'Toxic Toad' },
@@ -127,6 +127,7 @@ function LevelList({ category, entries, onOpen, onBack, t, locale, content, titl
           const fedor = (entry.tropas || []).find(troop => troop.nome === 'Fedor');
           const sampleResources = (entry.recursos || []).slice(0, 5);
           const rewards = entry.recompensas || [];
+          const rewardPreview = rewards.slice(0, 4);
           const safeGuides = (entry.guiasAtaque || []).filter(guide => guide.resultado === 'sem_perdas').length;
           const riskyGuides = (entry.guiasAtaque || []).filter(guide => guide.resultado === 'possiveis_perdas').length;
           return (
@@ -138,11 +139,30 @@ function LevelList({ category, entries, onOpen, onBack, t, locale, content, titl
               <strong>{content(entry, 'nome')}</strong>
               <span className="campaign-enemy-total">☠️ {fmt.format(totalTroops)} {t('campaign.enemy_troops_short')}</span>
               {fedor && <span className="campaign-fedor-mini">⚠ {t('campaign.fedor')}: {fmt.format(fedor.quantidade)}</span>}
-              <div className="campaign-resource-mini">
-                {sampleResources.map(r => <span key={r.tipo}>{RESOURCE_ICONS[r.tipo] || '◆'} {r.exibicao}</span>)}
-                {entry.campo?.producaoHora != null && <span>↗ {fmt.format(entry.campo.producaoHora)}/h</span>}
-              </div>
-              {rewards.length > 0 && <span className="campaign-reward-mini">◇ {t('campaign.reward_count', { count:rewards.length })}</span>}
+              {sampleResources.length > 0 && (
+                <div className="campaign-card-preview">
+                  <small>{t('campaign.resources')}</small>
+                  <div className="campaign-resource-mini">
+                    {sampleResources.map(r => <span key={r.tipo}>{RESOURCE_ICONS[r.tipo] || '◆'} {r.exibicao}</span>)}
+                    {entry.campo?.producaoHora != null && <span>↗ {fmt.format(entry.campo.producaoHora)}/h</span>}
+                  </div>
+                </div>
+              )}
+              {rewards.length > 0 && (
+                <div className="campaign-card-preview campaign-item-preview">
+                  <small>{t('campaign.items_preview')}</small>
+                  <div className="campaign-reward-preview">
+                    {rewardPreview.map((reward, index) => {
+                      const translated = locale !== 'pt-BR' ? reward?.i18n?.[locale] || {} : {};
+                      const name = translated.nome || reward.nome || t('campaign.reward_unknown');
+                      return reward.imagem
+                        ? <img key={reward.codigo || index} src={reward.imagem} alt={name} title={name} loading="lazy" />
+                        : <span key={reward.codigo || index} title={name}>{reward.simbolo || `R${index + 1}`}</span>;
+                    })}
+                    {rewards.length > rewardPreview.length && <b>+{rewards.length - rewardPreview.length}</b>}
+                  </div>
+                </div>
+              )}
               {(safeGuides > 0 || riskyGuides > 0) && <div className="campaign-guide-mini-row">{safeGuides > 0 && <span className="campaign-guide-mini-safe">✓ {t('campaign.zero_loss_count', { count:safeGuides })}</span>}{riskyGuides > 0 && <span className="campaign-guide-mini-risk">⚠ {t('campaign.risk_count', { count:riskyGuides })}</span>}</div>}
               <span className="campaign-open">{t('campaign.open')} ›</span>
             </button>
@@ -186,7 +206,7 @@ function SpecialTroopsTactic({ t, locale }) {
       </div>
       <p>{t('campaign.special_troops_intro')}</p>
       <div className="campaign-special-list">
-        {SPECIAL_TEST_TROOPS.map(item => <span key={item.pt}>500 · {locale === 'pt-BR' ? item.pt : item.en}</span>)}
+        {SPECIAL_SAFE_TROOPS.map(item => <span key={item.pt}>500 · {locale === 'pt-BR' ? item.pt : item.en}</span>)}
       </div>
       <div className="campaign-research-chips">
         <span>{locale === 'pt-BR' ? 'Metalurgia' : 'Metallurgy'} 4+</span><span>{locale === 'pt-BR' ? 'Medicina' : 'Medicine'} 4+</span><span>{locale === 'pt-BR' ? 'Calibração de Armas' : 'Weapons Calibration'} 4+</span>
@@ -248,15 +268,17 @@ function AttackGuidesBlock({ entry, t, locale }) {
   const guides = entry.guiasAtaque || [];
   const showCommon = entry.categoria === 'antropos' || entry.categoria === 'campos';
   if (!guides.length && !showCommon) return null;
-  const safe = guides.filter(guide => guide.resultado === 'sem_perdas').length;
+  const safeGuides = guides.filter(guide => guide.resultado === 'sem_perdas');
+  const otherGuides = guides.filter(guide => guide.resultado !== 'sem_perdas');
   const risky = guides.filter(guide => guide.resultado === 'possiveis_perdas').length;
-  const meta = [safe ? `${safe} ✓` : '', risky ? `${risky} ⚠` : ''].filter(Boolean).join(' · ');
+  const meta = [safeGuides.length ? `${safeGuides.length} ✓` : '', risky ? `${risky} ⚠` : ''].filter(Boolean).join(' · ');
   return (
     <CollapsibleSection title={t('campaign.how_to_attack')} meta={meta} className="campaign-attack-section">
-      {entry.categoria === 'antropos' && <div className="campaign-combat-warning">⚠ {t('campaign.ranged_speed_warning')}</div>}
-      {showCommon && <FedorTactic entry={entry} t={t} locale={locale} />}
-      {guides.map(guide => <AttackGuide key={guide.codigo} guide={guide} t={t} locale={locale} />)}
       {showCommon && <SpecialTroopsTactic t={t} locale={locale} />}
+      {safeGuides.map(guide => <AttackGuide key={guide.codigo} guide={guide} t={t} locale={locale} />)}
+      {showCommon && <FedorTactic entry={entry} t={t} locale={locale} />}
+      {otherGuides.map(guide => <AttackGuide key={guide.codigo} guide={guide} t={t} locale={locale} />)}
+      {entry.categoria === 'antropos' && <div className="campaign-combat-warning">⚠ {t('campaign.ranged_speed_warning')}</div>}
     </CollapsibleSection>
   );
 }
@@ -348,6 +370,8 @@ function Detail({ entry, onBack, t, locale, content }) {
           </CollapsibleSection>
         )}
 
+        <AttackGuidesBlock entry={entry} t={t} locale={locale} />
+
         <CollapsibleSection title={t('campaign.resources')} meta={String((entry.recursos || []).length)}>
           <div className="campaign-resources-grid">
             {(entry.recursos || []).map(resource => (
@@ -371,7 +395,6 @@ function Detail({ entry, onBack, t, locale, content }) {
           </div>
         </CollapsibleSection>
 
-        <AttackGuidesBlock entry={entry} t={t} locale={locale} />
         <StrategyBlock strategy={entry.estrategia} t={t} locale={locale} hasGuides={(entry.guiasAtaque || []).length > 0 || entry.categoria === 'antropos' || entry.categoria === 'campos'} />
         <div className="campaign-source-foot">{t('campaign.source')}: {entry.fonte?.descricao || t('campaign.source_screenshot')} · {entry.fonte?.data || '—'}</div>
       </div>

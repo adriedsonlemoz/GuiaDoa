@@ -28,14 +28,18 @@
       <p id="bootstrap-user-erro" class="bootstrap-inline-error" style="display:none"></p>
     </div>
 
-    <div id="login-form">
+    <form id="login-form" autocomplete="on">
       <div id="bootstrap-bank-notice" class="bootstrap-bank-notice" style="display:none"></div>
-      <div class="field"><label>Usuário</label><input type="text" id="login-user" placeholder="adrilemoz" autocomplete="username"></div>
-      <div class="field"><label>Senha</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"></div>
-      <button class="btn btn-navy btn-full" id="btn-login" onclick="fazerLogin()">Acessar o Quartel</button>
-      <button onclick="rodarDiagnostico()" style="width:100%;margin-top:6px;background:transparent;border:1px solid rgba(200,168,74,0.3);border-radius:8px;padding:7px;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.72rem;color:rgba(200,168,74,0.75);cursor:pointer;letter-spacing:0.5px;">🔍 Diagnosticar conexão</button>
+      <div class="field"><label>Usuário</label><input type="text" id="login-user" name="username" placeholder="adrilemoz" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
+      <div class="field"><label>Senha</label><input type="password" id="login-pass" name="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <label class="login-remember" for="remember-user">
+        <input type="checkbox" id="remember-user" name="remember-user">
+        <span>Lembrar meu usuário neste aparelho</span>
+      </label>
+      <button type="submit" class="btn btn-navy btn-full" id="btn-login">Acessar o Quartel</button>
+      <button type="button" onclick="rodarDiagnostico()" style="width:100%;margin-top:6px;background:transparent;border:1px solid rgba(200,168,74,0.3);border-radius:8px;padding:7px;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.72rem;color:rgba(200,168,74,0.75);cursor:pointer;letter-spacing:0.5px;">🔍 Diagnosticar conexão</button>
       <p id="login-erro" style="color:var(--red);font-size:0.75rem;text-align:center;margin-top:10px;display:none;"></p>
-    </div>
+    </form>
 
     <!-- Painel de debug -->
     <div id="debug-box" style="display:none;margin-top:14px;background:#0A0F1A;border:1px solid rgba(200,168,74,0.3);border-radius:8px;overflow:hidden;">
@@ -62,7 +66,7 @@
       <span class="admin-brand-copy"><strong>GUIA DOA</strong><small>Admin</small></span>
     </div>
     <div class="topbar-right">
-      <a class="topbar-project-link" href="https://guia-doa.vercel.app/" target="_blank" rel="noopener noreferrer" title="Ver Projeto">
+      <a class="topbar-project-link" href="https://guia-doa.vercel.app/#/" target="_blank" rel="noopener noreferrer" title="Ver Projeto">
         <span>🌐 Ver Projeto</span>
       </a>
       <div class="topbar-divider"></div>

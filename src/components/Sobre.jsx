@@ -9,6 +9,7 @@ import { API_URL as API } from '../config/api.js';
 
 const CHANGELOG_CONFIG = [
   { ver: DISPLAY_VERSION, icon: '◇', key: 'latest', color: '#4E716A', count: 4 },
+  { ver: 'Beta 2.48', icon: '🎒', key: 'history.2_48', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.47', icon: '⚔️', key: 'history.2_47', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.46', icon: '🏹', key: 'history.2_46', color: '#5A7B72', count: 4 },
   { ver: 'Beta 2.45', icon: '🌾', key: 'history.2_45', color: '#5A7B72', count: 4 },
@@ -89,11 +90,11 @@ const Sobre = () => {
           </p>
           <div className="py-2.5 px-3 rounded-lg mb-3" style={{ background: C.BG_SECONDARY, border: `2px dashed ${C.BORDER}` }}>
             <p className="font-nunito font-black text-[0.7rem] uppercase tracking-wider m-0 mb-0.5" style={{ color: C.TEXT_MUTED }}>{t('about.pix_key')}:</p>
-            <p className="font-mono font-black text-xl tracking-wide m-0" style={{ color: C.BLUE }}>37991260524</p>
+            <p className="font-mono font-black text-xl tracking-wide m-0" style={{ color: C.BLUE }}>adriedson@outlook.com</p>
           </div>
           <div className="flex gap-2">
             <button className="btn-ghost flex-1" onClick={() => setOpenApoio(false)}>{t('common.close')}</button>
-            <button className="btn-success flex-1" onClick={() => handleCopy('37991260524', t('about.pix_copy_success'))}>{t('about.copy_pix')}</button>
+            <button className="btn-success flex-1" onClick={() => handleCopy('adriedson@outlook.com', t('about.pix_copy_success'))}>{t('about.copy_pix')}</button>
           </div>
         </div>
       </Modal>
@@ -150,15 +151,20 @@ const Sobre = () => {
         <GameHeader title={t('about.updates')} fontSize="0.78rem" />
         <div className="p-3 bg-aoe-card space-y-2.5">
           {changelog.map((entry, index) => (
-            <div key={entry.ver} className="rounded-lg overflow-hidden" style={{ border: `1.5px solid ${entry.color}40`, borderLeft: `4px solid ${entry.color}` }}>
-              <div className="flex items-center gap-2 px-3 py-2" style={{ background: `${entry.color}12` }}>
-                <span className="text-xl leading-none">{entry.icon}</span>
+            <details
+              key={entry.ver}
+              className="about-changelog-entry rounded-lg overflow-hidden"
+              style={{ border: `1.5px solid ${entry.color}40`, borderLeft: `4px solid ${entry.color}` }}
+            >
+              <summary className="about-changelog-summary flex items-center gap-2 px-3 py-2" style={{ background: `${entry.color}12` }}>
+                <span className="text-xl leading-none" aria-hidden="true">{entry.icon}</span>
                 <div className="flex-1 min-w-0">
                   <p className="font-nunito font-black text-[0.8rem] m-0 leading-tight" style={{ color: C.TEXT_PRIMARY }}>{entry.name}</p>
                   <p className="font-nunito font-bold text-[0.65rem] m-0" style={{ color: entry.color }}>{entry.ver}</p>
                 </div>
                 {index === 0 && <span className="font-nunito font-black text-[0.58rem] px-1.5 py-0.5 rounded-full text-white" style={{ background: entry.color }}>{t('about.new')}</span>}
-              </div>
+                <span className="about-changelog-chevron" aria-hidden="true">⌄</span>
+              </summary>
               <div className="px-3 py-2 space-y-1">
                 {entry.items.map(item => (
                   <p key={item} className="font-nunito text-[0.72rem] flex items-start gap-1.5 m-0" style={{ color: C.TEXT_SECONDARY }}>
@@ -166,7 +172,7 @@ const Sobre = () => {
                   </p>
                 ))}
               </div>
-            </div>
+            </details>
           ))}
         </div>
       </div>

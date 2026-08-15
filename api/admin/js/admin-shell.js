@@ -58,7 +58,7 @@ function renderHome() {
     <div style="margin-top:20px">
       <div style="height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0.2;margin-bottom:12px"></div>
       <p style="font-size:0.62rem;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Acesso rápido</p>
-      <a href="/" target="_blank" class="projeto-link">
+      <a href="https://guia-doa.vercel.app/#/" target="_blank" rel="noopener noreferrer" class="projeto-link">
         <span style="font-size:1.2rem">🌐</span>
         <div>
           <div>Ver o Projeto</div>
@@ -94,13 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('click', e => { if (e.target === el) el.classList.remove('aberto'); })
   );
 
-  // Enter no campo senha faz login
-  const passEl = document.getElementById('login-pass');
-  if (passEl) passEl.addEventListener('keydown', e => { if (e.key === 'Enter') fazerLogin(); });
-
-  // Enter no campo usuário também
-  const userEl = document.getElementById('login-user');
-  if (userEl) userEl.addEventListener('keydown', e => { if (e.key === 'Enter') fazerLogin(); });
+  // Formulário real melhora autocomplete/gerenciadores de senha e permite lembrar só o usuário.
+  carregarUsuarioLembrado();
+  const loginForm = document.getElementById('login-form');
+  if (loginForm) loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    fazerLogin();
+  });
 
   // Teste de conectividade da API
   const statusEl = document.getElementById('api-status');

@@ -1417,3 +1417,11 @@
 .campaign-reward.has-image{padding:7px}
 .campaign-reward.has-image strong{font-size:.62rem}
 @media (max-width:380px){.campaign-reward-image{width:52px;height:52px;flex-basis:52px}}
+
+/* Beta 2.49 · changelog compacto do Sobre */
+.about-changelog-entry > summary { list-style: none; cursor: pointer; user-select: none; }
+.about-changelog-entry > summary::-webkit-details-marker { display: none; }
+.about-changelog-summary { min-height: 48px; }
+.about-changelog-chevron { flex: 0 0 auto; color: #4E716A; font-size: 1rem; font-weight: 900; transition: transform .18s ease; }
+.about-changelog-entry[open] .about-changelog-chevron { transform: rotate(180deg); }
+.about-changelog-entry[open] .about-changelog-summary { border-bottom: 1px solid rgba(126,94,47,.16); }

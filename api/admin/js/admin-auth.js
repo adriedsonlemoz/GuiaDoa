@@ -1,3 +1,24 @@
+const ADMIN_REMEMBER_USER_KEY = 'guiadoa_admin_remembered_user';
+
+function carregarUsuarioLembrado() {
+  const input = document.getElementById('login-user');
+  const checkbox = document.getElementById('remember-user');
+  if (!input || !checkbox) return;
+  try {
+    const remembered = localStorage.getItem(ADMIN_REMEMBER_USER_KEY) || '';
+    input.value = remembered;
+    checkbox.checked = Boolean(remembered);
+  } catch {}
+}
+
+function persistirUsuarioLembrado(usuario) {
+  const checkbox = document.getElementById('remember-user');
+  try {
+    if (checkbox?.checked && usuario) localStorage.setItem(ADMIN_REMEMBER_USER_KEY, usuario);
+    else localStorage.removeItem(ADMIN_REMEMBER_USER_KEY);
+  } catch {}
+}
+
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
 async function fazerLogin() {
   limparLog();
@@ -72,6 +93,7 @@ async function fazerLogin() {
 
     TOKEN = d.token;
     AdminCore.setToken(TOKEN);
+    persistirUsuarioLembrado(usuario);
     dbgOk('Token recebido e guardado.');
 
     await entrarAdminAposAuth(d.usuario);

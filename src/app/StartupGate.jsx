@@ -8,6 +8,9 @@ import DataSyncScene from './DataSyncScene.jsx';
 
 import { API_URL as API } from '../config/api.js';
 
+const RETRYABLE_CONNECTION_CODES = new Set(['GD-NET-001', 'GD-NET-002', 'GD-SRV-001']);
+const AUTO_RETRY_MS = 3000;
+
 const Tela = ({ children }) => (
   <div style={{ minHeight:'100vh', display:'grid', placeItems:'center', padding:20, background:C.BG_PRIMARY }}>
     <div style={{ width:'100%', maxWidth:420, background:C.BG_CARD, border:`1.5px solid ${C.BORDER}`, borderRadius:16, padding:22, boxShadow:'0 12px 40px rgba(62,47,28,.18)' }}>
@@ -57,6 +60,12 @@ export default function StartupGate({ children }) {
     return () => clearTimeout(id);
   }, [status]);
 
+  useEffect(() => {
+    if (!erro || !RETRYABLE_CONNECTION_CODES.has(erro.code) || status) return undefined;
+    const id = setTimeout(() => verificar(), AUTO_RETRY_MS);
+    return () => clearTimeout(id);
+  }, [erro, status]);
+
   const criarAdmin = async (e) => {
     e.preventDefault();
     if (form.usuario.trim().length < 3) return setErro({ code:'GD-SETUP-001', title:t('app.setup.user_review_title'), message:t('app.setup.user_review_message'), raw:new Error('Usuário com menos de 3 caracteres') });
@@ -87,6 +96,14 @@ export default function StartupGate({ children }) {
     <DataSyncScene
       title={t('app.setup.preparing')}
       subtitle={t('app.setup.syncing')}
+      phase="connect"
+    />
+  );
+
+  if (erro && !status && RETRYABLE_CONNECTION_CODES.has(erro.code)) return (
+    <DataSyncScene
+      title={t('app.sync.waiting_connection')}
+      subtitle={t('app.sync.auto_retry_note')}
       phase="connect"
     />
   );

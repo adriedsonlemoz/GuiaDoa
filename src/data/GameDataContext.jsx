@@ -7,6 +7,8 @@ import DataSyncScene from '../app/DataSyncScene.jsx';
 
 import { API_URL as API } from '../config/api.js';
 const GameDataContext = createContext(null);
+const RETRYABLE_CONNECTION_CODES = new Set(['GD-NET-001', 'GD-NET-002', 'GD-SRV-001']);
+const AUTO_RETRY_MS = 3000;
 
 const ENDPOINTS = [
   ['tropas', 'troops.title', '/api/tropas/todas', d => Array.isArray(d) ? d : [], '⚔'],
@@ -61,6 +63,11 @@ export function GameDataProvider({ children }) {
 
   useEffect(() => { refresh().catch(()=>{}); }, [refresh]);
 
+  useEffect(() => {
+    if (!erro || lastUpdated || !RETRYABLE_CONNECTION_CODES.has(erro.code)) return undefined;
+    const id = setTimeout(() => refresh().catch(()=>{}), AUTO_RETRY_MS);
+    return () => clearTimeout(id);
+  }, [erro, lastUpdated, refresh]);
 
   const value = useMemo(() => ({ ...dados, loading, erro, progress, lastUpdated, refresh }), [dados, loading, erro, progress, lastUpdated, refresh]);
 
@@ -78,6 +85,15 @@ export function GameDataProvider({ children }) {
       />
     );
   }
+
+  if (erro && !lastUpdated && RETRYABLE_CONNECTION_CODES.has(erro.code)) return (
+    <DataSyncScene
+      title={t('app.sync.waiting_connection')}
+      subtitle={t('app.sync.auto_retry_note')}
+      progress={progress}
+      phase="connect"
+    />
+  );
 
   if (erro && !lastUpdated) return (
     <div style={{ minHeight:'100vh', display:'grid', placeItems:'center', background:C.BG_PRIMARY, padding:20 }}>

@@ -23,7 +23,7 @@ test('catálogo filtra pelas novas funções táticas com fallback compatível p
 });
 
 test('Tropas mantém lista simples, filtros táticos e comparação rápida sem trazer o simulador para a tela principal', () => {
-  for (const file of ['SimpleTroopFilters.jsx','TroopListRow.jsx','TropaModal.jsx','TroopCombatDetails.jsx','troopCatalogUtils.js']) {
+  for (const file of ['SimpleTroopFilters.jsx','TroopListRow.jsx','TropaModal.jsx','TroopCombatSummary.jsx','TroopCombatDetails.jsx','troopCatalogUtils.js']) {
     assert.ok(existsSync(new URL(`../src/components/tropas/${file}`, import.meta.url)), file);
   }
   const main = read('src/components/Tropas.jsx');
@@ -42,17 +42,21 @@ test('Tropas mantém lista simples, filtros táticos e comparação rápida sem 
   assert.ok(main.split('\n').length < 150);
 });
 
-test('detalhe mantém atributos, requisito, dicas e nova seção expansível de combate', () => {
+test('detalhe mantém descrição, matchups, uso recomendado e seção avançada recolhível', () => {
   const detail = read('src/components/tropas/TropaModal.jsx');
+  const summary = read('src/components/tropas/TroopCombatSummary.jsx');
   const combat = read('src/components/tropas/TroopCombatDetails.jsx');
   assert.match(detail, /ATRIBUTOS/);
   assert.match(detail, /troops\.training_requirement/);
   assert.match(detail, /RelatedTroopTips/);
+  assert.match(detail, /TroopCombatSummary/);
   assert.match(detail, /TroopCombatDetails/);
   assert.match(detail, /createPortal/);
+  assert.match(summary, /troops\.strong_against/);
+  assert.match(summary, /troops\.weak_against/);
+  assert.match(summary, /troops\.how_to_use/);
   assert.match(combat, /<details/);
   assert.match(combat, /troops\.confidence\.experimental/);
-  assert.match(combat, /troops\.how_to_use/);
 });
 
 test('Admin permite cadastrar perfil de combate sem remover os campos legados', () => {

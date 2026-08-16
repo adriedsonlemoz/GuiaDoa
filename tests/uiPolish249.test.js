@@ -6,7 +6,7 @@ const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8'
 
 test('Home organiza módulos em grupos lógicos e mantém Sobre por último', () => {
   const tools = read('src/components/home/homeTools.js');
-  const expected = ['tropas','mecanicas_combate','dragoes','edificios','pesquisas','itens','campanha','ilhas','niveis','torneios','dicas','modal:color_builder','sobre'];
+  const expected = ['tropas','dragoes','edificios','pesquisas','itens','campanha','ilhas','niveis','torneios','dicas','modal:color_builder','sobre'];
   let previous = -1;
   for (const id of expected) {
     const index = tools.indexOf(`id: '${id}'`);

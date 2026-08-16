@@ -6,6 +6,7 @@ import { useI18n } from '../../hooks/useI18n.jsx';
 import { GameInfoTable, GameSectionTitle } from '../shared/GameChrome.jsx';
 import TroopTrainingPlanner from './TroopTrainingPlanner.jsx';
 import TroopCombatDetails from './TroopCombatDetails.jsx';
+import TroopCombatSummary from './TroopCombatSummary.jsx';
 
 export default function TropaModal({ tropa, onFechar, onOpenTips, onOpenTournament }) {
   const { t, content, locale } = useI18n();
@@ -56,6 +57,7 @@ export default function TropaModal({ tropa, onFechar, onOpenTips, onOpenTourname
             <div className="game-list-meta">{type.label} • ⭐ {tropa.poder || 0} {t('common.power').toLowerCase()}</div>
             {tropa.tipo === 'especial' ? <div className="game-badge">✨ {t('troops.special')}</div> : null}
             {description ? <p className="game-detail-copy">{description}</p> : null}
+            <TroopCombatSummary troop={tropa} />
           </div>
         </div>
 

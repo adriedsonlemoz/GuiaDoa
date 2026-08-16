@@ -39,10 +39,7 @@ export default function TroopCombatDetails({ troop }) {
   const profile = troop.perfilCombate || {};
   const confidence = profile.confiancaCampos || {};
   const roles = explicitTacticalRoles(troop);
-  const strong = localizedCombatField(troop, content, 'forteContra', 'combateForteContra') || [];
-  const weak = localizedCombatField(troop, content, 'fracoContra', 'combateFracoContra') || [];
   const skills = localizedCombatField(troop, content, 'habilidadesEspeciais', 'combateHabilidades') || [];
-  const recommended = localizedCombatField(troop, content, 'funcaoRecomendada', 'combateFuncaoRecomendada');
   const notes = localizedCombatField(troop, content, 'observacoesEstrategicas', 'combateObservacoesEstrategicas');
   const target = localizedCombatField(troop, content, 'prioridadeAlvo', 'combatePrioridadeAlvo');
   const source = localizedCombatField(troop, content, 'fonteInformacao', 'combateFonteInformacao');
@@ -62,10 +59,7 @@ export default function TroopCombatDetails({ troop }) {
           </div>
         ) : null}
 
-        <TextSection title={t('troops.strong_against')} confidence={confidence.counters} t={t}>{strong}</TextSection>
-        <TextSection title={t('troops.weak_against')} confidence={confidence.counters} t={t}>{weak}</TextSection>
         <TextSection title={t('troops.special_abilities')} confidence={confidence.habilidades} t={t}>{skills}</TextSection>
-        <TextSection title={t('troops.how_to_use')} confidence={confidence.funcaoRecomendada} t={t}>{recommended}</TextSection>
         <TextSection title={t('troops.target_priority')} confidence={confidence.prioridadeAlvo} t={t}>{target}</TextSection>
         <TextSection title={t('troops.strategy_notes')} confidence={confidence.observacoesEstrategicas} t={t}>{notes}</TextSection>
         <TextSection title={t('troops.information_source')} t={t}>{source}</TextSection>

@@ -66,6 +66,11 @@ Um relatório recente registrou aproximadamente 3.066 tropas do atacante e cerca
 
 A impressão de que o atacante costuma obter resultados melhores continua **em investigação**. Nenhum bônus matemático ofensivo foi cadastrado. A vantagem observada também pode decorrer da capacidade do atacante de escolher alvo, composição, general, dragão, counters e quantidade.
 
-## Integração com Mecânicas de Combate — Beta 2.54
 
-A nova página `mecanicas_combate` reutiliza `perfilCombate` diretamente do catálogo online. Ela não grava classificações inferidas nem mantém uma lista paralela de unidades. Alterações feitas no Admin/MongoDB passam a alimentar automaticamente a seção de evidências da página de mecânicas.
+## Experiência pública — Beta 2.55
+
+A central pública separada de Mecânicas de Combate foi removida. O perfil de combate permanece no cadastro da própria tropa e continua administrável pelo Admin.
+
+Na lista pública, as funções táticas explícitas (`Melee`, `Ranged`, `Speed`, `Tank`, `Supply`) aparecem como badges compactos. Ao abrir uma unidade, a descrição é acompanhada, quando houver dados cadastrados, por `Bom contra`, `Fraco contra` e `Como usar esta tropa?`. Habilidades, prioridade de alvo, observações, fonte e confiança continuam em `Detalhes de combate` para não aumentar demais o card/tela.
+
+Campos desconhecidos permanecem ocultos. A interface não infere counters nem inventa atributos.

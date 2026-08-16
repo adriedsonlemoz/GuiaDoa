@@ -403,3 +403,14 @@ td{border-bottom-color:rgba(128,96,51,.14)}
 .admin-check-row{display:flex;gap:10px;flex-wrap:wrap;padding-top:5px}.admin-check-row label{display:flex;align-items:center;gap:4px;font-weight:700;font-size:.72rem}
 .admin-subtitle{margin:6px 0 8px;padding-top:8px;border-top:1px solid rgba(47,86,82,.15);color:#52645f;font-size:.67rem;font-weight:850;text-transform:uppercase;letter-spacing:.03em}.field-hint{color:var(--muted);font-size:.6rem;font-weight:600}
 @media(max-width:620px){.admin-collapse-body{padding:9px 9px 3px}.admin-check-row{gap:7px}}
+
+/* Beta 2.58 · catálogo de itens */
+.admin-collapse{margin:10px 0;border:1px solid rgba(200,168,74,.28);border-radius:10px;background:rgba(200,168,74,.035);overflow:hidden}
+.admin-collapse>summary{cursor:pointer;padding:10px 12px;font-size:.72rem;font-weight:900;color:var(--text);list-style:none;display:flex;align-items:center;gap:6px}
+.admin-collapse>summary::-webkit-details-marker{display:none}
+.admin-collapse>summary:after{content:'⌄';margin-left:auto;color:var(--muted);font-size:.9rem}
+.admin-collapse[open]>summary{border-bottom:1px solid rgba(200,168,74,.2)}
+.admin-collapse-body{padding:10px 12px}
+.item-content-admin-row{display:grid;grid-template-columns:minmax(0,1fr) 76px 38px;gap:6px;align-items:center;margin-bottom:6px}
+.item-content-admin-row select,.item-content-admin-row input{min-width:0;width:100%}
+@media(max-width:560px){.item-content-admin-row{grid-template-columns:minmax(0,1fr) 64px 36px}}

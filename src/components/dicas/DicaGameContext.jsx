@@ -4,6 +4,8 @@ import { useGameData } from '../../data/GameDataContext.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
 import { buildDicaGameVariables } from './dicaGameUtils.js';
 import { SLOT_RULES } from '../ilhas/constants.js';
+import ItemReferenceCard from '../items/ItemReferenceCard.jsx';
+import { normalizeCatalogItem } from '../items/itemCatalogUtils.js';
 
 const MODULES = {
   ilhas: { icon: '🏝️', route: 'ilhas', labelKey: 'islands.title' },
@@ -21,7 +23,7 @@ const MODULES = {
 const fmt = (n, locale) => Number(n || 0).toLocaleString(locale);
 
 export default function DicaGameContext({ dica, setRoute }) {
-  const { edificios, tropas, dragoes } = useGameData();
+  const { edificios, tropas, dragoes, itens } = useGameData();
   const { t, content, locale } = useI18n();
   const rel = dica.relacionados || {};
 
@@ -44,8 +46,13 @@ export default function DicaGameContext({ dica, setRoute }) {
     return out.slice(0, 12);
   }, [rel, tropas, dragoes, edificios, content]);
 
+  const itensRelacionados = useMemo(() => {
+    const wanted = new Set(rel.itens || []);
+    return (itens || []).map(item => normalizeCatalogItem(item,content)).filter(item => wanted.has(item.slug)).slice(0,12);
+  }, [rel, itens, content]);
+
   const modulos = (rel.modulos || []).map(id => ({ id, ...MODULES[id] })).filter(x => x.route);
-  if (!modulos.length && !entidades.length && !capacidade) return null;
+  if (!modulos.length && !entidades.length && !itensRelacionados.length && !capacidade) return null;
 
   return (
     <div style={{ marginTop: 18, display: 'grid', gap: 12 }}>
@@ -82,6 +89,17 @@ export default function DicaGameContext({ dica, setRoute }) {
                 <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
                 <span className="font-nunito" style={{ fontSize: '.72rem', fontWeight: 800 }}>{t(item.labelKey)}</span>
               </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {itensRelacionados.length > 0 && (
+        <div style={{ padding: '0 2px' }}>
+          <div className="font-nunito" style={{ fontSize: '.66rem', color: C.TEXT_MUTED, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 7 }}>{t('tips.related_items')}</div>
+          <div className="item-contents-grid">
+            {itensRelacionados.map(item => (
+              <ItemReferenceCard key={item.slug} item={item} compact onClick={() => setRoute?.('itens')} />
             ))}
           </div>
         </div>

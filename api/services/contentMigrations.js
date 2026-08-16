@@ -2,10 +2,12 @@ import AppConfig from '../models/AppConfig.js';
 import CategoriaDica from '../models/CategoriaDica.js';
 import Dica from '../models/Dica.js';
 import Tropa from '../models/Tropa.js';
+import Item from '../models/Item.js';
 import CampanhaLocal from '../models/CampanhaLocal.js';
 import { DICAS_SEED } from '../seeds/dicas.js';
 import { tacticalMetadata } from '../seeds/tropasTaticas.js';
 import { TROOP_COMBAT_EVIDENCE } from '../seeds/tropasCombate.js';
+import { ITEM_SCREENSHOT_CATALOG } from '../seeds/itensCatalogo.js';
 import { ANTROPOS_SEED, SAVANA_SEED } from '../seeds/campanha.js';
 import { mesclarSeed } from '../utils/seedMerge.js';
 
@@ -14,6 +16,7 @@ const REALM_BEGINNER_GUIDE_KEY = 'content:dicas-guia-inicio-realm:beta-2.51';
 const ANTHROPUS_ATTACK_TUTORIAL_KEY = 'content:dicas-tutorial-antropos:beta-2.52';
 const TROOPS_TACTICAL_KEY = 'content:tropas-taticas:beta-2.15';
 const TROOPS_COMBAT_EVIDENCE_KEY = 'content:tropas-combate-evidencias:beta-2.53';
+const ITEMS_CATALOG_KEY = 'content:itens-catalogo:beta-2.58';
 const CAMPANHA_ANTROPOS_KEY = 'content:campanha-antropos:beta-2.44';
 const CAMPANHA_CAMPOS_KEY = 'content:campanha-campos:beta-2.45';
 const CAMPANHA_STRATEGY_KEY = 'content:campanha-estrategias:beta-2.46';
@@ -307,6 +310,44 @@ async function migrarEvidenciasCombateTropas() {
 }
 
 
+async function migrarCatalogoItens() {
+  const aplicado = await AppConfig.findOne({ chave:ITEMS_CATALOG_KEY }).lean();
+  if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, inseridas:0, completadas:0, preservadas:0 };
+
+  await AppConfig.findOneAndUpdate(
+    { chave:ITEMS_CATALOG_KEY },
+    { $set:{ migracaoEstado:'executando', migracaoVersao:'1', ultimoErro:'', atualizadoEm:new Date() } },
+    { upsert:true, setDefaultsOnInsert:true },
+  );
+
+  try {
+    const relatorio = { inseridas:0, completadas:0, preservadas:0 };
+    for (const seed of ITEM_SCREENSHOT_CATALOG) {
+      const atual = await Item.findOne({ $or:[{ slug:seed.slug }, { nome:seed.nome }] }).lean();
+      const filtro = atual?._id ? { _id:atual._id } : { slug:seed.slug };
+      const r = await mesclarSeed(Item, filtro, seed, { mergeArrays:{ conteudo:'itemSlug' } });
+      relatorio.inseridas += r.inserido || 0;
+      relatorio.completadas += r.completado || 0;
+      relatorio.preservadas += r.preservado || 0;
+    }
+
+    await AppConfig.findOneAndUpdate(
+      { chave:ITEMS_CATALOG_KEY },
+      { $set:{ migracaoEstado:'pronto', migracaoVersao:'1', migracaoEm:new Date(), atualizadoEm:new Date(), ultimoErro:'', relatorioMigracao:{ itensCatalogo:relatorio } } },
+      { upsert:true, setDefaultsOnInsert:true },
+    );
+    return { ok:true, ignorada:false, ...relatorio };
+  } catch (err) {
+    await AppConfig.findOneAndUpdate(
+      { chave:ITEMS_CATALOG_KEY },
+      { $set:{ migracaoEstado:'erro', ultimoErro:err.message, atualizadoEm:new Date() } },
+      { upsert:true, setDefaultsOnInsert:true },
+    ).catch(()=>{});
+    return { ok:false, erro:err.message, inseridas:0, completadas:0, preservadas:0 };
+  }
+}
+
+
 async function migrarCampanhaAntropos() {
   const aplicado = await AppConfig.findOne({ chave:CAMPANHA_ANTROPOS_KEY }).lean();
   if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, inseridas:0, completadas:0, preservadas:0 };
@@ -565,6 +606,8 @@ export async function executarMigracoesConteudo() {
   if (!tropas.ok) return tropas;
   const tropasCombate = await migrarEvidenciasCombateTropas();
   if (!tropasCombate.ok) return tropasCombate;
+  const itensCatalogo = await migrarCatalogoItens();
+  if (!itensCatalogo.ok) return itensCatalogo;
   const campanha = await migrarCampanhaAntropos();
   if (!campanha.ok) return campanha;
   const campos = await migrarCampanhaCampos();
@@ -579,12 +622,14 @@ export async function executarMigracoesConteudo() {
   if (!recompensas.ok) return recompensas;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && campanha.ignorada && campos.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
     tutorialAntroposAtualizado:tutorialAntropos.atualizadas || 0,
     tropasAtualizadas:(tropas.atualizadas || 0) + (tropasCombate.atualizadas || 0),
+    itensInseridos:itensCatalogo.inseridas || 0,
+    itensCompletados:itensCatalogo.completadas || 0,
     campanhaInseridas:(campanha.inseridas || 0) + (campos.inseridas || 0),
     campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (estrategiasPolidas.atualizadas || 0) + (recompensas.completadas || 0),
   };

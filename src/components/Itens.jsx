@@ -3,63 +3,72 @@ import { useGameData } from '../data/GameDataContext.jsx';
 import { useI18n } from '../hooks/useI18n.jsx';
 import GameHeader from './shared/GameHeader.jsx';
 import { GameSectionTitle, GameTabs } from './shared/GameChrome.jsx';
+import ItemPrice from './items/ItemPrice.jsx';
+import ItemContents from './items/ItemContents.jsx';
+import ItemReferenceCard, { ItemThumb } from './items/ItemReferenceCard.jsx';
+import { buildContainerMap, buildItemMap, normalizeCatalogItem } from './items/itemCatalogUtils.js';
 
-function normalizeItem(item, content) {
-  return {
-    ...item,
-    nome: content(item,'nome') || item.nome || 'Item',
-    descricao: content(item,'descricao') || item.descricao || '',
-    categoria: item.categoria || 'Geral',
-    raridade: item.raridade || '',
-    origem: content(item,'origem') || item.origem || content(item,'onde') || item.onde || '',
-    uso: content(item,'uso') || item.uso || '',
-    limites: content(item,'limites') || item.limites || '',
-    quantidade: Number.isFinite(Number(item.quantidade)) ? Number(item.quantidade) : null,
-  };
+function ItemVisual({ item, size = 70 }) {
+  return <ItemThumb item={item} size={size} />;
 }
 
-function ItemVisual({ item, size=76 }) {
-  return (
-    <div className="game-thumb" style={{ width:size, height:size, flexBasis:size, fontSize:size * .38 }}>
-      {item.imagem ? <img src={item.imagem} alt="" loading="lazy" /> : <span>{item.icone || '🎒'}</span>}
-    </div>
-  );
-}
+const GROUP_TABS = [
+  ['all','items.group_all','🎒'],
+  ['featured','items.group_featured','★'],
+  ['recursos','items.group_resources','◈'],
+  ['aceleracoes','items.group_speedups','⚡'],
+  ['geral','items.group_general','✦'],
+  ['arcas','items.group_chests','▣'],
+];
 
 function ItemRow({ item, onClick }) {
   return (
-    <button className="game-list-row" onClick={onClick}>
-      <ItemVisual item={item} />
-      <div style={{ flex:1, minWidth:0 }}>
-        <div className="game-list-name">{item.nome}</div>
-        <div className="game-list-meta">
-          {item.categoria}{item.raridade ? ` • ${item.raridade}` : ''}{item.quantidade !== null ? ` • x${item.quantidade}` : ''}
+    <button className="game-list-row item-catalog-row" onClick={onClick}>
+      <ItemVisual item={item} size={70} />
+      <div className="item-catalog-main">
+        <div className="item-catalog-title-line">
+          <div className="game-list-name">{item.nome}</div>
+          {item.destaque ? <span className="item-featured-star" title="Destaque">★</span> : null}
         </div>
-        {item.descricao ? <p className="game-list-copy">{item.descricao}</p> : null}
+        <div className="game-list-meta">{item.categoria}{item.raridade ? ` • ${item.raridade}` : ''}{item.quantidade !== null ? ` • x${item.quantidade.toLocaleString()}` : ''}</div>
+        {item.descricao ? <p className="game-list-copy item-catalog-description">{item.descricao}</p> : null}
+        <ItemPrice preco={item.preco} compact />
       </div>
-      <span aria-hidden="true" style={{ color:'#9b7d40', fontSize:'1.4rem', alignSelf:'center' }}>›</span>
+      <span aria-hidden="true" className="item-row-chevron">›</span>
     </button>
   );
 }
 
 function ItemGridCard({ item, onClick }) {
   return (
-    <button onClick={onClick} style={{
-      minWidth:0, textAlign:'left', padding:9, border:'1px solid #a48955', borderRadius:5,
-      background:'linear-gradient(180deg,#e5d8b2,#d3c396)', boxShadow:'inset 0 1px 0 rgba(255,248,218,.55)', cursor:'pointer',
-    }}>
-      <ItemVisual item={item} size={64} />
-      <div className="game-list-name" style={{ marginTop:7, fontSize:'.78rem' }}>{item.nome}</div>
-      <div className="game-list-meta">{item.categoria}{item.quantidade !== null ? ` • x${item.quantidade}` : ''}</div>
+    <button onClick={onClick} className="item-grid-card">
+      <div className="item-grid-visual"><ItemVisual item={item} size={68} />{item.destaque ? <span className="item-grid-star">★</span> : null}</div>
+      <div className="game-list-name item-grid-name">{item.nome}</div>
+      <div className="game-list-meta">{item.categoria}{item.quantidade !== null ? ` • x${item.quantidade.toLocaleString()}` : ''}</div>
+      <ItemPrice preco={item.preco} compact />
     </button>
   );
 }
 
-function ItemDetailsModal({ item, onClose, t }) {
+function formatEffect(item, t) {
+  const { tipo, valor, unidade } = item.efeito || {};
+  if (!tipo && valor == null) return '';
+  const label = t(`items.effect.${tipo}`);
+  const safeLabel = label === `items.effect.${tipo}` ? tipo : label;
+  const value = valor == null ? '' : String(valor).replace('.', ',');
+  const unitLabel = unidade ? t(`items.unit.${unidade}`) : '';
+  const safeUnit = unitLabel === `items.unit.${unidade}` ? unidade : unitLabel;
+  return [safeLabel, value, safeUnit].filter(Boolean).join(' · ');
+}
+
+function ItemDetailsModal({ item, itemMap, containersMap, onOpen, onClose, t }) {
+  const containers = containersMap.get(item.slug) || [];
+  const effect = formatEffect(item,t);
   const rows = [
     [t('items.field_category'), item.categoria],
-    [t('items.field_quantity'), item.quantidade],
+    [t('items.field_quantity'), item.quantidade !== null ? item.quantidade.toLocaleString() : ''],
     [t('items.field_rarity'), item.raridade],
+    [t('items.field_effect'), effect],
     [t('items.field_origin'), item.origem],
     [t('items.field_usage'), item.uso],
     [t('items.field_limits'), item.limites],
@@ -67,32 +76,49 @@ function ItemDetailsModal({ item, onClose, t }) {
 
   return (
     <div className="game-modal-backdrop" onClick={onClose}>
-      <article className="game-modal-sheet" onClick={e => e.stopPropagation()} style={{ maxWidth:480 }}>
+      <article className="game-modal-sheet item-modal-sheet" onClick={event => event.stopPropagation()}>
         <header className="game-modal-heading">
           <button className="game-modal-close" onClick={onClose}>‹</button>
           <h2>{item.nome}</h2>
           <button className="game-modal-close" onClick={onClose}>✕</button>
         </header>
-        <div className="game-detail-hero">
-          <ItemVisual item={item} size={90} />
-          <div style={{ minWidth:0 }}>
-            <h3 className="game-detail-title">{item.nome}</h3>
+        <div className="game-detail-hero item-detail-hero">
+          <ItemVisual item={item} size={92} />
+          <div className="item-detail-copy-wrap">
+            <div className="item-detail-title-line">
+              <h3 className="game-detail-title">{item.nome}</h3>
+              {item.destaque ? <span className="item-featured-star">★</span> : null}
+            </div>
             <div className="game-list-meta">{item.categoria}{item.raridade ? ` • ${item.raridade}` : ''}</div>
+            <ItemPrice preco={item.preco} />
             {item.descricao ? <p className="game-detail-copy">{item.descricao}</p> : null}
           </div>
         </div>
-        <div className="game-modal-content">
-          <GameSectionTitle>{t('items.title')}</GameSectionTitle>
-          <div className="game-info-table-wrap">
-            <div className="game-info-table-body">
-              {rows.map(([label,value]) => (
-                <div className="game-info-table-row" key={label} style={{ gridTemplateColumns:'minmax(0,1fr) minmax(0,1.45fr)' }}>
-                  <span className="game-info-label">{label}</span>
-                  <span className="game-info-value" style={{ textAlign:'right' }}>{value}</span>
-                </div>
-              ))}
+        <div className="game-modal-content item-modal-content">
+          {rows.length ? <>
+            <GameSectionTitle>{t('items.details')}</GameSectionTitle>
+            <div className="game-info-table-wrap">
+              <div className="game-info-table-body">
+                {rows.map(([label,value]) => (
+                  <div className="game-info-table-row" key={label} style={{ gridTemplateColumns:'minmax(0,1fr) minmax(0,1.45fr)' }}>
+                    <span className="game-info-label">{label}</span>
+                    <span className="game-info-value" style={{ textAlign:'right' }}>{value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </> : null}
+
+          <ItemContents item={item} itemMap={itemMap} onOpen={onOpen} t={t} />
+
+          {containers.length ? (
+            <section className="item-detail-section">
+              <h4>{t('items.found_in')}</h4>
+              <div className="item-contents-grid">
+                {containers.map(container => <ItemReferenceCard key={container.slug} item={container} compact onClick={() => onOpen(container)} />)}
+              </div>
+            </section>
+          ) : null}
         </div>
       </article>
     </div>
@@ -100,68 +126,84 @@ function ItemDetailsModal({ item, onClose, t }) {
 }
 
 export default function Itens() {
-  const { itens: itensOnline } = useGameData();
+  const { itens:itensOnline } = useGameData();
   const { t, content } = useI18n();
-  const [busca, setBusca] = useState('');
-  const [categoria, setCategoria] = useState('all');
-  const [modo, setModo] = useState('list');
-  const [selecionado, setSelecionado] = useState(null);
+  const [busca,setBusca] = useState('');
+  const [grupo,setGrupo] = useState('all');
+  const [subcategoria,setSubcategoria] = useState('all');
+  const [modo,setModo] = useState('list');
+  const [selecionado,setSelecionado] = useState(null);
 
-  const catalogo = useMemo(
-    () => itensOnline.map(item => normalizeItem(item,content)).sort((a,b) => (a.ordem ?? 999) - (b.ordem ?? 999) || a.nome.localeCompare(b.nome)),
-    [itensOnline, content],
-  );
-  const categorias = useMemo(() => ['all', ...Array.from(new Set(catalogo.map(i => i.categoria).filter(Boolean)))], [catalogo]);
+  const catalogo = useMemo(() => itensOnline
+    .map(item => normalizeCatalogItem(item,content))
+    .sort((a,b) => Number(b.destaque) - Number(a.destaque) || (a.ordem ?? 999) - (b.ordem ?? 999) || a.nome.localeCompare(b.nome)), [itensOnline,content]);
+  const itemMap = useMemo(() => buildItemMap(catalogo), [catalogo]);
+  const containersMap = useMemo(() => buildContainerMap(catalogo), [catalogo]);
+
+  const subcategorias = useMemo(() => {
+    const source = grupo === 'all' || grupo === 'featured' ? catalogo : catalogo.filter(item => item.grupo === grupo);
+    return ['all', ...Array.from(new Set(source.map(item => item.categoria).filter(Boolean))).sort((a,b) => a.localeCompare(b))];
+  }, [catalogo,grupo]);
+
   const filtrados = useMemo(() => {
     const query = busca.trim().toLowerCase();
     return catalogo.filter(item => {
-      if (categoria !== 'all' && item.categoria !== categoria) return false;
+      if (grupo === 'featured' && !item.destaque) return false;
+      if (!['all','featured'].includes(grupo) && item.grupo !== grupo) return false;
+      if (subcategoria !== 'all' && item.categoria !== subcategoria) return false;
       if (!query) return true;
-      return [item.nome,item.descricao,item.categoria,item.raridade,item.origem,item.uso].filter(Boolean).some(v => String(v).toLowerCase().includes(query));
+      const contentNames = (item.conteudo || []).map(row => itemMap.get(row.itemSlug)?.nome || row.itemSlug);
+      return [item.nome,item.descricao,item.categoria,item.raridade,item.origem,item.uso,...item.tags,...contentNames]
+        .filter(Boolean).some(value => String(value).toLowerCase().includes(query));
     });
-  }, [catalogo,busca,categoria]);
+  }, [catalogo,itemMap,busca,grupo,subcategoria]);
+
+  const changeGroup = next => { setGrupo(next); setSubcategoria('all'); };
 
   return (
-    <div style={{ maxWidth:620, margin:'0 auto', paddingBottom:18 }}>
-      <GameHeader title={t('items.eyebrow')} subtitle={t('items.subtitle_long')} />
+    <div className="items-page">
+      <GameHeader title={t('items.eyebrow')} subtitle={t('items.subtitle_catalog')} />
 
-      <GameTabs
-        compact
-        tabs={[{ id:'list', label:t('items.list') }, { id:'grid', label:t('items.grid') }]}
-        value={modo}
-        onChange={setModo}
-      />
-
-      <div className="game-filter-row" style={{ marginTop:8 }}>
-        <span className="game-filter-label">{t('common.filter')}:</span>
-        <select className="game-field" value={categoria} onChange={e => setCategoria(e.target.value)}>
-          {categorias.map(cat => <option key={cat} value={cat}>{cat === 'all' ? t('items.all_categories') : cat}</option>)}
-        </select>
-      </div>
-      <div className="game-filter-row" style={{ marginTop:7 }}>
-        <span aria-hidden="true">⌕</span>
-        <input className="game-field" value={busca} onChange={e => setBusca(e.target.value)} placeholder={t('items.search')} />
+      <div className="item-group-tabs" role="tablist" aria-label={t('items.categories')}>
+        {GROUP_TABS.map(([id,label,icon]) => (
+          <button key={id} type="button" role="tab" aria-selected={grupo === id} className={grupo === id ? 'is-active' : ''} onClick={() => changeGroup(id)}>
+            <span aria-hidden="true">{icon}</span>{t(label)}
+          </button>
+        ))}
       </div>
 
-      <div style={{ margin:'8px 2px 6px', color:'#765f3c', fontSize:'.62rem', fontWeight:900 }}>
-        {t('items.count',{count:filtrados.length})}
+      <div className="items-toolbar">
+        <div className="game-filter-row item-search-row">
+          <span aria-hidden="true">⌕</span>
+          <input className="game-field" value={busca} onChange={event => setBusca(event.target.value)} placeholder={t('items.search')} />
+        </div>
+        <GameTabs compact tabs={[{ id:'list', label:t('items.list') },{ id:'grid', label:t('items.grid') }]} value={modo} onChange={setModo} />
       </div>
+
+      {subcategorias.length > 2 ? (
+        <div className="game-filter-row item-subcategory-row">
+          <span className="game-filter-label">{t('items.subcategory')}:</span>
+          <select className="game-field" value={subcategoria} onChange={event => setSubcategoria(event.target.value)}>
+            {subcategorias.map(category => <option key={category} value={category}>{category === 'all' ? t('items.all_categories') : category}</option>)}
+          </select>
+        </div>
+      ) : null}
+
+      <div className="item-result-count">{t('items.count',{ count:filtrados.length })}</div>
 
       {!filtrados.length ? (
-        <section className="game-panel" style={{ padding:'34px 16px', textAlign:'center', color:'#745f40' }}>
-          <div style={{ fontSize:'2.5rem' }}>🎒</div>
-          <div style={{ marginTop:7, fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700 }}>{busca ? t('items.no_results') : t('items.empty')}</div>
-          <div style={{ marginTop:5, fontSize:'.7rem' }}>{busca ? t('items.no_match',{query:busca}) : t('items.empty_help')}</div>
+        <section className="game-panel item-empty-state">
+          <div>🎒</div>
+          <strong>{busca ? t('items.no_results') : t('items.empty')}</strong>
+          <span>{busca ? t('items.no_match',{ query:busca }) : t('items.empty_help')}</span>
         </section>
       ) : modo === 'list' ? (
-        <section className="game-list">{filtrados.map(item => <ItemRow key={item._id || item.nome} item={item} onClick={() => setSelecionado(item)} />)}</section>
+        <section className="game-list">{filtrados.map(item => <ItemRow key={item._id || item.slug} item={item} onClick={() => setSelecionado(item)} />)}</section>
       ) : (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(2,minmax(0,1fr))', gap:8 }}>
-          {filtrados.map(item => <ItemGridCard key={item._id || item.nome} item={item} onClick={() => setSelecionado(item)} />)}
-        </div>
+        <div className="item-grid">{filtrados.map(item => <ItemGridCard key={item._id || item.slug} item={item} onClick={() => setSelecionado(item)} />)}</div>
       )}
 
-      {selecionado ? <ItemDetailsModal item={selecionado} onClose={() => setSelecionado(null)} t={t} /> : null}
+      {selecionado ? <ItemDetailsModal item={selecionado} itemMap={itemMap} containersMap={containersMap} onOpen={setSelecionado} onClose={() => setSelecionado(null)} t={t} /> : null}
     </div>
   );
 }

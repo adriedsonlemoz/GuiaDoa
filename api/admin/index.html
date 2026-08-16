@@ -533,100 +533,77 @@
 
   <!-- Modal Item -->
   <div id="modal-item" class="modal-bg">
-    <div class="modal-card" style="max-width:460px">
+    <div class="modal-card" style="max-width:560px">
       <div class="modal-header">
         <h3 id="modal-item-titulo">Novo Item</h3>
         <button class="btn-close" onclick="fecharModal('modal-item')">✕</button>
       </div>
       <div class="modal-body">
-        <div class="field">
-          <label>Nome *</label>
-          <input id="fi-nome" type="text" placeholder="Ex: Essência de Fósforo">
+        <div class="field"><label>Nome *</label><input id="fi-nome" type="text" placeholder="Ex: Aceleração de 8 Horas"></div>
+        <div class="grid2">
+          <div class="field"><label>Identificador / slug</label><input id="fi-slug" type="text" placeholder="Gerado pelo nome se vazio"></div>
+          <div class="field"><label>Imagem (URL ou /assets/...)</label><input id="fi-imagem" type="text" placeholder="/assets/items/..."></div>
         </div>
-
-        <div class="field">
-          <label>Imagem (URL)</label>
-          <input id="fi-imagem" type="url" placeholder="https://.../item.png">
+        <div class="grid2">
+          <div class="field"><label>Grupo da aba</label><select id="fi-grupo"><option value="geral">Geral</option><option value="recursos">Recursos</option><option value="aceleracoes">Acelerações</option><option value="arcas">Arcas</option></select></div>
+          <div class="field"><label>Categoria específica</label><input id="fi-categoria" type="text" placeholder="Ex: Nanos, Dragão, Teleporte"></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div class="field"><label>Categoria</label><input id="fi-categoria" type="text" placeholder="Ex: Arcas, Cura, Nanos"></div>
-          <div class="field"><label>Raridade</label><input id="fi-raridade" type="text" placeholder="Ex: Raro, Épico"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="grid2">
+          <div class="field"><label>Raridade</label><input id="fi-raridade" type="text" placeholder="Opcional"></div>
           <div class="field"><label>Quantidade / pacote</label><input id="fi-quantidade" type="number" min="0" placeholder="Opcional"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Preço atual (Rubis)</label><input id="fi-preco" type="number" min="0" step="1" placeholder="Ex: 40"></div>
+          <div class="field"><label>Preço anterior (Rubis)</label><input id="fi-preco-original" type="number" min="0" step="1" placeholder="Para promoções"></div>
+        </div>
+        <div class="grid2">
           <div class="field"><label>Ordem</label><input id="fi-ordem" type="number" value="999"></div>
+          <div class="field" style="display:flex;align-items:flex-end"><label style="display:flex;align-items:center;gap:8px;min-height:38px;cursor:pointer"><input id="fi-destaque" type="checkbox" style="width:auto"> ★ Mostrar em Destaques</label></div>
         </div>
 
-        <div class="field">
-          <label>Ícone</label>
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-            <div id="emoji-preview" style="
-              width:52px;height:52px;border-radius:50%;
-              display:flex;align-items:center;justify-content:center;
-              font-size:1.8rem;
-              background:rgba(200,168,74,0.1);
-              border:2px solid var(--gold);
-              flex-shrink:0;
-            ">🎒</div>
-            <span style="font-size:0.7rem;color:var(--muted);font-weight:700;line-height:1.4">
-              Clique em um emoji abaixo para escolher o ícone do item
-            </span>
+        <details class="admin-collapse" open>
+          <summary>🖼️ Visual e descrição</summary>
+          <div class="admin-collapse-body">
+            <div class="field"><label>Ícone</label><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><div id="emoji-preview" style="width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;background:rgba(200,168,74,0.1);border:2px solid var(--gold);flex-shrink:0">🎒</div><span style="font-size:0.7rem;color:var(--muted);font-weight:700">Usado quando não há imagem.</span></div><div id="emoji-grid" style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;max-height:120px;overflow-y:auto;padding:8px;background:var(--bg2);border:1px solid rgba(200,168,74,0.3);border-radius:10px"></div></div>
+            <div class="field"><label>Descrição</label><textarea id="fi-descricao" rows="3" placeholder="Descrição exibida na lista e no detalhe"></textarea></div>
+            <div class="field"><label>Origem</label><textarea id="fi-origem" rows="2" placeholder="Loja, evento, baú..."></textarea></div>
+            <div class="field"><label>Utilização</label><textarea id="fi-uso" rows="2" placeholder="Para que o item serve..."></textarea></div>
+            <div class="field"><label>Limites</label><textarea id="fi-limites" rows="2" placeholder="Limites de uso ou disponibilidade..."></textarea></div>
+            <div class="field"><label>Onde conseguir</label><textarea id="fi-onde" rows="2" placeholder="Onde obter o item..."></textarea></div>
           </div>
-          <div id="emoji-grid" style="
-            display:grid;
-            grid-template-columns:repeat(10,1fr);
-            gap:4px;
-            max-height:160px;
-            overflow-y:auto;
-            padding:8px;
-            background:var(--bg2);
-            border:1px solid rgba(200,168,74,0.3);
-            border-radius:10px;
-          "></div>
-        </div>
+        </details>
 
-        <div class="field">
-          <label>Descrição</label>
-          <textarea id="fi-descricao" rows="3"
-            placeholder="Ex: Usada para evoluir o dragão do nível 29 para o 30."
-            style="width:100%;font-family:inherit;font-size:0.85rem;font-weight:600;
-                   background:#F8F4E8;color:var(--dark);border:1.5px solid var(--gold);
-                   border-radius:8px;padding:8px 12px;outline:none;resize:vertical;
-                   min-height:80px;transition:border-color 0.2s;"
-            onfocus="this.style.borderColor='var(--gold3)'"
-            onblur="this.style.borderColor='var(--gold)'"></textarea>
-        </div>
+        <details class="admin-collapse">
+          <summary>⚙️ Efeito estruturado</summary>
+          <div class="admin-collapse-body">
+            <div class="grid2"><div class="field"><label>Tipo de efeito</label><input id="fi-efeito-tipo" placeholder="aceleracao, recurso, producao..."></div><div class="field"><label>Valor</label><input id="fi-efeito-valor" type="number" step="any" placeholder="Ex: 8"></div></div>
+            <div class="field"><label>Unidade</label><input id="fi-efeito-unidade" placeholder="horas, minutos, madeira, percentual..."></div>
+            <div class="field"><label>Tags</label><input id="fi-tags" placeholder="Separadas por vírgula"></div>
+          </div>
+        </details>
 
-        <div class="field"><label>Origem</label><textarea id="fi-origem" rows="2" placeholder="Ex: Loja, evento, baú..."></textarea></div>
-        <div class="field"><label>Utilização</label><textarea id="fi-uso" rows="2" placeholder="Para que o item serve..."></textarea></div>
-        <div class="field"><label>Limites</label><textarea id="fi-limites" rows="2" placeholder="Limite por evento, uso único, disponibilidade..."></textarea></div>
+        <details class="admin-collapse">
+          <summary>▣ Conteúdo da Arca</summary>
+          <div class="admin-collapse-body">
+            <div style="font-size:.68rem;color:var(--muted);margin-bottom:8px">Relacione itens do próprio catálogo. Isso permite reutilizar o mesmo dado em Arcas e Tutoriais.</div>
+            <div id="fi-conteudo-lista"></div>
+            <button type="button" class="btn btn-navy btn-sm" onclick="adicionarConteudoItem()">＋ Adicionar item</button>
+            <div class="field" style="margin-top:10px"><label>Observação sobre o conteúdo</label><textarea id="fi-conteudo-observacao" rows="2" placeholder="Use para conteúdo aleatório ou ainda não estruturado"></textarea></div>
+          </div>
+        </details>
 
-        <div class="field">
-          <label>Onde Conseguir</label>
-          <textarea id="fi-onde" rows="2"
-            placeholder="Ex: Evento de Dragão, Loja de Itens, Cofres de Aliança..."
-            style="width:100%;font-family:inherit;font-size:0.85rem;font-weight:600;
-                   background:#F8F4E8;color:var(--dark);border:1.5px solid var(--gold);
-                   border-radius:8px;padding:8px 12px;outline:none;resize:vertical;
-                   min-height:64px;transition:border-color 0.2s;"
-            onfocus="this.style.borderColor='var(--gold3)'"
-            onblur="this.style.borderColor='var(--gold)'"></textarea>
-        </div>
-
-        <div class="i18n-section">
-          <div class="i18n-title">🌐 English <span>opcional</span></div>
-          <div class="field"><label>Name</label><input id="fi-en-nome" type="text" placeholder="Item name in English"></div>
-          <div class="field"><label>Description</label><textarea id="fi-en-descricao" rows="2" placeholder="Item description in English..."></textarea></div>
-          <div class="field"><label>Where to get it</label><textarea id="fi-en-onde" rows="2" placeholder="Where to obtain this item..."></textarea></div>
-        </div>
+        <details class="admin-collapse">
+          <summary>🌐 English (opcional)</summary>
+          <div class="admin-collapse-body i18n-section" style="margin:0">
+            <div class="field"><label>Name</label><input id="fi-en-nome" type="text" placeholder="Item name in English"></div>
+            <div class="field"><label>Description</label><textarea id="fi-en-descricao" rows="2" placeholder="Item description in English..."></textarea></div>
+            <div class="field"><label>Where to get it</label><textarea id="fi-en-onde" rows="2" placeholder="Where to obtain this item..."></textarea></div>
+          </div>
+        </details>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="fecharModal('modal-item')">Cancelar</button>
-        <button class="btn btn-gold" onclick="salvarItem()">💾 Salvar Item</button>
-      </div>
+      <div class="modal-footer"><button class="btn btn-ghost" onclick="fecharModal('modal-item')">Cancelar</button><button class="btn btn-gold" onclick="salvarItem()">💾 Salvar Item</button></div>
     </div>
   </div>
-
 
 
 

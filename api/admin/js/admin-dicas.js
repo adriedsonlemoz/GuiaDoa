@@ -255,6 +255,7 @@ function mostrarFormDica(dica){
         <div class="di-field"><label>Tropas relacionadas (nomes)</label><input id="di-rel-tropas" value="${isEdit?esc(diJoin(dica.relacionados?.tropas)):''}" placeholder="Hoplita, Ogros de Granito" /></div>
         <div class="di-field"><label>Dragões relacionados (slugs)</label><input id="di-rel-dragoes" value="${isEdit?esc(diJoin(dica.relacionados?.dragoes)):''}" placeholder="dragao_agua, dragao_terra" /></div>
         <div class="di-field"><label>Pesquisas relacionadas (slugs)</label><input id="di-rel-pesquisas" value="${isEdit?esc(diJoin(dica.relacionados?.pesquisas)):''}" placeholder="opcional" /></div>
+        <div class="di-field"><label>Itens relacionados (slugs)</label><input id="di-rel-itens" value="${isEdit?esc(diJoin(dica.relacionados?.itens)):''}" placeholder="aceleracao-8-horas, bolsa-de-cronos" /></div>
       </div>
 
       <div class="i18n-section" style="margin:14px 0">
@@ -358,6 +359,7 @@ async function salvarDica(){
     tropas: diCsv(document.getElementById('di-rel-tropas')?.value),
     dragoes: diCsv(document.getElementById('di-rel-dragoes')?.value),
     pesquisas: diCsv(document.getElementById('di-rel-pesquisas')?.value),
+    itens: diCsv(document.getElementById('di-rel-itens')?.value),
   };
 
   if(!titulo){toast('Título é obrigatório','aviso');return;}

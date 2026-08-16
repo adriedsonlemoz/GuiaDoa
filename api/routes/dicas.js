@@ -29,6 +29,7 @@ function sanitizeRelacionados(input = {}) {
     tropas: sanitizeRefs(input.tropas),
     dragoes: sanitizeRefs(input.dragoes),
     pesquisas: sanitizeRefs(input.pesquisas),
+    itens: sanitizeRefs(input.itens),
     reinos: sanitizeRefs(input.reinos),
   };
 }

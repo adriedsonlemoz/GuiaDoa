@@ -7,6 +7,7 @@ const RelacionadosSchema = new mongoose.Schema({
   tropas:    { type: [String], default: [] },
   dragoes:   { type: [String], default: [] },
   pesquisas: { type: [String], default: [] },
+  itens:     { type: [String], default: [] },
   reinos:    { type: [String], default: [] },
 }, { _id: false });
 

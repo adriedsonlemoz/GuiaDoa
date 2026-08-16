@@ -43,9 +43,11 @@ export const getIcone = (nome) => {
 // ─── Tipo de ataque ───────────────────────────────────────────────────────
 export const getTipoAtaque = (t, tr = null) => {
   const label = (key, fallback) => tr ? tr(key) : fallback;
-  if (t.atqPerto > 0 && t.atqDist > 0) return { label: label('troops.hybrid', 'Híbrido'), color: '#B8965A' };
-  if (t.atqDist  > t.atqPerto)          return { label: label('troops.ranged_short', 'Dist.'), color: '#0369a1' };
-  if (t.atqPerto > 0)                   return { label: label('troops.melee_short', 'C. a Corpo'), color: '#b91c1c' };
+  const melee = Number(t.atqPerto) || 0;
+  const ranged = Number(t.atqDist) || 0;
+  if (ranged > melee) return { label: label('troops.ranged_short', 'Dist.'), color: '#0369a1' };
+  if (melee > ranged) return { label: label('troops.melee_short', 'C. a Corpo'), color: '#b91c1c' };
+  if (melee > 0 && ranged > 0) return { label: label('troops.hybrid', 'Híbrido'), color: '#B8965A' };
   return { label: label('troops.support', 'Suporte'), color: '#6a5018' };
 };
 

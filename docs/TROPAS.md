@@ -74,3 +74,26 @@ A central pública separada de Mecânicas de Combate foi removida. O perfil de c
 Na lista pública, as funções táticas explícitas (`Melee`, `Ranged`, `Speed`, `Tank`, `Supply`) aparecem como badges compactos. Ao abrir uma unidade, a descrição é acompanhada, quando houver dados cadastrados, por `Bom contra`, `Fraco contra` e `Como usar esta tropa?`. Habilidades, prioridade de alvo, observações, fonte e confiança continuam em `Detalhes de combate` para não aumentar demais o card/tela.
 
 Campos desconhecidos permanecem ocultos. A interface não infere counters nem inventa atributos.
+
+
+## Counters visíveis — Beta 2.56
+
+- O detalhe de qualquer tropa mostra sempre **Bom contra** e **Fraco contra** logo após a descrição.
+- Quando ainda não existe counter confiável cadastrado, o campo mostra **Ainda não identificado** em vez de desaparecer.
+- O Admin usa os mesmos campos `perfilCombate.forteContra` e `perfilCombate.fracoContra`, agora rotulados de forma mais direta.
+- Nenhum counter é inferido ou criado automaticamente; nomes de tropas/categorias só aparecem quando cadastrados com evidência.
+
+## Filtros e ordenação por atributos — Beta 2.57
+
+A Enciclopédia pública não depende mais apenas de `perfilCombate.funcoesTaticas` ou do booleano legado `rapida` para classificar a lista.
+
+- **Melee**: ataque corpo a corpo é o ataque dominante (`atqPerto >= atqDist`, com ataque conhecido).
+- **Ranged**: ataque à distância é dominante (`atqDist > atqPerto`).
+- **Só distância**: `atqDist > 0` e `atqPerto = 0`.
+- **Híbrida**: os dois ataques são maiores que zero, independentemente de qual é dominante.
+- **Speed**: classificação explícita continua válida; além disso, a interface identifica automaticamente o quartil superior de `vel` no catálogo atualmente carregado. Essa inferência é somente de interface e não é persistida como dado oficial.
+- **Tank/Supply**: continuam usando os campos explícitos/legados compatíveis, sem inventar uma função apenas por um atributo isolado.
+
+O usuário também pode ordenar a lista por nome, vida, defesa, velocidade, carga, ataque à distância, ataque corpo a corpo, alcance, poder e **equilíbrio**. O equilíbrio é um índice apenas de ordenação do GUIA: utiliza percentis de vida, defesa, melhor ataque e velocidade, evitando comparar diretamente escalas numéricas diferentes. Não é uma estatística oficial do jogo.
+
+A lista e o detalhe destacam os atributos em que a tropa melhor se posiciona em relação às demais unidades cadastradas. Nenhum valor novo é criado; o destaque usa somente os números já presentes no catálogo online.

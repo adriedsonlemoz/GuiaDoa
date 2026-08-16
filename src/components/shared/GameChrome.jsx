@@ -51,9 +51,9 @@ export function GameInfoTable({ rows, headers }) {
       ) : null}
       <div className="game-info-table-body">
         {rows.map((row, index) => (
-          <div key={row.key || index} className="game-info-table-row">
+          <div key={row.key || index} className={`game-info-table-row${row.className ? ` ${row.className}` : ''}`}>
             <span className="game-info-label">{row.icon ? `${row.icon} ` : ''}{row.label}</span>
-            <span className="game-info-value">{row.value}</span>
+            <span className="game-info-value">{row.value}{row.badge ? <small className="game-info-value-badge">{row.badge}</small> : null}</span>
             {row.next !== undefined ? <span className="game-info-next">{row.next}</span> : null}
           </div>
         ))}

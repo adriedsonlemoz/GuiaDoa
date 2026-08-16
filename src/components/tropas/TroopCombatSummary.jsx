@@ -1,6 +1,6 @@
 import React from 'react';
 import { useI18n } from '../../hooks/useI18n.jsx';
-import { explicitTacticalRoles, hasCombatProfile } from './troopCatalogUtils.js';
+import { tacticalRolesForFilter } from './troopCatalogUtils.js';
 
 const ROLE_ICONS = { melee:'⚔️', ranged:'🏹', speed:'💨', tank:'🛡️', supply:'📦' };
 
@@ -9,16 +9,12 @@ function localizedCombatField(troop, content, profileKey, i18nKey) {
   return content({ [i18nKey]:profile[profileKey], i18n:troop?.i18n }, i18nKey) || profile[profileKey];
 }
 
-export default function TroopCombatSummary({ troop }) {
+export default function TroopCombatSummary({ troop, analysis }) {
   const { t, content } = useI18n();
-  if (!hasCombatProfile(troop)) return null;
-
-  const roles = explicitTacticalRoles(troop);
+  const roles = tacticalRolesForFilter(troop, analysis);
   const strong = localizedCombatField(troop, content, 'forteContra', 'combateForteContra') || [];
   const weak = localizedCombatField(troop, content, 'fracoContra', 'combateFracoContra') || [];
   const recommended = localizedCombatField(troop, content, 'funcaoRecomendada', 'combateFuncaoRecomendada');
-
-  if (!roles.length && !strong.length && !weak.length && !recommended) return null;
 
   return (
     <div className="troop-combat-inline">
@@ -28,22 +24,20 @@ export default function TroopCombatSummary({ troop }) {
         </div>
       ) : null}
 
-      {(strong.length || weak.length) ? (
-        <div className="troop-matchup-grid">
-          {strong.length ? (
-            <div className="troop-matchup is-strong">
-              <small>{t('troops.strong_against')}</small>
-              <div>{strong.map((item, index) => <span key={`${item}-${index}`}>{item}</span>)}</div>
-            </div>
-          ) : null}
-          {weak.length ? (
-            <div className="troop-matchup is-weak">
-              <small>{t('troops.weak_against')}</small>
-              <div>{weak.map((item, index) => <span key={`${item}-${index}`}>{item}</span>)}</div>
-            </div>
-          ) : null}
+      <div className="troop-matchup-grid">
+        <div className={`troop-matchup is-strong${strong.length ? '' : ' is-unknown'}`}>
+          <small>✅ {t('troops.strong_against')}</small>
+          {strong.length
+            ? <div>{strong.map((item, index) => <span key={`${item}-${index}`}>{item}</span>)}</div>
+            : <p>{t('troops.matchup_unknown')}</p>}
         </div>
-      ) : null}
+        <div className={`troop-matchup is-weak${weak.length ? '' : ' is-unknown'}`}>
+          <small>⚠️ {t('troops.weak_against')}</small>
+          {weak.length
+            ? <div>{weak.map((item, index) => <span key={`${item}-${index}`}>{item}</span>)}</div>
+            : <p>{t('troops.matchup_unknown')}</p>}
+        </div>
+      </div>
 
       {recommended ? (
         <div className="troop-use-note">

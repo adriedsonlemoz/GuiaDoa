@@ -7,8 +7,9 @@ import { GameInfoTable, GameSectionTitle } from '../shared/GameChrome.jsx';
 import TroopTrainingPlanner from './TroopTrainingPlanner.jsx';
 import TroopCombatDetails from './TroopCombatDetails.jsx';
 import TroopCombatSummary from './TroopCombatSummary.jsx';
+import { strongestAttributeIds } from './troopCatalogUtils.js';
 
-export default function TropaModal({ tropa, onFechar, onOpenTips, onOpenTournament }) {
+export default function TropaModal({ tropa, analysis, onFechar, onOpenTips, onOpenTournament }) {
   const { t, content, locale } = useI18n();
 
   useEffect(() => {
@@ -30,12 +31,16 @@ export default function TropaModal({ tropa, onFechar, onOpenTips, onOpenTourname
   const unlock = tropa.desbloqueio || {};
   const unlockSource = content({ desbloqueioFonte:unlock.fonte, i18n:tropa.i18n }, 'desbloqueioFonte') || unlock.fonte;
   const unlockNote = content({ desbloqueioObservacao:unlock.observacao, i18n:tropa.i18n }, 'desbloqueioObservacao') || unlock.observacao;
-  const rows = ATRIBUTOS.filter(attr => attr.id !== 'efi').map(attr => ({
-    key: attr.id,
-    icon: attr.icon,
-    label: attr.labelKey ? t(attr.labelKey) : attr.label,
-    value: tropa[attr.id] ? fmtFull(tropa[attr.id], locale) : '—',
-  }));
+  const highlightMap = { vida:'life', def:'defense', atqPerto:'melee_attack', atqDist:'ranged_attack', vel:'speed', car:'load', alcance:'range' };
+  const highlights = new Set(strongestAttributeIds(tropa, analysis));
+  const rows = ATRIBUTOS.filter(attr => attr.id !== 'efi').map(attr => {
+    const highlighted = highlights.has(highlightMap[attr.id]);
+    return {
+      key: attr.id, icon: attr.icon, label: attr.labelKey ? t(attr.labelKey) : attr.label,
+      value: tropa[attr.id] ? fmtFull(tropa[attr.id], locale) : '—',
+      className: highlighted ? 'is-highlighted' : '', badge: highlighted ? t('troops.attribute_highlight') : '',
+    };
+  });
 
   return createPortal(
     <div onClick={onFechar} className="game-modal-backdrop">
@@ -57,13 +62,14 @@ export default function TropaModal({ tropa, onFechar, onOpenTips, onOpenTourname
             <div className="game-list-meta">{type.label} • ⭐ {tropa.poder || 0} {t('common.power').toLowerCase()}</div>
             {tropa.tipo === 'especial' ? <div className="game-badge">✨ {t('troops.special')}</div> : null}
             {description ? <p className="game-detail-copy">{description}</p> : null}
-            <TroopCombatSummary troop={tropa} />
+            <TroopCombatSummary troop={tropa} analysis={analysis} />
           </div>
         </div>
 
         <div className="game-modal-content">
           <GameSectionTitle>{t('troops.attributes').toUpperCase()}</GameSectionTitle>
           <GameInfoTable rows={rows} />
+          <p className="troop-attribute-legend">{t('troops.attribute_highlight_help')}</p>
 
           <TroopCombatDetails troop={tropa} />
 

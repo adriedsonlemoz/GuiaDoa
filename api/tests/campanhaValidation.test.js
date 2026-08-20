@@ -71,3 +71,21 @@ test('recompensa aceita imagem local e mantém quantidade opcional', () => {
   assert.equal(out.recompensas[0].imagem, '/assets/items/anthropus/obsidiana.webp');
   assert.equal(out.recompensas[0].quantidade, null);
 });
+
+
+test('preserva status e metadados semânticos de recompensas para uso futuro em tutoriais', () => {
+  const out = normalizarCampanhaPayload({
+    categoria:'campos', subtipo:'lago', nivel:6, nome:'Lago — Nv. 6',
+    recompensasStatus:'confirmado', tags:['Campo','Lago','Obtenção Dragões','lago'],
+    recompensas:[{
+      codigo:'emblema-dragao-agua', nome:'Emblema do Dragão da Água', nomeConfirmado:true,
+      categoria:'Item Dragão', finalidade:'Obtenção Dragão', relacionadoA:'Dragão Água', tags:['Dragão','Obtenção'],
+    }],
+  });
+  assert.equal(out.recompensasStatus, 'confirmado');
+  assert.deepEqual(out.tags, ['campo','lago','obtencao-dragoes']);
+  assert.equal(out.recompensas[0].categoria, 'item-dragao');
+  assert.equal(out.recompensas[0].finalidade, 'obtencao-dragao');
+  assert.equal(out.recompensas[0].relacionadoA, 'dragao-agua');
+  assert.deepEqual(out.recompensas[0].tags, ['dragao','obtencao']);
+});

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ANTROPOS_SEED, SAVANA_SEED, CAMPANHA_CATEGORIAS, CAMPO_SUBTIPOS } from '../seeds/campanha.js';
+import { existsSync } from 'node:fs';
+import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED, CAMPANHA_CATEGORIAS, CAMPO_SUBTIPOS } from '../seeds/campanha.js';
 
 test('Antropos contém os 10 níveis confirmados e categorias futuras sem dados inventados', () => {
   assert.equal(ANTROPOS_SEED.length, 10);
@@ -30,6 +31,45 @@ test('Savana contém Nv.1–10, menos tropas que Antropos e produção confirmad
   assert.equal(SAVANA_SEED.find(x => x.nivel === 10).tropas.reduce((s,x)=>s+x.quantidade,0), 38850);
 });
 
+
+test('Lago contém Nv.1–10 com progressão de tropas, recurso e produção estruturada', () => {
+  assert.equal(LAGO_SEED.length, 10);
+  assert.deepEqual(LAGO_SEED.map(x => x.nivel), [1,2,3,4,5,6,7,8,9,10]);
+  assert.ok(LAGO_SEED.every(x => x.categoria === 'campos' && x.subtipo === 'lago' && x.campo?.recursoPrincipal === 'food'));
+  assert.ok(LAGO_SEED.every(x => x.fonte?.verificado && x.fonte?.data === '2026-08-20'));
+  assert.equal(LAGO_SEED.find(x => x.nivel === 1).campo.producaoHora, 2750);
+  assert.equal(LAGO_SEED.find(x => x.nivel === 6).campo.producaoHora, 16500);
+  assert.equal(LAGO_SEED.find(x => x.nivel === 10).campo.producaoHora, 27500);
+  assert.equal(LAGO_SEED.find(x => x.nivel === 10).recursos[0].valor, 10000);
+  assert.equal(LAGO_SEED.find(x => x.nivel === 10).tropas.reduce((s,x)=>s+x.quantidade,0), 38850);
+});
+
+test('Lago Nv.1–5 confirma ausência de recompensas; Nv.6–9 traz emblemas e Nv.10 acrescenta Núcleo Sombrio', () => {
+  for (const nivel of [1,2,3,4,5]) {
+    const entry = LAGO_SEED.find(x => x.nivel === nivel);
+    assert.equal(entry.recompensasStatus, 'confirmado');
+    assert.deepEqual(entry.recompensas, []);
+    assert.ok(entry.tags.includes('sem-recompensas'));
+  }
+
+  const expectedEmblems = ['emblema-dragao-agua','emblema-dragao-gelo','emblema-dragao-paradisiaco'];
+  for (const nivel of [6,7,8,9]) {
+    const entry = LAGO_SEED.find(x => x.nivel === nivel);
+    assert.deepEqual(entry.recompensas.map(x => x.codigo), expectedEmblems);
+    assert.ok(entry.recompensas.every(x => x.finalidade === 'obtencao-dragao'));
+    assert.ok(entry.recompensas.every(x => x.relacionadoA.startsWith('dragao-')));
+  }
+
+  const n10 = LAGO_SEED.find(x => x.nivel === 10);
+  assert.deepEqual(n10.recompensas.map(x => x.codigo), [...expectedEmblems, 'nucleo-sombrio']);
+  assert.equal(n10.recompensas.find(x => x.codigo === 'nucleo-sombrio').nome, 'Núcleo Sombrio');
+  assert.ok(n10.tags.includes('recompensa-especial'));
+  assert.ok(n10.recompensas.every(x => x.nomeConfirmado && x.nome));
+  assert.ok(n10.recompensas.every(x => x.quantidade == null));
+  assert.ok(n10.recompensas.every(x => x.imagem.startsWith('/assets/items/fields/lake/')));
+  for (const reward of n10.recompensas) assert.equal(existsSync(`../public${reward.imagem}`), true);
+});
+
 test('recompensas da Savana ficam simbólicas quando o nome não foi confirmado', () => {
   const n5 = SAVANA_SEED.find(x => x.nivel === 5);
   const n6 = SAVANA_SEED.find(x => x.nivel === 6);
@@ -45,8 +85,8 @@ test('recompensas da Savana ficam simbólicas quando o nome não foi confirmado'
 });
 
 test('estratégias começam vazias e não são inventadas pelo seed', () => {
-  assert.ok([...ANTROPOS_SEED,...SAVANA_SEED].every(x => x.estrategia?.publicada === false));
-  assert.ok([...ANTROPOS_SEED,...SAVANA_SEED].every(x => x.estrategia?.passos?.length === 0));
+  assert.ok([...ANTROPOS_SEED,...SAVANA_SEED,...LAGO_SEED].every(x => x.estrategia?.publicada === false));
+  assert.ok([...ANTROPOS_SEED,...SAVANA_SEED,...LAGO_SEED].every(x => x.estrategia?.passos?.length === 0));
 });
 
 

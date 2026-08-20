@@ -22,6 +22,10 @@ const RecompensaSchema = new mongoose.Schema({
   quantidade:{ type:Number, default:null, min:0 },
   nomeConfirmado:{ type:Boolean, default:false },
   observacao:{ type:String, default:'', trim:true },
+  categoria:{ type:String, default:'', trim:true },
+  finalidade:{ type:String, default:'', trim:true },
+  relacionadoA:{ type:String, default:'', trim:true },
+  tags:{ type:[String], default:[] },
   i18n:{ type:mongoose.Schema.Types.Mixed, default:{} },
 }, { _id:false });
 
@@ -87,6 +91,8 @@ const CampanhaLocalSchema = new mongoose.Schema({
   tropas:{ type:[TropaSchema], default:[] },
   recursos:{ type:[RecursoSchema], default:[] },
   recompensas:{ type:[RecompensaSchema], default:[] },
+  recompensasStatus:{ type:String, enum:['pendente','parcial','confirmado'], default:'pendente' },
+  tags:{ type:[String], default:[] },
   campo:{ type:CampoSchema, default:() => ({}) },
   estrategia:{ type:EstrategiaSchema, default:() => ({}) },
   guiasAtaque:{ type:[GuiaAtaqueSchema], default:[] },

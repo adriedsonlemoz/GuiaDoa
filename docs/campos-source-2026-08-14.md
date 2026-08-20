@@ -25,7 +25,7 @@ Tiers visuais confirmados:
 
 ## Outros tipos de campo
 
-A arquitetura reconhece Savana, Montanha, Morro, Lago e Floresta, porém somente Savana possui dados nesta versão. Os demais tipos permanecem sem valores até receberem fonte confirmada.
+Esta referência documenta a Savana na Beta 2.45. O Lago passou a possuir fonte confirmada própria na Beta 2.59; consulte `campos-source-2026-08-20-lago.md`. Montanha, Morro e Floresta continuam sem valores até receberem fonte confirmada.
 
 ## Regra de exibição
 

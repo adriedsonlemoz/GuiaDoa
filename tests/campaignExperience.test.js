@@ -11,14 +11,17 @@ test('Mapa & Campanha está acessível na Home e possui rota dedicada', () => {
 
 test('Campos possui seleção por subtipo antes dos níveis', () => {
   const source = read('src/components/CampanhaMapa.jsx');
+  const fields = read('src/components/campanha/FieldLanding.jsx');
+  const config = read('src/components/campanha/fieldConfig.js');
   assert.match(source, /FIELD_TYPES/);
-  assert.match(source, /campaign-field-grid/);
+  assert.match(fields, /campaign-field-grid/);
+  assert.match(config, /FIELD_TYPES/);
   assert.match(source, /fieldType/);
-  assert.match(source, /savana/);
-  assert.match(source, /montanha/);
-  assert.match(source, /morro/);
-  assert.match(source, /lago/);
-  assert.match(source, /floresta/);
+  assert.match(config, /savana/);
+  assert.match(config, /montanha/);
+  assert.match(config, /morro/);
+  assert.match(config, /lago/);
+  assert.match(config, /floresta/);
 });
 
 test('frontend preserva valores abreviados e separa estratégia de dados oficiais', () => {
@@ -30,10 +33,11 @@ test('frontend preserva valores abreviados e separa estratégia de dados oficiai
 
 test('frontend mostra produção do campo e recompensas simbólicas sem inventar nomes', () => {
   const source = read('src/components/CampanhaMapa.jsx');
+  const rewards = read('src/components/campanha/RewardsBlock.jsx');
   assert.match(source, /production_when_conquered/);
-  assert.match(source, /possible_rewards/);
-  assert.match(source, /reward_name_pending/);
-  assert.match(source, /reward\.simbolo/);
+  assert.match(rewards, /possible_rewards/);
+  assert.match(rewards, /reward_name_pending/);
+  assert.match(rewards, /reward\.simbolo/);
 });
 
 test('Admin oferece recompensas e domínio do campo sem armazenar screenshots', () => {
@@ -71,16 +75,17 @@ test('frontend exibe guias estruturados, resultado de perdas e tropas especiais 
 
 test('detalhes do Mapa & Campanha usam tópicos recolhíveis e voltar interno à direita', () => {
   const source = read('src/components/CampanhaMapa.jsx');
+  const collapsible = read('src/components/campanha/CollapsibleSection.jsx');
   const css = read('src/index.css');
-  assert.match(source, /function CollapsibleSection/);
-  assert.match(source, /campaign-collapse-trigger/);
-  assert.match(source, /aria-expanded/);
+  assert.match(source, /<CollapsibleSection/);
+  assert.match(collapsible, /campaign-collapse-trigger/);
+  assert.match(collapsible, /aria-expanded/);
   assert.match(css, /\.campaign-back\{[^}]*margin-left:auto/);
   assert.match(css, /\.campaign-back\{[^}]*color:#3f7656/);
 });
 
 test('recompensas de Antropos exibem imagens locais sem quantidade fixa no frontend', () => {
-  const source = read('src/components/CampanhaMapa.jsx');
+  const source = read('src/components/campanha/RewardsBlock.jsx');
   const css = read('src/index.css');
   assert.match(source, /campaign-reward-image/);
   assert.match(source, /reward\.imagem/);
@@ -108,4 +113,19 @@ test('métodos sem perdas são priorizados antes dos casos com risco e da tátic
   const fedor = source.indexOf('<FedorTactic');
   const other = source.indexOf('otherGuides.map');
   assert.ok(special >= 0 && safe > special && fedor > safe && other > fedor);
+});
+
+
+test('Lago usa módulo de dados próprio e diferencia ausência confirmada de recompensa pendente', () => {
+  const lake = read('api/seeds/campos/lago.js');
+  const shared = read('api/seeds/campos/shared.js');
+  const rewards = read('src/components/campanha/RewardsBlock.jsx');
+  assert.match(lake, /LAGO_SEED/);
+  assert.match(lake, /emblema-dragao-agua/);
+  assert.match(lake, /nucleo-sombrio/);
+  assert.match(shared, /createFieldSeed/);
+  assert.match(rewards, /no_rewards_confirmed/);
+  for (const asset of ['emblema-dragao-agua.webp','emblema-dragao-gelo.webp','emblema-dragao-paradisiaco.webp','nucleo-sombrio.webp']) {
+    assert.equal(existsSync(`public/assets/items/fields/lake/${asset}`), true);
+  }
 });

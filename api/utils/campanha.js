@@ -12,6 +12,8 @@ export function slugifyCampanha(value) {
 const cleanString = (v, max = 200) => String(v ?? '').trim().slice(0, max);
 const cleanLines = (v, maxItems = 30, maxLen = 300) => (Array.isArray(v) ? v : [])
   .map(x => cleanString(x, maxLen)).filter(Boolean).slice(0, maxItems);
+const cleanTags = (v, maxItems = 30) => [...new Set((Array.isArray(v) ? v : [])
+  .map(x => slugifyCampanha(cleanString(x, 80))).filter(Boolean))].slice(0, maxItems);
 
 function normalizarRecompensas(input) {
   const codigos = new Set();
@@ -33,6 +35,10 @@ function normalizarRecompensas(input) {
       quantidade,
       nomeConfirmado:Boolean(item?.nomeConfirmado && nome),
       observacao:cleanString(item?.observacao, 400),
+      categoria:slugifyCampanha(cleanString(item?.categoria, 80)),
+      finalidade:slugifyCampanha(cleanString(item?.finalidade, 100)),
+      relacionadoA:slugifyCampanha(cleanString(item?.relacionadoA, 100)),
+      tags:cleanTags(item?.tags, 20),
       i18n:item?.i18n && typeof item.i18n === 'object' ? item.i18n : {},
     };
   });
@@ -163,6 +169,10 @@ export function normalizarCampanhaPayload(body = {}, { parcial = false } = {}) {
   };
 
   const recompensas = normalizarRecompensas(body.recompensas);
+  const recompensasStatus = ['pendente','parcial','confirmado'].includes(body.recompensasStatus)
+    ? body.recompensasStatus
+    : (recompensas.length ? 'parcial' : 'pendente');
+  const tags = cleanTags(body.tags);
   const guiasAtaque = normalizarGuiasAtaque(body.guiasAtaque);
 
   const slugBase = cleanString(body.slug, 120)
@@ -174,7 +184,7 @@ export function normalizarCampanhaPayload(body = {}, { parcial = false } = {}) {
     slug, categoria, subtipo, nivel:nivelRaw, nome,
     ordem:Number.isFinite(Number(body.ordem)) ? Number(body.ordem) : (nivelRaw ?? 0),
     ativo:body.ativo !== false,
-    tropas, recursos, recompensas, campo,
+    tropas, recursos, recompensas, recompensasStatus, tags, campo,
     estrategia, guiasAtaque,
     i18n:body.i18n && typeof body.i18n === 'object' ? body.i18n : {},
     fonte:body.fonte && typeof body.fonte === 'object' ? {

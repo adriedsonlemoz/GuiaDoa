@@ -1,3 +1,8 @@
+import { SAVANA_SEED } from './campos/savana.js';
+import { LAGO_SEED } from './campos/lago.js';
+
+export { SAVANA_SEED, LAGO_SEED };
+
 const recursos = (stone, metals, wood, gold, food) => [
   { tipo:'stone',  valor:stone.valor,  exibicao:stone.exibicao,  exato:stone.exato ?? true },
   { tipo:'metals', valor:metals.valor, exibicao:metals.exibicao, exato:metals.exato ?? true },
@@ -376,58 +381,6 @@ export const ANTROPOS_SEED = [
 
 
 
-const campoRecompensa = (codigo, simbolo, nome = '', quantidade = null, nomeConfirmado = false, i18n = {}) => ({
-  codigo, simbolo, nome, quantidade, nomeConfirmado, i18n,
-});
-
-const SAVANA_REWARDS = Object.freeze({
-  R1: campoRecompensa('savana-r1', 'R1'),
-  R2: campoRecompensa('savana-r2', 'R2'),
-  R3: campoRecompensa('savana-r3', 'R3', 'Pedaço de carne bovina', 1, true, { 'en-US': { nome:'Piece of beef' } }),
-  R4: campoRecompensa('savana-r4', 'R4'),
-});
-
-const savanaRewards = (nivel) => {
-  if (nivel === 10) return [SAVANA_REWARDS.R1, SAVANA_REWARDS.R2, SAVANA_REWARDS.R3, SAVANA_REWARDS.R4];
-  if (nivel >= 6) return [SAVANA_REWARDS.R1, SAVANA_REWARDS.R2, SAVANA_REWARDS.R3];
-  return [SAVANA_REWARDS.R2];
-};
-
-const savana = (nivel, tropas, producaoHora) => ({
-  slug:`campos-savana-${nivel}`,
-  categoria:'campos',
-  subtipo:'savana',
-  nivel,
-  ordem:nivel,
-  nome:`Savana — Nv. ${nivel}`,
-  ativo:true,
-  tropas,
-  recursos:[{ tipo:'food', valor:nivel * 1000, exibicao:nivel === 10 ? '10.0k' : `${nivel}.00k`, exato:true }],
-  campo:{ recursoPrincipal:'food', producaoHora, producaoExibicao:`${producaoHora}/h` },
-  recompensas:savanaRewards(nivel),
-  i18n:{ 'en-US': { nome:`Savannah — Lv. ${nivel}` } },
-  estrategia:{ publicada:false, titulo:'', resumo:'', passos:[], requisitos:[], observacoes:'', i18n:{} },
-  guiasAtaque:[],
-  fonte:{ tipo:'screenshot', data:'2026-08-14', descricao:'Tela do campo e relatório de batalha do jogo', verificado:true },
-});
-
-/**
- * Savana Nv. 1–10 confirmada pelos screenshots enviados em 14/08/2026.
- * A recompensa R3 é a única cujo nome foi aberto no jogo e, por isso, é a única
- * nomeada no seed. R1, R2 e R4 permanecem símbolos visuais até confirmação.
- */
-export const SAVANA_SEED = [
-  savana(1,[tropa('Canibal',50)],2750),
-  savana(2,[tropa('Canibal',100),tropa('Fedor',50)],5500),
-  savana(3,[tropa('Canibal',200),tropa('Fedor',100),tropa('Demônia',50)],8250),
-  savana(4,[tropa('Canibal',500),tropa('Fedor',200),tropa('Demônia',100),tropa('Porreteiro',50)],11000),
-  savana(5,[tropa('Canibal',1000),tropa('Fedor',500),tropa('Demônia',200),tropa('Porreteiro',100),tropa('Lançadores',50)],13750),
-  savana(6,[tropa('Canibal',2000),tropa('Fedor',1000),tropa('Demônia',500),tropa('Porreteiro',200),tropa('Lançadores',100),tropa('Retalhador',50)],16500),
-  savana(7,[tropa('Canibal',2000),tropa('Fedor',1000),tropa('Demônia',500),tropa('Porreteiro',200),tropa('Lançadores',100),tropa('Retalhador',50)],19250),
-  savana(8,[tropa('Canibal',5000),tropa('Fedor',2000),tropa('Demônia',1000),tropa('Porreteiro',500),tropa('Lançadores',200),tropa('Retalhador',100),tropa('Chefes',50)],22000),
-  savana(9,[tropa('Canibal',10000),tropa('Fedor',5000),tropa('Demônia',2000),tropa('Porreteiro',1000),tropa('Lançadores',500),tropa('Retalhador',200),tropa('Chefes',100),tropa('Sanguíneos',50)],24750),
-  savana(10,[tropa('Canibal',20000),tropa('Fedor',10000),tropa('Demônia',5000),tropa('Porreteiro',2000),tropa('Lançadores',1000),tropa('Retalhador',500),tropa('Chefes',200),tropa('Sanguíneos',100),tropa('Raivoso',50)],27500),
-];
 
 export const CAMPO_SUBTIPOS = Object.freeze(['savana','montanha','morro','lago','floresta']);
 

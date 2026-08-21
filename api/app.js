@@ -16,6 +16,7 @@ import dicasRoutes from './routes/dicas.js';
 import healthRoutes from './routes/health.js';
 import allianceTrackerRoutes from './routes/allianceTracker.js';
 import campanhaRoutes from './routes/campanha.js';
+import eventoRoutes from './routes/eventos.js';
 import { APP_VERSION } from './version.js';
 import { requestContext, padronizarRespostasDeErro, erroGlobal } from './utils/apiError.js';
 
@@ -74,6 +75,7 @@ app.use('/api/assistente', assistenteRoutes);
 app.use('/api/dicas', dicasRoutes);
 app.use('/api/alliance-tracker', allianceTrackerRoutes);
 app.use('/api/campanha', campanhaRoutes);
+app.use('/api/eventos', eventoRoutes);
 
 // Assets públicos também ficam disponíveis no domínio da API para o Admin.
 // Isso mantém caminhos como /assets/dragons/... válidos tanto no Vercel quanto no Render.

@@ -26,6 +26,7 @@ const MODULOS = [
   { id:'campanha',  icon:'🗺️',  label:'Mapa & Campanha', desc:'PvE, tropas, recursos e estratégias',       ativo:true,  badge:'novo'  },
   { id:'niveis',    icon:'🏰',  label:'Níveis',          desc:'Poder necessário por nível',                ativo:true,  badge:'novo'  },
   { id:'reinos',    icon:'🌍',  label:'Reinos',          desc:'Reinos, fusos e idiomas',                   ativo:true,  badge:'novo'  },
+  { id:'eventos',   icon:'⚡',  label:'Eventos',         desc:'Ocorrências, fases, recompensas e histórico', ativo:true, badge:'novo' },
   { id:'alliances', icon:'🛡️',  label:'Aliança',         desc:'Tracker privado de membros e atividade',    ativo:true,  badge:'novo'  },
   { id:'dicas',     icon:'💡',  label:'Dicas',           desc:'Tutoriais e guias da comunidade',           ativo:true,  badge:'novo'  },
   { id:'torneios',  icon:'🏆',  label:'Torneios',        desc:'Metas e configurações',                     ativo:false, badge:'breve' },

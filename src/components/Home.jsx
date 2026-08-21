@@ -7,19 +7,18 @@ import AlertaModal from './shared/AlertaModal.jsx';
 import Toast from '../ui/Toast.jsx';
 import { C } from '../theme.js';
 import AssistenteTatico from './AssistenteTatico.jsx';
-import ColorTextBuilder from './colorbuilder/index.jsx';
 import { useI18n } from '../hooks/useI18n.jsx';
 import ConfiguracoesIdioma from './ProfileLogin/ConfiguracoesIdioma.jsx';
 import HomeDivider from './home/HomeDivider.jsx';
 import HomeProfileCard from './home/HomeProfileCard.jsx';
 import HomeToolsGrid from './home/HomeToolsGrid.jsx';
+import EventHomeHighlight from './eventos/EventHomeHighlight.jsx';
 
 const Home = ({ setRoute }) => {
   const [profile, setProfile] = useState(() => getProfile());
   const [termoAceito, setTermoAceito] = useState(() => getTermoAceito());
   const [alertaModal, setAlertaModal] = useState({ open: false, msg: '' });
   const { toast, closeToast } = useToast();
-  const [modalExtra, setModalExtra] = useState(null);
   const [verIdioma, setVerIdioma] = useState(false);
   const [editarPerfil, setEditarPerfil] = useState(false);
   const { t } = useI18n();
@@ -29,8 +28,7 @@ const Home = ({ setRoute }) => {
   }
 
   const handleTool = id => {
-    if (id.startsWith('modal:')) setModalExtra(id.replace('modal:', ''));
-    else setRoute(id);
+    setRoute(id);
   };
 
   return (
@@ -39,11 +37,11 @@ const Home = ({ setRoute }) => {
       <AlertaModal open={alertaModal.open} message={alertaModal.msg} onClose={() => setAlertaModal({ open: false, msg: '' })} />
       <HomeProfileCard profile={profile} onLanguage={() => setVerIdioma(true)} onEdit={() => setEditarPerfil(true)} />
       <div style={{ animation:'reveal-up .35s .12s ease both' }}>
+        <EventHomeHighlight realmName={profile.reino} onOpen={() => setRoute('eventos')} />
         <HomeDivider label={t('home.arsenal.titulo')} />
         <HomeToolsGrid t={t} onTool={handleTool} />
         <div style={{ marginTop: 12 }}><HomeDivider label={t('home.conselheiro.titulo')} /><AssistenteTatico /></div>
       </div>
-      {modalExtra === 'color_builder' && <ColorTextBuilder onClose={() => setModalExtra(null)} />}
       {editarPerfil && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, overflowY: 'auto', background: C.BG_MAIN }}>
           <ProfileForm perfilAtual={profile} onSave={updated => { setProfile(updated); setEditarPerfil(false); }} onCancel={() => setEditarPerfil(false)} />

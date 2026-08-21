@@ -6,6 +6,7 @@ import Item from '../models/Item.js';
 import CampanhaLocal from '../models/CampanhaLocal.js';
 import Dragao from '../models/Dragao.js';
 import Edificio from '../models/Edificio.js';
+import Evento from '../models/Evento.js';
 import { DICAS_SEED } from '../seeds/dicas.js';
 import { tacticalMetadata } from '../seeds/tropasTaticas.js';
 import { TROOP_COMBAT_EVIDENCE } from '../seeds/tropasCombate.js';
@@ -14,6 +15,7 @@ import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MO
 import { DRAGOES_SEED } from '../seeds/dragoes.js';
 import { TODAS_TROPAS } from '../seeds/core.js';
 import { EDIFICIOS_ESPECIAIS } from '../seeds/edificiosEspeciais.js';
+import { EVENTOS_SEED } from '../seeds/eventos.js';
 import { mesclarSeed } from '../utils/seedMerge.js';
 
 const MIGRATION_KEY = 'content:dicas:beta-2.14';
@@ -45,6 +47,7 @@ const DRAGOES_CATALOGO_268_KEY = 'content:dragoes-catalogo:beta-2.68';
 const TROPAS_I18N_268_KEY = 'content:tropas-i18n:beta-2.68';
 const CAMPANHA_EN_XP_268_KEY = 'content:campanha-en-xp:beta-2.68';
 const TUTORIALS_EN_268_KEY = 'content:tutoriais-en:beta-2.68';
+const EVENTOS_270_KEY = 'content:eventos:beta-2.70';
 
 
 const INICIANTE_CATEGORY = {
@@ -1111,6 +1114,34 @@ async function migrarTutoriaisEnglish268() {
   });
 }
 
+
+async function migrarEventos270() {
+  return executarMigracao264(EVENTOS_270_KEY, 'eventos270', async () => {
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const seed of EVENTOS_SEED) {
+      const atual = await Evento.findOne({ slug:seed.slug }).lean();
+      if (!atual) {
+        await Evento.create(seed);
+        inseridas += 1;
+        continue;
+      }
+      // A migração 2.70 completa somente o cadastro inicial; depois o Admin é a fonte de verdade.
+      const patch = {};
+      for (const campo of ['nome','resumo','descricao','categoria','servidorFuso','horarioReset','fases','recompensas','regras','ocorrencias','fonte','i18n']) {
+        const vazio = atual[campo] == null || atual[campo] === '' || (Array.isArray(atual[campo]) && atual[campo].length === 0);
+        if (vazio && seed[campo] != null) patch[campo] = seed[campo];
+      }
+      if (Object.keys(patch).length) {
+        patch.atualizadoEm = new Date();
+        await Evento.updateOne({ slug:seed.slug }, { $set:patch });
+        atualizadas += 1;
+      }
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
@@ -1170,9 +1201,11 @@ export async function executarMigracoesConteudo() {
   if (!campanha268.ok) return campanha268;
   const tutoriaisEn268 = await migrarTutoriaisEnglish268();
   if (!tutoriaisEn268.ok) return tutoriaisEn268;
+  const eventos270 = await migrarEventos270();
+  if (!eventos270.ok) return eventos270;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada && eventos270.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
@@ -1191,5 +1224,6 @@ export async function executarMigracoesConteudo() {
     tropasI18nAtualizadas:(tropas268.atualizadas || 0) + (tropas268.inseridas || 0),
     campanha268Atualizada:(campanha268.atualizadas || 0) + (campanha268.inseridas || 0),
     tutoriaisEn268Atualizados:(tutoriaisEn268.atualizadas || 0) + (tutoriaisEn268.inseridas || 0),
+    eventos270Atualizados:(eventos270.atualizadas || 0) + (eventos270.inseridas || 0),
   };
 }

@@ -15,6 +15,7 @@ function irModulo(id) {
   if (id === 'dragoes')   { carregarDragoes(); }
   if (id === 'pesquisas') { carregarPesquisas(); }
   if (id === 'reinos')    { carregarReinos(); }
+  if (id === 'eventos')   { carregarEventos(); }
   if (id === 'dicas')     { carregarDicas(); }
   if (id === 'alliances') { carregarAliancas(); }
   if (id === 'campanha')  { carregarCampanha(); }

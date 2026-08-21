@@ -18,11 +18,12 @@ const ENDPOINTS = [
   ['reinos', 'realms.title', '/api/reinos', d => d.reinos || [], '◎'],
   ['pesquisas', 'research.title', '/api/pesquisas', d => d.pesquisas || [], '⌁'],
   ['itens', 'items.title', '/api/itens?limite=500', d => d.itens || [], '✦'],
+  ['eventos', 'events.title', '/api/eventos', d => d.eventos || [], '⚡'],
 ];
 
 export function GameDataProvider({ children }) {
   const { t } = useI18n();
-  const [dados, setDados] = useState({ tropas:[], niveis:[], dragoes:[], edificios:[], reinos:[], pesquisas:[], itens:[] });
+  const [dados, setDados] = useState({ tropas:[], niveis:[], dragoes:[], edificios:[], reinos:[], pesquisas:[], itens:[], eventos:[] });
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(null);
   const [progress, setProgress] = useState({ step:0, total:ENDPOINTS.length, label:t('app.sync.connecting'), completedKeys:[], currentKey:'' });

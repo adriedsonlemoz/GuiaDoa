@@ -31,6 +31,7 @@ export const COLLECTIONS = Object.freeze({
   allianceSnapshots: collectionName('alliance_snapshots'),
   allianceOcrCorrections: collectionName('alliance_ocr_corrections'),
   campanhaLocais: collectionName('campanha_locais'),
+  eventos: collectionName('eventos'),
 });
 
 export const COLLECTION_SUFFIXES = Object.freeze([
@@ -50,6 +51,7 @@ export const COLLECTION_SUFFIXES = Object.freeze([
   'alliance_snapshots',
   'alliance_ocr_corrections',
   'campanha_locais',
+  'eventos',
 ]);
 
 export function mongoConnectOptions() {

@@ -9,6 +9,6 @@ export const HOME_TOOLS = [
   { id: 'niveis', icon: '🏰', tKey: 'home.botao.niveis', subKey: 'home.botao.niveis.sub', cor: '#3B7A8C' },
   { id: 'torneios', icon: '🏆', tKey: 'home.botao.torneios', subKey: 'home.botao.torneios.sub', cor: '#C87A2C' },
   { id: 'dicas', icon: '💡', tKey: 'home.botao.dicas', subKey: 'home.botao.dicas.sub', cor: '#D4A017' },
-  { id: 'modal:color_builder', icon: '🎨', tKey: 'home.botao.texto_colorido', subKey: 'home.botao.texto_colorido.sub', cor: '#9B59B6' },
-  { id: 'sobre', icon: 'ℹ️', tKey: 'home.botao.sobre', subKey: 'home.botao.sobre.sub', cor: '#7A6A5A' },
+  { id: 'eventos', icon: '⚡', tKey: 'events.title', subKey: 'events.home_sub', cor: '#A44B36' },
+  { id: 'extras', icon: '🧰', tKey: 'extras.title', subKey: 'extras.home_sub', cor: '#7A6A5A' },
 ];

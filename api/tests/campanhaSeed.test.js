@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, CAMPANHA_CATEGORIAS, CAMPO_SUBTIPOS } from '../seeds/campanha.js';
+import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MORRO_SEED, CAMPANHA_CATEGORIAS, CAMPO_SUBTIPOS } from '../seeds/campanha.js';
 
 test('Antropos contém os 10 níveis confirmados e categorias futuras sem dados inventados', () => {
   assert.equal(ANTROPOS_SEED.length, 10);
@@ -116,6 +116,26 @@ test('Floresta preserva lacunas de evidência e confirma recompensas somente ond
   for (const reward of n10.recompensas) assert.equal(existsSync(`../public${reward.imagem}`), true);
 });
 
+test('Montanha contém Nv.1–10 com metais e recompensas confirmadas pelas telas', () => {
+  assert.equal(MONTANHA_SEED.length,10); assert.deepEqual(MONTANHA_SEED.map(x=>x.nivel),[1,2,3,4,5,6,7,8,9,10]);
+  assert.ok(MONTANHA_SEED.every(x=>x.subtipo==='montanha' && x.campo?.recursoPrincipal==='metals'));
+  for(const nivel of [1,2,3,4,5]){ const e=MONTANHA_SEED.find(x=>x.nivel===nivel); assert.equal(e.recompensasStatus,'confirmado'); assert.deepEqual(e.recompensas,[]); }
+  const expected=['emblema-dragao-fogo','emblema-dragao-espinha-negra','emblema-dragao-tirano'];
+  for(const nivel of [6,7,8,9]) assert.deepEqual(MONTANHA_SEED.find(x=>x.nivel===nivel).recompensas.map(x=>x.codigo),expected);
+  const n10=MONTANHA_SEED.find(x=>x.nivel===10); assert.deepEqual(n10.recompensas.map(x=>x.codigo),[...expected,'obsidiana']);
+  for(const reward of n10.recompensas) assert.equal(existsSync(`../public${reward.imagem}`),true);
+});
+
+test('Morro contém Nv.1–10 com pedra e dois itens extras no Nv.10', () => {
+  assert.equal(MORRO_SEED.length,10); assert.deepEqual(MORRO_SEED.map(x=>x.nivel),[1,2,3,4,5,6,7,8,9,10]);
+  assert.ok(MORRO_SEED.every(x=>x.subtipo==='morro' && x.campo?.recursoPrincipal==='stone'));
+  for(const nivel of [1,2,3,4,5]){ const e=MORRO_SEED.find(x=>x.nivel===nivel); assert.equal(e.recompensasStatus,'confirmado'); assert.deepEqual(e.recompensas,[]); }
+  const expected=['brasao-dragao-terra','emblema-dragao-celestial','emblema-dragao-dourado'];
+  for(const nivel of [6,7,8,9]) assert.deepEqual(MORRO_SEED.find(x=>x.nivel===nivel).recompensas.map(x=>x.codigo),expected);
+  const n10=MORRO_SEED.find(x=>x.nivel===10); assert.deepEqual(n10.recompensas.map(x=>x.codigo),[...expected,'pedra-faisca-dourada','pedra-florescer-bosque']);
+  for(const reward of n10.recompensas) assert.equal(existsSync(`../public${reward.imagem}`),true);
+});
+
 test('recompensas da Savana ficam simbólicas quando o nome não foi confirmado', () => {
   const n5 = SAVANA_SEED.find(x => x.nivel === 5);
   const n6 = SAVANA_SEED.find(x => x.nivel === 6);
@@ -131,8 +151,8 @@ test('recompensas da Savana ficam simbólicas quando o nome não foi confirmado'
 });
 
 test('estratégias começam vazias e não são inventadas pelo seed', () => {
-  assert.ok([...ANTROPOS_SEED,...SAVANA_SEED,...LAGO_SEED,...FLORESTA_SEED].every(x => x.estrategia?.publicada === false));
-  assert.ok([...ANTROPOS_SEED,...SAVANA_SEED,...LAGO_SEED,...FLORESTA_SEED].every(x => x.estrategia?.passos?.length === 0));
+  assert.ok([...ANTROPOS_SEED,...SAVANA_SEED,...LAGO_SEED,...FLORESTA_SEED,...MONTANHA_SEED,...MORRO_SEED].every(x => x.estrategia?.publicada === false));
+  assert.ok([...ANTROPOS_SEED,...SAVANA_SEED,...LAGO_SEED,...FLORESTA_SEED,...MONTANHA_SEED,...MORRO_SEED].every(x => x.estrategia?.passos?.length === 0));
 });
 
 

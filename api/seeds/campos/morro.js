@@ -1,0 +1,13 @@
+import { createFieldReward, createFieldSeed } from './shared.js';
+const rewardImage = file => `/assets/items/fields/hill/${file}.webp`;
+export const MORRO_REWARDS = Object.freeze({
+  BRASAO_TERRA:createFieldReward({ codigo:'brasao-dragao-terra', nome:'Brasão do Dragão da Terra', imagem:rewardImage('brasao-dragao-terra'), categoria:'item-dragao', finalidade:'obtencao-dragao', relacionadoA:'dragao-terra', tags:['dragao','obtencao','terra'], i18n:{ 'en-US': { nome:'Earth Dragon Crest' } } }),
+  EMBLEMA_CELESTIAL:createFieldReward({ codigo:'emblema-dragao-celestial', nome:'Emblema do Dragão Celestial', imagem:rewardImage('emblema-dragao-celestial'), categoria:'item-dragao', finalidade:'obtencao-dragao', relacionadoA:'dragao-celestial', tags:['dragao','obtencao','celestial'], i18n:{ 'en-US': { nome:'Celestial Dragon Emblem' } } }),
+  EMBLEMA_DOURADO:createFieldReward({ codigo:'emblema-dragao-dourado', nome:'Emblema do Dragão Dourado', imagem:rewardImage('emblema-dragao-dourado'), categoria:'item-dragao', finalidade:'obtencao-dragao', relacionadoA:'dragao-dourado', tags:['dragao','obtencao','dourado'], i18n:{ 'en-US': { nome:'Golden Dragon Emblem' } } }),
+  PEDRA_FAISCA_DOURADA:createFieldReward({ codigo:'pedra-faisca-dourada', nome:'Pedra da Faísca Dourada', imagem:rewardImage('pedra-faisca-dourada'), categoria:'material-especial', finalidade:'recompensa-campo', tags:['material','nivel-10'], i18n:{ 'en-US': { nome:'Golden Spark Stone' } } }),
+  PEDRA_FLORESCER_BOSQUE:createFieldReward({ codigo:'pedra-florescer-bosque', nome:'Pedra do Florescer do Bosque', imagem:rewardImage('pedra-florescer-bosque'), categoria:'material-especial', finalidade:'recompensa-campo', tags:['material','nivel-10'], i18n:{ 'en-US': { nome:'Grove Bloom Stone' } } }),
+});
+const DRAGON_ITEMS=[MORRO_REWARDS.BRASAO_TERRA,MORRO_REWARDS.EMBLEMA_CELESTIAL,MORRO_REWARDS.EMBLEMA_DOURADO];
+export function morroRewardsForLevel(nivel){ if(nivel<=5)return[]; if(nivel===10)return[...DRAGON_ITEMS,MORRO_REWARDS.PEDRA_FAISCA_DOURADA,MORRO_REWARDS.PEDRA_FLORESCER_BOSQUE]; return[...DRAGON_ITEMS]; }
+function tagsForLevel(nivel){ if(nivel<=5)return['sem-recompensas']; if(nivel===10)return['recompensas','obtencao-dragoes','recompensas-especiais']; return['recompensas','obtencao-dragoes']; }
+export const MORRO_SEED=createFieldSeed({ subtipo:'morro', nome:'Morro', nameEn:'Hill', recursoPrincipal:'stone', rewardsForLevel:morroRewardsForLevel, rewardStatusForLevel:()=> 'confirmado', tagsForLevel, source:{ tipo:'screenshot', data:'2026-08-20', descricao:'Telas do Morro Nv.1–10, recompensas e relatórios de batalha enviados pelo usuário', verificado:true } });

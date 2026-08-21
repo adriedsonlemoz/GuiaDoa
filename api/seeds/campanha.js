@@ -1,8 +1,10 @@
 import { SAVANA_SEED } from './campos/savana.js';
 import { LAGO_SEED } from './campos/lago.js';
 import { FLORESTA_SEED } from './campos/floresta.js';
+import { MONTANHA_SEED } from './campos/montanha.js';
+import { MORRO_SEED } from './campos/morro.js';
 
-export { SAVANA_SEED, LAGO_SEED, FLORESTA_SEED };
+export { SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MORRO_SEED };
 
 const recursos = (stone, metals, wood, gold, food) => [
   { tipo:'stone',  valor:stone.valor,  exibicao:stone.exibicao,  exato:stone.exato ?? true },

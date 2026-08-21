@@ -23,6 +23,7 @@ const CAMPANHA_LAGO_KEY = 'content:campanha-lago:beta-2.59';
 const CAMPANHA_FLORESTA_KEY = 'content:campanha-floresta:beta-2.61';
 const CAMPANHA_MONTANHA_KEY = 'content:campanha-montanha:beta-2.62';
 const CAMPANHA_MORRO_KEY = 'content:campanha-morro:beta-2.62';
+const CAMPANHA_SAVANA_REWARDS_KEY = 'content:campanha-savana-recompensas:beta-2.63';
 const CAMPANHA_STRATEGY_KEY = 'content:campanha-estrategias:beta-2.46';
 const CAMPANHA_STRATEGY_CONFIRMED_KEY = 'content:campanha-estrategias-confirmadas:beta-2.47';
 const CAMPANHA_REWARDS_KEY = 'content:campanha-recompensas:beta-2.48';
@@ -533,6 +534,59 @@ async function migrarCampanhaMorro() {
 }
 
 
+async function migrarCampanhaSavanaRecompensasConfirmadas() {
+  const aplicado = await AppConfig.findOne({ chave:CAMPANHA_SAVANA_REWARDS_KEY }).lean();
+  if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, atualizadas:0, inseridas:0 };
+
+  await AppConfig.findOneAndUpdate(
+    { chave:CAMPANHA_SAVANA_REWARDS_KEY },
+    { $set:{ migracaoEstado:'executando', migracaoVersao:'1', ultimoErro:'', atualizadoEm:new Date() } },
+    { upsert:true, setDefaultsOnInsert:true },
+  );
+
+  try {
+    await garantirIndiceCampanhaPorSubtipo();
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const seed of SAVANA_SEED) {
+      const atual = await CampanhaLocal.findOne({ slug:seed.slug }).lean();
+      if (!atual) {
+        await CampanhaLocal.create(seed);
+        inseridas += 1;
+        continue;
+      }
+
+      const codigosOficiais = new Set(seed.recompensas.map(x => x.codigo));
+      const personalizadas = (atual.recompensas || []).filter(x => !codigosOficiais.has(x.codigo));
+      await CampanhaLocal.updateOne(
+        { slug:seed.slug },
+        { $set:{
+          recompensas:[...seed.recompensas, ...personalizadas],
+          recompensasStatus:seed.recompensasStatus,
+          fonte:seed.fonte,
+          atualizadoEm:new Date(),
+        } },
+      );
+      atualizadas += 1;
+    }
+
+    await AppConfig.findOneAndUpdate(
+      { chave:CAMPANHA_SAVANA_REWARDS_KEY },
+      { $set:{ migracaoEstado:'pronto', migracaoVersao:'1', migracaoEm:new Date(), atualizadoEm:new Date(), ultimoErro:'', relatorioMigracao:{ savanaRecompensas:{ atualizadas, inseridas } } } },
+      { upsert:true, setDefaultsOnInsert:true },
+    );
+    return { ok:true, ignorada:false, atualizadas, inseridas };
+  } catch (err) {
+    await AppConfig.findOneAndUpdate(
+      { chave:CAMPANHA_SAVANA_REWARDS_KEY },
+      { $set:{ migracaoEstado:'erro', ultimoErro:err.message, atualizadoEm:new Date() } },
+      { upsert:true, setDefaultsOnInsert:true },
+    ).catch(()=>{});
+    return { ok:false, erro:err.message, atualizadas:0, inseridas:0 };
+  }
+}
+
+
 async function migrarCampanhaEstrategias() {
   const aplicado = await AppConfig.findOne({ chave:CAMPANHA_STRATEGY_KEY }).lean();
   if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, inseridas:0, completadas:0, preservadas:0 };
@@ -726,6 +780,8 @@ export async function executarMigracoesConteudo() {
   if (!montanha.ok) return montanha;
   const morro = await migrarCampanhaMorro();
   if (!morro.ok) return morro;
+  const savanaRecompensas = await migrarCampanhaSavanaRecompensasConfirmadas();
+  if (!savanaRecompensas.ok) return savanaRecompensas;
   const estrategias = await migrarCampanhaEstrategias();
   if (!estrategias.ok) return estrategias;
   const estrategiasConfirmadas = await migrarCampanhaEstrategiasConfirmadas();
@@ -736,7 +792,7 @@ export async function executarMigracoesConteudo() {
   if (!recompensas.ok) return recompensas;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
@@ -744,7 +800,7 @@ export async function executarMigracoesConteudo() {
     tropasAtualizadas:(tropas.atualizadas || 0) + (tropasCombate.atualizadas || 0),
     itensInseridos:itensCatalogo.inseridas || 0,
     itensCompletados:itensCatalogo.completadas || 0,
-    campanhaInseridas:(campanha.inseridas || 0) + (campos.inseridas || 0) + (lago.inseridas || 0) + (floresta.inseridas || 0) + (montanha.inseridas || 0) + (morro.inseridas || 0),
-    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (lago.completadas || 0) + (floresta.completadas || 0) + (montanha.completadas || 0) + (morro.completadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (estrategiasPolidas.atualizadas || 0) + (recompensas.completadas || 0),
+    campanhaInseridas:(campanha.inseridas || 0) + (campos.inseridas || 0) + (lago.inseridas || 0) + (floresta.inseridas || 0) + (montanha.inseridas || 0) + (morro.inseridas || 0) + (savanaRecompensas.inseridas || 0),
+    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (lago.completadas || 0) + (floresta.completadas || 0) + (montanha.completadas || 0) + (morro.completadas || 0) + (savanaRecompensas.atualizadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (estrategiasPolidas.atualizadas || 0) + (recompensas.completadas || 0),
   };
 }

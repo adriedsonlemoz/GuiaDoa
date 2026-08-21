@@ -136,18 +136,37 @@ test('Morro contém Nv.1–10 com pedra e dois itens extras no Nv.10', () => {
   for(const reward of n10.recompensas) assert.equal(existsSync(`../public${reward.imagem}`),true);
 });
 
-test('recompensas da Savana ficam simbólicas quando o nome não foi confirmado', () => {
+test('Savana confirma carnes e preserva apenas o item azul sem nome', () => {
+  const n1 = SAVANA_SEED.find(x => x.nivel === 1);
   const n5 = SAVANA_SEED.find(x => x.nivel === 5);
   const n6 = SAVANA_SEED.find(x => x.nivel === 6);
   const n10 = SAVANA_SEED.find(x => x.nivel === 10);
+
+  assert.equal(n1.recompensasStatus, 'confirmado');
+  assert.equal(n5.recompensasStatus, 'confirmado');
   assert.deepEqual(n5.recompensas.map(x=>x.simbolo), ['R2']);
+  assert.equal(n5.recompensas[0].nome, 'Pedaço de carne carneiro');
+  assert.equal(n5.recompensas[0].nomeConfirmado, true);
+  assert.equal(n5.recompensas[0].quantidade, 1);
+
+  assert.equal(n6.recompensasStatus, 'parcial');
   assert.deepEqual(n6.recompensas.map(x=>x.simbolo), ['R1','R2','R3']);
   assert.deepEqual(n10.recompensas.map(x=>x.simbolo), ['R1','R2','R3','R4']);
-  const beef = n6.recompensas.find(x => x.codigo === 'savana-r3');
+  assert.equal(n10.recompensasStatus, 'parcial');
+
+  const unknown = n10.recompensas.find(x => x.codigo === 'savana-r1');
+  assert.equal(unknown.nomeConfirmado, false);
+  assert.equal(unknown.nome, '');
+  assert.ok(unknown.imagem.endsWith('/savana-r1.webp'));
+
+  const ram = n10.recompensas.find(x => x.codigo === 'savana-r2');
+  const beef = n10.recompensas.find(x => x.codigo === 'savana-r3');
+  const chicken = n10.recompensas.find(x => x.codigo === 'savana-r4');
+  assert.equal(ram.nome, 'Pedaço de carne carneiro');
   assert.equal(beef.nome, 'Pedaço de carne bovina');
-  assert.equal(beef.quantidade, 1);
-  assert.equal(beef.nomeConfirmado, true);
-  assert.ok(n10.recompensas.filter(x=>!x.nomeConfirmado).every(x=>!x.nome));
+  assert.equal(chicken.nome, 'Pedaço de Frango');
+  assert.ok([ram,beef,chicken].every(x => x.quantidade === 1 && x.nomeConfirmado));
+  for (const reward of n10.recompensas) assert.equal(existsSync(`../public${reward.imagem}`), true);
 });
 
 test('estratégias começam vazias e não são inventadas pelo seed', () => {

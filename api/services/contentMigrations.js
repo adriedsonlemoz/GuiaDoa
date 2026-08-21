@@ -5,12 +5,14 @@ import Tropa from '../models/Tropa.js';
 import Item from '../models/Item.js';
 import CampanhaLocal from '../models/CampanhaLocal.js';
 import Dragao from '../models/Dragao.js';
+import Edificio from '../models/Edificio.js';
 import { DICAS_SEED } from '../seeds/dicas.js';
 import { tacticalMetadata } from '../seeds/tropasTaticas.js';
 import { TROOP_COMBAT_EVIDENCE } from '../seeds/tropasCombate.js';
 import { ITEM_SCREENSHOT_CATALOG } from '../seeds/itensCatalogo.js';
 import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MORRO_SEED, GRODZ_SEED } from '../seeds/campanha.js';
 import { DRAGOES_SEED } from '../seeds/dragoes.js';
+import { EDIFICIOS_ESPECIAIS } from '../seeds/edificiosEspeciais.js';
 import { mesclarSeed } from '../utils/seedMerge.js';
 
 const MIGRATION_KEY = 'content:dicas:beta-2.14';
@@ -37,6 +39,7 @@ const TUTORIALS_264_KEY = 'content:dicas-antropos-captura:beta-2.64';
 const CAMPANHA_GRODZ_266_KEY = 'content:campanha-grodz:beta-2.66';
 const TUTORIAL_GRODZ_266_KEY = 'content:dicas-grodz:beta-2.66';
 const ITEM_DEVASTAR_266_KEY = 'content:item-pergaminho-devastar:beta-2.66';
+const EDIFICIOS_ESPECIAIS_267_KEY = 'content:edificios-especiais:beta-2.67';
 
 const INICIANTE_CATEGORY = {
   slug: 'iniciante',
@@ -985,6 +988,29 @@ async function migrarTicketDevastar266() {
   });
 }
 
+
+async function migrarEdificiosEspeciais267() {
+  return executarMigracao264(EDIFICIOS_ESPECIAIS_267_KEY, 'edificiosEspeciais267', async () => {
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const seed of EDIFICIOS_ESPECIAIS) {
+      const atual = await Edificio.findOne({ slug:seed.slug }).lean();
+      if (!atual) {
+        await Edificio.create(seed);
+        inseridas += 1;
+        continue;
+      }
+      await Edificio.updateOne({ slug:seed.slug }, { $set:{
+        nome:seed.nome, icone:seed.icone, tag:seed.tag, descricao:seed.descricao, ordem:seed.ordem,
+        grupo:seed.grupo, tipoModulo:seed.tipoModulo, imagem:seed.imagem, colunas:seed.colunas,
+        niveis:seed.niveis, dadosEspeciais:seed.dadosEspeciais, i18n:seed.i18n || {}, atualizadoEm:new Date(),
+      } });
+      atualizadas += 1;
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
@@ -1034,9 +1060,11 @@ export async function executarMigracoesConteudo() {
   if (!tutoriaisGrodz266.ok) return tutoriaisGrodz266;
   const ticketDevastar266 = await migrarTicketDevastar266();
   if (!ticketDevastar266.ok) return ticketDevastar266;
+  const edificiosEspeciais267 = await migrarEdificiosEspeciais267();
+  if (!edificiosEspeciais267.ok) return edificiosEspeciais267;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
@@ -1050,5 +1078,6 @@ export async function executarMigracoesConteudo() {
     tutoriaisAtualizados:(tutoriais264.atualizadas || 0) + (tutoriais264.inseridas || 0) + (tutoriaisGrodz266.atualizadas || 0) + (tutoriaisGrodz266.inseridas || 0),
     grodzInseridos:grodz266.inseridas || 0,
     itemDevastarAtualizado:(ticketDevastar266.atualizadas || 0) + (ticketDevastar266.inseridas || 0),
+    edificiosEspeciaisAtualizados:(edificiosEspeciais267.atualizadas || 0) + (edificiosEspeciais267.inseridas || 0),
   };
 }

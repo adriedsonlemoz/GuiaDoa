@@ -38,6 +38,9 @@ const BASE_LABELS = {
   tropas_comparar: { key: 'troops.compare', icon: '⚖️' },
   calculostropas: { key: 'troops.simulator', icon: '🧮' },
   edificios: { key: 'home.botao.edificios', icon: '🏰' },
+  edificios_normais: { key: 'buildings.normal_title', icon: '🏠' },
+  edificios_gruta: { key: 'buildings.cave_title', icon: '🕳️' },
+  edificios_basilica: { key: 'buildings.basilica_title', icon: '⛪' },
   itens: { key: 'home.botao.itens', icon: '🎒' },
   niveis: { key: 'home.botao.niveis', icon: '📈' },
   ilhas: { key: 'home.botao.ilhas', icon: '🏝️' },
@@ -70,7 +73,10 @@ export function renderRoute(route, setRoute) {
     case 'tropas_lista': return <Tropas setRoute={setRoute} />;
     case 'tropas_comparar': return <TropaComparar />;
     case 'calculostropas': return <CalculosTropas setRoute={setRoute} />;
-    case 'edificios': return <Edificios setRoute={setRoute} />;
+    case 'edificios': return <Edificios setRoute={setRoute} initialView="hub" />;
+    case 'edificios_normais': return <Edificios setRoute={setRoute} initialView="normal" />;
+    case 'edificios_gruta': return <Edificios setRoute={setRoute} initialView="gruta" />;
+    case 'edificios_basilica': return <Edificios setRoute={setRoute} initialView="basilica" />;
     case 'itens': return <Itens setRoute={setRoute} />;
     case 'niveis': return <Niveis />;
     case 'ilhas': return <Ilhas />;

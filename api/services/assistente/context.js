@@ -53,10 +53,23 @@ export const buildContext = async (locale = 'pt-BR') => {
                 `    Nv${n.nivel}: ` + cols.map(c => `${c.label}:${n[c.key] ?? '?'}`).join(' | ')
               ).join('\n')
             : '';
+          let especial = '';
+          if (e.tipoModulo === 'gruta' && e.dadosEspeciais) {
+            const d = e.dadosEspeciais;
+            especial = `
+  Sistema especial: requer Aliança=${d.requerAlianca ? 'sim' : 'não'} | requer Base da Aliança=${d.requerBaseAlianca ? 'sim' : 'não'} | exploração=${d.exploracaoHoras ?? '?'}h | 100 Órbitas=${d.orbitasPorPedraNivel1 ?? '?'} Pedra Nv.1 | nível máximo=${d.nivelMax ?? '?'}`;
+          }
+          if (e.tipoModulo === 'basilica' && e.dadosEspeciais) {
+            const d = e.dadosEspeciais;
+            const pedras = (d.pedras || []).map(p => localizedValue(p, 'nome', locale)).filter(Boolean).join(', ');
+            especial = `
+  Sistema especial: depende dos recursos da Gruta | nível máximo=${d.nivelMax ?? '?'} | ranhuras máximas=${d.ranhurasMax ?? '?'} | Pedra máxima=Lv.${d.combinacao?.projecaoFormula?.nivelMaxExistente ?? '?'}${pedras ? `
+  Pedras: ${pedras}` : ''}`;
+          }
           return (
             `• **${nome}**${tag ? ` [${tag}]` : ''}` +
             (descricao ? ` — ${descricao}` : '') +
-            tabelaNiveis
+            especial + tabelaNiveis
           );
         }).join('\n\n')
       : 'Nenhum edifício cadastrado.';

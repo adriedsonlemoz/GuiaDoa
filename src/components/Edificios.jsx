@@ -1,130 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useGameData } from '../data/GameDataContext.jsx';
-import { useI18n } from '../hooks/useI18n.jsx';
-import GameHeader from './shared/GameHeader.jsx';
-import { GameInfoTable, GamePanel, GameTabs } from './shared/GameChrome.jsx';
+import BuildingHub from './edificios/BuildingHub.jsx';
+import NormalBuildingsView from './edificios/NormalBuildingsView.jsx';
+import GrutaView from './edificios/GrutaView.jsx';
+import BasilicaView from './edificios/BasilicaView.jsx';
 
-const COLUMN_LABEL_KEYS = {
-  desc:'buildings.column.effect', populacao:'buildings.column.population', producaoHora:'buildings.column.production_hour',
-  capacidadeMax:'buildings.column.max_capacity', maxTropas:'buildings.column.max_troops', aumentoPopulacao:'buildings.column.population_increase',
-  territorios:'buildings.column.territories', reforcos:'buildings.column.reinforcements', areas:'buildings.column.areas', marchas:'buildings.column.marches',
-  tropasPorMarcha:'buildings.column.troops_march',
-};
-
-const fmt = (v, locale='pt-BR') => v === null || v === undefined ? '—' : typeof v === 'number' ? v.toLocaleString(locale) : v;
-
-export default function Edificios() {
+export default function Edificios({ setRoute, initialView = 'hub' }) {
   const { edificios } = useGameData();
-  const { t, content, locale } = useI18n();
-  const [sel, setSel] = useState(null);
-  const [aba, setAba] = useState('tabela');
-  const [nivel, setNivel] = useState('1');
-  const [qtd, setQtd] = useState('1');
+  const normal = edificios.filter(item => item.grupo !== 'especial' && item.tipoModulo !== 'gruta' && item.tipoModulo !== 'basilica');
+  const gruta = edificios.find(item => item.tipoModulo === 'gruta' || item.slug === 'Gruta');
+  const basilica = edificios.find(item => item.tipoModulo === 'basilica' || item.slug === 'Basilica');
 
-  useEffect(() => {
-    if (!sel && edificios.length) setSel(edificios[0].slug);
-  }, [edificios, sel]);
-
-  const ed = edificios.find(e => e.slug === sel);
-  const dados = ed?.niveis || [];
-  const colunas = ed?.colunas?.length
-    ? ed.colunas
-    : dados.length
-      ? Object.keys(dados[0]).filter(k => k !== 'nivel').map(k => ({ key:k, label:COLUMN_LABEL_KEYS[k] ? t(COLUMN_LABEL_KEYS[k]) : k.toUpperCase(), tipo:'number' }))
-      : [];
-  const nivelNum = parseInt(nivel,10) || 1;
-  const nivelFim = Math.min(nivelNum + (parseInt(qtd,10) || 1) - 1, dados.length);
-  const nAtual = dados.find(r => String(r.nivel) === String(nivelNum));
-  const nFim = dados.find(r => r.nivel === nivelFim);
-
-  if (!edificios.length) return (
-    <div style={{ maxWidth:620, margin:'0 auto' }}>
-      <GameHeader title={t('buildings.title')} subtitle={t('buildings.no_data_help')} />
-    </div>
-  );
-
-  const tabs = [
-    { id:'tabela', label:t('buildings.table') },
-    { id:'ganhos', label:t('buildings.gains') },
-  ];
-
-  return (
-    <div style={{ maxWidth:620, margin:'0 auto', paddingBottom:18 }}>
-      <GameHeader title={t('buildings.city_engineering')} subtitle={t('buildings.subtitle')} />
-
-      <div className="game-filter-row" style={{ marginBottom:8 }}>
-        <span className="game-filter-label">{t('buildings.select')}:</span>
-        <select
-          className="game-field"
-          value={sel || ''}
-          onChange={event => { setSel(event.target.value); setAba('tabela'); setNivel('1'); setQtd('1'); }}
-        >
-          {edificios.map(item => <option key={item.slug} value={item.slug}>{content(item,'nome')}</option>)}
-        </select>
-      </div>
-
-      {ed ? (
-        <>
-          <GamePanel>
-            <div className="game-detail-hero">
-              <div className="game-thumb" style={{ fontSize:'2.7rem' }}>{ed.icone || '🏗️'}</div>
-              <div style={{ minWidth:0 }}>
-                <h1 className="game-detail-title">{content(ed,'nome')}</h1>
-                <div className="game-list-meta">{content(ed,'tag') || '—'}</div>
-                {content(ed,'descricao') ? <p className="game-detail-copy">{content(ed,'descricao')}</p> : null}
-              </div>
-            </div>
-          </GamePanel>
-
-          <div style={{ marginTop:8 }}><GameTabs tabs={tabs} value={aba} onChange={setAba} /></div>
-
-          {aba === 'tabela' ? (
-            <section className="game-panel" style={{ marginTop:8 }}>
-              {!dados.length ? <div style={{ padding:24, textAlign:'center', color:'#806d4d' }}>{t('buildings.no_levels')}</div> : (
-                <div style={{ overflowX:'auto' }}>
-                  <table style={{ width:'100%', borderCollapse:'collapse', minWidth: Math.max(360, 80 + colunas.length * 100) }}>
-                    <thead><tr><th className="tw-th">{t('common.level')}</th>{colunas.map(c => <th key={c.key} className="tw-th">{c.label}</th>)}</tr></thead>
-                    <tbody>
-                      {dados.map(row => (
-                        <tr key={row.nivel}>
-                          <td className="tw-td" style={{ fontWeight:900, color:'#6b512b', textAlign:'center' }}>{row.nivel}</td>
-                          {colunas.map(c => <td key={c.key} className="tw-td">{fmt(row[c.key],locale)}</td>)}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
-          ) : (
-            <section style={{ marginTop:8 }}>
-              <div className="game-filter-row" style={{ marginBottom:8 }}>
-                <label style={{ flex:1 }}>
-                  <span className="game-filter-label" style={{ display:'block', marginBottom:4 }}>{t('buildings.initial_level')}</span>
-                  <input type="number" min={1} max={dados.length} className="game-field" value={nivel} onChange={e => setNivel(e.target.value)} />
-                </label>
-                <label style={{ flex:1 }}>
-                  <span className="game-filter-label" style={{ display:'block', marginBottom:4 }}>{t('buildings.level_count')}</span>
-                  <input type="number" min={1} className="game-field" value={qtd} onChange={e => setQtd(e.target.value)} />
-                </label>
-              </div>
-              {nAtual && nFim ? (
-                <GameInfoTable rows={colunas.filter(c => c.key !== 'desc').map(c => {
-                  const de = nAtual[c.key];
-                  const para = nFim[c.key];
-                  const diff = typeof de === 'number' && typeof para === 'number' ? para - de : null;
-                  return {
-                    key:c.key,
-                    label:c.label,
-                    value:fmt(de,locale),
-                    next:`${fmt(para,locale)}${diff !== null && diff > 0 ? ` ↑ +${fmt(diff,locale)}` : ''}`,
-                  };
-                })} />
-              ) : <div style={{ padding:20, textAlign:'center', color:'#806d4d' }}>{t('buildings.out_of_range')}</div>}
-            </section>
-          )}
-        </>
-      ) : null}
-    </div>
-  );
+  if (initialView === 'normal') return <NormalBuildingsView edificios={normal} setRoute={setRoute} />;
+  if (initialView === 'gruta') return <GrutaView gruta={gruta} basilica={basilica} setRoute={setRoute} />;
+  if (initialView === 'basilica') return <BasilicaView basilica={basilica} setRoute={setRoute} />;
+  return <BuildingHub normalCount={normal.length} gruta={gruta} basilica={basilica} setRoute={setRoute} />;
 }

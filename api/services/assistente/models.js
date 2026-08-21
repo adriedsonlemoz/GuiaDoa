@@ -19,9 +19,11 @@ const ItemSchema = new mongoose.Schema({
 }, { collection: COLLECTIONS.itens });
 
 const EdificioSchema = new mongoose.Schema({
-  nome: String, icone: String, tag: String, descricao: String,
+  nome: String, icone: String, tag: String, descricao: String, grupo:String, tipoModulo:String, imagem:String,
   colunas: [{ key: String, label: String, tipo: String }],
   niveis: mongoose.Schema.Types.Mixed,
+  dadosEspeciais: mongoose.Schema.Types.Mixed,
+  i18n: mongoose.Schema.Types.Mixed,
 }, { collection: COLLECTIONS.edificios });
 
 const DragaoSchema = new mongoose.Schema({

@@ -268,18 +268,20 @@ test('Doação fica separada de Sobre e aviso de primeiro acesso é persistido',
   assert.match(storage,/DONATION_NOTICE_SEEN/);
 });
 
-test('APK não usa localhost silenciosamente e startup possui limite de tentativas', () => {
+test('APK não usa localhost silenciosamente e cold start não bloqueia a interface', () => {
   const api=read('src/config/api.js');
   const startup=read('src/app/StartupGate.jsx');
+  const provider=read('src/data/GameDataContext.jsx');
   const workflow=read('.github/workflows/build-apk.yml');
-  const sync=read('src/app/DataSyncScene.jsx');
   assert.match(api,/API_CONFIGURED/);
   assert.match(api,/looksNative/);
-  assert.match(startup,/MAX_AUTO_RETRIES = 3/);
-  assert.match(startup,/CONNECTION_TIMEOUT_MS = 20000/);
-  assert.match(workflow,/VITE_API_URL é obrigatória para qualquer APK/);
+  assert.match(startup,/CONNECTION_TIMEOUT_MS = 45000/);
+  assert.match(startup,/return children/);
+  assert.match(provider,/readGameDataCache/);
+  assert.match(provider,/wakeBackend/);
+  assert.match(api,/https:\/\/guiadoa-agrq\.onrender\.com/);
+  assert.match(workflow,/guiadoa-agrq\.onrender\.com/);
   assert.match(workflow,/https:\/\/\*/);
-  assert.match(sync,/document\.body\.style\.overflow='hidden'/);
 });
 
 test('Admin permite clonar evento sem reaproveitar datas ou ocorrências', () => {

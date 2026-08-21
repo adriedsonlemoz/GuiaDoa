@@ -14,3 +14,10 @@ test('CORS permite automaticamente o próprio host que serve o Admin', () => {
 test('CORS não depende de domínio Render fixo antigo', () => {
   assert.doesNotMatch(appSource, /guiadoa\.onrender\.com/);
 });
+
+
+test('CORS aceita a origem do APK Capacitor Android', () => {
+  assert.match(appSource, /'https:\/\/localhost'/);
+  assert.match(appSource, /'capacitor:\/\/localhost'/);
+  assert.match(appSource, /androidScheme=https/);
+});

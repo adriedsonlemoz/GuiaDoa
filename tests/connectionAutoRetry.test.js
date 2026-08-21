@@ -12,17 +12,19 @@ test('central separada de Mecânicas de Combate foi removida da navegação púb
   assert.equal(existsSync(new URL('../src/components/MecanicasCombate.jsx', import.meta.url)), false);
 });
 
-test('falhas temporárias de conexão usam nova tentativa automática na tela inicial', () => {
+test('cold start do Render acontece em segundo plano com backoff progressivo e teto de 60s', () => {
   const startup = read('src/app/StartupGate.jsx');
   const provider = read('src/data/GameDataContext.jsx');
-  for (const source of [startup, provider]) {
-    assert.match(source, /RETRYABLE_CONNECTION_CODES/);
-    assert.match(source, /AUTO_RETRY_MS/);
-    assert.match(source, /setTimeout/);
-  }
-  assert.match(provider, /app\.sync\.auto_retry_note/);
-  assert.match(startup, /app\.sync\.retry_progress/);
-  assert.match(startup, /MAX_AUTO_RETRIES/);
-  assert.match(startup, /DataSyncScene/);
-  assert.doesNotMatch(startup, /code=\{erro\.code\}[^]*onRetry=\{verificar\}[^]*GD-NET-002/);
+  const sync = read('src/app/useAppSync.js');
+
+  assert.match(provider, /BACKGROUND_RETRY_DELAYS/);
+  assert.match(provider, /5000, 15000, 30000, 60000/);
+  assert.match(provider, /WAKE_TIMEOUT_MS = 45000/);
+  assert.match(provider, /\/api\/health/);
+  assert.match(provider, /setTimeout/);
+  assert.match(provider, /readGameDataCache/);
+  assert.match(provider, /setDataSource\('cache'\)/);
+  assert.match(startup, /CONNECTION_TIMEOUT_MS = 45000/);
+  assert.doesNotMatch(startup, /DataSyncScene/);
+  assert.match(sync, /status === 'cached'|dataSource === 'cache'/);
 });

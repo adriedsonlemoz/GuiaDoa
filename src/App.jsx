@@ -16,7 +16,7 @@ const GuiaApp = () => {
   const { route, setRoute, canGoBack } = useHashRouter();
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
   const [donationNoticeOpen, setDonationNoticeOpen] = useState(() => !getDonationNoticeSeen());
-  const { syncStatus, syncProgress } = useAppSync();
+  const { syncStatus, syncProgress, syncInfo, sincronizarAgora } = useAppSync();
   const { dragoes } = useGameData();
   const { t, content } = useI18n();
   const currentRoute = getRouteLabel(route, dragoes, t, content);
@@ -39,7 +39,7 @@ const GuiaApp = () => {
 
   return (
     <>
-      <SyncProgressBanner status={syncStatus} progress={syncProgress} />
+      <SyncProgressBanner status={syncStatus} progress={syncProgress} info={syncInfo} onRetry={sincronizarAgora} />
 
       <Modal open={donationNoticeOpen} onClose={() => { setDonationNoticeSeen(); setDonationNoticeOpen(false); }} maxWidth={340}>
         <div className="p-4 text-center donation-first-modal">

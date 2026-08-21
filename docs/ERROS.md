@@ -20,6 +20,10 @@ Nunca exibir nomes de tecnologias, provedores, URLs internas, stacks ou segredos
 
 ## Inicialização e APK
 
-A Beta 2.72 limita as novas tentativas automáticas de conexão e aplica timeout. Depois do limite, o Splash deixa de repetir indefinidamente e abre uma tela acionável com **Tentar novamente** e **Copiar diagnóstico**. O diagnóstico inclui versão, origem/configuração da API e número de tentativas, sem registrar senha, token ou segredo.
+Desde a Beta 2.73, falha de rede/cold start **não é motivo para bloquear a interface pública**. O aplicativo abre o shell imediatamente, tenta acordar o Render por `/api/health` e sincroniza os módulos em segundo plano. Se houver snapshot local, ele continua disponível enquanto isso.
 
-Builds Android devem receber `VITE_API_URL` HTTPS; `localhost` e `127.0.0.1` são rejeitados no workflow de APK.
+Retentativas automáticas usam backoff progressivo (5s → 15s → 30s → 60s, mantendo o teto de 60s) e também são disparadas quando o navegador/WebView informa que a conexão voltou. O usuário pode solicitar uma sincronização manual pelo aviso compacto.
+
+O CORS da API inclui `https://localhost`, origem usada pelo Capacitor Android quando `androidScheme` é `https`, além de origens nativas compatíveis. Isso evita o cenário em que o site na Vercel funciona e o APK não consegue falar com a mesma API.
+
+Builds Android devem receber `VITE_API_URL` HTTPS; `localhost` e `127.0.0.1` são rejeitados no workflow de APK. `MONGO_URI` nunca deve ser enviada ao frontend/APK.

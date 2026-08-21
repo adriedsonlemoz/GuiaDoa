@@ -1671,3 +1671,27 @@
 @media(max-width:390px){.event-tutorial-phase{grid-template-columns:1fr}.event-tutorial-phase button{width:100%}.realm-filter-chips{grid-template-columns:repeat(2,minmax(0,1fr))}.tournament-general-row,.tournament-kill-row{grid-template-columns:1fr 1fr}.tournament-general-row>strong,.tournament-kill-row>div{justify-self:start;text-align:left}.tournament-kill-row small,.tournament-kill-row strong{text-align:left}.tournament-general-row>button,.tournament-kill-row>button{justify-self:end}.realm-schedule-note{font-size:.68rem}}
 @media(max-height:680px){.sync-orbit-wrap{transform:scale(.82);margin-block:-20px -16px}.sync-console{padding-top:12px!important;padding-bottom:10px!important}.sync-route{margin-top:8px!important}.sync-console-version{margin-top:7px!important}}
 .realm-filter-chips button.is-all{grid-template-columns:1fr;grid-template-areas:'zone' 'count';}.realm-filter-chips button.is-all>strong{grid-area:zone}.realm-filter-chips button.is-all>small{grid-area:count}
+
+/* ── Beta 2.73 · inicialização offline-first / cache stale-while-revalidate ── */
+.sync-live-dock.is-cached { background:rgba(48,82,76,.96); }
+.sync-live-dock.is-error { background:rgba(103,62,48,.96); }
+.sync-live-retry {
+  flex:0 0 auto;
+  min-height:30px;
+  max-width:112px;
+  padding:5px 8px;
+  border:1px solid rgba(235,211,151,.45);
+  border-radius:7px;
+  background:rgba(255,255,255,.08);
+  color:#f7edcf;
+  font:800 .58rem/1.15 Nunito, sans-serif;
+  white-space:normal;
+  text-align:center;
+}
+.sync-live-retry:active { transform:translateY(1px); }
+@media (max-width:360px) {
+  .sync-live-dock-main { gap:7px; padding-inline:8px; }
+  .sync-live-copy b { font-size:.64rem; }
+  .sync-live-copy small { font-size:.53rem; }
+  .sync-live-retry { max-width:92px; font-size:.54rem; }
+}

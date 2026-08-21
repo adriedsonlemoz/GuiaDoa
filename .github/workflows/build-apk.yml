@@ -68,10 +68,10 @@ jobs:
       # ── 7. Validar URL da API em builds release ───────────────────────────────
       - name: 🛡️ Validar API do APK
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL || '' }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://guiadoa-agrq.onrender.com' }}
         run: |
           if [ -z "$VITE_API_URL" ]; then
-            echo "::error::VITE_API_URL é obrigatória para qualquer APK. Configure o secret do backend Render."
+            echo "::error::VITE_API_URL ficou vazia. O workflow deve usar a URL canônica do backend Render ou um override válido."
             exit 1
           fi
           case "$VITE_API_URL" in
@@ -92,7 +92,7 @@ jobs:
       - name: 🔨 Build web (Vite)
         run: npm run build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL || '' }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://guiadoa-agrq.onrender.com' }}
 
       # ── 9. Toolchain móvel isolada do build web ───────────────────────────────
       - name: 📱 Instalar Capacitor 8 (somente APK)

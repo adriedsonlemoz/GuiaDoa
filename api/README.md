@@ -98,12 +98,17 @@ Horários de reino são armazenados no relógio oficial UTC do jogo e somente qu
 
 A migração `content:eventos-reinos:beta-2.72` também corrige o calendário da Corrida Armamentista para 21/08/2026 00:00 UTC → 28/08/2026 00:00 UTC, com Dia 1 de observação.
 
-## 🔗 Frontend e modo online
+## 🔗 Frontend, APK e cache local — Beta 2.74
 
-O `GameDataProvider` busca tropas, níveis, dragões, edifícios, pesquisas, reinos e itens pela API com `cache: no-store`.
-Não há fallback estático ou banco offline paralelo para dados do jogo. Se API/MongoDB estiver indisponível, o aplicativo informa a indisponibilidade.
+O endpoint público canônico usado pelo frontend e pelo APK é `https://guiadoa-agrq.onrender.com`. Esse endereço não contém segredo; `MONGO_URI`, `JWT_SECRET` e credenciais administrativas continuam somente nas variáveis privadas do serviço Render.
 
-O PWA ainda pode armazenar arquivos estáticos (HTML/CSS/JS/ícones) para carregamento, e preferências/calculadoras pessoais podem usar armazenamento local. Esses dados pessoais não são a base pública do jogo.
+O `GameDataProvider` continua buscando tropas, níveis, dragões, edifícios, pesquisas, reinos, itens e eventos pela API com `cache: no-store`. **MongoDB/API permanece como fonte de verdade.**
+
+A diferença é que o frontend agora mantém um **snapshot local somente de leitura** do último catálogo recebido com sucesso. O snapshot é persistido em IndexedDB e serve para abrir rapidamente o site/APK enquanto o Render acorda ou quando a rede cai. Assim que a API volta, o snapshot é substituído pelo conteúdo oficial novo.
+
+Esse cache não contém `MONGO_URI`, senha do banco, JWT secret ou credenciais administrativas. O APK nunca acessa MongoDB diretamente.
+
+No Android Capacitor, a origem do WebView é `https://localhost` neste projeto (`androidScheme: https`). A política CORS deve manter essa origem permitida; sem isso, a Vercel funciona e o APK recebe falha de CORS mesmo com o Render online.
 
 ## 🔑 Variáveis principais
 
@@ -112,7 +117,7 @@ MONGO_URI=mongodb+srv://...
 MONGO_DB_NAME=...
 MONGO_COLLECTION_PREFIX=guiadoa_
 JWT_SECRET=uma-chave-longa-e-aleatoria
-ALLOWED_ORIGINS=https://guia-doa.vercel.app
+ALLOWED_ORIGINS=https://guia-doa.vercel.app  # origens adicionais; as origens nativas do Capacitor já estão no allowlist interno
 
 # opcionais
 REQUIRE_SETUP_KEY=false

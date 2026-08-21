@@ -4,7 +4,7 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 
 ## Versão
 
-**1.0.0-beta.2.72**
+**1.0.0-beta.2.74**
 
 ## Principais módulos
 
@@ -61,7 +61,7 @@ O Admin também oferece **Clonar evento**. A clonagem reaproveita a estrutura ú
 
 ## Reinos
 
-A Beta 2.72 usa somente os **33 reinos confirmados** e seus números reais do jogo. IDs artificiais antigos são remapeados pelo nome durante a migração e o registro fictício `Fabrica` é removido.
+A Beta 2.73 mantém somente os **33 reinos confirmados** e seus números reais do jogo. IDs artificiais antigos são remapeados pelo nome durante a migração e o registro fictício `Fabrica` é removido.
 
 Campos atuais:
 
@@ -121,15 +121,43 @@ O fim dos torneios continua vazio quando não houver valor confirmado no cadastr
 
 Após a primeira inicialização bem-sucedida, o usuário recebe uma única mensagem informando que o GUIA DOA é gratuito e oferecendo um atalho opcional para apoiar o projeto. Ao ajudar, fechar ou escolher “Agora não”, a mensagem é marcada como vista naquela instalação/navegador.
 
-## APK, Splash e diagnóstico
+## APK, cache e cold start do Render
 
-Builds de produção/nativos não usam mais `localhost` silenciosamente. Para APK, `VITE_API_URL` é obrigatório, deve ser HTTPS e não pode apontar para `localhost`/`127.0.0.1`.
+Builds de produção/nativos não usam `localhost` silenciosamente. A API canônica é `https://guiadoa-agrq.onrender.com`; `VITE_API_URL` é um override opcional para ambientes alternativos e, quando usado, deve ser HTTPS e não pode apontar para `localhost`/`127.0.0.1`.
 
-A inicialização aplica timeout e número máximo de novas tentativas. Se a API não responder, a tela deixa de carregar indefinidamente e oferece **Tentar novamente** e **Copiar diagnóstico**. O Splash fica centralizado em `100dvh`, com rolagem bloqueada durante a inicialização.
+A Beta 2.73 corrige duas causas diferentes do travamento observado no Android:
+
+1. o backend agora aceita explicitamente a origem `https://localhost` usada pelo Capacitor Android (além das origens nativas compatíveis), evitando que o CORS aceite a Vercel mas rejeite o APK;
+2. a interface deixou de depender da resposta do Render para abrir. O shell é exibido imediatamente e o backend é acordado em segundo plano por `/api/health`.
+
+O último catálogo oficial recebido da API é persistido em **IndexedDB** (com fallback local quando necessário). Em novas aberturas ele aparece imediatamente, enquanto o aplicativo executa uma estratégia **stale-while-revalidate**: mostra os dados salvos e busca uma versão nova ao fundo. A janela de frescor é de 12 horas apenas para metadados; um snapshot antigo não é apagado só por estar vencido, pois continua sendo melhor fallback durante falta de internet/cold start.
+
+O APK **não se conecta diretamente ao MongoDB**. `MONGO_URI`, usuário e senha do banco permanecem exclusivamente no backend. Expor essa credencial dentro do APK permitiria extração e acesso indevido ao banco.
+
+Se for a primeira instalação e ainda não existir cache, a interface abre mesmo assim com o catálogo vazio/estado de sincronização e recebe os dados assim que o Render e o MongoDB responderem. Falhas usam backoff progressivo e não prendem mais o usuário em uma tela de carregamento.
 
 ## Migrações
 
-### Beta 2.72
+### Beta 2.74
+
+- `https://guiadoa-agrq.onrender.com` passou a ser o endpoint canônico de produção do frontend e do APK.
+- O build Android funciona com esse endpoint mesmo sem secret `VITE_API_URL`; um secret continua podendo sobrescrevê-lo.
+- `.env.production` documenta a API oficial e o código mantém uma única configuração centralizada.
+- A arquitetura offline-first e o CORS nativo introduzidos na Beta 2.73 foram preservados.
+- Credenciais MongoDB continuam exclusivamente no Render/API.
+
+### Beta 2.73
+
+- Corrigido o CORS do backend para a origem nativa `https://localhost` do Capacitor Android.
+- Inicialização passou a ser **offline-first**: a interface abre antes do Render responder.
+- Snapshot persistente do catálogo em IndexedDB, com atualização automática em segundo plano.
+- `/api/health` é usado para acordar o Render antes da sincronização dos módulos.
+- Retentativas de cold start usam backoff progressivo sem tela bloqueante.
+- Quando há cache, uma falha de rede mantém os dados visíveis e oferece sincronização manual.
+- Credenciais MongoDB continuam restritas à API; o APK nunca recebe `MONGO_URI`.
+- Sobre/changelog, README e documentação de erros atualizados para a nova arquitetura.
+
+## Beta 2.72
 
 A migração `content:eventos-reinos:beta-2.72` reforça o catálogo canônico, remove datas herdadas dos reinos cuja abertura é desconhecida, preserva horários já cadastrados quando não há dado novo confirmado e atualiza a Corrida Armamentista para o calendário de observação/fases confirmado em 21/08/2026.
 

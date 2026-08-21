@@ -28,6 +28,13 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3001',
   'http://127.0.0.1:5173',
+  // Origens nativas do Capacitor/WebView. No Android deste projeto o
+  // capacitor.config.json usa androidScheme=https, portanto o APK envia
+  // Origin: https://localhost ao chamar a API publicada no Render.
+  'https://localhost',
+  'http://localhost',
+  'capacitor://localhost',
+  'ionic://localhost',
   'https://guia-doa.vercel.app',
   ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean) : []),
 ];

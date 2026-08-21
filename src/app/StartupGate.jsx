@@ -1,18 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { C } from '../theme.js';
 import { limparCachesDeDadosLegados } from '../data/syncService.js';
+import { hasUsableGameData, readGameDataCache } from '../data/dataCache.js';
 import AppErrorState from '../ui/AppErrorState.jsx';
 import { buildDiagnostic, classifyConnectionError } from '../errors/appErrors.js';
 import { useI18n } from '../hooks/useI18n.jsx';
-import DataSyncScene from './DataSyncScene.jsx';
 
 import { API_URL as API, API_CONFIGURED, API_CONFIGURATION_SOURCE } from '../config/api.js';
 import { DISPLAY_VERSION } from '../version.js';
 
-const RETRYABLE_CONNECTION_CODES = new Set(['GD-NET-001', 'GD-NET-002', 'GD-SRV-001']);
-const AUTO_RETRY_MS = 5000;
-const MAX_AUTO_RETRIES = 3;
-const CONNECTION_TIMEOUT_MS = 20000;
+const CONNECTION_TIMEOUT_MS = 45000;
 
 const Tela = ({ children }) => (
   <div style={{ minHeight:'100dvh', display:'grid', placeItems:'center', padding:20, background:C.BG_PRIMARY, overflow:'hidden' }}>
@@ -26,21 +23,22 @@ export default function StartupGate({ children }) {
   const { t } = useI18n();
   const [status, setStatus] = useState(null);
   const [erro, setErro] = useState(null);
-  const [carregando, setCarregando] = useState(true);
+  const [cacheDisponivel, setCacheDisponivel] = useState(false);
   const [form, setForm] = useState({ usuario:'', senha:'', confirmar:'', setupKey:'' });
   const [salvando, setSalvando] = useState(false);
-  const [autoRetries, setAutoRetries] = useState(0);
 
-  const verificar = async ({ resetRetries = false } = {}) => {
-    if (resetRetries) setAutoRetries(0);
-    setCarregando(true);
+  const verificar = async () => {
     setErro(null);
     try {
-      limparCachesDeDadosLegados();
       if (!API_CONFIGURED) {
-        const err=new Error('VITE_API_URL não foi configurada para este build.'); err.name='ApiConfigurationError'; throw err;
+        const err = new Error('VITE_API_URL não foi configurada para este build.');
+        err.name = 'ApiConfigurationError';
+        throw err;
       }
-      const r = await fetch(`${API}/api/setup/bootstrap-status`, { signal:AbortSignal.timeout(CONNECTION_TIMEOUT_MS), cache:'no-store' });
+      const r = await fetch(`${API}/api/setup/bootstrap-status`, {
+        signal:AbortSignal.timeout(CONNECTION_TIMEOUT_MS),
+        cache:'no-store',
+      });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.mensagem || d.erro || `HTTP ${r.status}`);
       setStatus(d);
@@ -58,26 +56,23 @@ export default function StartupGate({ children }) {
       } else {
         const info = classifyConnectionError(e, 'GD-START-001');
         setErro({ ...info, raw:e });
-        if (RETRYABLE_CONNECTION_CODES.has(info.code)) setAutoRetries(n=>n+1);
       }
-    } finally {
-      setCarregando(false);
     }
   };
 
-  useEffect(() => { verificar({ resetRetries:true }); }, []);
+  useEffect(() => {
+    limparCachesDeDadosLegados();
+    readGameDataCache()
+      .then(snapshot => setCacheDisponivel(Boolean(snapshot?.data && hasUsableGameData(snapshot.data))))
+      .catch(() => setCacheDisponivel(false));
+    verificar();
+  }, []);
 
   useEffect(() => {
     if (!status || status.migracao?.estado === 'pronto' || status.migracao?.estado === 'erro') return undefined;
-    const id = setTimeout(() => verificar(), 1500);
+    const id = setTimeout(() => verificar(), 2500);
     return () => clearTimeout(id);
   }, [status]);
-
-  useEffect(() => {
-    if (!erro || !RETRYABLE_CONNECTION_CODES.has(erro.code) || status || autoRetries >= MAX_AUTO_RETRIES) return undefined;
-    const id = setTimeout(() => verificar(), AUTO_RETRY_MS);
-    return () => clearTimeout(id);
-  }, [erro, status, autoRetries]);
 
   const criarAdmin = async (e) => {
     e.preventDefault();
@@ -103,50 +98,22 @@ export default function StartupGate({ children }) {
     }
   };
 
-  const diagnostic = useMemo(() => erro ? buildDiagnostic({ code:erro.code, error:erro.raw, context:'Inicialização', extra:{ versao:DISPLAY_VERSION, api:API || 'não configurada', apiSource:API_CONFIGURATION_SOURCE, tentativas:autoRetries, origem:typeof window!=='undefined'?window.location.origin:'' } }) : '', [erro, autoRetries]);
+  const diagnostic = useMemo(() => erro ? buildDiagnostic({
+    code:erro.code,
+    error:erro.raw,
+    context:'Inicialização',
+    extra:{
+      versao:DISPLAY_VERSION,
+      api:API || 'não configurada',
+      apiSource:API_CONFIGURATION_SOURCE,
+      cache:cacheDisponivel ? 'disponível' : 'indisponível',
+      origem:typeof window!=='undefined'?window.location.origin:'',
+    },
+  }) : '', [erro, cacheDisponivel]);
 
-  if (carregando && !status) return (
-    <DataSyncScene
-      title={t('app.setup.preparing')}
-      subtitle={t('app.setup.syncing')}
-      phase="connect"
-    />
-  );
-
-  if (erro && !status && RETRYABLE_CONNECTION_CODES.has(erro.code) && autoRetries < MAX_AUTO_RETRIES) return (
-    <DataSyncScene title={t('app.sync.waiting_connection')} subtitle={t('app.sync.retry_progress',{current:autoRetries,total:MAX_AUTO_RETRIES})} phase="connect" />
-  );
-
-  if (erro && (!status || status.migracao?.estado === 'erro')) return (
-    <Tela>
-      <AppErrorState title={erro.title} message={erro.message} code={erro.code} diagnostic={diagnostic} onRetry={()=>verificar({resetRetries:true})} compact />
-    </Tela>
-  );
-
-  if (status?.migracao?.estado !== 'pronto') return (
-    <DataSyncScene
-      title={t('app.setup.content_title')}
-      subtitle={t('app.setup.content_text')}
-      phase="catalog"
-    />
-  );
-
-  if (status?.dados?.necessario) {
-    const faltantes = status.dados?.modulos?.filter(m => m.essencial && m.vazio).map(m => m.label).join(', ') || 'conteúdo essencial';
-    const raw = new Error(`Conteúdo essencial ausente: ${faltantes}`);
-    return (
-      <Tela>
-        <AppErrorState
-          title={t('app.setup.content_unavailable_title')}
-          message={t('app.setup.content_unavailable_message')}
-          code="GD-START-003"
-          diagnostic={buildDiagnostic({ code:'GD-START-003', error:raw, context:'Inicialização', extra:{ faltantes } })}
-          onRetry={()=>verificar({resetRetries:true})}
-          compact
-        />
-      </Tela>
-    );
-  }
+  // Erros de rede/cold start nunca bloqueiam a interface pública. O GameDataProvider
+  // abre o shell/cache e continua acordando o Render em segundo plano.
+  const erroEstrutural = erro && ['GD-START-002', 'GD-CONFIG-001'].includes(erro.code);
 
   if (status?.usuario?.necessario) return (
     <Tela>
@@ -177,6 +144,29 @@ export default function StartupGate({ children }) {
       <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.62rem', marginTop:14, textAlign:'center' }}>{t('app.setup.online_note')}</div>
     </Tela>
   );
+
+  if (erroEstrutural && !cacheDisponivel) return (
+    <Tela>
+      <AppErrorState title={erro.title} message={erro.message} code={erro.code} diagnostic={diagnostic} onRetry={verificar} compact />
+    </Tela>
+  );
+
+  if (status?.dados?.necessario && !cacheDisponivel) {
+    const faltantes = status.dados?.modulos?.filter(m => m.essencial && m.vazio).map(m => m.label).join(', ') || 'conteúdo essencial';
+    const raw = new Error(`Conteúdo essencial ausente: ${faltantes}`);
+    return (
+      <Tela>
+        <AppErrorState
+          title={t('app.setup.content_unavailable_title')}
+          message={t('app.setup.content_unavailable_message')}
+          code="GD-START-003"
+          diagnostic={buildDiagnostic({ code:'GD-START-003', error:raw, context:'Inicialização', extra:{ faltantes } })}
+          onRetry={verificar}
+          compact
+        />
+      </Tela>
+    );
+  }
 
   return children;
 }

@@ -87,3 +87,13 @@ test('picker de tropas recebe a função de tradução pela camada i18n', () => 
   assert.match(picker, /useI18n/);
   assert.match(picker, /getTipoAtaque\(item,\s*t\)/);
 });
+
+
+test('produção e APK usam a API canônica do Render sem depender de localhost', () => {
+  const api = read('src/config/api.js');
+  const env = read('.env.production');
+  const workflow = read('.github/workflows/build-apk.yml');
+  assert.match(api, /CANONICAL_API_URL = 'https:\/\/guiadoa-agrq\.onrender\.com'/);
+  assert.match(env, /VITE_API_URL=https:\/\/guiadoa-agrq\.onrender\.com/);
+  assert.match(workflow, /secrets\.VITE_API_URL \|\| 'https:\/\/guiadoa-agrq\.onrender\.com'/);
+});

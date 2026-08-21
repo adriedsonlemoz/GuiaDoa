@@ -1,6 +1,9 @@
 /**
- * Compatibilidade da Beta 2.8.
- * Os dados oficiais do jogo são carregados exclusivamente pelo serviço online.
+ * Compatibilidade dos caches legados.
+ * A API online continua sendo a fonte oficial; desde a Beta 2.73 o último
+ * snapshot recebido é mantido separadamente em IndexedDB para abertura rápida
+ * e uso durante cold start/offline. As chaves abaixo existem apenas para
+ * limpar formatos antigos que não devem mais ser consumidos.
  */
 export const SYNC_KEYS = Object.freeze({
   ITENS: 'doa_cache_itens_v2',

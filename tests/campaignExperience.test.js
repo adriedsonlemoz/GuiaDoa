@@ -81,7 +81,7 @@ test('detalhes do Mapa & Campanha usam tópicos recolhíveis e voltar interno à
   assert.match(collapsible, /campaign-collapse-trigger/);
   assert.match(collapsible, /aria-expanded/);
   assert.match(css, /\.campaign-back\{[^}]*margin-left:auto/);
-  assert.match(css, /\.campaign-back\{[^}]*color:#3f7656/);
+  assert.match(css, /\.campaign-back\{[^}]*background:linear-gradient\(180deg,#46c65b,#26943b\)[^}]*color:#fff/);
 });
 
 test('recompensas de Antropos exibem imagens locais sem quantidade fixa no frontend', () => {

@@ -395,40 +395,41 @@ The Great Dragon is not on this list because it is part of initial progression a
 function grodzLevelRows(locale = 'pt-BR') {
   const levelWord = locale === 'pt-BR' ? 'Nv.' : 'Lv.';
   const gameLabel = locale === 'pt-BR' ? 'jogo recomenda' : 'game recommends';
-  const enemyLabel = locale === 'pt-BR' ? 'inimigos' : 'enemies';
-  const partial = locale === 'pt-BR' ? 'composição parcial' : 'partial composition';
-  const pending = locale === 'pt-BR' ? 'composição pendente' : 'composition pending';
+  const enemyLabel = locale === 'pt-BR' ? 'inimigo' : 'enemy';
+  const noGameRecommendation = locale === 'pt-BR' ? 'nenhuma tropa exibida' : 'no troop shown';
+  const healthBar = locale === 'pt-BR' ? 'Grodz — barra de vida, sem tropas definidas' : 'Grodz — health bar, no defined troops';
   const troopName = troop => localField(troop, 'nome', locale) || troop?.nome || '';
   const troopList = troops => (troops || []).map(troop => `${fmtGuideNumber(troop.quantidade, locale)} ${troopName(troop)}`).join(' + ');
   return GRODZ_SEED.map(entry => {
-    const status = entry.grodz?.composicaoStatus;
-    const enemy = troopList(entry.tropas) || (status === 'pendente' ? pending : '—');
-    const official = troopList(entry.grodz?.recomendacaoJogo) || '—';
-    const statusText = status === 'parcial' ? ` | ⚠ ${partial}` : status === 'pendente' ? ` | ⚠ ${pending}` : '';
-    return `- ${levelWord} ${entry.nivel} → ${gameLabel}: ${official} | ${enemyLabel}: ${enemy}${statusText}`;
+    const enemy = entry.grodz?.inimigoTipo === 'barra_vida' ? healthBar : troopList(entry.tropas);
+    const official = troopList(entry.grodz?.recomendacaoJogo) || noGameRecommendation;
+    return `- ${levelWord} ${entry.nivel} → ${gameLabel}: ${official} | ${enemyLabel}: ${enemy}`;
   }).join('\n');
 }
 
-const GRODZ_TUTORIAL_PT = `«🛡️ A Campanha de Grodz possui 10 níveis e é uma das rotas para obter partes de armadura de dragão.
-Os dados de tropas e recomendações do jogo abaixo vêm dos prints enviados; onde o relatório está cortado, o GUIA marca a informação como parcial em vez de adivinhar.»
+const GRODZ_TUTORIAL_PT = `«🛡️ A Campanha de Grodz possui 10 níveis. Os níveis 1–9 servem como progressão; no Nv.10 você enfrenta o próprio Grodz e pode obter partes de armadura de dragão.»
 
 🧭 Como entrar
 
 1. Abra Missões.
 2. Entre na aba Campanha.
-3. Escolha um dos níveis de Grodz, do 1 ao 10.
-4. Antes do ataque, selecione o dragão cuja armadura você quer tentar obter.
-5. Ataque e confira a recompensa.
+3. Avance pelos níveis de Grodz.
+4. No ataque, você pode selecionar um dragão caso queira a armadura daquele dragão específico.
+5. Se não selecionar nenhum dragão, a armadura recebida será aleatória entre os dragões que você possui.
 
-A Campanha permite até ${GRODZ_MECHANICS.ataqueLimiteDiario} ataques por dia e o contador reinicia às ${GRODZ_MECHANICS.resetDiario}.
+Ataque normal e Devastar compartilham o mesmo contador diário de ${GRODZ_MECHANICS.limiteDiarioCompartilhado} ações.
+
+Exemplo: 10 ataques normais + 15 usos de Devastar = 25 ações consumidas e 74 restantes.
 
 ---
 
-🐉 Qual dragão escolher?
+🐉 Como funciona a armadura
 
-A armadura está ligada ao dragão escolhido no momento do ataque. Se você quer tentar obter uma parte da armadura do Dragão da Terra, selecione o Dragão da Terra antes de enviar a marcha.
+Se você selecionar um dragão antes do ataque, a peça de armadura obtida será daquele dragão.
 
-A parte recebida é aleatória. Você pode fazer vários ataques e receber a mesma peça repetidas vezes; o jogo não garante uma parte diferente a cada tentativa.
+Se você não selecionar nenhum dragão, o jogo escolhe aleatoriamente uma armadura entre os dragões que você já possui.
+
+As partes continuam aleatórias e podem se repetir. Fazer vários ataques não garante receber uma peça diferente em cada tentativa.
 
 ---
 
@@ -436,115 +437,140 @@ A parte recebida é aleatória. Você pode fazer vários ataques e receber a mes
 
 Use ${fmtGuideNumber(GRODZ_MECHANICS.tropaPrincipal.quantidade)} Magmassauros (Lava Jaws).
 
-Esta é a configuração principal registrada no GUIA para os níveis 1 a ${GRODZ_MECHANICS.tropaPrincipal.nivelMaxSemPerdas}, informada como suficiente para passar sem perdas.
+Essa configuração foi testada pelo GUIA e é a recomendação principal para passar os níveis 1 a ${GRODZ_MECHANICS.tropaPrincipal.nivelMaxSemPerdas} sem perdas.
 
-No Nv.10, não há configuração garantida sem perdas no momento. Para contas mais evoluídas, 5.000 Magmassauros, 5.000 Hoplitas ou 5.000 Ogros de Granito ficam registrados como referências em validação. A quantidade mínima ainda pode ser menor e perdas são esperadas.
+Você pode usar outras tropas se preferir, mas a recomendação exibida é a configuração já testada pelo GUIA.
 
 ---
 
-📊 Tropas por nível
+☠️ Nv.10 — Grodz
+
+O Nv.10 não possui uma quantidade de tropas inimigas conhecida. Grodz é representado por uma barra de vida, e não por uma composição normal de tropas.
+
+Recomendação do GUIA:
+
+- ${fmtGuideNumber(GRODZ_MECHANICS.nivel10.magmassauros)} Magmassauros
+- ${fmtGuideNumber(GRODZ_MECHANICS.nivel10.ogrosGranito)} Ogros de Granito
+
+Envie as duas tropas juntas na mesma marcha.
+
+⚠️ Perdas são esperadas no Nv.10. Você pode usar outras tropas, mas essa é a formação recomendada pelo GUIA. Tropas elegíveis perdidas podem seguir para as Fontes de Recuperação conforme as regras do jogo.
+
+---
+
+📊 Inimigos por nível
 
 ${grodzLevelRows('pt-BR')}
 
-Nos Nv.8 e 9, o relatório corta o nome exato de uma tropa de Dragão. No Nv.10, o material enviado confirma a missão final e sua recompensa, mas não mostra a composição inimiga completa. Esses pontos permanecem sinalizados até termos um print melhor.
+Os Nv.8 e 9 estão registrados como Dragões de Combate. No Nv.10 não existe composição de tropas definida: o inimigo é o próprio Grodz, mostrado por uma barra de vida.
 
 ---
 
-💥 Devastar
+💥 Ticket de Campanha de Devastar
 
-O Pergaminho Devastar usado aqui é o mesmo item cadastrado no módulo Itens.
+O item usado no modo Devastar se chama **Ticket de Campanha de Devastar**.
 
-- obtenha o item por meio dos Zyrvorthians e da troca na Loja de Surpresas
-- a troca/construção leva cerca de ${GRODZ_MECHANICS.devastarTempoHoras} horas; esse tempo ainda está em validação
-- volte à Campanha e escolha Devastar
-- defina quantas vezes deseja usar
-- selecione o dragão relacionado à armadura desejada
-- limite: ${GRODZ_MECHANICS.devastarLimiteDiario} usos por dia
+- os materiais necessários são obtidos atacando Zyrvorthians
+- o Ticket é produzido na Loja de Surpresas
+- a produção leva ${GRODZ_MECHANICS.devastarTempoHoras} horas
+- depois, volte à Campanha e escolha Devastar
+- escolha quantos Tickets deseja usar
+- selecione um dragão se quiser a armadura dele; sem selecionar, a armadura será aleatória entre seus dragões
 
-O Devastar facilita a repetição da Campanha, mas a aleatoriedade das partes de armadura continua valendo.
-
----
-
-🎁 Nv.10
-
-O material enviado confirma a Arca Superior do Grande Dragão como recompensa, concedendo 1 parte aleatória da Armadura do Grande Dragão.
+⚠️ Devastar não possui um contador separado. Ataques normais e Devastar consomem juntos as mesmas ${GRODZ_MECHANICS.limiteDiarioCompartilhado} ações diárias.
 
 ---
 
-🔗 Informação conectada
+🎁 Recompensa do Nv.10
 
-Este tutorial usa os mesmos dados da página Campanha / Grodz. A recomendação principal aponta para Magmassauros no catálogo de Tropas, o Pergaminho Devastar aponta para o catálogo de Itens e os atalhos da Campanha permitem continuar para Dragões, Tropas, Itens ou este Tutorial sem duplicar os dados.`;
+Ao derrotar Grodz no nível final, você pode obter uma parte de armadura de dragão. As peças são aleatórias e podem se repetir.
 
-const GRODZ_TUTORIAL_EN = `«🛡️ The Grodz Campaign has 10 levels and is one route for obtaining dragon armor parts.
-The enemy troops and in-game recommendations below come from the supplied screenshots. When a battle report is cut off, GUIA marks the information as partial instead of guessing.»
+O GUIA também mantém conectados os registros de armadura, dragões, Magmassauros, Ogros de Granito e o Ticket de Campanha de Devastar para que futuras correções sejam feitas em um único lugar.`;
+
+const GRODZ_TUTORIAL_EN = `«🛡️ The Grodz Campaign has 10 levels. Levels 1–9 are progression stages; at Lv.10 you fight Grodz himself and can obtain dragon armor parts.»
 
 🧭 How to enter
 
 1. Open Missions.
 2. Open the Campaign tab.
-3. Choose a Grodz level from 1 through 10.
-4. Before attacking, select the dragon whose armor you want to obtain.
-5. Attack and check the reward.
+3. Progress through the Grodz levels.
+4. When attacking, you may select a dragon if you want armor for that specific dragon.
+5. If you select no dragon, the armor reward is random among dragons you own.
 
-Campaign allows up to ${GRODZ_MECHANICS.ataqueLimiteDiario} attacks per day and the counter resets at ${GRODZ_MECHANICS.resetDiario}.
+Normal attacks and Devastate share the same daily counter of ${GRODZ_MECHANICS.limiteDiarioCompartilhado} actions.
 
----
-
-🐉 Which dragon should I select?
-
-Armor is tied to the dragon selected when the attack is sent. If you want a chance at an Earth Dragon armor part, select the Earth Dragon before sending the march.
-
-The received part is random. Several attacks can award the same part repeatedly; the game does not guarantee a different piece on every attempt.
+Example: 10 normal attacks + 15 Devastate uses = 25 actions consumed and 74 remaining.
 
 ---
 
-🔥 GUIA primary recommendation — Lv.1–9
+🐉 How armor works
+
+If you select a dragon before attacking, the armor part you receive belongs to that dragon.
+
+If you select no dragon, the game randomly chooses armor for one of the dragons you already own.
+
+Armor parts remain random and may repeat. Multiple attacks do not guarantee a different part every time.
+
+---
+
+🔥 GUIA main recommendation — Lv.1–9
 
 Use ${fmtGuideNumber(GRODZ_MECHANICS.tropaPrincipal.quantidade, 'en-US')} Magmassaurs (Lava Jaws).
 
-This is GUIA's main recorded setup for levels 1 through ${GRODZ_MECHANICS.tropaPrincipal.nivelMaxSemPerdas}, reported as sufficient to clear them with zero losses.
+This setup has been tested by GUIA and is the main recommendation for clearing levels 1 through ${GRODZ_MECHANICS.tropaPrincipal.nivelMaxSemPerdas} with zero losses.
 
-At Lv.10 there is currently no guaranteed zero-loss setup. For more developed accounts, 5,000 Magmassaurs, 5,000 Hoplites, or 5,000 Granite Ogres are stored as validation references. The true minimum may be lower and losses are expected.
+You can use other troops if you prefer, but the displayed recommendation is the setup already tested by GUIA.
 
 ---
 
-📊 Troops by level
+☠️ Lv.10 — Grodz
+
+Lv.10 has no known enemy troop count. Grodz is represented by a health bar rather than a normal troop composition.
+
+GUIA recommendation:
+
+- ${fmtGuideNumber(GRODZ_MECHANICS.nivel10.magmassauros, 'en-US')} Magmassaurs
+- ${fmtGuideNumber(GRODZ_MECHANICS.nivel10.ogrosGranito, 'en-US')} Granite Ogres
+
+Send both troop types together in the same march.
+
+⚠️ Losses are expected at Lv.10. Other troops can be used, but this is GUIA's recommended formation. Eligible lost troops may go to Recovery Pools according to game rules.
+
+---
+
+📊 Enemies by level
 
 ${grodzLevelRows('en-US')}
 
-At Lv.8 and 9, the report cuts off the exact Dragon troop name. At Lv.10, the supplied material confirms the final mission and reward but does not show the full enemy composition. GUIA keeps those points flagged until better evidence is available.
+Lv.8 and 9 are registered as Battle Dragons. At Lv.10 there is no defined troop composition: the enemy is Grodz himself, shown as a health bar.
 
 ---
 
-💥 Devastate
+💥 Devastate Campaign Ticket
 
-The Devastate Scroll used here is the same item registered in the Items module.
+The item used by Devastate is the **Devastate Campaign Ticket**.
 
-- obtain it through Zyrvorthian activity and the Surprise Shop exchange
-- the exchange/build takes about ${GRODZ_MECHANICS.devastarTempoHoras} hours; this time is still being validated
-- return to Campaign and choose Devastate
-- set how many uses you want
-- select the dragon tied to the armor you want
-- limit: ${GRODZ_MECHANICS.devastarLimiteDiario} uses per day
+- required materials are obtained by attacking Zyrvorthians
+- the Ticket is produced in the Surprise Shop
+- production takes ${GRODZ_MECHANICS.devastarTempoHoras} hours
+- then return to Campaign and choose Devastate
+- choose how many Tickets to use
+- select a dragon if you want its armor; with no dragon selected, armor is random among your dragons
 
-Devastate makes repeated Campaign runs easier, but armor-part randomness still applies.
-
----
-
-🎁 Lv.10
-
-The supplied material confirms the Superior Great Dragon Chest as a reward, granting 1 random Great Dragon Armor part.
+⚠️ Devastate does not have a separate counter. Normal attacks and Devastate together consume the same ${GRODZ_MECHANICS.limiteDiarioCompartilhado} daily actions.
 
 ---
 
-🔗 Connected information
+🎁 Lv.10 reward
 
-This tutorial uses the same data as Campaign / Grodz. The main recommendation links to Magmassaurs in the Troops catalog, the Devastate Scroll links to the Items catalog, and Campaign shortcuts can continue to Dragons, Troops, Items, or this Tutorial without duplicating the data.`;
+Defeating Grodz at the final level can grant a dragon armor part. Parts are random and may repeat.
+
+GUIA also keeps armor, dragons, Magmassaurs, Granite Ogres, and the Devastate Campaign Ticket connected so future corrections are maintained from a single source.`;
 
 export const DICAS_SEED = [
   {
     slug: 'guia-inicial-construcoes',
-    titulo: '🐉 Guia para Início de Realm',
+    titulo: '🐉 Guia para Iniciante',
     resumo: 'Um roteiro prático para os primeiros dias: cidade, população, tropas, dragões, Campos, Antropos, defesa e rotina de crescimento.',
     categoria: 'iniciante',
     tipo: 'guia',
@@ -784,7 +810,7 @@ Evitar defesas ruins → preserva o recurso mais caro do início: seu exército
 Não existe necessidade de fazer tudo imediatamente. Desenvolva uma base sólida, aproveite os sistemas do jogo e, acima de tudo, divirta-se. 🐉`,
     i18n: {
       'en-US': {
-        titulo: '🐉 Beginner Realm Guide',
+        titulo: '🐉 Beginner Guide',
         resumo: 'A practical roadmap for the first days: city layout, population, troops, dragons, Fields, Anthropus, defense, and steady growth.',
         conteudo: `«⚠️ This guide is a starting recommendation, not an Alliance rule.
 Adapt your city and upgrade order to your playstyle, available time, and account goals.»
@@ -1067,8 +1093,8 @@ There is no need to do everything immediately. Build a solid foundation, use the
   },
   {
     slug: 'tutorial-campanha-grodz',
-    titulo: '🛡️ Campanha Grodz: Armaduras e Devastar',
-    resumo: 'Aprenda os 10 níveis de Grodz, a recomendação de 1.000 Magmassauros, como escolher o dragão para a armadura e como usar o Devastar.',
+    titulo: '🛡️ Como atacar o Grodz e obter armaduras',
+    resumo: 'Aprenda os 10 níveis de Grodz, a recomendação de ataque, como obter armaduras e como usar o Ticket de Campanha de Devastar.',
     categoria: 'grodz',
     tipo: 'tutorial',
     leituraMin: 9,
@@ -1078,7 +1104,7 @@ There is no need to do everything immediately. Build a solid foundation, use the
     relacionados: {
       modulos: ['campanha', 'tropas', 'dragoes', 'itens'],
       edificios: [],
-      tropas: ['Magmassauros', 'Hoplita', 'Ogros de Granito'],
+      tropas: ['Magmassauros', 'Ogros de Granito'],
       dragoes: ['grande_dragao', 'dragao_agua', 'dragao_terra', 'dragao_fogo'],
       pesquisas: [],
       reinos: [],
@@ -1086,8 +1112,8 @@ There is no need to do everything immediately. Build a solid foundation, use the
     conteudo: GRODZ_TUTORIAL_PT,
     i18n: {
       'en-US': {
-        titulo: '🛡️ Grodz Campaign: Armor & Devastate',
-        resumo: 'Learn all 10 Grodz levels, the 1,000 Magmassaur recommendation, how dragon selection affects armor, and how to use Devastate.',
+        titulo: '🛡️ How to attack Grodz and obtain armor',
+        resumo: 'Learn all 10 Grodz levels, the recommended marches, how to obtain armor, and how to use the Devastate Campaign Ticket.',
         conteudo: GRODZ_TUTORIAL_EN,
       },
     },

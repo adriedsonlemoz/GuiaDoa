@@ -5,7 +5,8 @@ import { DICAS_SEED } from '../seeds/dicas.js';
 test('guia de início de Realm está preparado para PT/EN e dados conectados', () => {
   const guia = DICAS_SEED.find(item => item.slug === 'guia-inicial-construcoes');
   assert.ok(guia);
-  assert.equal(guia.titulo, '🐉 Guia para Início de Realm');
+  assert.equal(guia.titulo, '🐉 Guia para Iniciante');
+  assert.equal(guia.i18n?.['en-US']?.titulo, '🐉 Beginner Guide');
   assert.equal(guia.categoria, 'iniciante');
   assert.equal(guia.tipo, 'guia');
   assert.equal(guia.destaque, true);

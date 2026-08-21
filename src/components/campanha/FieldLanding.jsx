@@ -5,7 +5,7 @@ import { FIELD_TYPES, RESOURCE_ICONS, RESOURCE_KEYS } from './fieldConfig.js';
 export default function FieldLanding({ entries, onSelect, onBack, t }) {
   return (
     <div>
-      <button type="button" className="campaign-back" onClick={onBack}>↩ {t('campaign.categories')}</button>
+      <button type="button" className="campaign-back" onClick={onBack}><span>←</span> {t('campaign.categories')}</button>
       <div className="tw-card mb-3">
         <GameHeader title={`🌲 ${t('campaign.category.fields')}`} />
         <div className="campaign-section-copy">{t('campaign.fields_intro')}</div>

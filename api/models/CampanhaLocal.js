@@ -96,6 +96,8 @@ const GrodzDialogueSchema = new mongoose.Schema({
 }, { _id:false });
 
 const GrodzSchema = new mongoose.Schema({
+  inimigoNome:{ type:String, default:'', trim:true },
+  inimigoTipo:{ type:String, enum:['tropas','barra_vida'], default:'tropas' },
   composicaoStatus:{ type:String, enum:['pendente','parcial','confirmado'], default:'pendente' },
   observacaoComposicao:{ type:String, default:'', trim:true },
   recomendacaoJogo:{ type:[GrodzRecommendedTroopSchema], default:[] },

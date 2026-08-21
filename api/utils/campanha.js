@@ -129,6 +129,8 @@ function normalizarGrodz(input, categoria) {
     return { ordem, personagem, texto, i18n:item?.i18n && typeof item.i18n === 'object' ? item.i18n : {} };
   });
   return {
+    inimigoNome:cleanString(raw.inimigoNome, 120),
+    inimigoTipo:['tropas','barra_vida'].includes(raw.inimigoTipo) ? raw.inimigoTipo : 'tropas',
     composicaoStatus,
     observacaoComposicao:cleanString(raw.observacaoComposicao, 1200),
     recomendacaoJogo,

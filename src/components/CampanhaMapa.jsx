@@ -88,7 +88,7 @@ function CategoryLanding({ counts, onSelect, t }) {
 function FieldLanding({ entries, onSelect, onBack, t }) {
   return (
     <div>
-      <button type="button" className="campaign-back" onClick={onBack}>↩ {t('campaign.categories')}</button>
+      <button type="button" className="campaign-back" onClick={onBack}><span>←</span> {t('campaign.categories')}</button>
       <div className="tw-card mb-3">
         <GameHeader title={`🌲 ${t('campaign.category.fields')}`} />
         <div className="campaign-section-copy">{t('campaign.fields_intro')}</div>
@@ -117,7 +117,7 @@ function LevelList({ category, entries, onOpen, onBack, t, locale, content, titl
   const fmt = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   return (
     <div>
-      <button type="button" className="campaign-back" onClick={onBack}>↩ {category === 'campos' ? t('campaign.field_types') : t('campaign.categories')}</button>
+      <button type="button" className="campaign-back" onClick={onBack}><span>←</span> {category === 'campos' ? t('campaign.field_types') : t('campaign.categories')}</button>
       <div className="tw-card mb-3">
         <GameHeader title={title || `${cat?.icon || '◆'} ${t(cat?.title || 'campaign.title')}`} />
         <div className="campaign-section-copy">{category === 'campos' ? t('campaign.field_levels_intro') : t(cat?.desc || 'campaign.intro')}</div>
@@ -350,7 +350,7 @@ function Detail({ entry, onBack, t, locale, content }) {
   const principal = entry.campo?.recursoPrincipal || '';
   return (
     <div>
-      <button type="button" className="campaign-back" onClick={onBack}>↩ {t('campaign.levels')}</button>
+      <button type="button" className="campaign-back" onClick={onBack}><span>←</span> {t('campaign.levels')}</button>
       <div className="campaign-report-card">
         <div className="campaign-report-ribbon">{content(entry, 'nome')}</div>
         <div className="campaign-report-summary">

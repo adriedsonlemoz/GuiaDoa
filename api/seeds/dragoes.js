@@ -76,6 +76,17 @@ const dragon = ({ id, ordem, nome, elemento, cor, obtencao, habilidades = [], ni
   i18n:{ 'en-US': { nome:DRAGON_I18N[id]?.nome || nome, elemento:DRAGON_I18N[id]?.elemento || elemento } },
 });
 
+const HABILIDADES_DRAGAO_AGUA = [
+  {
+    id:'paz_do_dragao',
+    nome:'Paz do Dragão',
+    tipo:'comum',
+    imagem:'/assets/items/defense/paz-do-dragao.webp',
+    descricao:'Você não pode atacar ou ser atacado por 3 dias. Use quando não estiver lutando ou marchando. Pode ser comprada por 40 Rubis e também obtida em arcas ou recompensas de torneios.',
+    i18n:{ 'en-US':{ nome:'Dragon Peace', descricao:'You cannot attack or be attacked for 3 days. Use it when you are not fighting or marching. It can be bought for 40 Rubies and may also be obtained from tournament chests or rewards.' } },
+  },
+];
+
 const HABILIDADES_GRANDE_DRAGAO = [
   {
     id: 'orbe_protecao',
@@ -206,7 +217,7 @@ export const DRAGOES_SEED = [
     obtencao:{ tipo:'inicial', resumo:'É o dragão principal da cidade e faz parte da progressão inicial da conta. Não precisa ser capturado.', fonte:null, i18n:{ 'en-US':{ resumo:'It is the city’s main dragon and part of the account’s initial progression. It does not need to be captured.' } } },
     habilidades:HABILIDADES_GRANDE_DRAGAO, niveis:NIVEIS_GRANDE_DRAGAO,
   }),
-  dragon({ id:'dragao_agua', ordem:2, nome:'Dragão da Água', elemento:'Água', cor:'#2F8DA8', obtencao:waterObtencao(), niveis:NIVEIS_DRAGAO_AGUA }),
+  dragon({ id:'dragao_agua', ordem:2, nome:'Dragão da Água', elemento:'Água', cor:'#2F8DA8', obtencao:waterObtencao(), habilidades:HABILIDADES_DRAGAO_AGUA, niveis:NIVEIS_DRAGAO_AGUA }),
   dragon({ id:'dragao_fogo', ordem:3, nome:'Dragão do Fogo', elemento:'Fogo', cor:'#C94B20', obtencao:captureObtencao('dragao_fogo','O Dragão do Fogo') }),
   dragon({ id:'dragao_terra', ordem:4, nome:'Dragão da Terra', elemento:'Terra', cor:'#776548', obtencao:captureObtencao('dragao_terra','O Dragão da Terra') }),
   dragon({ id:'dragao_beladona', ordem:5, nome:'Dragão Beladona', elemento:'Beladona', cor:'#6750A4', obtencao:captureObtencao('dragao_beladona','O Dragão Beladona') }),

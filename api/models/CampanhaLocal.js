@@ -122,6 +122,9 @@ const CampanhaLocalSchema = new mongoose.Schema({
   estrategia:{ type:EstrategiaSchema, default:() => ({}) },
   guiasAtaque:{ type:[GuiaAtaqueSchema], default:[] },
   grodz:{ type:GrodzSchema, default:() => ({}) },
+  // Zyrvorthian possui habilidades, materiais, ranking e receitas próprios.
+  // Mantido como Mixed para permitir adicionar novos chefes sem migração destrutiva do schema.
+  zyrvorthian:{ type:mongoose.Schema.Types.Mixed, default:() => ({}) },
   fonte:{
     tipo:{ type:String, default:'manual' },
     data:{ type:String, default:'' },

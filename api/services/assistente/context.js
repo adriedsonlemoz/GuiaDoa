@@ -36,7 +36,9 @@ export const buildContext = async (locale = 'pt-BR') => {
           const categoria = localizedValue(i, 'categoria', locale);
           const raridade = localizedValue(i, 'raridade', locale);
           const meta = [categoria, raridade].filter(Boolean).join(' · ');
-          return `• **${nome}**${meta ? ` [${meta}]` : ''}` + (descricao ? `: ${descricao}` : '') + (uso ? ` | Uso: ${uso}` : '') + (origem ? ` | Origem: ${origem}` : '');
+          const preco = Number.isFinite(Number(i?.preco?.valor)) ? ` | Preço: ${Number(i.preco.valor).toLocaleString(locale)} ${locale === 'en-US' ? 'Rubies' : 'Rubis'}` : '';
+          const efeito = i?.efeito?.tipo && i?.efeito?.valor != null ? ` | Efeito: ${i.efeito.tipo} ${i.efeito.valor} ${i.efeito.unidade || ''}`.trimEnd() : '';
+          return `• **${nome}**${meta ? ` [${meta}]` : ''}` + (descricao ? `: ${descricao}` : '') + preco + efeito + (uso ? ` | Uso: ${uso}` : '') + (origem ? ` | Origem: ${origem}` : '');
         }).join('\n')
       : 'Nenhum item cadastrado.';
 

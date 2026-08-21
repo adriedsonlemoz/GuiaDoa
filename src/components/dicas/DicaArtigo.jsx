@@ -8,6 +8,7 @@ import DicaGameContext from './DicaGameContext.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
 import { useGameData } from '../../data/GameDataContext.jsx';
 import { applyDicaVariables, buildDicaGameVariables } from './dicaGameUtils.js';
+import DefenseProtectionCalculator from './DefenseProtectionCalculator.jsx';
 
 const typeIcon = { guia: '🧭', tutorial: '📘', dica: '💡' };
 
@@ -100,7 +101,8 @@ const DicaArtigo = ({ dica, catInfo, onClose, setRoute }) => {
         </header>
 
         <div style={{ padding: 0 }}>
-          <GuideContentRenderer content={conteudo} variables={gameVariables} collapsible={['guia-inicial-construcoes', 'tutorial-atacar-antropos', 'tutorial-capturar-dragoes'].includes(dica.slug)} />
+          <GuideContentRenderer content={conteudo} variables={gameVariables} collapsible={['guia-inicial-construcoes', 'tutorial-atacar-antropos', 'tutorial-capturar-dragoes', 'tutorial-defesa-inimigos'].includes(dica.slug)} />
+          {dica.slug === 'tutorial-defesa-inimigos' ? <DefenseProtectionCalculator /> : null}
           <DicaGameContext dica={dica} setRoute={navegar} />
         </div>
       </main>

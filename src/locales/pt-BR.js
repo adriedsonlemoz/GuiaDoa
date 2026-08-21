@@ -1730,7 +1730,7 @@ const ptBR = {
   'campaign.field.forest': 'Floresta',
   'campaign.level_count': '{count} nível(is)',
   'campaign.category.zyrvorthian': 'Zyrvorthian',
-  'campaign.category.zyrvorthian.desc': 'Área preparada para o conteúdo do chefe mundial.',
+  'campaign.category.zyrvorthian.desc': 'Chefes da Calamidade, habilidades, materiais, ranking, receitas e horários confirmados.',
   'campaign.category.grodz': 'Campanha / Grodz',
   'campaign.category.grodz.desc': '10 níveis de campanha com tropas, armaduras, Devastar e estratégias conectadas.',
   'campaign.grodz.intro': 'Avance pelos 10 níveis de Grodz, veja a composição inimiga, a recomendação oficial do jogo e a marcha prática do GUIA para buscar armaduras de dragão.',

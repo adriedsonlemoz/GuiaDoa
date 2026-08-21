@@ -4,6 +4,7 @@ import AppErrorState from '../ui/AppErrorState.jsx';
 import { API_URL as API } from '../config/api.js';
 import { useI18n } from '../hooks/useI18n.jsx';
 import { GrodzLanding, GrodzDetail } from './campanha/grodz/GrodzView.jsx';
+import { ZyrvorthianLanding, ZyrvorthianDetail } from './campanha/zyrvorthian/ZyrvorthianView.jsx';
 
 const CATEGORIES = [
   { id:'antropos', icon:'☠️', title:'campaign.category.anthropus', desc:'campaign.category.anthropus.desc' },
@@ -407,7 +408,7 @@ function Detail({ entry, onBack, t, locale, content }) {
 
 export default function CampanhaMapa({ setRoute }) {
   const { t, locale, content } = useI18n();
-  const [data, setData] = useState({ locais:[], categorias:{}, grodz:{} });
+  const [data, setData] = useState({ locais:[], categorias:{}, grodz:{}, zyrvorthian:{} });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [category, setCategory] = useState(null);
@@ -444,9 +445,11 @@ export default function CampanhaMapa({ setRoute }) {
 
   if (loading) return <Loading t={t} />;
   if (error) return <AppErrorState title={t('campaign.load_error')} message={t('campaign.load_error_help')} code="CAMPAIGN-DATA-001" diagnostic={error.message} onRetry={load} />;
+  if (selected && selected.categoria === 'zyrvorthian') return <ZyrvorthianDetail entry={selected} mechanics={data.zyrvorthian || {}} onBack={() => setSelected(null)} setRoute={setRoute} t={t} locale={locale} />;
   if (selected && selected.categoria === 'grodz') return <GrodzDetail entry={selected} mechanics={data.grodz || {}} onBack={() => setSelected(null)} setRoute={setRoute} t={t} locale={locale} />;
   if (selected) return <Detail entry={selected} onBack={() => setSelected(null)} t={t} locale={locale} content={content} />;
   if (category === 'campos' && !fieldType) return <FieldLanding entries={categoryEntries} onSelect={setFieldType} onBack={() => setCategory(null)} t={t} />;
+  if (category === 'zyrvorthian') return <ZyrvorthianLanding entries={entries} mechanics={data.zyrvorthian || {}} onOpen={setSelected} onBack={() => setCategory(null)} setRoute={setRoute} t={t} locale={locale} />;
   if (category === 'grodz') return <GrodzLanding entries={entries} mechanics={data.grodz || {}} onOpen={setSelected} onBack={() => setCategory(null)} setRoute={setRoute} t={t} locale={locale} />;
   if (category) return <LevelList category={category} entries={entries} onOpen={setSelected} onBack={() => category === 'campos' ? setFieldType(null) : setCategory(null)} t={t} locale={locale} content={content} title={category === 'campos' && fieldConfig ? `${fieldConfig.icon} ${t(fieldConfig.title)}` : null} />;
   return <CategoryLanding counts={data.categorias} onSelect={cat => { setCategory(cat); setFieldType(null); }} t={t} />;

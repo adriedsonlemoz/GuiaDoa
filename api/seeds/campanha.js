@@ -6,8 +6,10 @@ import { MORRO_SEED } from './campos/morro.js';
 import { buildAnthropusAttackGuides, enemyTroop } from './antropos/attackGuides.js';
 import { GRODZ_SEED } from './grodz/levels.js';
 import { GRODZ_MECHANICS } from './grodz/mechanics.js';
+import { ZYRVORTHIAN_SEED } from './zyrvorthian/bosses.js';
+import { ZYRVORTHIAN_MECHANICS } from './zyrvorthian/mechanics.js';
 
-export { SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MORRO_SEED, GRODZ_SEED, GRODZ_MECHANICS };
+export { SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MORRO_SEED, GRODZ_SEED, GRODZ_MECHANICS, ZYRVORTHIAN_SEED, ZYRVORTHIAN_MECHANICS };
 
 const recursos = (stone, metals, wood, gold, food) => [
   { tipo:'stone',  valor:stone.valor,  exibicao:stone.exibicao,  exato:stone.exato ?? true },

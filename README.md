@@ -4,7 +4,7 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 
 ## Versão
 
-**1.0.0-beta.2.74**
+**1.0.0-beta.2.75**
 
 ## Principais módulos
 
@@ -15,6 +15,15 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 - **Extras → Reinos** com catálogo canônico, abertura/idade calculada, fuso, horários confirmados, eventos ativos e histórico
 - Extras: Reinos, Doação, Sobre, Texto Colorido e Backup
 - Painel Admin para manutenção dos conteúdos do MongoDB
+
+## Beta 2.75 — Zyrvorthian e defesa
+
+- Zyrvorthian agora possui tela própria com regras, horários confirmados por reino e fichas de Astrax/Aetherion.
+- Novo tutorial **Como se defender dos seus inimigos**, com calculadora de Tratado de Cessar-fogo e Paz do Dragão.
+- Proteção do Dragão, Paz do Dragão, teleportes e materiais dos chefes entram no catálogo com ícones recortados dos screenshots.
+- Paz do Dragão foi adicionada ao Dragão da Água.
+- O popup de habilidades do Dragão foi corrigido para usar modal opaco em portal, evitando o painel transparente.
+- O Assistente passa a receber preços em Rubis e efeitos dos itens em seu contexto.
 
 ## Eventos por reino
 

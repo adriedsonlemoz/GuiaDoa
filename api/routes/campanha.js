@@ -2,7 +2,7 @@ import { Router } from 'express';
 import CampanhaLocal from '../models/CampanhaLocal.js';
 import { autenticar } from '../middleware/auth.js';
 import { normalizarCampanhaPayload, resumoCategorias } from '../utils/campanha.js';
-import { CAMPANHA_CATEGORIAS, GRODZ_MECHANICS } from '../seeds/campanha.js';
+import { CAMPANHA_CATEGORIAS, GRODZ_MECHANICS, ZYRVORTHIAN_MECHANICS } from '../seeds/campanha.js';
 
 const router = Router();
 
@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
     if (categoria && CAMPANHA_CATEGORIAS.includes(categoria)) filtro.categoria = categoria;
     const locais = await CampanhaLocal.find(filtro).sort({ categoria:1, subtipo:1, ordem:1, nivel:1, nome:1 }).lean();
     const todos = categoria ? await CampanhaLocal.find({ ativo:true }).select('categoria').lean() : locais;
-    res.json({ locais, total:locais.length, categorias:resumoCategorias(todos), grodz:GRODZ_MECHANICS });
+    res.json({ locais, total:locais.length, categorias:resumoCategorias(todos), grodz:GRODZ_MECHANICS, zyrvorthian:ZYRVORTHIAN_MECHANICS });
   } catch (err) { res.status(500).json({ erro:err.message }); }
 });
 

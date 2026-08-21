@@ -13,7 +13,7 @@ import { DICAS_SEED } from '../seeds/dicas.js';
 import { tacticalMetadata } from '../seeds/tropasTaticas.js';
 import { TROOP_COMBAT_EVIDENCE } from '../seeds/tropasCombate.js';
 import { ITEM_SCREENSHOT_CATALOG } from '../seeds/itensCatalogo.js';
-import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MORRO_SEED, GRODZ_SEED } from '../seeds/campanha.js';
+import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MORRO_SEED, GRODZ_SEED, ZYRVORTHIAN_SEED } from '../seeds/campanha.js';
 import { DRAGOES_SEED } from '../seeds/dragoes.js';
 import { TODAS_TROPAS } from '../seeds/core.js';
 import { EDIFICIOS_ESPECIAIS } from '../seeds/edificiosEspeciais.js';
@@ -55,6 +55,10 @@ const TUTORIALS_EN_268_KEY = 'content:tutoriais-en:beta-2.68';
 const EVENTOS_270_KEY = 'content:eventos:beta-2.70';
 const EVENTOS_REINOS_271_KEY = 'content:eventos-reinos:beta-2.71';
 const EVENTOS_REINOS_272_KEY = 'content:eventos-reinos:beta-2.72';
+const CAMPANHA_ZYRVORTHIAN_275_KEY = 'content:campanha-zyrvorthian:beta-2.75';
+const ITENS_DEFESA_ZYRVORTHIAN_275_KEY = 'content:itens-defesa-zyrvorthian:beta-2.75';
+const TUTORIAL_DEFESA_275_KEY = 'content:dica-defesa-inimigos:beta-2.75';
+const DRAGAO_AGUA_PAZ_275_KEY = 'content:dragao-agua-paz:beta-2.75';
 
 
 const INICIANTE_CATEGORY = {
@@ -1367,6 +1371,90 @@ async function migrarEventosReinos272() {
   });
 }
 
+
+async function migrarCampanhaZyrvorthian275() {
+  return executarMigracao264(CAMPANHA_ZYRVORTHIAN_275_KEY, 'campanhaZyrvorthian275', async () => {
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const seed of ZYRVORTHIAN_SEED) {
+      const atual = await CampanhaLocal.findOne({ slug:seed.slug }).lean();
+      if (!atual) {
+        await CampanhaLocal.create(seed);
+        inseridas += 1;
+        continue;
+      }
+      await CampanhaLocal.updateOne({ slug:seed.slug }, { $set:{
+        categoria:seed.categoria, subtipo:seed.subtipo || '', nivel:null, ordem:seed.ordem, nome:seed.nome,
+        ativo:seed.ativo !== false, tags:seed.tags || [], zyrvorthian:seed.zyrvorthian || {},
+        fonte:seed.fonte || {}, i18n:seed.i18n || {}, atualizadoEm:new Date(),
+      } });
+      atualizadas += 1;
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
+async function migrarItensDefesaZyrvorthian275() {
+  return executarMigracao264(ITENS_DEFESA_ZYRVORTHIAN_275_KEY, 'itensDefesaZyrvorthian275', async () => {
+    const slugs = [
+      'teleportador-sombrio','teleportador-direcionado','tratado-cessar-fogo','protecao-do-dragao','paz-do-dragao',
+      'estilhaco-poeira-estelar-astrax','astrax-olho-do-vazio','pena-aetherion','garra-trovao-aetherion',
+    ];
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const slug of slugs) {
+      const seed = ITEM_SCREENSHOT_CATALOG.find(item => item.slug === slug);
+      if (!seed) throw new Error(`Seed do item ${slug} não encontrada.`);
+      const atual = await Item.findOne({ slug }).lean();
+      if (!atual) {
+        await Item.create(seed);
+        inseridas += 1;
+        continue;
+      }
+      const { slug:seedSlug, ...patch } = seed;
+      await Item.updateOne({ slug }, { $set:{ ...patch, atualizadoEm:new Date() } });
+      atualizadas += 1;
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
+async function migrarTutorialDefesa275() {
+  return executarMigracao264(TUTORIAL_DEFESA_275_KEY, 'tutorialDefesa275', async () => {
+    const seed = DICAS_SEED.find(item => item.slug === 'tutorial-defesa-inimigos');
+    if (!seed) throw new Error('Seed do tutorial de defesa não encontrada.');
+    const atual = await Dica.findOne({ slug:seed.slug }).lean();
+    if (!atual) { await Dica.create(seed); return { atualizadas:0, inseridas:1 }; }
+    await Dica.updateOne({ slug:seed.slug }, { $set:{
+      titulo:seed.titulo, resumo:seed.resumo, categoria:seed.categoria, tipo:seed.tipo, leituraMin:seed.leituraMin,
+      destaque:seed.destaque, ativo:seed.ativo, ordem:seed.ordem, relacionados:seed.relacionados,
+      conteudo:seed.conteudo, i18n:seed.i18n || {}, atualizadoEm:new Date(),
+    } });
+    return { atualizadas:1, inseridas:0 };
+  });
+}
+
+async function migrarDragaoAguaPaz275() {
+  return executarMigracao264(DRAGAO_AGUA_PAZ_275_KEY, 'dragaoAguaPaz275', async () => {
+    const seed = DRAGOES_SEED.find(item => item.id === 'dragao_agua');
+    if (!seed) throw new Error('Seed do Dragão da Água não encontrada.');
+    const paz = (seed.habilidades || []).find(item => item.id === 'paz_do_dragao');
+    if (!paz) throw new Error('Habilidade Paz do Dragão não encontrada no seed.');
+    const atual = await Dragao.findOne({ slug:'dragao_agua' }).lean();
+    if (!atual) {
+      const { id, ...rest } = seed;
+      await Dragao.create({ slug:id, ...rest });
+      return { atualizadas:0, inseridas:1 };
+    }
+    const skills = Array.isArray(atual.habilidades) ? [...atual.habilidades] : [];
+    const idx = skills.findIndex(item => item?.id === paz.id || item?.nome === paz.nome);
+    if (idx >= 0) skills[idx] = { ...skills[idx], ...paz };
+    else skills.push(paz);
+    await Dragao.updateOne({ slug:'dragao_agua' }, { $set:{ habilidades:skills, atualizadoEm:new Date() } });
+    return { atualizadas:1, inseridas:0 };
+  });
+}
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
@@ -1432,9 +1520,17 @@ export async function executarMigracoesConteudo() {
   if (!eventosReinos271.ok) return eventosReinos271;
   const eventosReinos272 = await migrarEventosReinos272();
   if (!eventosReinos272.ok) return eventosReinos272;
+  const zyrvorthian275 = await migrarCampanhaZyrvorthian275();
+  if (!zyrvorthian275.ok) return zyrvorthian275;
+  const itensDefesa275 = await migrarItensDefesaZyrvorthian275();
+  if (!itensDefesa275.ok) return itensDefesa275;
+  const tutorialDefesa275 = await migrarTutorialDefesa275();
+  if (!tutorialDefesa275.ok) return tutorialDefesa275;
+  const dragaoAguaPaz275 = await migrarDragaoAguaPaz275();
+  if (!dragaoAguaPaz275.ok) return dragaoAguaPaz275;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada && eventos270.ignorada && eventosReinos271.ignorada && eventosReinos272.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada && eventos270.ignorada && eventosReinos271.ignorada && eventosReinos272.ignorada && zyrvorthian275.ignorada && itensDefesa275.ignorada && tutorialDefesa275.ignorada && dragaoAguaPaz275.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
@@ -1456,5 +1552,9 @@ export async function executarMigracoesConteudo() {
     eventos270Atualizados:(eventos270.atualizadas || 0) + (eventos270.inseridas || 0),
     eventosReinos271Atualizados:eventosReinos271.atualizadas || 0,
     eventosReinos272Atualizados:eventosReinos272.atualizadas || 0,
+    zyrvorthian275Atualizado:(zyrvorthian275.atualizadas || 0) + (zyrvorthian275.inseridas || 0),
+    itensDefesa275Atualizados:(itensDefesa275.atualizadas || 0) + (itensDefesa275.inseridas || 0),
+    tutorialDefesa275Atualizado:(tutorialDefesa275.atualizadas || 0) + (tutorialDefesa275.inseridas || 0),
+    dragaoAguaPaz275Atualizado:(dragaoAguaPaz275.atualizadas || 0) + (dragaoAguaPaz275.inseridas || 0),
   };
 }

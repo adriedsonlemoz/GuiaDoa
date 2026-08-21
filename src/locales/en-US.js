@@ -1688,7 +1688,7 @@ const enUS = {
   'campaign.field.forest': 'Forest',
   'campaign.level_count': '{count} level(s)',
   'campaign.category.zyrvorthian': 'Zyrvorthian',
-  'campaign.category.zyrvorthian.desc': 'Area prepared for World Boss content.',
+  'campaign.category.zyrvorthian.desc': 'Calamity Bosses, skills, materials, rankings, recipes, and confirmed schedules.',
   'campaign.category.grodz': 'Campaign / Grodz',
   'campaign.category.grodz.desc': '10 campaign levels with troops, armor, Devastate, and connected strategies.',
   'campaign.grodz.intro': 'Progress through all 10 Grodz levels, review enemy composition, the game’s official recommendation, and GUIA’s practical march for dragon armor.',

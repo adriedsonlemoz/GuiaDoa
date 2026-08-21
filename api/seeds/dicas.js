@@ -1118,4 +1118,125 @@ There is no need to do everything immediately. Build a solid foundation, use the
       },
     },
   },
+  {
+    slug: 'tutorial-defesa-inimigos',
+    titulo: '🛡️ Como se defender dos seus inimigos',
+    resumo: 'Aprenda a usar Tratado de Cessar-fogo, Paz do Dragão e teleportes, preserve suas tropas e calcule quanto precisa para manter a cidade protegida.',
+    categoria: 'iniciante',
+    tipo: 'tutorial',
+    leituraMin: 8,
+    destaque: true,
+    ativo: true,
+    ordem: 3,
+    relacionados: {
+      modulos: ['campanha', 'itens', 'dragoes', 'reinos'],
+      edificios: [],
+      tropas: [],
+      dragoes: ['dragao_agua'],
+      pesquisas: [],
+      itens: ['protecao-do-dragao','tratado-cessar-fogo','paz-do-dragao','teleportador-sombrio','teleportador-direcionado','estilhaco-poeira-estelar-astrax','astrax-olho-do-vazio','pena-aetherion','garra-trovao-aetherion'],
+      reinos: [],
+    },
+    conteudo: `🛡️ Escolha a defesa certa
+Existem várias maneiras de evitar que um inimigo destrua seu exército. Proteção, teleporte e uma boa gestão dos recursos servem a situações diferentes.
+
+---
+
+⏳ Tratado de Cessar-fogo — 12 horas
+O Tratado de Cessar-fogo impede você de atacar e de ser atacado por 12 horas. Use quando não estiver lutando nem marchando.
+
+A Proteção do Dragão não é o escudo: ela é o material usado para fabricar o Tratado.
+
+- complete as 5 missões diárias para receber 2 Proteções do Dragão por dia
+- 2 Proteções do Dragão + 100.000 Pedra + 100.000 Ouro = 1 Tratado de Cessar-fogo
+- cada Tratado leva 4 horas para ser produzido na Loja de Surpresas
+- só com as missões diárias, você consegue material para 1 Tratado de 12h por dia
+
+O planejador no fim deste tutorial calcula automaticamente quantos Tratados, materiais, Pedra e Ouro você precisa.
+
+Exemplo de 7 dias de proteção contínua:
+- 14 Tratados de 12h
+- 28 Proteções do Dragão
+- 14 dias de missões diárias para juntar esses materiais sem Zyrvorthian
+- 1.400.000 Pedra + 1.400.000 Ouro
+- 56 horas de produção se os 14 Tratados forem produzidos em sequência
+
+---
+
+🐲 Use o Zyrvorthian para conseguir mais Tratados
+Os materiais exclusivos dos Chefes da Calamidade permitem produzir Tratados sem depender apenas das duas Proteções do Dragão recebidas no dia.
+
+Astrax:
+- 25 Estilhaços de Poeira Estelar de Astrax + 1 Astrax, o Olho do Vazio = 1 Tratado
+
+Aetherion:
+- 20 Penas de Aetherion + 1 Garra de Trovão de Aetherion = 1 Tratado
+
+Cada chefe usa materiais próprios. Materiais de um chefe não são usados na loja de outro.
+
+---
+
+🐉 Paz do Dragão — 3 dias
+A Paz do Dragão impede atacar e ser atacado por 3 dias. Ela aparece como uma habilidade/opção do Dragão da Água.
+
+- pode ser comprada por 40 Rubis
+- também pode ser obtida em arcas ou recompensas de torneios
+- é útil quando você ficará ausente por mais tempo e quer uma proteção prolongada
+
+Não confunda a Paz do Dragão de 3 dias com o Tratado de Cessar-fogo de 12 horas.
+
+---
+
+🌑 Teleportador Sombrio
+O Teleportador Sombrio custa 30 Rubis e move sua cidade para uma localização aleatória no mapa.
+
+É uma boa saída quando um inimigo já sabe exatamente onde você está. Você desaparece daquela posição, mas isso não torna sua cidade impossível de encontrar. Se atacar o mesmo inimigo novamente, ele poderá localizar você outra vez.
+
+---
+
+🧭 Teleportador Direcionado
+O Teleportador Direcionado custa 75 Rubis. Em vez de mandar sua cidade para um ponto aleatório, ele permite escolher uma localização disponível no mapa.
+
+Use quando quiser controlar para onde vai: afastar-se de uma aliança inimiga, ficar perto de aliados ou escolher uma área mais conveniente.
+
+---
+
+📦 Não vire um alvo lucrativo
+Evite acumular uma quantidade enorme de recursos expostos sem necessidade. Quanto mais comida, madeira, pedra, metal e ouro disponíveis para saque, maior o incentivo para alguém voltar a atacar sua cidade.
+
+Produza e acumule conforme o que pretende gastar. Se houver risco de ataque, gastar recursos em construções, pesquisas e treinamento pode ser melhor do que deixá-los parados.
+
+---
+
+⚔️ Nem todo ataque deve ser defendido
+Se o atacante for muito mais forte, defender apenas para “tentar” pode custar o seu exército inteiro.
+
+Perder alguns recursos pode ser menos prejudicial do que perder todas as tropas. Reconstruir um exército do zero leva tempo e pode travar seu crescimento.
+
+Preserve suas tropas quando a defesa não tiver chance real. Use proteção ou teleporte quando isso for mais vantajoso.
+
+---
+
+🌐 Horário do servidor e do Reino
+A virada diária do servidor acontece às 00:00 UTC. Em Brasília (UTC−3), isso corresponde a 21:00 do dia anterior.
+
+Eventos como Zyrvorthian podem possuir horários cadastrados diferentes entre os Reinos. O GUIA mostra somente os horários confirmados no módulo Reinos; ele não inventa um horário para Reinos que ainda não tenham esse dado.
+
+---
+
+✅ Resumo rápido
+- 12h: Tratado de Cessar-fogo
+- 3 dias: Paz do Dragão
+- fuga imediata aleatória: Teleportador Sombrio
+- mudança planejada de posição: Teleportador Direcionado
+- não acumule recursos sem necessidade
+- não sacrifique seu exército em uma defesa que você sabe que não consegue vencer
+- use o Zyrvorthian para produzir mais Tratados quando precisar de proteção além do limite das missões diárias`,
+    i18n: {
+      'en-US': {
+        titulo: '🛡️ How to defend yourself from enemies',
+        resumo: 'Learn how to use Ceasefire Treaties, Dragon Peace and teleports, preserve your troops, and calculate what you need to keep your city protected.',
+      },
+    },
+  }
 ];

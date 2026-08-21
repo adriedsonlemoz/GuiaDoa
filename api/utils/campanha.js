@@ -139,6 +139,26 @@ function normalizarGrodz(input, categoria) {
   };
 }
 
+
+function normalizarZyrvorthian(input, categoria) {
+  if (categoria !== 'zyrvorthian') return {};
+  const raw = input && typeof input === 'object' ? input : {};
+  const dadosStatus = ['pendente','parcial','confirmado'].includes(raw.dadosStatus) ? raw.dadosStatus : 'pendente';
+  const cleanObjectArray = (value, max = 40) => (Array.isArray(value) ? value : []).slice(0, max).map(item => (item && typeof item === 'object' ? item : {}));
+  return {
+    chefeId:slugifyCampanha(cleanString(raw.chefeId, 100)),
+    dadosStatus,
+    descricao:cleanString(raw.descricao, 1600),
+    habilidades:cleanObjectArray(raw.habilidades, 20),
+    materiais:cleanObjectArray(raw.materiais, 20),
+    golpeFinal:cleanObjectArray(raw.golpeFinal, 20),
+    ranking:cleanObjectArray(raw.ranking, 30),
+    receitas:cleanObjectArray(raw.receitas, 40),
+    observacoes:cleanLines(raw.observacoes, 30, 500),
+    i18n:raw.i18n && typeof raw.i18n === 'object' ? raw.i18n : {},
+  };
+}
+
 export function normalizarCampanhaPayload(body = {}, { parcial = false } = {}) {
   const categoria = cleanString(body.categoria, 32).toLowerCase();
   if (!CAMPANHA_CATEGORIAS.includes(categoria)) throw Object.assign(new Error('Categoria inválida.'), { status:400 });
@@ -212,6 +232,7 @@ export function normalizarCampanhaPayload(body = {}, { parcial = false } = {}) {
   const tags = cleanTags(body.tags);
   const guiasAtaque = normalizarGuiasAtaque(body.guiasAtaque);
   const grodz = normalizarGrodz(body.grodz, categoria);
+  const zyrvorthian = normalizarZyrvorthian(body.zyrvorthian, categoria);
 
   const slugBase = cleanString(body.slug, 120)
     || (subtipo && nivelRaw != null ? `${categoria}-${subtipo}-${nivelRaw}` : `${categoria}-${nivelRaw ?? nome}`);
@@ -223,7 +244,7 @@ export function normalizarCampanhaPayload(body = {}, { parcial = false } = {}) {
     ordem:Number.isFinite(Number(body.ordem)) ? Number(body.ordem) : (nivelRaw ?? 0),
     ativo:body.ativo !== false,
     tropas, recursos, recompensas, recompensasStatus, tags, campo,
-    estrategia, guiasAtaque, grodz,
+    estrategia, guiasAtaque, grodz, zyrvorthian,
     i18n:body.i18n && typeof body.i18n === 'object' ? body.i18n : {},
     fonte:body.fonte && typeof body.fonte === 'object' ? {
       tipo:cleanString(body.fonte.tipo, 30) || 'manual',

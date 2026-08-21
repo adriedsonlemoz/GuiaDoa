@@ -15,14 +15,18 @@ Fonte: 23 capturas do jogo fornecidas em 20/08/2026.
 - Pontos das fases são somados na classificação do evento.
 - Recompensas progressivas são enviadas ao cumprir requisitos; recompensas de ranking são enviadas no fechamento da fase correspondente.
 
-## Ocorrência inicial cadastrada
+## Ocorrências confirmadas cadastradas
 
+Além das capturas, foi informado que o evento atual acontece nos quatro reinos mais recentes já cadastrados no projeto. Portanto, a ocorrência foi confirmada para:
+
+- Realm 345 — Corvith (UTC+0).
+- Realm 346 — Kenorax (UTC-7).
+- Realm 347 — Eisenhold (UTC+1).
 - Realm 348 — Zulanka (UTC-4).
-- Início oficial: 20/08/2026 00:00 UTC.
-- Encerramento: 27/08/2026 00:00 UTC.
-- O fuso UTC-4 é metadado do reino; não desloca o reset global do evento.
+- Início oficial comum: 20/08/2026 00:00 UTC.
+- Encerramento comum: 27/08/2026 00:00 UTC.
 
-Outros reinos não são marcados como ausentes. Sem uma ocorrência cadastrada, permanecem **não confirmados**.
+Os fusos são metadados dos reinos e não deslocam o reset global do evento. Reinos sem ocorrência cadastrada permanecem **não confirmados**; a existência deste grupo de quatro não cria uma regra automática para eventos futuros.
 
 ## Recompensas
 

@@ -1,47 +1,201 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { eventStatus, phaseEventDay, formatUtcDay, buildEventShareText, occurrenceForRealm } from '../src/components/eventos/eventUtils.js';
 
 const read = p => fs.readFileSync(p, 'utf8');
 
-test('Beta 2.70 inclui módulo público de eventos e destaque por reino', () => {
+test('módulo público de Eventos continua vinculado ao reino selecionado', () => {
   const routes = read('src/app/routes.jsx');
   const home = read('src/components/Home.jsx');
   const eventos = read('src/components/Eventos.jsx');
   assert.match(routes, /case 'eventos'/);
   assert.match(home, /EventHomeHighlight/);
-  assert.match(read('src/components/eventos/EventHomeHighlight.jsx'), /events\.confirmed_in/);
   assert.match(eventos, /occurrenceForRealm/);
-  assert.match(eventos, /final_ranking_rewards/);
+  assert.match(eventos, /confirmedRealms/);
   assert.match(eventos, /not_confirmed_rule/);
 });
 
-test('eventos usam reset global separado do fuso do reino', () => {
-  const seed = read('api/seeds/eventos.js');
-  const utils = read('api/utils/eventos.js');
-  assert.match(seed, /servidorFuso:'UTC'/);
-  assert.match(seed, /horarioReset:'00:00'/);
-  assert.match(seed, /reinoId:348/);
-  assert.match(utils, /statusOcorrencia/);
+test('Home recalcula o relógio e remove automaticamente evento encerrado', () => {
+  const homeEvent = read('src/components/eventos/EventHomeHighlight.jsx');
+  assert.match(homeEvent, /setInterval/);
+  assert.match(homeEvent, /15000/);
+  const occurrence={confirmado:true,inicioServidor:'2026-08-20T00:00:00Z',fimServidor:'2026-08-21T00:00:00Z'};
+  assert.equal(eventStatus(occurrence,new Date('2026-08-20T23:59:59Z')),'ativo');
+  assert.equal(eventStatus(occurrence,new Date('2026-08-21T00:00:00Z')),'encerrado');
 });
 
-test('Admin oferece eventos e ocorrências por reino', () => {
-  const state = read('api/admin/js/admin-state.js');
-  const shell = read('api/admin/js/admin-shell.js');
-  const admin = read('api/admin/js/admin-eventos.js');
-  assert.match(state, /id:'eventos'/);
-  assert.match(shell, /carregarEventos/);
-  assert.match(admin, /Ocorrências confirmadas por reino/);
-  assert.match(admin, /Ausência de ocorrência não significa/);
-  assert.match(admin, /me-recompensas/);
-  assert.match(admin, /fonte:EVENTO_FONTE/);
+test('ausência de ocorrência significa não confirmado e não cria evento global', () => {
+  const event={ocorrencias:[{reinoNome:'Zulanka',confirmado:true}]};
+  assert.equal(occurrenceForRealm(event,'Corvith'),null);
+  assert.equal(eventStatus(null),'nao_confirmado');
 });
 
-test('Sobre e conteúdo secundário foram agrupados em Extras', () => {
+test('fases calculam Dia X e dia da semana a partir das datas', () => {
+  const occurrence={inicioServidor:'2026-08-20T00:00:00Z',fimServidor:'2026-08-27T00:00:00Z'};
+  const phase={inicioServidor:'2026-08-21T00:00:00Z',fimServidor:'2026-08-22T00:00:00Z'};
+  assert.equal(phaseEventDay(phase,occurrence),2);
+  assert.match(formatUtcDay(phase.inicioServidor,'pt-BR'),/sexta-feira/i);
+  assert.match(formatUtcDay(phase.inicioServidor,'en-US'),/Friday/i);
+});
+
+test('lista pública de fases usa hierarquia legível e status calculado', () => {
+  const phases=read('src/components/eventos/EventPhaseList.jsx');
+  const css=read('src/index.css');
+  assert.match(phases,/event-phase-kicker/);
+  assert.match(phases,/events\.event_day/);
+  assert.match(phases,/formatUtcDay/);
+  assert.match(phases,/phaseStatus/);
+  assert.match(css,/event-phase-kicker\{[^}]*\.66rem/);
+  assert.match(css,/event-phase-summary-main>strong\{[^}]*\.79rem/);
+  assert.doesNotMatch(css,/event-phase-summary-main>strong\{[^}]*\.4[0-9]rem/);
+});
+
+test('botão Copiar gera instruções com todos os reinos confirmados, fases e regras', () => {
+  const text=buildEventShareText({
+    nome:'Evento',servidorFuso:'UTC',horarioReset:'00:00',
+    ocorrencias:[{reinoNome:'Corvith',confirmado:true},{reinoNome:'Zulanka',confirmado:true}],
+    fases:[{nome:'Fase 1',inicioServidor:'2026-08-21T00:00:00Z',fimServidor:'2026-08-22T00:00:00Z'}],
+    regras:[{texto:'Complete a meta.'}],
+  },{reinoNome:'Zulanka',inicioServidor:'2026-08-20T00:00:00Z',fimServidor:'2026-08-27T00:00:00Z'});
+  assert.match(text,/Corvith, Zulanka/);
+  assert.match(text,/Fase 1/);
+  assert.match(text,/› Complete a meta\./);
+  assert.match(read('src/components/Eventos.jsx'),/events\.copy_instructions/);
+});
+
+test('recompensas estruturadas podem abrir conteúdo relacionado do guia', () => {
+  const rewards=read('src/components/eventos/EventRewards.jsx');
+  assert.match(rewards,/guiadoa_open_troop/);
+  assert.match(rewards,/guiadoa_open_item/);
+  assert.match(rewards,/dragao_/);
+  assert.match(rewards,/pesquisa_/);
+  assert.match(rewards,/event-reward-item is-linked/);
+});
+
+test('Admin de Eventos virou página de gerenciamento com seções independentes', () => {
+  const admin=read('api/admin/js/admin-eventos.js');
+  const index=read('api/admin/index.html');
+  assert.match(admin,/Informações gerais/);
+  assert.match(admin,/Datas e fases/);
+  assert.match(admin,/Reinos/);
+  assert.match(admin,/Recompensas/);
+  assert.match(admin,/Regras/);
+  assert.match(admin,/Histórico/);
+  assert.match(index,/admin-eventos-datas\.js/);
+  assert.match(index,/admin-eventos-reinos\.js/);
+  assert.match(index,/admin-eventos-recompensas\.js/);
+});
+
+test('Admin permite selecionar individualmente e usar atalho dos quatro reinos mais recentes', () => {
+  const realms=read('api/admin/js/admin-eventos-reinos.js');
+  assert.match(realms,/Selecionar 4 mais recentes/);
+  assert.match(realms,/slice\(0,4\)/);
+  assert.match(realms,/EVENTO_REINOS_SELECTED/);
+  assert.match(realms,/Sem ocorrência = não confirmado/);
+  assert.match(realms,/salvarSecaoEvento\('reinos'/);
+});
+
+test('Admin de recompensas usa etapas, ranking por faixa e múltiplos itens', () => {
+  const rewards=read('api/admin/js/admin-eventos-recompensas.js');
+  assert.match(rewards,/Individuais/);
+  assert.match(rewards,/Ranking/);
+  assert.match(rewards,/Revisão/);
+  assert.match(rewards,/posicaoInicio/);
+  assert.match(rewards,/posicaoFim/);
+  assert.match(rewards,/adicionarRewardItem/);
+  assert.match(rewards,/English name/);
+});
+
+test('exclusão de evento exige revisão do impacto antes da confirmação', () => {
+  const admin=read('api/admin/js/admin-eventos.js');
+  const route=read('api/routes/eventos.js');
+  assert.match(admin,/impacto-exclusao/);
+  assert.match(admin,/ocorrência\(s\)/);
+  assert.match(admin,/fase\(s\)/);
+  assert.match(admin,/grupo\(s\) de recompensa/);
+  assert.match(route,/confirmar/);
+  assert.match(route,/requerConfirmacao:true/);
+});
+
+test('migração Beta 2.71 preserva eventos legados e remapeia IDs artificiais para o catálogo canônico', () => {
+  const migration=read('api/services/contentMigrations.js');
+  assert.match(migration,/EVENTOS_REINOS_271_KEY/);
+  assert.match(migration,/normalizarEventoPayload/);
+  assert.match(migration,/preservado sem normalização/);
+  assert.match(migration,/oldIdToNewId/);
+  assert.match(migration,/REINOS_SEED/);
+  assert.match(migration,/somente os 33 reinos informados permanecem no catálogo/);
+  assert.match(migration,/reinoNome:realm\.nome/);
+});
+
+test('Extras possui consulta pública de Reinos com idade, filtros em cards e histórico', () => {
+  const extras=read('src/components/Extras.jsx');
+  const realms=read('src/components/Reinos.jsx');
+  const routes=read('src/app/routes.jsx');
+  const css=read('src/index.css');
+  assert.match(extras,/setRoute\('reinos'\)/);
+  assert.match(routes,/case 'reinos'/);
+  assert.match(realms,/realmAge/);
+  assert.match(realms,/eventos\.filter/);
+  assert.match(realms,/selected\.fusoes/);
+  assert.match(realms,/realms\.tournaments_end/);
+  assert.match(realms,/realms\.dragon_battle/);
+  assert.match(realms,/realm-filter-chips/);
+  assert.match(realms,/realms\.language_utc_7/);
+  assert.match(realms,/realms\.power_title/);
+  assert.match(css,/realm-filter-chips button/);
+  assert.doesNotMatch(realms,/<select/);
+});
+
+test('Reinos não reintroduzem idioma/região e formulário Admin é agrupado', () => {
+  const model=read('api/models/Reino.js');
+  const html=read('api/admin/index.html');
+  assert.doesNotMatch(model,/\bregiao\s*:/);
+  assert.doesNotMatch(model,/\bidioma\s*:/);
+  assert.match(html,/Identificação/);
+  assert.match(html,/Tempo/);
+  assert.match(html,/Horários do reino/);
+  assert.match(html,/Histórico/);
+});
+
+test('layout novo possui limites mobile, rolagem interna de modal e sem scroll horizontal planejado', () => {
+  const css=read('api/admin/css/admin.css');
+  assert.match(css,/@media\s*\(max-width:\s*640px\)/);
+  assert.match(css,/admin-event-modal-body[^}]*overflow-y:auto/);
+  assert.match(css,/admin-realm-check-list/);
+  assert.match(css,/admin-wizard-steps/);
+});
+
+test('Sobre e conteúdo secundário permanecem agrupados em Extras', () => {
   const tools = read('src/components/home/homeTools.js');
   const extras = read('src/components/Extras.jsx');
   assert.doesNotMatch(tools, /id: 'sobre'/);
   assert.doesNotMatch(tools, /modal:color_builder/);
   assert.match(tools, /id: 'extras'/);
   assert.match(extras, /setRoute\('sobre'\)/);
+});
+
+
+test('instruções copiadas respeitam i18n e incluem objetivo de fase sem inventar texto', () => {
+  const utils=read('src/components/eventos/eventUtils.js');
+  const events=read('src/components/Eventos.jsx');
+  assert.match(utils,/content\(rule, 'texto'\)/);
+  assert.match(utils,/content\(phase, 'objetivo'\)/);
+  assert.match(utils,/t\('events\.event_day'/);
+  assert.match(events,/content\(r,'texto'\)/);
+  assert.match(events,/buildEventShareText\(evento, ocorrencia, \{ content, locale, t \}\)/);
+});
+
+test('links de recompensas cobrem tropas, itens, dragões, pesquisas e edifícios específicos', () => {
+  const rewards=read('src/components/eventos/EventRewards.jsx');
+  const buildings=read('src/components/edificios/NormalBuildingsView.jsx');
+  assert.match(rewards,/guiadoa_open_troop/);
+  assert.match(rewards,/guiadoa_open_item/);
+  assert.match(rewards,/dragao_/);
+  assert.match(rewards,/pesquisa_/);
+  assert.match(rewards,/guiadoa_open_building/);
+  assert.match(rewards,/edificios_gruta/);
+  assert.match(rewards,/edificios_basilica/);
+  assert.match(buildings,/guiadoa_open_building/);
 });

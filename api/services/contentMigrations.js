@@ -7,6 +7,8 @@ import CampanhaLocal from '../models/CampanhaLocal.js';
 import Dragao from '../models/Dragao.js';
 import Edificio from '../models/Edificio.js';
 import Evento from '../models/Evento.js';
+import Reino from '../models/Reino.js';
+import ReinoFusao from '../models/ReinoFusao.js';
 import { DICAS_SEED } from '../seeds/dicas.js';
 import { tacticalMetadata } from '../seeds/tropasTaticas.js';
 import { TROOP_COMBAT_EVIDENCE } from '../seeds/tropasCombate.js';
@@ -16,7 +18,10 @@ import { DRAGOES_SEED } from '../seeds/dragoes.js';
 import { TODAS_TROPAS } from '../seeds/core.js';
 import { EDIFICIOS_ESPECIAIS } from '../seeds/edificiosEspeciais.js';
 import { EVENTOS_SEED } from '../seeds/eventos.js';
+import { REINOS_SEED } from '../seeds/reinos.js';
 import { mesclarSeed } from '../utils/seedMerge.js';
+import { normalizarEventoPayload } from '../utils/eventos.js';
+import { slugifyReino } from '../utils/reinos.js';
 
 const MIGRATION_KEY = 'content:dicas:beta-2.14';
 const REALM_BEGINNER_GUIDE_KEY = 'content:dicas-guia-inicio-realm:beta-2.51';
@@ -48,6 +53,7 @@ const TROPAS_I18N_268_KEY = 'content:tropas-i18n:beta-2.68';
 const CAMPANHA_EN_XP_268_KEY = 'content:campanha-en-xp:beta-2.68';
 const TUTORIALS_EN_268_KEY = 'content:tutoriais-en:beta-2.68';
 const EVENTOS_270_KEY = 'content:eventos:beta-2.70';
+const EVENTOS_REINOS_271_KEY = 'content:eventos-reinos:beta-2.71';
 
 
 const INICIANTE_CATEGORY = {
@@ -1142,6 +1148,175 @@ async function migrarEventos270() {
   });
 }
 
+
+async function migrarEventosReinos271() {
+  return executarMigracao264(EVENTOS_REINOS_271_KEY, 'eventosReinos271', async () => {
+    let eventosAtualizados = 0;
+    let reinosAtualizados = 0;
+    let reinosInseridos = 0;
+    let reinosRemovidos = 0;
+    let fusoesAtualizadas = 0;
+
+    // A listagem fornecida pelo usuário é a fonte canônica da Beta 2.71.
+    // IDs antigos artificiais (1, 2, 3...) são remapeados pelo nome sem perder
+    // horários, histórico ou traduções já cadastradas.
+    const aliases = new Map([
+      ['manre','mamre'], ['redforn','redfern'], ['siera','sierra'], ['solange','solace'],
+    ]);
+    const keyFor = value => aliases.get(slugifyReino(value)) || slugifyReino(value);
+    const canonicalByKey = new Map(REINOS_SEED.map(seed => [keyFor(seed.nome), seed]));
+    const canonicalById = new Map(REINOS_SEED.map(seed => [Number(seed.id), seed]));
+    const canonicalIds = REINOS_SEED.map(seed => Number(seed.id));
+
+    const existentesAntes = await Reino.find({}).lean();
+    const oldIdToNewId = new Map();
+    const existingByKey = new Map();
+    for (const realm of existentesAntes) {
+      const key = keyFor(realm.nome || realm.slug);
+      if (!existingByKey.has(key)) existingByKey.set(key, realm);
+      const canonical = canonicalByKey.get(key);
+      if (canonical) oldIdToNewId.set(Number(realm.id), Number(canonical.id));
+    }
+
+    // Remove explicitamente o registro fictício e qualquer outro reino fora da
+    // listagem canônica somente depois que o mapa de IDs antigos foi capturado.
+    const extraIds = existentesAntes.filter(realm => !canonicalByKey.has(keyFor(realm.nome || realm.slug))).map(realm => realm._id);
+    if (extraIds.length) {
+      const removed = await Reino.deleteMany({ _id:{ $in:extraIds } });
+      reinosRemovidos += removed.deletedCount || 0;
+    }
+
+    for (const seed of REINOS_SEED) {
+      const key = keyFor(seed.nome);
+      let atual = existingByKey.get(key) || null;
+      if (atual && extraIds.some(id => String(id) === String(atual._id))) atual = null;
+      if (!atual) atual = await Reino.findOne({ id:Number(seed.id) }).lean();
+
+      const canonical = {
+        id:Number(seed.id),
+        slug:slugifyReino(seed.nome),
+        nome:seed.nome,
+        fuso:seed.fuso || '',
+        tipoEspecial:seed.tipoEspecial || '',
+        // Se a data foi confirmada no catálogo ela prevalece; caso contrário,
+        // uma data previamente cadastrada pelo Admin é preservada.
+        aberturaEm:seed.aberturaEm ? new Date(seed.aberturaEm) : (atual?.aberturaEm || null),
+        status:atual?.status || '',
+        horarios:atual?.horarios || { torneiosFim:'', zyrvorthian:'', batalhaDragao:'' },
+        historico:atual?.historico || { status:'', observacoes:'' },
+        i18n:atual?.i18n || {},
+        atualizadoEm:new Date(),
+      };
+
+      if (atual?._id) {
+        // Evita conflito de ID se uma instalação tiver criado manualmente o
+        // número real em outro documento antes desta migração.
+        const duplicate = await Reino.findOne({ id:canonical.id, _id:{ $ne:atual._id } }).lean();
+        if (duplicate) {
+          canonical.status = duplicate.status || canonical.status;
+          canonical.horarios = duplicate.horarios || canonical.horarios;
+          canonical.historico = duplicate.historico || canonical.historico;
+          canonical.i18n = duplicate.i18n || canonical.i18n;
+          if (!seed.aberturaEm && duplicate.aberturaEm) canonical.aberturaEm = duplicate.aberturaEm;
+          await Reino.deleteOne({ _id:duplicate._id });
+          reinosRemovidos += 1;
+        }
+        const result = await Reino.updateOne(
+          { _id:atual._id },
+          { $set:canonical, $unset:{ regiao:'', idioma:'' } },
+        );
+        reinosAtualizados += result.modifiedCount || 0;
+      } else {
+        await Reino.create(canonical);
+        reinosInseridos += 1;
+      }
+    }
+
+    // Garantia final: somente os 33 reinos informados permanecem no catálogo.
+    const removedOutside = await Reino.deleteMany({ id:{ $nin:canonicalIds } });
+    reinosRemovidos += removedOutside.deletedCount || 0;
+
+    const realmDocs = await Reino.find({ id:{ $in:canonicalIds } }).lean();
+    const realmById = new Map(realmDocs.map(realm => [Number(realm.id), realm]));
+
+    // Se fusões reais já tiverem sido cadastradas, seus IDs acompanham o remapeamento.
+    const fusoes = await ReinoFusao.find({}).lean();
+    for (const fusao of fusoes) {
+      const patch = {};
+      for (const field of ['reinoOriginalId','reinoParceiroId','reinoResultanteId']) {
+        const oldId = Number(fusao[field]);
+        if (oldIdToNewId.has(oldId) && oldIdToNewId.get(oldId) !== oldId) patch[field] = oldIdToNewId.get(oldId);
+      }
+      if (Object.keys(patch).length) {
+        patch.atualizadoEm = new Date();
+        const result = await ReinoFusao.updateOne({ _id:fusao._id }, { $set:patch });
+        fusoesAtualizadas += result.modifiedCount || 0;
+      }
+    }
+
+    // Usa documentos brutos para conseguir normalizar regras legadas que eram
+    // strings antes do novo schema e remapear ocorrências vinculadas a IDs locais.
+    const raws = await Evento.collection.find({}).toArray();
+    for (const raw of raws) {
+      try {
+        const base = { ...raw };
+        if (!base.inicioServidor && base.ocorrencias?.[0]?.inicioServidor) base.inicioServidor = base.ocorrencias[0].inicioServidor;
+        if (!base.fimServidor && base.ocorrencias?.[0]?.fimServidor) base.fimServidor = base.ocorrencias[0].fimServidor;
+        if (Array.isArray(base.ocorrencias)) {
+          base.ocorrencias = base.ocorrencias.map(occ => {
+            const mappedId = oldIdToNewId.get(Number(occ.reinoId)) || Number(occ.reinoId);
+            const realm = realmById.get(mappedId);
+            return {
+              ...occ,
+              reinoId:mappedId,
+              ...(realm ? { reinoNome:realm.nome, fusoReino:realm.fuso } : {}),
+            };
+          });
+        }
+        const normalized = normalizarEventoPayload(base);
+
+        if (raw.slug === 'corrida-armamentista') {
+          const existingById = new Map((normalized.ocorrencias || []).map(occ => [Number(occ.reinoId), occ]));
+          const template = existingById.get(348) || normalized.ocorrencias?.[0];
+          if (template) {
+            normalized.ocorrencias = [345,346,347,348].flatMap(id => {
+              const realm = realmById.get(id);
+              if (!realm) return [];
+              const existing = existingById.get(id);
+              return [{
+                ...(existing || template),
+                codigo:existing?.codigo || `${raw.slug}-${id}`,
+                reinoId:id,
+                reinoNome:realm.nome,
+                fusoReino:realm.fuso,
+                confirmado:true,
+                observacao:existing?.observacao || '',
+              }];
+            });
+          }
+        }
+
+        const { _id, criadoEm, ...patch } = normalized;
+        await Evento.collection.updateOne({ _id:raw._id }, { $set:patch });
+        eventosAtualizados += 1;
+      } catch (err) {
+        // Compatibilidade acima de agressividade: um evento legado inconsistente
+        // não é apagado nem sobrescrito por uma normalização incompleta.
+        console.warn(`[migration beta-2.71] Evento ${raw.slug || raw._id} preservado sem normalização: ${err.message}`);
+      }
+    }
+
+    return {
+      atualizadas:eventosAtualizados + reinosAtualizados + reinosInseridos + reinosRemovidos + fusoesAtualizadas,
+      eventosAtualizados,
+      reinosAtualizados,
+      reinosInseridos,
+      reinosRemovidos,
+      fusoesAtualizadas,
+    };
+  });
+}
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
@@ -1203,9 +1378,11 @@ export async function executarMigracoesConteudo() {
   if (!tutoriaisEn268.ok) return tutoriaisEn268;
   const eventos270 = await migrarEventos270();
   if (!eventos270.ok) return eventos270;
+  const eventosReinos271 = await migrarEventosReinos271();
+  if (!eventosReinos271.ok) return eventosReinos271;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada && eventos270.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada && eventos270.ignorada && eventosReinos271.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
@@ -1225,5 +1402,6 @@ export async function executarMigracoesConteudo() {
     campanha268Atualizada:(campanha268.atualizadas || 0) + (campanha268.inseridas || 0),
     tutoriaisEn268Atualizados:(tutoriaisEn268.atualizadas || 0) + (tutoriaisEn268.inseridas || 0),
     eventos270Atualizados:(eventos270.atualizadas || 0) + (eventos270.inseridas || 0),
+    eventosReinos271Atualizados:eventosReinos271.atualizadas || 0,
   };
 }

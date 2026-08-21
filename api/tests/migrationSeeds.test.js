@@ -20,12 +20,17 @@ test('migração automática possui todos os conjuntos essenciais atuais', () =>
   assert.ok(ITENS_SEED.length >= 6);
 });
 
-test('reinos 345 a 348 fazem parte do seed canônico migrado ao MongoDB', () => {
+test('catálogo canônico de reinos usa os 33 IDs reais confirmados', () => {
   const map = new Map(REINOS_SEED.map(r => [r.id, r]));
+  assert.equal(REINOS_SEED.length, 33);
   assert.equal(map.get(345)?.nome, 'Corvith');
   assert.equal(map.get(346)?.fuso, 'UTC-7');
   assert.equal(map.get(347)?.nome, 'Eisenhold');
   assert.equal(map.get(348)?.fuso, 'UTC-4');
+  assert.equal(map.get(287)?.fuso, 'UTC-7');
+  assert.equal(map.get(291)?.fuso, 'UTC+0');
+  assert.equal(map.has(5), false);
+  assert.equal(REINOS_SEED.some(r => r.nome === 'Fabrica'), false);
 });
 
 

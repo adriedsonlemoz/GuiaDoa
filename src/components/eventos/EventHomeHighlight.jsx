@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useGameData } from '../../data/GameDataContext.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
 import { occurrenceForRealm, eventStatus, currentPhase, timeRemaining } from './eventUtils.js';
@@ -6,10 +6,12 @@ import { occurrenceForRealm, eventStatus, currentPhase, timeRemaining } from './
 export default function EventHomeHighlight({ realmName, onOpen }) {
   const { eventos = [] } = useGameData();
   const { t, content } = useI18n();
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => { const timer=window.setInterval(() => setNow(new Date()), 15000); return () => window.clearInterval(timer); }, []);
   const ativos = useMemo(() => eventos.map(evento => {
     const ocorrencia = occurrenceForRealm(evento, realmName);
-    return { evento, ocorrencia, status:eventStatus(ocorrencia), fase:currentPhase(evento, ocorrencia) };
-  }).filter(item => item.status === 'ativo'), [eventos, realmName]);
+    return { evento, ocorrencia, status:eventStatus(ocorrencia, now), fase:currentPhase(evento, ocorrencia, now) };
+  }).filter(item => item.status === 'ativo'), [eventos, realmName, now]);
 
   if (!realmName || ativos.length === 0) return null;
 
@@ -20,9 +22,9 @@ export default function EventHomeHighlight({ realmName, onOpen }) {
         <button type="button" onClick={onOpen}>{t('events.view_all')}</button>
       </div>
       {ativos.map(({ evento, ocorrencia, fase }) => {
-        const left = timeRemaining(ocorrencia.fimServidor);
+        const left = timeRemaining(ocorrencia.fimServidor, now);
         const confirmedActiveRealms = (evento.ocorrencias || [])
-          .filter(o => o.confirmado !== false && eventStatus(o) === 'ativo')
+          .filter(o => o.confirmado !== false && eventStatus(o, now) === 'ativo')
           .map(o => o.reinoNome)
           .filter(Boolean);
         return (

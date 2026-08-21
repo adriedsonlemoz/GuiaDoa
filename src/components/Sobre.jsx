@@ -9,6 +9,7 @@ import { API_URL as API } from '../config/api.js';
 
 const CHANGELOG_CONFIG = [
   { ver: DISPLAY_VERSION, icon: '🛡️', key: 'latest', color: '#4E716A', count: 5 },
+  { ver: 'Beta 2.70', icon: '⚡', key: 'history.2_70', color: '#7A5C24', count: 5 },
 ];
 
 const Sobre = () => {

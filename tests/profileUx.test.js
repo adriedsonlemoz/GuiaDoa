@@ -52,6 +52,16 @@ test('relógio da Home usa fuso do reino em vez de relógio UTC genérico', () =
   assert.equal(parseUtcOffset('UTC +1'), 1);
 });
 
+
+test('perfil sincroniza nome corrigido e fuso com o catálogo canônico de reinos', () => {
+  const home = read('src/components/Home.jsx');
+  assert.match(home, /saveProfile\(updated\)/);
+  assert.match(home, /manre:'mamre'/);
+  assert.match(home, /redforn:'redfern'/);
+  assert.match(home, /realm\.fuso/);
+  assert.match(home, /realm\.nome/);
+});
+
 test('primeiro acesso e configurações compartilham o mesmo seletor premium de idioma', () => {
   const setup = read('src/components/ProfileLogin/ProfileLanguageStep.jsx');
   const settings = read('src/components/ProfileLogin/ConfiguracoesIdioma.jsx');

@@ -19,7 +19,20 @@ export default function NormalBuildingsView({ edificios, setRoute }) {
   const [nivel, setNivel] = useState('1');
   const [qtd, setQtd] = useState('1');
 
-  useEffect(() => { if (!sel && edificios.length) setSel(edificios[0].slug); }, [edificios, sel]);
+  useEffect(() => {
+    if (!edificios.length) return;
+    let target = '';
+    try { target = sessionStorage.getItem('guiadoa_open_building') || ''; } catch {}
+    if (target) {
+      const normalized = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      const wanted = normalized(target);
+      const found = edificios.find(item => normalized(item.slug) === wanted || normalized(item.nome) === wanted);
+      if (found) setSel(found.slug);
+      try { sessionStorage.removeItem('guiadoa_open_building'); } catch {}
+      if (found) return;
+    }
+    if (!sel) setSel(edificios[0].slug);
+  }, [edificios, sel]);
   const ed = edificios.find(e => e.slug === sel);
   const dados = ed?.niveis || [];
   const colunas = ed?.colunas?.length ? ed.colunas : dados.length

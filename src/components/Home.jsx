@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { getProfile, getTermoAceito } from '../utils/storage.js';
+import React, { useEffect, useState } from 'react';
+import { getProfile, getTermoAceito, saveProfile } from '../utils/storage.js';
 import { useToast } from '../hooks/useToast.js';
 import TermosDialog from './ProfileLogin/TermosDialog.jsx';
 import ProfileForm from './ProfileLogin/ProfileForm.jsx';
@@ -13,6 +13,7 @@ import HomeDivider from './home/HomeDivider.jsx';
 import HomeProfileCard from './home/HomeProfileCard.jsx';
 import HomeToolsGrid from './home/HomeToolsGrid.jsx';
 import EventHomeHighlight from './eventos/EventHomeHighlight.jsx';
+import { useGameData } from '../data/GameDataContext.jsx';
 
 const Home = ({ setRoute }) => {
   const [profile, setProfile] = useState(() => getProfile());
@@ -22,6 +23,23 @@ const Home = ({ setRoute }) => {
   const [verIdioma, setVerIdioma] = useState(false);
   const [editarPerfil, setEditarPerfil] = useState(false);
   const { t } = useI18n();
+  const { reinos = [] } = useGameData();
+
+  // Mantém o fuso salvo no perfil sincronizado com o catálogo canônico do reino.
+  // O nome do reino continua sendo a chave legível do perfil local.
+  useEffect(() => {
+    if (!profile?.reino || !reinos.length) return;
+    const aliases = { manre:'mamre', redforn:'redfern', siera:'sierra', solange:'solace' };
+    const key = value => {
+      const normalized = String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      return aliases[normalized] || normalized;
+    };
+    const realm = reinos.find(item => key(item.nome) === key(profile.reino));
+    if (!realm?.fuso || (realm.fuso === profile.fuso && realm.nome === profile.reino)) return;
+    const updated = { ...profile, reino:realm.nome, fuso:realm.fuso };
+    saveProfile(updated);
+    setProfile(updated);
+  }, [profile, reinos]);
 
   if (!profile) {
     return <><TermosDialog open={!termoAceito} onAceitar={() => setTermoAceito(true)} />{termoAceito && <ProfileForm onSave={setProfile} />}</>;

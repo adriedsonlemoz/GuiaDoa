@@ -7,6 +7,7 @@ export default function Extras({ setRoute }) {
   const { t } = useI18n();
   const [colorBuilder, setColorBuilder] = useState(false);
   const cards = [
+    { icon:'🌍', title:t('realms.title'), sub:t('extras.realms_sub'), action:()=>setRoute('reinos') },
     { icon:'ℹ️', title:t('home.botao.sobre'), sub:t('home.botao.sobre.sub'), action:()=>setRoute('sobre') },
     { icon:'🎨', title:t('home.botao.texto_colorido'), sub:t('home.botao.texto_colorido.sub'), action:()=>setColorBuilder(true) },
     { icon:'💾', title:t('backup.nav'), sub:t('extras.backup_sub'), action:()=>setRoute('backup') },

@@ -690,62 +690,45 @@
   </div>
 </div>
 
-<!-- Modal Reino (estático) -->
+<!-- Modal Reino -->
 <div class="modal-bg" id="modal-reino">
-  <div class="modal-card" style="max-width:440px;width:100%">
-    <div class="card-header" style="padding:12px 16px">
-      <h2 id="mr-titulo">🌍 Novo Reino</h2>
-      <button class="btn-close" onclick="fecharModal('modal-reino')">✕</button>
-    </div>
-    <div class="card-body" style="padding:16px">
-      <div class="grid2">
-        <div class="field">
-          <label>ID Numérico *</label>
-          <input id="mr-id" type="number" min="1" placeholder="Ex: 17">
-        </div>
-        <div class="field">
-          <label>Nome *</label>
-          <input id="mr-nome" placeholder="Ex: Ortson">
-        </div>
+  <div class="modal-card admin-realm-modal">
+    <div class="card-header admin-event-modal-head"><h2 id="mr-titulo">🌍 Novo Reino</h2><button class="btn-close" onclick="fecharModal('modal-reino')">✕</button></div>
+    <div class="card-body admin-event-modal-body">
+      <div class="admin-form-section"><h3>Identificação</h3>
+        <div class="grid2"><div class="field"><label>ID numérico *</label><input id="mr-id" type="number" min="1" placeholder="Ex: 348"></div><div class="field"><label>Nome *</label><input id="mr-nome" placeholder="Ex: Zulanka"></div></div>
+        <div class="grid2"><div class="field"><label>Status</label><input id="mr-status" placeholder="Deixe vazio quando não estiver confirmado"></div><div class="field"><label>Tipo especial</label><select id="mr-tipo-especial"><option value="">Normal</option><option value="idade_dragao">🐉 Idade do Dragão</option><option value="hardcore">⚔️ Hardcore</option></select></div></div>
       </div>
-      <div class="field">
-        <label>Fuso Horário *</label>
-        <select id="mr-fuso">
-          <option value="">— Selecionar fuso —</option>
-        </select>
+      <div class="admin-form-section"><h3>Tempo</h3>
+        <div class="grid2"><div class="field"><label>Data de abertura</label><input id="mr-abertura" type="date"></div><div class="field"><label>Fuso horário</label><select id="mr-fuso"><option value="">— Não informado —</option></select></div></div>
+        <small class="admin-field-help">A idade é calculada automaticamente. Não há campo manual para “X dias”.</small>
       </div>
-      <div class="grid2">
-        <div class="field">
-          <label>Região do Mundo</label>
-          <select id="mr-regiao">
-            <option value="">— Selecionar —</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Idioma Principal</label>
-          <select id="mr-idioma">
-            <option value="">— Selecionar —</option>
-          </select>
-        </div>
+      <div class="admin-form-section"><h3>Horários do reino</h3>
+        <div class="field"><label>Fim dos torneios</label><input id="mr-torneios" type="time"></div>
+        <div class="grid2"><div class="field"><label>Zyrvorthian</label><input id="mr-zyrvorthian" type="time"></div><div class="field"><label>Batalha do Dragão</label><input id="mr-dragao" type="time"></div></div>
+        <small class="admin-field-help">Campos vazios permanecem como “não informado”.</small>
       </div>
-      <div class="i18n-section">
-        <div class="i18n-title">🌐 English <span>opcional</span></div>
-        <div class="grid2">
-          <div class="field"><label>Region</label><input id="mr-en-regiao" placeholder="e.g. South America"></div>
-          <div class="field"><label>Primary language</label><input id="mr-en-idioma" placeholder="e.g. Portuguese"></div>
-        </div>
+      <div class="admin-form-section"><h3>Histórico</h3>
+        <div class="field"><label>Status histórico</label><input id="mr-historico-status" placeholder="Opcional"></div>
+        <div class="field"><label>Observações históricas</label><textarea id="mr-historico-obs" rows="3"></textarea></div>
+        <div class="admin-callout compact"><strong>Fusões futuras</strong><span>A arquitetura já separa reino original, reino parceiro, data, reino resultante, observações e histórico. Nenhuma fusão fictícia é criada por este formulário.</span></div>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
-        <button class="btn btn-ghost" onclick="fecharModal('modal-reino')">Cancelar</button>
-        <button class="btn btn-gold" onclick="salvarReino()">💾 Salvar</button>
+      <div class="admin-form-section admin-i18n-section"><div class="i18n-title">🌐 English <span>opcional</span></div>
+        <div class="field"><label>Name</label><input id="mr-en-nome" placeholder="Optional English name"></div>
+        <div class="field"><label>Status</label><input id="mr-en-status" placeholder="Optional English status"></div>
+        <div class="grid2"><div class="field"><label>Historical status</label><input id="mr-en-historico-status"></div><div class="field"><label>Historical notes</label><textarea id="mr-en-historico-obs" rows="2"></textarea></div></div>
       </div>
     </div>
+    <div class="admin-event-modal-footer"><button class="btn btn-ghost" onclick="fecharModal('modal-reino')">Cancelar</button><button class="btn btn-gold" onclick="salvarReino()">💾 Salvar</button></div>
   </div>
 </div>
 
 <script src="/admin/js/admin-pesquisas.js"></script>
 <script src="/admin/js/admin-reinos.js"></script>
 <script src="/admin/js/admin-eventos.js"></script>
+<script src="/admin/js/admin-eventos-datas.js"></script>
+<script src="/admin/js/admin-eventos-reinos.js"></script>
+<script src="/admin/js/admin-eventos-recompensas.js"></script>
 <script src="/admin/js/admin-dicas.js"></script>
 <script src="/admin/js/admin-alliances.js"></script>
 <script src="/admin/js/admin-campanha.js"></script>

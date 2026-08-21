@@ -1,39 +1,46 @@
-// Dados padrão canônicos dos reinos.
+// Catálogo canônico confirmado dos reinos de Dragons of Atlantis.
+// Regras:
+// - IDs são os números reais do jogo, nunca IDs artificiais locais.
+// - Datas só são preenchidas quando fornecidas/confirmadas pelo usuário.
+// - "tipoEspecial" identifica apenas modalidades estáveis do reino; a Marca de Poder
+//   (Ápice/Excelência/Avançado/Crescente) é dinâmica e não é persistida aqui.
 export const REINOS_SEED = [
-  { id:  1, nome: 'Caelorn',     fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Inglês'     },
-  { id:  2, nome: 'Dakota',      fuso: 'UTC+0',  regiao: 'América do Norte', idioma: 'Inglês'   },
-  { id:  3, nome: 'Eldria',      fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Inglês'     },
-  { id:  4, nome: 'Eoswood',     fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Inglês'     },
-  { id:  5, nome: 'Fabrica',     fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Inglês'     },
-  { id:  6, nome: 'Gibia',       fuso: 'UTC+0',  regiao: 'Europa',         idioma: 'Inglês'     },
-  { id:  7, nome: 'Hinode',      fuso: 'UTC+9',  regiao: 'Ásia',           idioma: 'Japonês'    },
-  { id:  8, nome: 'Luz',         fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Português'  },
-  { id:  9, nome: 'Lysor',       fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Inglês'     },
-  { id: 10, nome: 'Mamre',       fuso: 'UTC+1',  regiao: 'Médio Oriente',  idioma: 'Árabe'      },
-  { id: 11, nome: 'Megara',      fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Inglês'     },
-  { id: 12, nome: 'Mist',        fuso: 'UTC+0',  regiao: 'Europa',         idioma: 'Inglês'     },
-  { id: 13, nome: 'Mjolnheim',   fuso: 'UTC+0',  regiao: 'Europa',         idioma: 'Inglês'     },
-  { id: 14, nome: 'Naxos',       fuso: 'UTC-5',  regiao: 'América do Norte', idioma: 'Inglês'   },
-  { id: 15, nome: 'Nocturne',    fuso: 'UTC+3',  regiao: 'Europa de Leste', idioma: 'Russo'     },
-  { id: 16, nome: 'Norsenholm',  fuso: 'UTC+0',  regiao: 'Europa',         idioma: 'Inglês'     },
-  { id: 17, nome: 'Ortson',      fuso: 'UTC-3',  regiao: 'América do Sul', idioma: 'Português'  },
-  { id: 18, nome: 'Pontus',      fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Inglês'     },
-  { id: 19, nome: 'Quetzara',    fuso: 'UTC-7',  regiao: 'América do Norte', idioma: 'Espanhol' },
-  { id: 20, nome: 'Rainchant',   fuso: 'UTC-4',  regiao: 'América do Norte', idioma: 'Inglês'   },
-  { id: 21, nome: 'Raya',        fuso: 'UTC+3',  regiao: 'Europa de Leste', idioma: 'Russo'     },
-  { id: 22, nome: 'Redfern',     fuso: 'UTC-7',  regiao: 'América do Norte', idioma: 'Inglês'   },
-  { id: 23, nome: 'Saba',        fuso: 'UTC+0',  regiao: 'África',         idioma: 'Inglês'     },
-  { id: 24, nome: 'Saguenay',    fuso: 'UTC-7',  regiao: 'América do Norte', idioma: 'Francês'  },
-  { id: 25, nome: 'Sicyon',      fuso: 'UTC-3',  regiao: 'América do Sul', idioma: 'Português'  },
-  { id: 26, nome: 'Sierra',      fuso: 'UTC-7',  regiao: 'América do Norte', idioma: 'Espanhol' },
-  { id: 27, nome: 'Solace',      fuso: 'UTC-7',  regiao: 'América do Norte', idioma: 'Inglês'   },
-  { id: 28, nome: 'Solgracia',   fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Espanhol'   },
-  { id: 29, nome: 'Thalric',     fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Alemão'     },
-  { id: 30, nome: 'Virelia',     fuso: 'UTC+1',  regiao: 'Europa',         idioma: 'Italiano'   },
+  { id:348, nome:'Zulanka',    fuso:'UTC-4', aberturaEm:'2026-08-12T00:00:00.000Z' },
+  { id:347, nome:'Eisenhold',  fuso:'UTC+1', aberturaEm:'2026-08-12T00:00:00.000Z' },
+  { id:346, nome:'Kenorax',    fuso:'UTC-7', aberturaEm:'2026-08-12T00:00:00.000Z' },
+  { id:345, nome:'Corvith',    fuso:'UTC+0', aberturaEm:'2026-08-12T00:00:00.000Z' },
 
-  // Novos Realms anunciados para 12/08/2026
-  { id: 345, nome: 'Corvith',     fuso: 'UTC+0',  regiao: '', idioma: '' },
-  { id: 346, nome: 'Kenorax',     fuso: 'UTC-7',  regiao: '', idioma: '' },
-  { id: 347, nome: 'Eisenhold',   fuso: 'UTC+1',  regiao: '', idioma: '' },
-  { id: 348, nome: 'Zulanka',     fuso: 'UTC-4',  regiao: '', idioma: '' },
-].sort((a, b) => a.nome.localeCompare(b.nome));
+  { id:344, nome:'Sierra',     fuso:'UTC-7', aberturaEm:'2025-08-12T00:00:00.000Z' },
+  { id:343, nome:'Redfern',    fuso:'UTC-7', aberturaEm:'2025-08-12T00:00:00.000Z' },
+  { id:342, nome:'Caelorn',    fuso:'UTC+1', aberturaEm:'2025-08-12T00:00:00.000Z' },
+  { id:341, nome:'Eldria',     fuso:'UTC+1', aberturaEm:'2025-08-12T00:00:00.000Z' },
+
+  { id:340, nome:'Solace',     fuso:'UTC-7', aberturaEm:'2024-08-12T00:00:00.000Z' },
+  { id:339, nome:'Dakota',     fuso:'UTC+0', aberturaEm:'2024-08-12T00:00:00.000Z' },
+  { id:338, nome:'Lysor',      fuso:'UTC+1', aberturaEm:'2024-08-12T00:00:00.000Z' },
+  { id:337, nome:'Virelia',    fuso:'UTC+1', aberturaEm:'2024-08-12T00:00:00.000Z' },
+
+  { id:336, nome:'Nocturne',   fuso:'UTC+3' },
+  { id:335, nome:'Thalric',    fuso:'UTC+1' },
+  { id:334, nome:'Rainchant',  fuso:'UTC-4' },
+  { id:333, nome:'Solgracia',  fuso:'UTC+1' },
+  { id:332, nome:'Quetzara',   fuso:'UTC-7' },
+  { id:331, nome:'Mjolnheim',  fuso:'UTC+0' },
+  { id:330, nome:'Raya',       fuso:'UTC+3' },
+  { id:329, nome:'Eoswood',    fuso:'UTC+1' },
+  { id:328, nome:'Saguenay',   fuso:'UTC-7' },
+  { id:327, nome:'Norsenholm', fuso:'UTC+0' },
+  { id:326, nome:'Hinode',     fuso:'UTC+9' },
+  { id:325, nome:'Gibia',      fuso:'UTC+0', tipoEspecial:'hardcore' },
+  { id:324, nome:'Luz',        fuso:'UTC+1' },
+  { id:323, nome:'Mamre',      fuso:'UTC-7' },
+  { id:322, nome:'Saba',       fuso:'UTC+0' },
+  { id:321, nome:'Mist',       fuso:'UTC+0' },
+  { id:320, nome:'Pontus',     fuso:'UTC-7' },
+  { id:313, nome:'Ortson',     fuso:'UTC-3' },
+  { id:291, nome:'Sicyon',     fuso:'UTC+0', tipoEspecial:'idade_dragao' },
+  { id:287, nome:'Naxos',      fuso:'UTC-7', tipoEspecial:'idade_dragao' },
+  { id:286, nome:'Megara',     fuso:'UTC+1', tipoEspecial:'idade_dragao' },
+];
+
+export const REINO_IDS_CANONICOS = new Set(REINOS_SEED.map(reino => reino.id));

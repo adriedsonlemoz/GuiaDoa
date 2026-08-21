@@ -130,7 +130,7 @@ export async function executarMigracaoAutomatica() {
     const pesquisas = documentosPesquisas();
     relatorio.pesquisas = await migrarLista(Pesquisa, pesquisas, x => ({ slug: x.slug }), x => x, { mergeArrays: { niveis: 'nivel' } });
     const reinos = documentosReinos();
-    relatorio.reinos = await migrarLista(Reino, reinos, x => ({ id: x.id }));
+    relatorio.reinos = await migrarLista(Reino, reinos, x => ({ $or:[{ id:x.id }, { slug:x.slug }] }));
     relatorio.categoriasDicas = await migrarLista(CategoriaDica, CATS_PADRAO, x => ({ slug: x.slug }));
     relatorio.itens = await migrarLista(Item, ITENS_SEED, x => ({ nome: x.nome }));
 

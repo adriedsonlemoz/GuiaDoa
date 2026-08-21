@@ -8,7 +8,7 @@ import { DICAS_SEED } from '../seeds/dicas.js';
 import { tacticalMetadata } from '../seeds/tropasTaticas.js';
 import { TROOP_COMBAT_EVIDENCE } from '../seeds/tropasCombate.js';
 import { ITEM_SCREENSHOT_CATALOG } from '../seeds/itensCatalogo.js';
-import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED } from '../seeds/campanha.js';
+import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED, FLORESTA_SEED } from '../seeds/campanha.js';
 import { mesclarSeed } from '../utils/seedMerge.js';
 
 const MIGRATION_KEY = 'content:dicas:beta-2.14';
@@ -20,6 +20,7 @@ const ITEMS_CATALOG_KEY = 'content:itens-catalogo:beta-2.58';
 const CAMPANHA_ANTROPOS_KEY = 'content:campanha-antropos:beta-2.44';
 const CAMPANHA_CAMPOS_KEY = 'content:campanha-campos:beta-2.45';
 const CAMPANHA_LAGO_KEY = 'content:campanha-lago:beta-2.59';
+const CAMPANHA_FLORESTA_KEY = 'content:campanha-floresta:beta-2.61';
 const CAMPANHA_STRATEGY_KEY = 'content:campanha-estrategias:beta-2.46';
 const CAMPANHA_STRATEGY_CONFIRMED_KEY = 'content:campanha-estrategias-confirmadas:beta-2.47';
 const CAMPANHA_REWARDS_KEY = 'content:campanha-recompensas:beta-2.48';
@@ -462,6 +463,41 @@ async function migrarCampanhaLago() {
 }
 
 
+
+async function migrarCampanhaFloresta() {
+  const aplicado = await AppConfig.findOne({ chave:CAMPANHA_FLORESTA_KEY }).lean();
+  if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, inseridas:0, completadas:0, preservadas:0 };
+
+  await AppConfig.findOneAndUpdate(
+    { chave:CAMPANHA_FLORESTA_KEY },
+    { $set:{ migracaoEstado:'executando', migracaoVersao:'1', ultimoErro:'', atualizadoEm:new Date() } },
+    { upsert:true, setDefaultsOnInsert:true },
+  );
+
+  try {
+    await garantirIndiceCampanhaPorSubtipo();
+    const relatorio = { inseridas:0, completadas:0, preservadas:0 };
+    for (const seed of FLORESTA_SEED) {
+      const r = await mesclarSeed(CampanhaLocal, { slug:seed.slug }, seed, {
+        mergeArrays:{ tropas:'nome', recursos:'tipo', recompensas:'codigo' },
+      });
+      relatorio.inseridas += r.inserido || 0;
+      relatorio.completadas += r.completado || 0;
+      relatorio.preservadas += r.preservado || 0;
+    }
+    await AppConfig.findOneAndUpdate(
+      { chave:CAMPANHA_FLORESTA_KEY },
+      { $set:{ migracaoEstado:'pronto', migracaoVersao:'1', migracaoEm:new Date(), atualizadoEm:new Date(), ultimoErro:'', relatorioMigracao:{ floresta:relatorio } } },
+      { upsert:true, setDefaultsOnInsert:true },
+    );
+    return { ok:true, ignorada:false, ...relatorio };
+  } catch (err) {
+    await AppConfig.findOneAndUpdate({ chave:CAMPANHA_FLORESTA_KEY }, { $set:{ migracaoEstado:'erro', ultimoErro:err.message, atualizadoEm:new Date() } }, { upsert:true, setDefaultsOnInsert:true }).catch(()=>{});
+    return { ok:false, erro:err.message, inseridas:0, completadas:0, preservadas:0 };
+  }
+}
+
+
 async function migrarCampanhaEstrategias() {
   const aplicado = await AppConfig.findOne({ chave:CAMPANHA_STRATEGY_KEY }).lean();
   if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, inseridas:0, completadas:0, preservadas:0 };
@@ -649,6 +685,8 @@ export async function executarMigracoesConteudo() {
   if (!campos.ok) return campos;
   const lago = await migrarCampanhaLago();
   if (!lago.ok) return lago;
+  const floresta = await migrarCampanhaFloresta();
+  if (!floresta.ok) return floresta;
   const estrategias = await migrarCampanhaEstrategias();
   if (!estrategias.ok) return estrategias;
   const estrategiasConfirmadas = await migrarCampanhaEstrategiasConfirmadas();
@@ -659,7 +697,7 @@ export async function executarMigracoesConteudo() {
   if (!recompensas.ok) return recompensas;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
@@ -667,7 +705,7 @@ export async function executarMigracoesConteudo() {
     tropasAtualizadas:(tropas.atualizadas || 0) + (tropasCombate.atualizadas || 0),
     itensInseridos:itensCatalogo.inseridas || 0,
     itensCompletados:itensCatalogo.completadas || 0,
-    campanhaInseridas:(campanha.inseridas || 0) + (campos.inseridas || 0) + (lago.inseridas || 0),
-    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (lago.completadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (estrategiasPolidas.atualizadas || 0) + (recompensas.completadas || 0),
+    campanhaInseridas:(campanha.inseridas || 0) + (campos.inseridas || 0) + (lago.inseridas || 0) + (floresta.inseridas || 0),
+    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (lago.completadas || 0) + (floresta.completadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (estrategiasPolidas.atualizadas || 0) + (recompensas.completadas || 0),
   };
 }

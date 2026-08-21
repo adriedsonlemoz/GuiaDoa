@@ -43,3 +43,7 @@ As recompensas agora podem armazenar `categoria`, `finalidade`, `relacionadoA` e
 ## Regra de exibição
 
 `recompensasStatus: "confirmado"` com uma lista vazia significa **ausência confirmada de recompensas**. Isso é diferente de `pendente`, que significa que ainda faltam dados. A interface apresenta esses dois estados separadamente.
+
+## Beta 2.60 — hotfix de carregamento
+
+A implementação de dados do Lago permanece modular no backend. O frontend de Campanha voltou a usar a estrutura estável da Beta 2.58, removendo a refatoração de imports introduzida na Beta 2.59. A única alteração visual específica é o estado explícito de “sem recompensas” para Lago Nv. 1–5.

@@ -1,9 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import GameHeader from './shared/GameHeader.jsx';
-import FieldLanding from './campanha/FieldLanding.jsx';
-import CollapsibleSection from './campanha/CollapsibleSection.jsx';
-import RewardsBlock from './campanha/RewardsBlock.jsx';
-import { FIELD_TYPES, RESOURCE_ICONS, RESOURCE_KEYS } from './campanha/fieldConfig.js';
 import AppErrorState from '../ui/AppErrorState.jsx';
 import { API_URL as API } from '../config/api.js';
 import { useI18n } from '../hooks/useI18n.jsx';
@@ -14,6 +10,21 @@ const CATEGORIES = [
   { id:'zyrvorthian', icon:'🐲', title:'campaign.category.zyrvorthian', desc:'campaign.category.zyrvorthian.desc' },
   { id:'grodz', icon:'🛡️', title:'campaign.category.grodz', desc:'campaign.category.grodz.desc' },
 ];
+
+const FIELD_TYPES = [
+  { id:'savana', icon:'🍞', title:'campaign.field.savannah' },
+  { id:'montanha', icon:'◆', title:'campaign.field.mountain' },
+  { id:'morro', icon:'◆', title:'campaign.field.hill' },
+  { id:'lago', icon:'◆', title:'campaign.field.lake' },
+  { id:'floresta', icon:'◆', title:'campaign.field.forest' },
+];
+
+const RESOURCE_ICONS = { stone:'🪨', metals:'⛏️', wood:'🪵', gold:'🟡', food:'🍞' };
+const RESOURCE_KEYS = {
+  stone:'troops.resource.stone', metals:'troops.resource.metals', wood:'troops.resource.wood',
+  gold:'troops.resource.gold', food:'troops.resource.food', pearls:'troops.resource.pearls',
+  seeds:'troops.resource.seeds', geodes:'troops.resource.geodes', sulfur:'troops.resource.sulfur',
+};
 
 const SPECIAL_SAFE_TROOPS = [
   { pt:'Fada da Selva', en:'Forest Fairy' },
@@ -26,6 +37,22 @@ const SPECIAL_SAFE_TROOPS = [
 
 function Loading({ t }) {
   return <div className="campaign-loading"><span className="spinner" /> {t('campaign.loading')}</div>;
+}
+
+function CollapsibleSection({ title, meta = '', defaultOpen = false, className = '', children }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className={`campaign-report-section campaign-collapsible ${className} ${open ? 'is-open' : 'is-closed'}`}>
+      <button type="button" className="campaign-collapse-trigger" onClick={() => setOpen(value => !value)} aria-expanded={open}>
+        <span>{title}</span>
+        <span className="campaign-collapse-side">
+          {meta && <small>{meta}</small>}
+          <b aria-hidden="true">{open ? '⌃' : '⌄'}</b>
+        </span>
+      </button>
+      {open && <div className="campaign-collapse-body">{children}</div>}
+    </section>
+  );
 }
 
 function CategoryLanding({ counts, onSelect, t }) {
@@ -54,6 +81,33 @@ function CategoryLanding({ counts, onSelect, t }) {
         })}
       </div>
     </>
+  );
+}
+
+function FieldLanding({ entries, onSelect, onBack, t }) {
+  return (
+    <div>
+      <button type="button" className="campaign-back" onClick={onBack}>↩ {t('campaign.categories')}</button>
+      <div className="tw-card mb-3">
+        <GameHeader title={`🌲 ${t('campaign.category.fields')}`} />
+        <div className="campaign-section-copy">{t('campaign.fields_intro')}</div>
+      </div>
+      <div className="campaign-field-grid">
+        {FIELD_TYPES.map(field => {
+          const matches = entries.filter(x => x.subtipo === field.id);
+          const principal = matches.find(x => x.campo?.recursoPrincipal)?.campo?.recursoPrincipal || '';
+          const ready = matches.length > 0;
+          return (
+            <button key={field.id} type="button" className={`campaign-field-card ${ready ? 'is-ready' : 'is-empty'}`} disabled={!ready} onClick={() => ready && onSelect(field.id)}>
+              <span className="campaign-field-icon">{principal ? (RESOURCE_ICONS[principal] || field.icon) : field.icon}</span>
+              <strong>{t(field.title)}</strong>
+              <small>{ready ? t('campaign.level_count', { count:matches.length }) : t('campaign.awaiting_data')}</small>
+              {principal && <span className="campaign-field-resource">{t(RESOURCE_KEYS[principal] || 'campaign.resource')}</span>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -258,6 +312,35 @@ function StrategyBlock({ strategy, t, locale, hasGuides = false }) {
   );
 }
 
+function RewardsBlock({ rewards, t, locale, confirmedEmpty = false }) {
+  return (
+    <CollapsibleSection title={t('campaign.possible_rewards')} meta={confirmedEmpty ? '0' : (rewards.length ? String(rewards.length) : '—')}>
+      {rewards.length ? (
+        <div className="campaign-reward-grid">
+          {rewards.map((reward, index) => {
+            const translated = locale !== 'pt-BR' ? reward?.i18n?.[locale] || {} : {};
+            const name = translated.nome || reward.nome || '';
+            return (
+              <div className={`campaign-reward ${reward.nomeConfirmado ? 'is-named' : 'is-symbolic'} ${reward.imagem ? 'has-image' : ''}`} key={reward.codigo || index}>
+                {reward.imagem ? (
+                  <img className="campaign-reward-image" src={reward.imagem} alt={name || t('campaign.reward_unknown')} loading="lazy" />
+                ) : (
+                  <span className="campaign-reward-symbol">{reward.simbolo || `R${index + 1}`}</span>
+                )}
+                <div>
+                  <strong>{name || t('campaign.reward_unknown')}</strong>
+                  {!reward.nomeConfirmado && <small>{t('campaign.reward_name_pending')}</small>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : <p className="campaign-reward-empty">{confirmedEmpty ? t('campaign.no_rewards_confirmed') : t('campaign.rewards_pending')}</p>}
+      <p className="campaign-reward-note">{t('campaign.reward_note')}</p>
+    </CollapsibleSection>
+  );
+}
+
 function Detail({ entry, onBack, t, locale, content }) {
   const fmt = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   const totalTroops = (entry.tropas || []).reduce((sum, troop) => sum + Number(troop.quantidade || 0), 0);
@@ -271,7 +354,7 @@ function Detail({ entry, onBack, t, locale, content }) {
         <div className="campaign-report-summary">
           <div><span>☠️</span><strong>{fmt.format(totalTroops)}</strong><small>{t('campaign.enemy_total')}</small></div>
           <div><span>⚔️</span><strong>{(entry.tropas || []).length}</strong><small>{t('campaign.troop_types')}</small></div>
-          <div><span>◇</span><strong>{entry.recompensasStatus === 'confirmado' ? rewards.length : (rewards.length || '—')}</strong><small>{t('campaign.rewards')}</small></div>
+          <div><span>◇</span><strong>{rewards.length || '—'}</strong><small>{t('campaign.rewards')}</small></div>
         </div>
 
         {entry.categoria === 'campos' && (principal || entry.campo?.producaoHora != null) && (
@@ -301,7 +384,7 @@ function Detail({ entry, onBack, t, locale, content }) {
           {(entry.recursos || []).some(r => !r.exato) && <p className="campaign-abbrev-note">{t('campaign.abbrev_note')}</p>}
         </CollapsibleSection>
 
-        <RewardsBlock rewards={rewards} status={entry.recompensasStatus} t={t} locale={locale} />
+        <RewardsBlock rewards={rewards} t={t} locale={locale} confirmedEmpty={entry.categoria === 'campos' && entry.subtipo === 'lago' && Number(entry.nivel) <= 5} />
 
         <CollapsibleSection title={t('campaign.enemy_composition')} meta={fmt.format(totalTroops)}>
           <div className="campaign-troop-table">

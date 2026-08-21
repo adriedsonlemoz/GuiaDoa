@@ -1,65 +1,56 @@
 import { useEffect, useState } from 'react';
 import { useI18n } from './useI18n.jsx';
+import {
+  SERVER_BASE_TIMEZONE,
+  SERVER_DAILY_RESET_UTC,
+  countdownTo,
+  convertBaseUtcTimeToRealm,
+  formatRealmClock,
+  nextDailyBaseUtcOccurrence,
+} from '../utils/timezone.js';
 
 /**
- * Hook: lógica central do cronômetro de torneio.
- * Regra DOA: torneios iniciam/encerram às 21:00 hora LOCAL do servidor.
- * Dura 24h contínuas.
- *
- * @param {number} offset - UTC offset do servidor (ex: -3 para BRT)
- * @returns {{ horaLocal, countdown, isAtivo, isUrgente, faseTexto }}
+ * Cronômetro central da virada diária.
+ * A referência canônica é sempre UTC+0; o relógio mostrado ao usuário é convertido
+ * para o fuso do realm selecionado, incluindo a mudança de data.
  */
-export function useTorneioTimer(offset = 0) {
-  const { t, locale } = useI18n();
-  const [horaLocal, setHoraLocal]   = useState('--/-- - --:--:--');
-  const [horaSomente, setHoraSomente] = useState('--:--:--');
-  const [countdown, setCountdown]   = useState('00:00:00');
-  const [isAtivo,   setIsAtivo]     = useState(false);
-  const [isUrgente, setIsUrgente]   = useState(false);
-  const [faseTexto, setFaseTexto]   = useState('');
+export function useTorneioTimer(fuso = SERVER_BASE_TIMEZONE) {
+  const { locale, t } = useI18n();
+  const realmFuso = typeof fuso === 'string' ? fuso : `UTC${Number(fuso) >= 0 ? '+' : ''}${Number(fuso) || 0}`;
+  const [state, setState] = useState({
+    horaLocal:'--/-- - --:--:--',
+    horaSomente:'--:--:--',
+    countdown:'00:00:00',
+    isAtivo:true,
+    isUrgente:false,
+    faseTexto:'',
+    resetLocal:'--:--',
+    resetDayDelta:0,
+  });
 
   useEffect(() => {
-    const tick = setInterval(() => {
-      const agora      = new Date();
-      const serverDate = new Date(agora.getTime() + offset * 3600000);
-
-      const hh = serverDate.getUTCHours();
-      const mm = serverDate.getUTCMinutes();
-      const ss = serverDate.getUTCSeconds();
-
-      // Hora formatada conforme o idioma escolhido. A data já foi deslocada
-      // pelo fuso do realm e é formatada em UTC para não aplicar o fuso do aparelho.
-      const formatDate = new Intl.DateTimeFormat(locale, {
-        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit',
-        hour12: false, timeZone: 'UTC',
+    const tick = () => {
+      const now = new Date();
+      const clock = formatRealmClock(realmFuso, now, locale, { seconds:true });
+      const target = nextDailyBaseUtcOccurrence(SERVER_DAILY_RESET_UTC, now);
+      const remaining = countdownTo(target, now) || { totalSeconds:0, hours:0, minutes:0, seconds:0 };
+      const localReset = convertBaseUtcTimeToRealm(SERVER_DAILY_RESET_UTC, realmFuso) || { time:'00:00', dayDelta:0 };
+      setState({
+        horaLocal:`${clock.date} · ${clock.time}`,
+        horaSomente:clock.time,
+        countdown:`${String(remaining.hours).padStart(2,'0')}:${String(remaining.minutes).padStart(2,'0')}:${String(remaining.seconds).padStart(2,'0')}`,
+        isAtivo:true,
+        isUrgente:remaining.totalSeconds <= 300,
+        faseTexto:t('torneio.status.next_reset'),
+        resetLocal:localReset.time,
+        resetDayDelta:localReset.dayDelta,
       });
-      const formatTime = new Intl.DateTimeFormat(locale, {
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'UTC',
-      });
-      setHoraLocal(formatDate.format(serverDate));
-      setHoraSomente(formatTime.format(serverDate));
+    };
 
-      // Cálculo do tempo restante até a próxima virada (21:00)
-      const totalSeg = hh * 3600 + mm * 60 + ss;
-      const inicio   = 21 * 3600;
-      const tempoRestante = totalSeg >= inicio
-        ? (24 * 3600 - totalSeg) + inicio   // 21:00–23:59 → conta até 21:00 do dia seguinte
-        : inicio - totalSeg;                 // 00:00–20:59 → conta até 21:00 de hoje
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [realmFuso, locale, t, fuso]);
 
-      setIsAtivo(true); // torneio é sempre ativo (24h contínuas)
-      setIsUrgente(tempoRestante <= 300);
-      setFaseTexto(hh >= 21 ? t('torneio.status.ends_tomorrow') : t('torneio.status.ends_today'));
-
-      const h = Math.floor(tempoRestante / 3600);
-      const m = Math.floor((tempoRestante % 3600) / 60);
-      const s = tempoRestante % 60;
-      setCountdown(
-        `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-      );
-    }, 1000);
-
-    return () => clearInterval(tick);
-  }, [offset, locale, t]);
-
-  return { horaLocal, horaSomente, countdown, isAtivo, isUrgente, faseTexto };
+  return state;
 }

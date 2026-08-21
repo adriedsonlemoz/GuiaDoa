@@ -91,7 +91,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
                 }}/>
                 <p style={{
                   fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:600,
-                  fontSize:'0.62rem', color:'rgba(140,180,210,0.7)', margin:0,
+                  fontSize:'.72rem', color:'rgba(140,180,210,0.7)', margin:0,
                 }}>{t('assistant.online_data')}</p>
               </div>
             </div>
@@ -146,7 +146,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
               {/* Divisor */}
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
                 <div style={{ flex:1, height:1, background:`linear-gradient(90deg,transparent,${C.BORDER})` }}/>
-                <span style={{ fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700, fontSize:'0.6rem', color:C.TEXT_FAINT, letterSpacing:'2px', textTransform:'uppercase' }}>{t('assistant.suggestions')}</span>
+                <span style={{ fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700, fontSize:'.72rem', color:C.TEXT_FAINT, letterSpacing:'2px', textTransform:'uppercase' }}>{t('assistant.suggestions')}</span>
                 <div style={{ flex:1, height:1, background:`linear-gradient(270deg,transparent,${C.BORDER})` }}/>
               </div>
 
@@ -166,7 +166,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
                     <span style={{ fontSize:'1.1rem', flexShrink:0 }}>{s.emoji}</span>
                     <span style={{
                       fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700,
-                      fontSize:'0.68rem', color:C.TEXT_SECONDARY, lineHeight:1.3,
+                      fontSize:'.72rem', color:C.TEXT_SECONDARY, lineHeight:1.3,
                     }}>{s.texto}</span>
                   </button>
                 ))}
@@ -258,7 +258,7 @@ const AssistenteModal = ({ onClose, mensagens, loading, pensando, sugestoes, err
           </div>
           <p style={{
             fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:600,
-            fontSize:'0.58rem', color:C.TEXT_FAINT,
+            fontSize:'.72rem', color:C.TEXT_FAINT,
             textAlign:'center', margin:'6px 0 0',
           }}>
             {t('assistant.input_hint')}

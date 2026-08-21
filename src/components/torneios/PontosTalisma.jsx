@@ -59,7 +59,7 @@ const PontosTalisma = () => {
           style={{ background: 'linear-gradient(135deg, #0A2030 0%, #1A3A5A 100%)' }}>
 
           <div className="flex-1 min-w-0">
-            <p className="font-nunito font-bold text-[0.6rem] tracking-[3px] uppercase m-0 mb-1"
+            <p className="font-nunito font-bold text-[0.72rem] tracking-[3px] uppercase m-0 mb-1"
               style={{ color: 'rgba(140,190,220,0.7)' }}>
               {t('torneio.aceleracoes.total_pontos')}
             </p>
@@ -73,7 +73,7 @@ const PontosTalisma = () => {
               {fmtN(totalFinal)}
             </p>
             {ptsPos > 0 && (
-              <p className="font-nunito font-semibold text-[0.6rem] m-0 mt-1"
+              <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-1"
                 style={{ color: 'rgba(140,190,220,0.55)' }}>
                 {fmtN(ptsDosItens)} {t('torneio.talisma.detalhe_talismas')} + {fmtN(ptsPos)} {t('torneio.aceleracoes.detalhe_possuidos')}
               </p>
@@ -98,7 +98,7 @@ const PontosTalisma = () => {
         {/* Campo pontos possuídos */}
         <div className="px-4 py-3"
           style={{ background: C.BG_CARD, borderTop: `1px solid rgba(90,138,174,0.25)` }}>
-          <label className="font-nunito font-bold text-[0.65rem] tracking-widest uppercase block mb-1.5"
+          <label className="font-nunito font-bold text-[0.72rem] tracking-widest uppercase block mb-1.5"
             style={{ color: C.TEXT_MUTED }}>
             {t('torneio.label.possuidos')}
           </label>
@@ -140,7 +140,7 @@ const PontosTalisma = () => {
                   style={{ color: C.TEXT_PRIMARY }}>
                   {t('torneio.talisma.nome_prefixo')} {t(tal.chave)}
                 </p>
-                <p className="font-nunito font-semibold text-[0.6rem] m-0 mt-0.5 text-center"
+                <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-0.5 text-center"
                   style={{ color: tal.cor, fontWeight: 800 }}>
                   {fmtN(tal.pts)} {t('torneio.talisma.pts_por_unidade')}
                 </p>
@@ -149,7 +149,7 @@ const PontosTalisma = () => {
               {/* Input com "= pts" */}
               <div className="px-3 py-2"
                 style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span className="font-nunito font-bold text-[0.55rem] leading-none"
+                <span className="font-nunito font-bold text-[0.72rem] leading-none"
                   style={{ color: C.TEXT_FAINT, flexShrink: 0, whiteSpace: 'nowrap' }}>
                   {t('torneio.label.eq_pts')}
                 </span>

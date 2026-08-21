@@ -34,7 +34,7 @@ const ProdRow = ({ titulo, qtd, nivel, maxNivel, ganhoLabel, ganhoValor, cor, te
     <div className="flex flex-1 justify-center">
       {terrQtd !== undefined && (
         <div className="flex flex-col items-center px-2 py-1 rounded-md" style={{ background: C.BG_SECONDARY, border: `1px solid ${C.BORDER_SOFT}` }}>
-          <span className="font-nunito font-black text-[0.5rem] uppercase tracking-wider mb-0.5" style={{ color: C.TEXT_MUTED }}>{t('islands.territory_short')}</span>
+          <span className="font-nunito font-black text-[0.72rem] uppercase tracking-wider mb-0.5" style={{ color: C.TEXT_MUTED }}>{t('islands.territory_short')}</span>
           <div className="flex items-center gap-1.5">
             <button className="w-5 h-5 rounded flex items-center justify-center text-sm font-bold cursor-pointer transition-all"
               style={{ background: C.BG_CARD, border: `1px solid ${C.BORDER_SOFT}`, color: C.ERROR, opacity: (disabled || terrQtd === 0) ? 0.3 : 1 }} onClick={onTerrSub} disabled={disabled || terrQtd === 0}>−</button>
@@ -46,11 +46,11 @@ const ProdRow = ({ titulo, qtd, nivel, maxNivel, ganhoLabel, ganhoValor, cor, te
       )}
     </div>
     <div className="text-right" style={{ minWidth: 80 }}>
-      <p className="font-nunito font-black text-[0.6rem] uppercase tracking-wider m-0" style={{ color: C.TEXT_MUTED }}>{ganhoLabel}</p>
+      <p className="font-nunito font-black text-[0.72rem] uppercase tracking-wider m-0" style={{ color: C.TEXT_MUTED }}>{ganhoLabel}</p>
       <p className="font-mono font-black text-base leading-tight m-0" style={{ color: cor }}>
-        {fmtN(ganhoValor, locale)}<span className="text-[0.55rem] ml-0.5" style={{ color: C.TEXT_MUTED }}>/h</span>
+        {fmtN(ganhoValor, locale)}<span className="text-[0.72rem] ml-0.5" style={{ color: C.TEXT_MUTED }}>/h</span>
       </p>
-      <p className="font-nunito text-[0.6rem] m-0" style={{ color: C.TEXT_MUTED }}>{fmtN(ganhoValor * 24, locale)} {t('islands.per_day')}</p>
+      <p className="font-nunito text-[0.72rem] m-0" style={{ color: C.TEXT_MUTED }}>{fmtN(ganhoValor * 24, locale)} {t('islands.per_day')}</p>
     </div>
   </div>
 );

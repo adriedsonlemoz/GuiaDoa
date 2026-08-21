@@ -48,7 +48,7 @@ const TorneioHabilidadeDragao = () => {
           style={{ background: 'linear-gradient(135deg, #3A1A0A 0%, #6A2A0A 100%)' }}>
 
           <div className="flex-1 min-w-0">
-            <p className="font-nunito font-bold text-[0.6rem] tracking-[3px] uppercase m-0 mb-1"
+            <p className="font-nunito font-bold text-[0.72rem] tracking-[3px] uppercase m-0 mb-1"
               style={{ color: 'rgba(220,160,100,0.7)' }}>
               {t('torneio.aceleracoes.total_pontos')}
             </p>
@@ -62,7 +62,7 @@ const TorneioHabilidadeDragao = () => {
               {fmtN(totalFinal)}
             </p>
             {ptsPos > 0 && (
-              <p className="font-nunito font-semibold text-[0.6rem] m-0 mt-1"
+              <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-1"
                 style={{ color: 'rgba(220,160,100,0.55)' }}>
                 {fmtN(ptsItem)} {t('torneio.habilidade_dragao.detalhe_essencias')} + {fmtN(ptsPos)} {t('torneio.aceleracoes.detalhe_possuidos')}
               </p>
@@ -87,7 +87,7 @@ const TorneioHabilidadeDragao = () => {
         {/* Pontos já possuídos */}
         <div className="px-4 py-3"
           style={{ background: C.BG_CARD, borderTop: `1px solid rgba(200,90,44,0.25)` }}>
-          <label className="font-nunito font-bold text-[0.65rem] tracking-widest uppercase block mb-1.5"
+          <label className="font-nunito font-bold text-[0.72rem] tracking-widest uppercase block mb-1.5"
             style={{ color: C.TEXT_MUTED }}>
             {t('torneio.label.possuidos')}
           </label>
@@ -124,7 +124,7 @@ const TorneioHabilidadeDragao = () => {
             style={{ color: C.TEXT_PRIMARY }}>
             {t('torneio.habilidade_dragao.nome_item')}
           </p>
-          <p className="font-nunito font-bold text-[0.68rem] m-0 mt-1 text-center"
+          <p className="font-nunito font-bold text-[0.72rem] m-0 mt-1 text-center"
             style={{ color: COR }}>
             {t('torneio.habilidade_dragao.pts_por_unidade')}
           </p>
@@ -133,7 +133,7 @@ const TorneioHabilidadeDragao = () => {
         {/* Input + resultado */}
         <div className="px-4 py-3 flex items-center gap-3">
           <div className="flex-1">
-            <label className="font-nunito font-bold text-[0.62rem] tracking-widest uppercase block mb-1"
+            <label className="font-nunito font-bold text-[0.72rem] tracking-widest uppercase block mb-1"
               style={{ color: C.TEXT_MUTED }}>
               {t('torneio.label.quantidade')}
             </label>
@@ -159,7 +159,7 @@ const TorneioHabilidadeDragao = () => {
               style={{ color: ativo ? COR : C.TEXT_FAINT }}>
               {fmtN(ptsItem)}
             </p>
-            <p className="font-nunito font-semibold text-[0.6rem] m-0 mt-0.5"
+            <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-0.5"
               style={{ color: C.TEXT_FAINT }}>
               {t('torneio.label.pontos_min')}
             </p>

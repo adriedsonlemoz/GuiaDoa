@@ -32,7 +32,7 @@ const TorneioAprimoramentoTropa = () => {
             style={{ background:`${r.color}12`, border:`1px solid ${r.color}44`, borderLeft:`4px solid ${r.color}` }}>
             <span className="font-nunito font-black text-[0.78rem] flex-1" style={{ color: r.color }}>
               {t(r.chave)}
-              <span className="font-semibold text-[0.62rem] ml-1.5" style={{ color: C.TEXT_MUTED }}>({r.pts} pts)</span>
+              <span className="font-semibold text-[0.72rem] ml-1.5" style={{ color: C.TEXT_MUTED }}>({r.pts} pts)</span>
             </span>
             <input
               className="tw-input text-center"
@@ -42,7 +42,7 @@ const TorneioAprimoramentoTropa = () => {
               onChange={e => setQtds(q=>({ ...q, [r.key]: e.target.value.replace(/\D/g,'') }))}
               inputMode="numeric"
             />
-            <span className="font-nunito font-bold text-[0.65rem] whitespace-nowrap shrink-0" style={{ color:r.color, minWidth:50 }}>
+            <span className="font-nunito font-bold text-[0.72rem] whitespace-nowrap shrink-0" style={{ color:r.color, minWidth:50 }}>
               = {fmtN((parseInt(qtds[r.key])||0)*r.pts)}
             </span>
           </div>

@@ -61,7 +61,7 @@ const TorneioPocoes = () => {
           style={{ background: `linear-gradient(135deg, #3A1A4A 0%, #5A2A6A 100%)` }}>
 
           <div className="flex-1 min-w-0">
-            <p className="font-nunito font-bold text-[0.6rem] tracking-[3px] uppercase m-0 mb-1"
+            <p className="font-nunito font-bold text-[0.72rem] tracking-[3px] uppercase m-0 mb-1"
               style={{ color: 'rgba(200,168,200,0.7)' }}>
               {t('torneio.aceleracoes.total_pontos')}
             </p>
@@ -75,7 +75,7 @@ const TorneioPocoes = () => {
               {fmtN(totalFinal)}
             </p>
             {ptsPos > 0 && (
-              <p className="font-nunito font-semibold text-[0.6rem] m-0 mt-1"
+              <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-1"
                 style={{ color: 'rgba(200,168,200,0.55)' }}>
                 {fmtN(ptsDosItens)} {t('torneio.pocoes.detalhe_pocoes')} + {fmtN(ptsPos)} {t('torneio.aceleracoes.detalhe_possuidos')}
               </p>
@@ -100,7 +100,7 @@ const TorneioPocoes = () => {
         {/* Pontos já possuídos */}
         <div className="px-4 py-3"
           style={{ background: C.BG_CARD, borderTop: `1px solid rgba(200,168,74,0.25)` }}>
-          <label className="font-nunito font-bold text-[0.65rem] tracking-widest uppercase block mb-1.5"
+          <label className="font-nunito font-bold text-[0.72rem] tracking-widest uppercase block mb-1.5"
             style={{ color: C.TEXT_MUTED }}>
             {t('torneio.label.possuidos')}
           </label>
@@ -140,11 +140,11 @@ const TorneioPocoes = () => {
                 <div style={{ fontSize: '1.4rem', lineHeight: 1, marginBottom: 4, textAlign: 'center' }}>
                   {poc.emoji}
                 </div>
-                <p className="font-nunito font-black text-[0.66rem] m-0 leading-snug text-center"
+                <p className="font-nunito font-black text-[0.72rem] m-0 leading-snug text-center"
                   style={{ color: C.TEXT_PRIMARY }}>
                   {t(poc.chave)}
                 </p>
-                <p className="font-nunito font-semibold text-[0.56rem] m-0 mt-0.5 text-center"
+                <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-0.5 text-center"
                   style={{ color: poc.cor, fontWeight: 800 }}>
                   {poc.pts} {t('torneio.talisma.pts_por_unidade')}
                 </p>
@@ -152,7 +152,7 @@ const TorneioPocoes = () => {
 
               {/* Input */}
               <div className="px-2 py-2" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span className="font-nunito font-bold text-[0.52rem] leading-none"
+                <span className="font-nunito font-bold text-[0.72rem] leading-none"
                   style={{ color: C.TEXT_FAINT, flexShrink: 0, whiteSpace: 'nowrap' }}>
                   {t('torneio.label.eq_pts')}
                 </span>
@@ -183,7 +183,7 @@ const TorneioPocoes = () => {
         <div className="rounded-xl overflow-hidden mb-3"
           style={{ border: `1px solid rgba(139,58,154,0.35)`, background: 'rgba(139,58,154,0.06)' }}>
           <div className="px-4 py-2.5">
-            <p className="font-nunito font-black text-[0.65rem] uppercase tracking-widest m-0 mb-1.5"
+            <p className="font-nunito font-black text-[0.72rem] uppercase tracking-widest m-0 mb-1.5"
               style={{ color: COR }}>
               🧪 {t('torneio.pocoes.resumo_titulo')}
             </p>

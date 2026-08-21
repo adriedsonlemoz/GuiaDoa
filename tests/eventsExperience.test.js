@@ -47,7 +47,7 @@ test('lista pública de fases usa hierarquia legível e status calculado', () =>
   assert.match(phases,/events\.event_day/);
   assert.match(phases,/formatUtcDay/);
   assert.match(phases,/phaseStatus/);
-  assert.match(css,/event-phase-kicker\{[^}]*\.66rem/);
+  assert.match(css,/event-phase-kicker\{[^}]*\.72rem/);
   assert.match(css,/event-phase-summary-main>strong\{[^}]*\.79rem/);
   assert.doesNotMatch(css,/event-phase-summary-main>strong\{[^}]*\.4[0-9]rem/);
 });
@@ -88,9 +88,11 @@ test('Admin de Eventos virou página de gerenciamento com seções independentes
   assert.match(index,/admin-eventos-recompensas\.js/);
 });
 
-test('Admin permite selecionar individualmente e usar atalho dos quatro reinos mais recentes', () => {
+test('Admin permite selecionar individualmente e usar atalho das quatro aberturas confirmadas mais recentes', () => {
   const realms=read('api/admin/js/admin-eventos-reinos.js');
-  assert.match(realms,/Selecionar 4 mais recentes/);
+  assert.match(realms,/Selecionar 4 com abertura mais recente/);
+  assert.match(realms,/filter\(r=>r\.aberturaEm\)/);
+  assert.match(realms,/new Date\(b\.aberturaEm\)-new Date\(a\.aberturaEm\)/);
   assert.match(realms,/slice\(0,4\)/);
   assert.match(realms,/EVENTO_REINOS_SELECTED/);
   assert.match(realms,/Sem ocorrência = não confirmado/);

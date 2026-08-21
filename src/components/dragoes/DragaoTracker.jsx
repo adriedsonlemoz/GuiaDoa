@@ -34,10 +34,10 @@ const XPBar = ({ atual, total, cor, locale = 'pt-BR' }) => {
   return (
     <div>
       <div className="flex justify-between mb-1">
-        <span className="font-nunito font-bold text-[0.67rem]" style={{ color: C.TEXT_MUTED }}>
+        <span className="font-nunito font-bold text-[0.72rem]" style={{ color: C.TEXT_MUTED }}>
           {atual.toLocaleString(locale)} / {total > 0 ? total.toLocaleString(locale) : '?'} XP
         </span>
-        <span className="font-nunito font-black text-[0.67rem]" style={{ color: cor }}>
+        <span className="font-nunito font-black text-[0.72rem]" style={{ color: cor }}>
           {total > 0 ? `${pct}%` : '?%'}
         </span>
       </div>
@@ -67,7 +67,7 @@ const NivelControl = ({ value, onChange, cor, min=0, max=90 }) => (
 
 const NumInput = ({ value, onChange, placeholder='0', label }) => (
   <div className="flex flex-col gap-0.5 flex-1">
-    {label && <span className="font-nunito font-bold text-[0.62rem] tracking-wide" style={{ color:C.TEXT_MUTED }}>{label}</span>}
+    {label && <span className="font-nunito font-bold text-[0.72rem] tracking-wide" style={{ color:C.TEXT_MUTED }}>{label}</span>}
     <input
       type="number"
       value={value || ''}
@@ -101,7 +101,7 @@ const HabilidadeTrackerCard = ({ hab, dados, onChange, cor, t, locale }) => {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-nunito font-black text-[0.88rem] m-0 leading-tight" style={{ color:'#FFF8EE' }}>{hab.nome}</p>
-          <span className="font-nunito text-[0.6rem] px-1.5 py-0.5 rounded"
+          <span className="font-nunito text-[0.72rem] px-1.5 py-0.5 rounded"
             style={{ background: isCampo?'#7B1C1C':'#1B5E20', color: isCampo?'#FFCDD2':'#C8E6C9', border:`1px solid ${isCampo?'#A52020':'#2E7D32'}` }}>
             {isCampo ? t('dragon_tracker.field') : t('dragon_tracker.battle')}
           </span>
@@ -193,7 +193,7 @@ const DragaoTracker = ({ dragaoId, setRoute }) => {
             </p>
             {/* Nível dragão */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-nunito font-bold text-[0.68rem]" style={{ color:'rgba(255,248,238,0.6)' }}>{t('dragon_tracker.level')}</span>
+              <span className="font-nunito font-bold text-[0.72rem]" style={{ color:'rgba(255,248,238,0.6)' }}>{t('dragon_tracker.level')}</span>
               <NivelControl
                 value={dados.nivelDragao ?? 0}
                 onChange={v => setDados(d => ({ ...d, nivelDragao:v }))}
@@ -205,7 +205,7 @@ const DragaoTracker = ({ dragaoId, setRoute }) => {
 
         {/* XP dragão */}
         <div className="px-4 py-3" style={{ background:C.BG_CARD, borderTop:`1px solid ${cor}44` }}>
-          <p className="font-nunito font-black text-[0.68rem] uppercase tracking-widest m-0 mb-2" style={{ color:C.TEXT_MUTED }}>{t('dragon_tracker.dragon_xp')}</p>
+          <p className="font-nunito font-black text-[0.72rem] uppercase tracking-widest m-0 mb-2" style={{ color:C.TEXT_MUTED }}>{t('dragon_tracker.dragon_xp')}</p>
           <XPBar atual={dados.xpDragaoAtual || 0} total={dados.xpDragaoTotal || 0} cor={cor} locale={locale} />
           <div className="flex gap-2 mt-2">
             <NumInput value={dados.xpDragaoAtual} onChange={v => setDados(d=>({...d,xpDragaoAtual:v}))} label={t('dragon_tracker.current_xp')} placeholder="0" />
@@ -231,7 +231,7 @@ const DragaoTracker = ({ dragaoId, setRoute }) => {
       <button className="btn-gold btn-lg w-full" onClick={salvar}>
         {t('dragon_tracker.save')}
       </button>
-      <p className="font-nunito text-[0.68rem] text-center mt-1.5 m-0" style={{ color:C.TEXT_MUTED }}>
+      <p className="font-nunito text-[0.72rem] text-center mt-1.5 m-0" style={{ color:C.TEXT_MUTED }}>
         {t('dragon_tracker.local_note')}
       </p>
     </div>

@@ -79,8 +79,8 @@ export default function TropaModal({ tropa, analysis, onFechar, onOpenTips, onOp
             <section className="game-panel" style={{ marginTop:10 }}>
               <GameSectionTitle>{t('troops.training_requirement')}</GameSectionTitle>
               <div style={{ padding:'11px 12px', fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", color:'#58462c' }}>
-                <div style={{ fontSize:'.78rem', fontWeight:700 }}>{unlockSource}{unlock.nivel ? ` • ${t('common.level_short')} ${unlock.nivel}` : ''}</div>
-                {unlockNote ? <div style={{ marginTop:5, color:'#796644', fontSize:'.68rem', lineHeight:1.4 }}>{unlockNote}</div> : null}
+                <div style={{ fontSize:'.82rem', fontWeight:700 }}>{unlockSource}{unlock.nivel ? ` • ${t('common.level_short')} ${unlock.nivel}` : ''}</div>
+                {unlockNote ? <div style={{ marginTop:5, color:'#796644', fontSize:'.76rem', lineHeight:1.4 }}>{unlockNote}</div> : null}
               </div>
             </section>
           ) : null}

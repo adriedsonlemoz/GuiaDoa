@@ -22,11 +22,11 @@ const ReinoCard = ({ reino, selecionado, onClick }) => {
         <span style={{ display:'block', fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif", fontWeight:900, fontSize:'.84rem', color:selecionado?C.TEXT_PRIMARY:C.TEXT_SECONDARY, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
           {realmIcon(reino)}{content(reino, 'nome')}
         </span>
-        <span style={{ display:'block', fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif", fontWeight:700, fontSize:'.68rem', color:C.TEXT_FAINT, marginTop:1 }}>
+        <span style={{ display:'block', fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif", fontWeight:700, fontSize:'.76rem', color:C.TEXT_FAINT, marginTop:1 }}>
           {reino.tipoEspecial === 'idade_dragao' ? t('realms.type_dragon_age') : reino.tipoEspecial === 'hardcore' ? t('realms.type_hardcore') : reino.fuso || ''}
         </span>
       </span>
-      <span style={{ fontFamily:'monospace', fontWeight:800, fontSize:'.72rem', color:selecionado?C.ACCENT:C.TEXT_MUTED, background:selecionado?'rgba(200,168,74,.15)':'rgba(200,168,74,.06)', border:`1px solid ${selecionado?'rgba(200,168,74,.5)':'rgba(200,168,74,.2)'}`, borderRadius:5, padding:'3px 6px', flexShrink:0 }}>
+      <span style={{ fontFamily:'monospace', fontWeight:800, fontSize:'.76rem', color:selecionado?C.ACCENT:C.TEXT_MUTED, background:selecionado?'rgba(200,168,74,.15)':'rgba(200,168,74,.06)', border:`1px solid ${selecionado?'rgba(200,168,74,.5)':'rgba(200,168,74,.2)'}`, borderRadius:5, padding:'3px 6px', flexShrink:0 }}>
         {reino.fuso || 'UTC?'}
       </span>
     </button>
@@ -62,13 +62,13 @@ const ReinoSelector = ({ value, onChange }) => {
           <span style={{ flex:1, minWidth:0 }}>
             <span style={{ display:'block', fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif", fontWeight:900, fontSize:'.86rem', color:C.TEXT_PRIMARY, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{realmIcon(selecionado)}{content(selecionado,'nome')}</span>
           </span>
-          <span style={{ fontFamily:'monospace', fontWeight:800, fontSize:'.72rem', color:C.ACCENT, background:'rgba(200,168,74,.12)', border:'1px solid rgba(200,168,74,.35)', borderRadius:5, padding:'3px 6px', flexShrink:0 }}>{selecionado.fuso || 'UTC?'}</span>
+          <span style={{ fontFamily:'monospace', fontWeight:800, fontSize:'.76rem', color:C.ACCENT, background:'rgba(200,168,74,.12)', border:'1px solid rgba(200,168,74,.35)', borderRadius:5, padding:'3px 6px', flexShrink:0 }}>{selecionado.fuso || 'UTC?'}</span>
         </> : <span style={{ fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif", fontWeight:700, fontSize:'.84rem', color:C.TEXT_FAINT, flex:1 }}>— {t('profile.select_realm')} —</span>}
-        <span style={{ color:C.TEXT_FAINT, fontSize:'.76rem', transform:aberto?'rotate(180deg)':'none', transition:'transform .2s', flexShrink:0 }}>▾</span>
+        <span style={{ color:C.TEXT_FAINT, fontSize:'.80rem', transform:aberto?'rotate(180deg)':'none', transition:'transform .2s', flexShrink:0 }}>▾</span>
       </button>
 
       {aberto && <div style={{ position:'absolute', top:'100%', left:0, right:0, zIndex:999, background:'#F2EADA', border:`1.5px solid ${C.BORDER}`, borderTop:'1px solid rgba(200,168,74,.3)', borderRadius:'0 0 10px 10px', boxShadow:'0 8px 24px rgba(62,47,28,.20)', overflow:'hidden' }}>
-        <div style={{ padding:'7px 11px', background:'#EAE0C8', borderBottom:'1px solid rgba(200,168,74,.2)', fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif", fontWeight:800, fontSize:'.68rem', color:C.TEXT_SECONDARY }}>
+        <div style={{ padding:'7px 11px', background:'#EAE0C8', borderBottom:'1px solid rgba(200,168,74,.2)', fontFamily:"system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif", fontWeight:800, fontSize:'.76rem', color:C.TEXT_SECONDARY }}>
           {t('profile.realm_count', { shown:ordenados.length, total:reinos.length })}
         </div>
         <div style={{ maxHeight:300, overflowY:'auto' }}>

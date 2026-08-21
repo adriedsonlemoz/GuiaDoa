@@ -27,7 +27,7 @@ const SkillModal = ({ skill, onClose }) => {
           {skill.imagem ? <img src={skill.imagem} alt="" style={{ width:54, height:54, objectFit:'cover', borderRadius:6, border:'1px solid #b69b63', flexShrink:0 }} /> : <div style={{ width:54, height:54, display:'grid', placeItems:'center', fontSize:24, border:'1px solid #b69b63', borderRadius:6, flexShrink:0 }}>✦</div>}
           <div style={{ flex:1, minWidth:0 }}>
             <h2 style={{ margin:0, fontSize:'1rem' }}>{skill.nome}</h2>
-            <div style={{ opacity:.82, fontSize:'.72rem', marginTop:2 }}>{skill.tipo === 'comum' ? t('dragons.skill_type_common') : t('dragons.skill_type_battle')}</div>
+            <div style={{ opacity:.82, fontSize:'.76rem', marginTop:2 }}>{skill.tipo === 'comum' ? t('dragons.skill_type_common') : t('dragons.skill_type_battle')}</div>
           </div>
           <button type="button" className="game-modal-close" onClick={onClose} aria-label={t('common.close') || 'Fechar'}>✕</button>
         </div>

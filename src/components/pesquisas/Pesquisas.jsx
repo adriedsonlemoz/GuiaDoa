@@ -93,7 +93,7 @@ export default function Pesquisas({ setRoute }) {
             ))}
           </div>
         ) : (
-          <div style={{ padding:'28px 18px', textAlign:'center', color:'#6f7469', fontSize:'.74rem', fontWeight:700 }}>
+          <div style={{ padding:'28px 18px', textAlign:'center', color:'#6f7469', fontSize:'.80rem', fontWeight:700 }}>
             🔬 {t('research.no_results')}
           </div>
         )}

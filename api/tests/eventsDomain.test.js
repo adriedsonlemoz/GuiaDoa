@@ -173,8 +173,9 @@ test('seed canônico contém somente os 33 reinos informados, com IDs reais e da
   assert.equal(new Set(REINOS_SEED.map(r=>r.id)).size,33);
   assert.equal(REINOS_SEED.some(r=>r.nome==='Fabrica'),false);
   for (const id of [345,346,347,348]) assert.equal(byId.get(id)?.aberturaEm,'2026-08-12T00:00:00.000Z');
-  for (const id of [341,342,343,344]) assert.equal(byId.get(id)?.aberturaEm,'2025-08-12T00:00:00.000Z');
-  for (const id of [337,338,339,340]) assert.equal(byId.get(id)?.aberturaEm,'2024-08-12T00:00:00.000Z');
+  for (const id of [331,332,333,334]) assert.equal(byId.get(id)?.aberturaEm,'2025-08-12T00:00:00.000Z');
+  for (const id of [327,328,329,330]) assert.equal(byId.get(id)?.aberturaEm,'2024-08-12T00:00:00.000Z');
+  assert.equal(byId.get(344)?.aberturaEm,undefined);
   assert.equal(byId.get(336)?.aberturaEm,undefined);
   assert.equal(byId.get(287)?.fuso,'UTC-7');
   assert.equal(byId.get(291)?.fuso,'UTC+0');
@@ -203,15 +204,16 @@ test('período central do evento realinha todas as ocorrências ao mesmo reset',
 });
 
 
-test('seed 2.72 não inventa abertura e aplica apenas horários de reino confirmados', () => {
+test('seed 2.77 não inventa abertura e separa horários específicos da referência UTC+0', () => {
   const byId=new Map(REINOS_SEED.map(r=>[r.id,r]));
   const dated=REINOS_SEED.filter(r=>r.aberturaEm);
   assert.equal(dated.length,12);
   assert.equal(byId.get(336).aberturaEm,undefined);
   assert.equal(byId.get(291).aberturaEm,undefined);
   assert.equal(byId.get(291).horarios.batalhaDragao,'');
-  assert.equal(byId.get(291).horarios.zyrvorthian,'19:00');
-  assert.equal(byId.get(313).horarios.zyrvorthian,'22:00');
+  assert.equal(byId.get(291).horarios.zyrvorthian,'');
+  assert.equal(byId.get(313).horarios.zyrvorthian,'');
+  assert.equal(byId.get(345).horarios.zyrvorthian,'19:00');
   assert.equal(byId.get(313).horarios.batalhaDragao,'17:00');
   assert.equal(byId.get(346).horarios.batalhaDragao,'20:00');
   assert.equal(byId.get(347).horarios.batalhaDragao,'06:00');

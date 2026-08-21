@@ -13,7 +13,7 @@ export default function ModoEmoticons({ onInsert, showToast }) {
         <div style={T.cardTitle}>
           <span style={{ color: C.ACCENT }}>ʕ•ᴥ•ʔ</span> {t('builder.kaomoji.title')}
         </div>
-        <p style={{ fontSize: '0.67rem', color: C.TEXT_MUTED, marginBottom: 10, lineHeight: 1.6 }}>
+        <p style={{ fontSize: '.72rem', color: C.TEXT_MUTED, marginBottom: 10, lineHeight: 1.6 }}>
           {t('builder.kaomoji.help')}
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -35,7 +35,7 @@ export default function ModoEmoticons({ onInsert, showToast }) {
         <div style={T.cardTitle}>
           <span style={{ color: C.ACCENT }}>:-)</span> {t('builder.ascii.title')}
         </div>
-        <p style={{ fontSize: '0.67rem', color: C.TEXT_MUTED, marginBottom: 10, lineHeight: 1.6 }}>
+        <p style={{ fontSize: '.72rem', color: C.TEXT_MUTED, marginBottom: 10, lineHeight: 1.6 }}>
           {t('builder.ascii.help')}
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>

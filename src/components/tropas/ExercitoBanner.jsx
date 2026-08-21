@@ -30,7 +30,7 @@ const ExercitoBanner = ({ totTropas, totPoder, totalFiltradas }) => {
           className="flex-1 text-center py-3 px-1 relative"
           style={{ borderRight: i < 2 ? `1px solid ${C.BORDER_SOFT}` : 'none' }}
         >
-          <p className="font-nunito font-bold text-[0.65rem] tracking-widest flex items-center justify-center gap-1 m-0 mb-1" style={{ color: C.TEXT_MUTED }}>
+          <p className="font-nunito font-bold text-[0.72rem] tracking-widest flex items-center justify-center gap-1 m-0 mb-1" style={{ color: C.TEXT_MUTED }}>
             {icon} {label}
           </p>
           <p className="font-nunito font-bold text-base leading-none m-0" style={{ color }}>

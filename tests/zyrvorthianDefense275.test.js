@@ -12,8 +12,9 @@ const assistant = fs.readFileSync('api/services/assistente/context.js','utf8');
 test('Mapa & Campanha usa uma experiência própria para Zyrvorthian', () => {
   assert.match(campaign, /ZyrvorthianLanding/);
   assert.match(campaign, /ZyrvorthianDetail/);
-  assert.match(zyr, /Horários confirmados/);
-  assert.match(zyr, /não mostra horários cadastrados como confirmados|só mostra horários cadastrados como confirmados/);
+  assert.match(zyr, /SERVIDOR BASE/);
+  assert.match(zyr, /convertBaseUtcTimeToRealm/);
+  assert.match(zyr, /referência canônica/i);
   assert.match(zyr, /CHEFES DOCUMENTADOS|Calamidades conhecidas/);
   assert.match(zyr, /tutorial-defesa-inimigos/);
 });

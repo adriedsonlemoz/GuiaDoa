@@ -57,7 +57,7 @@ const EvolucaoTropas = () => {
         <div className="px-4 py-3 flex items-center gap-3"
           style={{ background: 'linear-gradient(135deg, #2A1800 0%, #5A3200 100%)' }}>
           <div className="flex-1 min-w-0">
-            <p className="font-nunito font-bold text-[0.6rem] tracking-[3px] uppercase m-0 mb-1"
+            <p className="font-nunito font-bold text-[0.72rem] tracking-[3px] uppercase m-0 mb-1"
               style={{ color: 'rgba(220,160,80,0.7)' }}>
               {t('torneio.aceleracoes.total_pontos')}
             </p>
@@ -71,7 +71,7 @@ const EvolucaoTropas = () => {
               {fmtN(totalFinal)}
             </p>
             {ptsPos > 0 && (
-              <p className="font-nunito font-semibold text-[0.6rem] m-0 mt-1"
+              <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-1"
                 style={{ color: 'rgba(220,160,80,0.55)' }}>
                 {fmtN(ptsDosItens)} {t('torneio.evolucao_tropas.detalhe_fosseis')} + {fmtN(ptsPos)} {t('torneio.aceleracoes.detalhe_possuidos')}
               </p>
@@ -92,7 +92,7 @@ const EvolucaoTropas = () => {
         {/* Pontos possuídos */}
         <div className="px-4 py-3"
           style={{ background: C.BG_CARD, borderTop: `1px solid rgba(200,122,44,0.25)` }}>
-          <label className="font-nunito font-bold text-[0.65rem] tracking-widest uppercase block mb-1.5"
+          <label className="font-nunito font-bold text-[0.72rem] tracking-widest uppercase block mb-1.5"
             style={{ color: C.TEXT_MUTED }}>
             {t('torneio.label.possuidos')}
           </label>
@@ -130,11 +130,11 @@ const EvolucaoTropas = () => {
               <div className="px-2 pt-2.5 pb-2"
                 style={{ borderBottom: `1px solid rgba(200,168,74,0.12)` }}>
                 <p className="text-center text-xl leading-tight m-0">{f.emoji}</p>
-                <p className="font-nunito font-black text-[0.68rem] m-0 mt-1 leading-snug text-center"
+                <p className="font-nunito font-black text-[0.72rem] m-0 mt-1 leading-snug text-center"
                   style={{ color: C.TEXT_PRIMARY }}>
                   {t(f.chave)}
                 </p>
-                <p className="font-nunito font-semibold text-[0.58rem] m-0 mt-0.5 text-center"
+                <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-0.5 text-center"
                   style={{ color: f.cor, fontWeight: 800 }}>
                   {t('torneio.evolucao_tropas.conversao')}
                 </p>
@@ -143,7 +143,7 @@ const EvolucaoTropas = () => {
               {/* Input */}
               <div className="px-2 py-2"
                 style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                <span className="font-nunito font-bold text-[0.5rem] leading-none"
+                <span className="font-nunito font-bold text-[0.72rem] leading-none"
                   style={{ color: C.TEXT_FAINT, flexShrink: 0, whiteSpace: 'nowrap' }}>
                   {t('torneio.label.eq_pts')}
                 </span>

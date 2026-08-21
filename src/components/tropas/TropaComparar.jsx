@@ -49,14 +49,14 @@ const TropaComparar = () => {
             ))}
           </div>
           {tropasAtivas.length === 0 ? (
-            <p style={{ textAlign:'center', margin:'9px 0 0', color:'#687064', fontSize:'.68rem', fontWeight:650 }}>{t('troops.compare_add')}</p>
+            <p style={{ textAlign:'center', margin:'9px 0 0', color:'#687064', fontSize:'.76rem', fontWeight:650 }}>{t('troops.compare_add')}</p>
           ) : null}
         </section>
 
         <TropaComparisonTable slots={slots} />
 
         {tropasAtivas.length === 1 ? (
-          <div className="game-panel" style={{ textAlign:'center', padding:'18px 14px', color:'#687064', fontSize:'.7rem', fontWeight:650 }}>
+          <div className="game-panel" style={{ textAlign:'center', padding:'18px 14px', color:'#687064', fontSize:'.76rem', fontWeight:650 }}>
             ⚖ {t('troops.compare_add_second')}
           </div>
         ) : null}

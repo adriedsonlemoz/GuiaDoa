@@ -3,6 +3,7 @@ import { classifyConnectionError } from '../errors/appErrors.js';
 import { useI18n } from '../hooks/useI18n.jsx';
 import { API_URL as API, API_CONFIGURED } from '../config/api.js';
 import { hasUsableGameData, readGameDataCache, writeGameDataCache } from './dataCache.js';
+import { sanitizeRealmCatalog } from './realmCanonical.js';
 
 const GameDataContext = createContext(null);
 const RETRYABLE_CONNECTION_CODES = new Set(['GD-NET-001', 'GD-NET-002', 'GD-SRV-001']);
@@ -17,7 +18,7 @@ const ENDPOINTS = [
   ['niveis', 'levels.title', '/api/niveis/todas', d => Array.isArray(d) ? d : []],
   ['dragoes', 'dragons.title', '/api/dragoes', d => (d.dragoes || []).map(x => ({ ...x, id:x.slug }))],
   ['edificios', 'buildings.title', '/api/edificios', d => d.edificios || []],
-  ['reinos', 'realms.title', '/api/reinos', d => d.reinos || []],
+  ['reinos', 'realms.title', '/api/reinos', d => sanitizeRealmCatalog(d.reinos || [])],
   ['pesquisas', 'research.title', '/api/pesquisas', d => d.pesquisas || []],
   ['itens', 'items.title', '/api/itens?limite=500', d => d.itens || []],
   ['eventos', 'events.title', '/api/eventos', d => d.eventos || []],
@@ -93,7 +94,7 @@ export function GameDataProvider({ children }) {
       const snapshot = await readGameDataCache().catch(() => null);
       if (!active) return;
       if (snapshot?.data && hasUsableGameData(snapshot.data)) {
-        setDados(snapshot.data);
+        setDados({ ...snapshot.data, reinos:sanitizeRealmCatalog(snapshot.data.reinos || []) });
         setLastUpdated(snapshot.updatedAt || null);
         setDataSource('cache');
       }

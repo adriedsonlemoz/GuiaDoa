@@ -13,7 +13,7 @@ export default function ModoSimbolos({ onInsert, showToast }) {
         <div style={T.cardTitle}>
           <span style={{ color: C.ACCENT }}>✦</span> {t('builder.symbols.title')}
         </div>
-        <p style={{ fontSize: '0.67rem', color: C.TEXT_MUTED, marginBottom: 12, lineHeight: 1.6 }}>
+        <p style={{ fontSize: '.72rem', color: C.TEXT_MUTED, marginBottom: 12, lineHeight: 1.6 }}>
           {t('builder.symbols.help')}
         </p>
 
@@ -42,7 +42,7 @@ export default function ModoSimbolos({ onInsert, showToast }) {
         </div>
 
         {/* Contador */}
-        <p style={{ fontSize: '0.62rem', color: C.TEXT_FAINT, marginTop: 10, textAlign: 'right' }}>
+        <p style={{ fontSize: '.72rem', color: C.TEXT_FAINT, marginTop: 10, textAlign: 'right' }}>
           {t('builder.symbols.count',{count:SYM_CATS[catIdx].s.length})}
         </p>
       </div>

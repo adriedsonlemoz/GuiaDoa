@@ -19,7 +19,7 @@ export function buildEventTutorialText(evento, occurrence, { content, locale, t 
     const { start, end }=phaseDates(phase, occurrence);
     const day=phaseEventDay(phase, occurrence);
     lines.push('', `${content(phase,'nome')}${day?` · ${t('events.event_day',{day})}`:''}`);
-    if (start) lines.push(`${formatUtcDay(start,locale)} · ${formatUtcTime(start,locale)}${end?` → ${formatUtcTime(end,locale)}`:''}`);
+    if (start) lines.push(`${formatUtcDay(start,locale, occurrence?.fusoReino)} · ${formatUtcTime(start,locale, occurrence?.fusoReino)}${end?` → ${formatUtcTime(end,locale, occurrence?.fusoReino)}`:''}`);
     const desc=content(phase,'descricao') || content(phase,'objetivo') || phase.observacao;
     if (desc) lines.push(`› ${desc}`);
   }

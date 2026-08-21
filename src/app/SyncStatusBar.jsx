@@ -20,16 +20,16 @@ export default function SyncStatusBar({ status, isOffline, syncInfo, onSync }) {
       borderTop: '1px solid rgba(200,168,74,0.18)',
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="font-nunito font-black text-[0.67rem]" style={{ color: C.TEXT_HEADER }}>
+        <div className="font-nunito font-black text-[0.72rem]" style={{ color: C.TEXT_HEADER }}>
           {visual.emoji} {visual.label}
         </div>
-        <div className="font-nunito text-[0.56rem] truncate" style={{ color: '#B9B0A0' }}>
+        <div className="font-nunito text-[0.72rem] truncate" style={{ color: '#B9B0A0' }}>
           {t('app.sync.data_loaded', { time: ultima })}
         </div>
       </div>
       <button
         onClick={onSync}
-        className="font-nunito font-black text-[0.6rem] rounded-md px-2 py-1"
+        className="font-nunito font-black text-[0.72rem] rounded-md px-2 py-1"
         style={{
           color: C.ACCENT,
           background: 'rgba(200,168,74,0.08)',

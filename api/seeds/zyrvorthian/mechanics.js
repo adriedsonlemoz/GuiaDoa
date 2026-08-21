@@ -1,12 +1,14 @@
 /**
  * Regras confirmadas das Provações da Calamidade (Zyrvorthian).
- * Os horários de batalha NÃO são inferidos entre Reinos. A referência de 19:00
- * vem de Corvith (UTC+0); a interface cruza os horários confirmados do catálogo de Reinos.
+ * O horário canônico conhecido é 19:00 no servidor base UTC+0 (Corvith).
+ * A interface converte esse horário pelo utilitário central de fusos, sempre a partir de UTC+0.
  */
 export const ZYRVORTHIAN_MECHANICS = Object.freeze({
   nome:'Provações da Calamidade',
+  servidorBase:'UTC+0',
+  horarioBaseUtc:'19:00',
   referenciaHorario:{ reinoId:345, reinoNome:'Corvith', fuso:'UTC+0', hora:'19:00', preparacaoMinutos:5 },
-  trocaChefe:{ diaSemana:'segunda-feira', hora:'00:00', fuso:'UTC', duracaoDias:7, lojaDisponivelDias:14 },
+  trocaChefe:{ diaSemana:'segunda-feira', hora:'00:00', fuso:'UTC+0', duracaoDias:7, lojaDisponivelDias:14 },
   aumentar:{ incrementosPercentuais:[5,10,15,20], maximoPercentual:50, somenteEventoAtual:true },
   furia:{ danoAdicionalPercentual:0.1 },
   recompensaAposInicioMinutos:15,

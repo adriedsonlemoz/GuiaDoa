@@ -68,7 +68,7 @@ const TorneioAceleracoes = () => {
 
           {/* Número total */}
           <div className="flex-1 min-w-0">
-            <p className="font-nunito font-bold text-[0.6rem] tracking-[3px] uppercase m-0 mb-1"
+            <p className="font-nunito font-bold text-[0.72rem] tracking-[3px] uppercase m-0 mb-1"
               style={{ color: 'rgba(200,168,74,0.7)' }}>
               {t('torneio.aceleracoes.total_pontos')}
             </p>
@@ -82,7 +82,7 @@ const TorneioAceleracoes = () => {
               {fmtN(totalFinal)}
             </p>
             {ptsPos > 0 && (
-              <p className="font-nunito font-semibold text-[0.6rem] m-0 mt-1"
+              <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-1"
                 style={{ color: 'rgba(200,168,74,0.55)' }}>
                 {fmtN(ptsDosItens)} {t('torneio.aceleracoes.detalhe_itens')} + {fmtN(ptsPos)} {t('torneio.aceleracoes.detalhe_possuidos')}
               </p>
@@ -101,7 +101,7 @@ const TorneioAceleracoes = () => {
         {/* Campo pontos possuídos */}
         <div className="px-4 py-3"
           style={{ background: C.BG_CARD, borderTop: `1px solid rgba(200,168,74,0.25)` }}>
-          <label className="font-nunito font-bold text-[0.65rem] tracking-widest uppercase block mb-1.5"
+          <label className="font-nunito font-bold text-[0.72rem] tracking-widest uppercase block mb-1.5"
             style={{ color: C.TEXT_MUTED }}>
             {t('torneio.label.possuidos')}
           </label>
@@ -142,7 +142,7 @@ const TorneioAceleracoes = () => {
                   style={{ color: C.TEXT_PRIMARY }}>
                   {t(it.chave)}
                 </p>
-                <p className="font-nunito font-semibold text-[0.55rem] m-0 mt-0.5"
+                <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-0.5"
                   style={{ color: C.TEXT_MUTED }}>
                   {fmtN(it.min)} {it.min !== 1 ? t('torneio.aceleracoes.pt_plural') : t('torneio.aceleracoes.pt_singular')}
                 </p>
@@ -150,7 +150,7 @@ const TorneioAceleracoes = () => {
 
               {/* Input com "= pts" inline à esquerda */}
               <div className="px-2 py-2" style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'nowrap' }}>
-                <span className="font-nunito font-bold text-[0.52rem] leading-none"
+                <span className="font-nunito font-bold text-[0.72rem] leading-none"
                   style={{ color: C.TEXT_FAINT, flexShrink: 0, whiteSpace: 'nowrap' }}>
                   {t('torneio.label.eq_pts')}
                 </span>

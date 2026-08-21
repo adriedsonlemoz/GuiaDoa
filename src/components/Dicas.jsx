@@ -38,7 +38,7 @@ const Dicas = ({ setRoute }) => {
           <div className="game-panel" style={{ textAlign:'center', padding:'42px 18px', color:'#806d4d' }}>
             <div style={{ fontSize:'2rem' }}>📚</div>
             <div style={{ marginTop:8, fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700 }}>{t('tips.no_data')}</div>
-            <div style={{ marginTop:4, fontSize:'.68rem' }}>{t('tips.no_data_hint')}</div>
+            <div style={{ marginTop:4, fontSize:'.76rem' }}>{t('tips.no_data_hint')}</div>
           </div>
         ) : null}
         {!feed.loading ? featured.map(dica => <DicaCard key={dica._id} dica={dica} catInfo={feed.catMap[dica.categoria]} onClick={() => feed.setArtigoAberto(dica)} />) : null}

@@ -15,7 +15,7 @@ export default function IlhasTabela({ data, expansoes, isEditing, onChange }) {
         <table className="text-left" style={{ minWidth: 380, tableLayout: 'fixed', width: '100%' }}>
           <thead>
             <tr style={{ background: C.BG_SECONDARY }}>
-              <th className="sticky left-0 z-10 py-2 px-2 font-nunito font-black text-[0.58rem] uppercase tracking-wider"
+              <th className="sticky left-0 z-10 py-2 px-2 font-nunito font-black text-[0.72rem] uppercase tracking-wider"
                 style={{ width: '22%', minWidth: 82, color: C.TEXT_MUTED, background: C.BG_SECONDARY, borderBottom: `2px solid ${C.BORDER}`, borderRight: `1px solid ${C.BORDER_SOFT}` }}>
                 {t('islands.building')}
               </th>
@@ -26,8 +26,8 @@ export default function IlhasTabela({ data, expansoes, isEditing, onChange }) {
                   <th key={ilha} align="center" className="py-2 px-1 text-center"
                     style={{ background: C.BG_SECONDARY, borderBottom: `2px solid ${C.BORDER}`, borderLeft: idx === 0 ? 'none' : `1px solid ${C.BORDER_SOFT}`, width: `${78 / 5}%` }}>
                     <p className="text-sm leading-none m-0">{meta.icon}</p>
-                    <p className="font-nunito font-black text-[0.6rem] tracking-wide m-0" style={{ color: meta.color }}>{t(ISLAND_KEY[ilha])}</p>
-                    {limite !== null && <p className="font-nunito text-[0.5rem] m-0" style={{ color: C.TEXT_FAINT }}>{t('islands.plots', { count: limite })}</p>}
+                    <p className="font-nunito font-black text-[0.72rem] tracking-wide m-0" style={{ color: meta.color }}>{t(ISLAND_KEY[ilha])}</p>
+                    {limite !== null && <p className="font-nunito text-[0.72rem] m-0" style={{ color: C.TEXT_FAINT }}>{t('islands.plots', { count: limite })}</p>}
                   </th>
                 );
               })}

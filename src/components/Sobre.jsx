@@ -59,7 +59,7 @@ const Sobre = () => {
             {t('about.support_modal_text')}
           </p>
           <div className="py-2.5 px-3 rounded-lg mb-3" style={{ background: C.BG_SECONDARY, border: `2px dashed ${C.BORDER}` }}>
-            <p className="font-nunito font-black text-[0.7rem] uppercase tracking-wider m-0 mb-0.5" style={{ color: C.TEXT_MUTED }}>{t('about.support_email')}:</p>
+            <p className="font-nunito font-black text-[0.72rem] uppercase tracking-wider m-0 mb-0.5" style={{ color: C.TEXT_MUTED }}>{t('about.support_email')}:</p>
             <p className="font-mono font-black text-sm tracking-wide m-0" style={{ color: C.BLUE }}>suporte@guiadoa.com</p>
           </div>
           <div className="flex gap-2">
@@ -75,7 +75,7 @@ const Sobre = () => {
           <img className="about-brand-icon" src="/img/app-icon.png" alt="GUIA DOA" />
           <div className="inline-flex items-center gap-2 mb-1">
             <p className="font-cinzel font-bold text-lg uppercase tracking-widest m-0" style={{ color: C.ACCENT_DEEP }}>{DISPLAY_VERSION}</p>
-            <span className="font-nunito font-black text-[0.58rem] px-2 py-0.5 rounded-full text-white" style={{ background: C.SUCCESS, letterSpacing: '0.5px' }}>{t('about.new')}</span>
+            <span className="font-nunito font-black text-[0.72rem] px-2 py-0.5 rounded-full text-white" style={{ background: C.SUCCESS, letterSpacing: '0.5px' }}>{t('about.new')}</span>
           </div>
           <p className="font-nunito font-semibold text-xs italic m-0 mb-2" style={{ color: C.TEXT_MUTED }}>“{t('about.tagline')}”</p>
           <div className="gold-stripe mb-3 opacity-50" />
@@ -111,9 +111,9 @@ const Sobre = () => {
                 <span className="text-xl leading-none" aria-hidden="true">{entry.icon}</span>
                 <div className="flex-1 min-w-0">
                   <p className="font-nunito font-black text-[0.8rem] m-0 leading-tight" style={{ color: C.TEXT_PRIMARY }}>{entry.name}</p>
-                  <p className="font-nunito font-bold text-[0.65rem] m-0" style={{ color: entry.color }}>{entry.ver}</p>
+                  <p className="font-nunito font-bold text-[0.72rem] m-0" style={{ color: entry.color }}>{entry.ver}</p>
                 </div>
-                {index === 0 && <span className="font-nunito font-black text-[0.58rem] px-1.5 py-0.5 rounded-full text-white" style={{ background: entry.color }}>{t('about.new')}</span>}
+                {index === 0 && <span className="font-nunito font-black text-[0.72rem] px-1.5 py-0.5 rounded-full text-white" style={{ background: entry.color }}>{t('about.new')}</span>}
                 <span className="about-changelog-chevron" aria-hidden="true">⌄</span>
               </summary>
               <div className="px-3 py-2 space-y-1">

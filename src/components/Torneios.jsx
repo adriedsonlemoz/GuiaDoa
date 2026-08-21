@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { getFusoOffset, getProfile } from '../utils/storage.js';
+import { getProfile } from '../utils/storage.js';
 import { useTorneioTimer } from '../hooks/useTorneioTimer.js';
 import { useI18n } from '../hooks/useI18n.jsx';
 import { C } from '../theme.js';
@@ -101,8 +101,7 @@ const Torneios = () => {
   const [recent, setRecent] = useState(() => readRecentTournaments());
   const tutorialContentRef = useRef(null);
   const profile = getProfile() || {};
-  const offset = getFusoOffset();
-  const { horaSomente, countdown, isUrgente } = useTorneioTimer(offset);
+  const { horaSomente, countdown, isUrgente, resetLocal, resetDayDelta } = useTorneioTimer(profile.fuso || 'UTC+0');
   const active = getTournament(activeId);
 
   const filtered = useMemo(() => {
@@ -132,6 +131,12 @@ const Torneios = () => {
     time: horaSomente,
     urgent: isUrgente,
     label: t('tournament.turnover.next'),
+    resetLocal,
+    resetDayDelta,
+    previousDayLabel: t('realms.previous_day'),
+    nextDayLabel: t('realms.next_day'),
+    nowLabel: t('tournament.turnover.now'),
+    baseLabel: t('tournament.turnover.base'),
   };
 
   const openTournament = id => {

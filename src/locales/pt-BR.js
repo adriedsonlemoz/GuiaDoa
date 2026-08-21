@@ -1458,8 +1458,9 @@ const ptBR = {
   'builder.score.placeholder_a': 'Brasil',
   'builder.score.placeholder_b': 'Haiti',
 
-  'torneio.status.ends_tomorrow': 'Encerra às 21:00 de amanhã',
-  'torneio.status.ends_today': 'Encerra às 21:00 de hoje',
+  'torneio.status.ends_tomorrow': 'Virada no próximo dia do realm',
+  'torneio.status.ends_today': 'Virada ainda hoje',
+  'torneio.status.next_reset': 'Próxima virada do servidor base',
 
   'errors.ui.title': 'Não foi possível abrir esta seção',
   'errors.ui.message': 'Ocorreu uma falha inesperada na interface. Tente novamente ou volte ao início.',
@@ -1607,8 +1608,10 @@ const ptBR = {
 
   'tournament.hub.title': 'Centro de Torneios',
   'tournament.hub.help': 'Calculadoras, guias e planejamento em um único lugar. Abra um torneio para consultar regras, estimar pontos ou salvar uma meta.',
-  'tournament.turnover.next': 'Próxima virada do realm',
-  'tournament.turnover.note': 'A virada usa a referência diária das 21:00 do realm. Horários específicos de eventos só serão exibidos quando estiverem cadastrados.',
+  'tournament.turnover.next': 'Próxima virada do servidor',
+  'tournament.turnover.note': 'A virada diária usa 00:00 UTC+0 como referência canônica. O horário do realm é convertido automaticamente a partir do servidor base; horários específicos desconhecidos permanecem sem preenchimento.',
+  'tournament.turnover.now': 'agora',
+  'tournament.turnover.base': 'Base',
   'tournament.filter.all': 'Todos',
   'tournament.filter.calculators': 'Calculadoras',
   'tournament.filter.guides': 'Guias',
@@ -2046,6 +2049,8 @@ const ptBR = {
   'realms.history': 'Histórico',
   'realms.no_history': 'Nenhuma informação histórica cadastrada.',
   'realms.not_informed': 'Não informado',
+  'realms.previous_day': 'dia anterior',
+  'realms.next_day': 'dia seguinte',
   'realms.no_results': 'Nenhum reino corresponde à busca.',
   'realms.merge_ready': 'Estrutura preparada para registrar futuras fusões quando houver dados reais; nenhuma fusão fictícia é exibida.',
   'realms.mergers': 'Fusões registradas',
@@ -2060,7 +2065,7 @@ const ptBR = {
   // ── Beta 2.72 · Eventos, Reinos, tutoriais e inicialização ────────────────
   'realms.timezone_realm_count': '{count} reinos',
   'realms.timezone_now': 'Agora neste fuso',
-  'realms.schedule_server_note': 'Os horários abaixo usam o relógio oficial UTC do jogo quando cadastrados. O fuso do reino continua indicado separadamente.',
+  'realms.schedule_server_note': 'Referência canônica do servidor:',
   'events.current_events': 'Eventos atuais',
   'events.past_events': 'Eventos passados',
   'events.observation': 'Observação',
@@ -2094,7 +2099,7 @@ const ptBR = {
   'donation.future_title': 'Outras formas de apoio',
   'donation.future_help': 'PayPal e moedas digitais ficam preparados para o futuro, mas só serão ativados quando houver dados reais cadastrados.',
   'donation.crypto': 'Moedas digitais',
-  'donation.first_title': 'GUIA DOA continua gratuito',
+  'donation.first_title': 'Guia Doa continua gratuito',
   'donation.first_text': 'Este aplicativo é totalmente gratuito. Se quiser ajudar na manutenção do projeto, você pode acessar a área de Doação. Este aviso aparece somente uma vez neste dispositivo/navegador.',
   'donation.not_now': 'Agora não',
   'donation.help': 'Ajudar',
@@ -2105,7 +2110,7 @@ const ptBR = {
   'about.history.2_71.1': 'Admin de Eventos dividido em áreas menores para Informações gerais, Datas e fases, Reinos, Recompensas, Regras e Histórico.',
   'about.history.2_71.2': 'Catálogo canônico passou a usar os 33 números reais dos reinos, removendo IDs artificiais e o registro inexistente Fabrica.',
   'about.history.2_71.3': 'Extras ganhou Reinos com filtros em cards, tipos especiais e dados desconhecidos explicitamente não informados.',
-  'about.history.2_71.4': 'Ocorrências em múltiplos reinos passaram a usar validação detalhada e seleção segura dos quatro reinos mais recentes.',
+  'about.history.2_71.4': 'Ocorrências em múltiplos reinos passaram a usar validação detalhada e seleção segura dos quatro reinos com abertura confirmada mais recente.',
   'about.history.2_71.5': 'Fases e recompensas foram estruturadas para integração com outros módulos e expansão futura.',
 
 };

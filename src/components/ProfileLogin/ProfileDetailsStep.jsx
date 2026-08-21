@@ -21,9 +21,9 @@ export default function ProfileDetailsStep({
             background:'rgba(248,242,224,.06)', border:'1.5px solid rgba(200,168,74,.5)', fontSize:27,
           }}>🎖️</div>
           <div>
-            <div className="font-nunito" style={{ color:C.ACCENT, fontWeight:900, fontSize:'.6rem', letterSpacing:2 }}>{t('profile.eyebrow')}</div>
+            <div className="font-nunito" style={{ color:C.ACCENT, fontWeight:900, fontSize:'.72rem', letterSpacing:2 }}>{t('profile.eyebrow')}</div>
             <h1 className="font-cinzel" style={{ color:C.TEXT_HEADER, fontSize:'1.02rem', margin:'4px 0 4px' }}>{t('profile.title')}</h1>
-            <p className="font-nunito" style={{ color:'rgba(248,242,224,.66)', fontSize:'.7rem', lineHeight:1.4, margin:0 }}>{t('profile.subtitle')}</p>
+            <p className="font-nunito" style={{ color:'rgba(248,242,224,.66)', fontSize:'.76rem', lineHeight:1.4, margin:0 }}>{t('profile.subtitle')}</p>
           </div>
         </div>
       </header>
@@ -35,8 +35,8 @@ export default function ProfileDetailsStep({
         }}>
           <span aria-hidden="true">ℹ️</span>
           <div>
-            <strong className="font-nunito" style={{ color:C.TEXT_SECONDARY, fontSize:'.68rem' }}>{t('profile.unofficial.title')}</strong>
-            <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.64rem', lineHeight:1.45, margin:'2px 0 0' }}>{t('profile.unofficial.text')}</p>
+            <strong className="font-nunito" style={{ color:C.TEXT_SECONDARY, fontSize:'.76rem' }}>{t('profile.unofficial.title')}</strong>
+            <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.74rem', lineHeight:1.45, margin:'2px 0 0' }}>{t('profile.unofficial.text')}</p>
           </div>
         </section>
 
@@ -45,7 +45,7 @@ export default function ProfileDetailsStep({
           boxShadow:'0 5px 18px rgba(62,47,28,.09)', overflow:'visible',
         }}>
           <div style={{ padding:'11px 16px', background:C.BG_CARD_TOP, borderBottom:`1px solid ${C.BORDER_SOFT}`, borderRadius:'14px 14px 0 0' }}>
-            <span className="font-cinzel" style={{ color:C.TEXT_PRIMARY, fontWeight:700, fontSize:'.75rem', letterSpacing:1.6 }}>{t('profile.identity')}</span>
+            <span className="font-cinzel" style={{ color:C.TEXT_PRIMARY, fontWeight:700, fontSize:'.80rem', letterSpacing:1.6 }}>{t('profile.identity')}</span>
           </div>
           <div style={{ padding:'16px 16px 18px' }}>
             <Field label={t('profile.commander_name')}>
@@ -54,7 +54,7 @@ export default function ProfileDetailsStep({
 
             <div style={{ display:'flex', alignItems:'center', gap:8, margin:'17px 0 14px' }}>
               <div style={{ flex:1, height:1, background:C.BORDER_SOFT }} />
-              <span className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.62rem', fontWeight:900, letterSpacing:1.6, textTransform:'uppercase' }}>{t('profile.realm_section')}</span>
+              <span className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.74rem', fontWeight:900, letterSpacing:1.6, textTransform:'uppercase' }}>{t('profile.realm_section')}</span>
               <div style={{ flex:1, height:1, background:C.BORDER_SOFT }} />
             </div>
 
@@ -64,7 +64,7 @@ export default function ProfileDetailsStep({
 
             {fuso && <RealmClock realm={reino} fuso={fuso} compact />}
 
-            <p className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.62rem', lineHeight:1.45, margin:'13px 0 0' }}>🔒 {t('profile.privacy')}</p>
+            <p className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.74rem', lineHeight:1.45, margin:'13px 0 0' }}>🔒 {t('profile.privacy')}</p>
           </div>
         </section>
 

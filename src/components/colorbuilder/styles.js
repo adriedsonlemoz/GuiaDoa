@@ -62,14 +62,14 @@ export const T = {
     borderRadius: 12, padding: '12px 14px', marginBottom: 10,
   },
   cardTitle: {
-    fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.14em',
+    fontSize: '.72rem', textTransform: 'uppercase', letterSpacing: '0.14em',
     color: C.TEXT_MUTED, marginBottom: 10,
     display: 'flex', alignItems: 'center', gap: 6,
   },
 
   // ── Tipografia ────────────────────────────────────────────────────────────
   secLbl: {
-    fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.13em',
+    fontSize: '.72rem', textTransform: 'uppercase', letterSpacing: '0.13em',
     color: C.TEXT_MUTED, marginBottom: 6, marginTop: 4,
   },
 
@@ -110,7 +110,7 @@ export const T = {
     background: active ? 'linear-gradient(135deg,#3C6863,#2F5652)' : 'transparent',
     border: active ? '1.5px solid rgba(200,168,74,0.5)' : `1.5px solid rgba(200,168,74,0.2)`,
     borderRadius: 5, color: active ? 'rgba(200,168,74,0.95)' : C.TEXT_MUTED,
-    fontSize: '0.6rem', padding: '3px 9px', cursor: 'pointer',
+    fontSize: '.72rem', padding: '3px 9px', cursor: 'pointer',
     letterSpacing: '0.07em', textTransform: 'uppercase',
     fontFamily: 'inherit', transition: 'all 0.12s',
   }),
@@ -123,7 +123,7 @@ export const T = {
     flex: 1, background: active ? 'linear-gradient(135deg,#3C6863,#2F5652)' : 'none',
     border: 'none', borderRadius: 6,
     color: active ? 'rgba(200,168,74,0.9)' : C.TEXT_MUTED,
-    fontFamily: 'inherit', fontSize: '0.7rem', padding: '8px 6px',
+    fontFamily: 'inherit', fontSize: '.72rem', padding: '8px 6px',
     cursor: 'pointer', letterSpacing: '0.05em', textTransform: 'uppercase',
     transition: 'all 0.14s',
   }),

@@ -34,9 +34,9 @@ const REGRAS = [
 const SectionDivider = ({ label }) => (
   <div className="flex items-center gap-2 my-3">
     <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, transparent, ${C.BORDER})` }} />
-    <span style={{ color: C.ACCENT, fontSize: '0.7rem' }}>◆</span>
-    {label && <span className="font-nunito font-bold text-[0.65rem] tracking-widest whitespace-nowrap" style={{ color: C.TEXT_MUTED }}>{label}</span>}
-    {label && <span style={{ color: C.ACCENT, fontSize: '0.7rem' }}>◆</span>}
+    <span style={{ color: C.ACCENT, fontSize: '.72rem' }}>◆</span>
+    {label && <span className="font-nunito font-bold text-[0.72rem] tracking-widest whitespace-nowrap" style={{ color: C.TEXT_MUTED }}>{label}</span>}
+    {label && <span style={{ color: C.ACCENT, fontSize: '.72rem' }}>◆</span>}
     <div className="flex-1 h-px" style={{ background: `linear-gradient(270deg, transparent, ${C.BORDER})` }} />
   </div>
 );
@@ -94,11 +94,11 @@ const Calculadora = () => {
         {/* Inputs nível */}
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
-            <label className="font-nunito font-bold text-[0.65rem] tracking-wide block mb-1" style={{ color: C.TEXT_MUTED }}>{t('upgrade.calc.current')}</label>
+            <label className="font-nunito font-bold text-[0.72rem] tracking-wide block mb-1" style={{ color: C.TEXT_MUTED }}>{t('upgrade.calc.current')}</label>
             <input type="number" min={1} max={25} className="tw-input text-center" value={nivelDe} onChange={e => setNivelDe(e.target.value)} />
           </div>
           <div>
-            <label className="font-nunito font-bold text-[0.65rem] tracking-wide block mb-1" style={{ color: C.TEXT_MUTED }}>{t('upgrade.calc.target')}</label>
+            <label className="font-nunito font-bold text-[0.72rem] tracking-wide block mb-1" style={{ color: C.TEXT_MUTED }}>{t('upgrade.calc.target')}</label>
             <input type="number" min={1} max={25} className="tw-input text-center" value={nivelAte} onChange={e => setNivelAte(e.target.value)} />
           </div>
         </div>
@@ -118,7 +118,7 @@ const Calculadora = () => {
                   style={{ background: C.BG_CARD, border: `1.5px solid ${item.cor}55`, borderBottom: `3px solid ${item.cor}`, minWidth: 72 }}>
                   <p className="text-xl leading-none m-0">{item.icon}</p>
                   <p className="font-nunito font-black text-lg leading-tight m-0" style={{ color: item.cor }}>{item.value.toLocaleString(locale)}</p>
-                  <p className="font-nunito font-bold text-[0.62rem] uppercase m-0" style={{ color: C.TEXT_MUTED }}>{item.label}</p>
+                  <p className="font-nunito font-bold text-[0.72rem] uppercase m-0" style={{ color: C.TEXT_MUTED }}>{item.label}</p>
                 </div>
               ))}
             </div>
@@ -181,7 +181,7 @@ const AprimoramentoTropas = () => {
       <span className="absolute top-1.5 left-2" style={{ color: C.ACCENT, fontSize: 11, opacity: 0.7 }}>◆</span>
       <span className="absolute top-1.5 right-2" style={{ color: C.ACCENT, fontSize: 11, opacity: 0.7 }}>◆</span>
       <p className="font-nunito font-bold text-xs tracking-widest uppercase m-0" style={{ color: C.TEXT_PRIMARY }}>{t('upgrade.title')}</p>
-      <p className="font-nunito italic text-[0.7rem] m-0 mt-0.5" style={{ color: C.TEXT_MUTED }}>{t('upgrade.subtitle')}</p>
+      <p className="font-nunito italic text-[0.72rem] m-0 mt-0.5" style={{ color: C.TEXT_MUTED }}>{t('upgrade.subtitle')}</p>
     </div>
 
     <SectionDivider label={t('upgrade.calculator')} />
@@ -213,7 +213,7 @@ const AprimoramentoTropas = () => {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                 <span className="font-nunito font-black text-[0.85rem]" style={{ color: attr.cor }}>{t(`upgrade.attr.${attr.key}.name`)}</span>
-                <span className="font-nunito font-bold text-[0.6rem] px-1.5 py-0.5 rounded-full"
+                <span className="font-nunito font-bold text-[0.72rem] px-1.5 py-0.5 rounded-full"
                   style={{
                     background: attr.tipo === 'ofensivo' ? '#A83C2C22' : '#5C7FA322',
                     color: attr.tipo === 'ofensivo' ? '#A83C2C' : '#5C7FA3',
@@ -221,12 +221,12 @@ const AprimoramentoTropas = () => {
                   }}>
                   {t(attr.tipo === 'ofensivo' ? 'upgrade.offensive' : 'upgrade.defensive')}
                 </span>
-                {attr.critico && <span className="font-nunito font-bold text-[0.6rem] px-1.5 py-0.5 rounded-full" style={{ background: '#8B6BAE22', color: '#8B6BAE', border: '1px solid #8B6BAE44' }}>{t('upgrade.critical',{value:attr.critico})}</span>}
-                {attr.bloqueio && <span className="font-nunito font-bold text-[0.6rem] px-1.5 py-0.5 rounded-full" style={{ background: '#5C7FA322', color: '#5C7FA3', border: '1px solid #5C7FA344' }}>{t('upgrade.blocks',{value:attr.bloqueio})}</span>}
+                {attr.critico && <span className="font-nunito font-bold text-[0.72rem] px-1.5 py-0.5 rounded-full" style={{ background: '#8B6BAE22', color: '#8B6BAE', border: '1px solid #8B6BAE44' }}>{t('upgrade.critical',{value:attr.critico})}</span>}
+                {attr.bloqueio && <span className="font-nunito font-bold text-[0.72rem] px-1.5 py-0.5 rounded-full" style={{ background: '#5C7FA322', color: '#5C7FA3', border: '1px solid #5C7FA344' }}>{t('upgrade.blocks',{value:attr.bloqueio})}</span>}
               </div>
               <p className="font-nunito font-semibold text-[0.75rem] leading-snug m-0 mb-1" style={{ color: C.TEXT_SECONDARY }}>{t(`upgrade.attr.${attr.key}.desc`)}</p>
               {attr.contra && (
-                <p className="font-nunito text-[0.68rem] m-0">
+                <p className="font-nunito text-[0.72rem] m-0">
                   <span style={{ color: C.TEXT_MUTED }}>{t('upgrade.countered_by')} </span>
                   <span className="font-black" style={{ color: C.ACCENT_DEEP }}>{t(`upgrade.attr.${attr.contra}.name`)}</span>
                 </p>

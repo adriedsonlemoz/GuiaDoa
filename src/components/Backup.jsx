@@ -72,7 +72,7 @@ const Backup = () => {
               value={backupCode}
               rows={3}
               className="tw-input font-mono text-xs resize-none mb-3"
-              style={{ wordBreak: 'break-all', fontSize: '0.62rem', lineHeight: 1.5 }}
+              style={{ wordBreak: 'break-all', fontSize: '.72rem', lineHeight: 1.5 }}
             />
           )}
 
@@ -90,7 +90,7 @@ const Backup = () => {
           <textarea
             rows={3}
             className="tw-input font-mono text-xs resize-none mb-2.5"
-            style={{ fontSize: '0.62rem', lineHeight: 1.5 }}
+            style={{ fontSize: '.72rem', lineHeight: 1.5 }}
             placeholder={t('backup.paste_placeholder')}
             value={restoreCode}
             onChange={e => setRestoreCode(e.target.value)}
@@ -105,7 +105,7 @@ const Backup = () => {
             className="mt-3 p-2.5 rounded-lg"
             style={{ border: `1px dashed ${C.WARNING}`, background: `${C.WARNING}10` }}
           >
-            <p className="font-nunito font-bold text-[0.7rem] m-0" style={{ color: C.WARNING }}>
+            <p className="font-nunito font-bold text-[0.72rem] m-0" style={{ color: C.WARNING }}>
               {t('backup.warning')}
             </p>
           </div>

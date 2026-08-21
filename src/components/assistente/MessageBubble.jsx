@@ -19,7 +19,7 @@ const BotaoCopiar = ({ texto }) => {
         background: copiado ? 'rgba(90,180,90,0.15)' : 'rgba(92,127,163,0.12)',
         border: `1px solid ${copiado ? 'rgba(90,180,90,0.4)' : 'rgba(92,127,163,0.3)'}`,
         color: copiado ? '#5AB45A' : COR,
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 700, fontSize: '0.6rem',
+        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 700, fontSize: '.72rem',
         letterSpacing: '0.3px', transition: 'all 0.2s',
         display: 'flex', alignItems: 'center', gap: 4,
       }}>
@@ -52,12 +52,12 @@ export function MessageBubble({ msg }) {
           {!isUser && (
             <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
               <p style={{
-                fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:900, fontSize:'0.6rem', letterSpacing:'2px',
+                fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:900, fontSize:'.72rem', letterSpacing:'2px',
                 textTransform:'uppercase', color: COR, margin:0,
               }}>{t('assistant.advisor')}</p>
               {msg.intencao && INTENCAO_LABEL[msg.intencao] && (
                 <span style={{
-                  fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700, fontSize:'0.55rem', padding:'1px 6px',
+                  fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700, fontSize:'.72rem', padding:'1px 6px',
                   borderRadius:4, background:`${COR}20`, border:`1px solid ${COR}40`, color: COR,
                   letterSpacing:'0.3px',
                 }}>
@@ -73,7 +73,7 @@ export function MessageBubble({ msg }) {
         </div>
         <div style={{ display:'flex', alignItems:'center', justifyContent: isUser ? 'flex-end' : 'flex-start', gap: 8, marginTop: 2 }}>
           <p style={{
-            fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:600, fontSize:'0.55rem', color:C.TEXT_FAINT, margin:0,
+            fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:600, fontSize:'.72rem', color:C.TEXT_FAINT, margin:0,
           }}>{msg.hora}</p>
           {!isUser && <BotaoCopiar texto={msg.content} />}
         </div>
@@ -111,7 +111,7 @@ export function TypingBubble({ mensagem }) {
           ))}
         </div>
         {mensagem && (
-          <span style={{ fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:600, fontSize:'0.65rem', color:C.TEXT_MUTED }}>
+          <span style={{ fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:600, fontSize:'.72rem', color:C.TEXT_MUTED }}>
             {mensagem}
           </span>
         )}

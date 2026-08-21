@@ -28,7 +28,7 @@ const TorneioConhecimento = () => {
           style={{ background:`${p.color}12`, border:`1px solid ${p.color}44`, borderLeft:`4px solid ${p.color}` }}>
           <span className="font-nunito font-black text-[0.78rem] flex-1" style={{ color: p.color }}>
             {t('knowledge.tier', { tier:p.tier })}
-            <span className="font-semibold text-[0.62rem] ml-1.5" style={{ color: C.TEXT_MUTED }}>({fmtN(p.pts, locale)} {t('knowledge.points')})</span>
+            <span className="font-semibold text-[0.72rem] ml-1.5" style={{ color: C.TEXT_MUTED }}>({fmtN(p.pts, locale)} {t('knowledge.points')})</span>
           </span>
           <input
             className="tw-input text-center"
@@ -38,7 +38,7 @@ const TorneioConhecimento = () => {
             onChange={e => setQtds(q=>({ ...q, [p.key]: e.target.value.replace(/\D/g,'') }))}
             inputMode="numeric"
           />
-          <span className="font-nunito font-bold text-[0.62rem] whitespace-nowrap shrink-0" style={{ color:p.color, minWidth:50 }}>
+          <span className="font-nunito font-bold text-[0.72rem] whitespace-nowrap shrink-0" style={{ color:p.color, minWidth:50 }}>
             = {fmtN((parseInt(qtds[p.key])||0)*p.pts, locale)}
           </span>
         </div>

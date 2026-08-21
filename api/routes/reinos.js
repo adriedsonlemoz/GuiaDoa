@@ -26,8 +26,8 @@ router.get('/', async (_req, res) => {
 router.get('/admin/recentes', autenticar, async (req, res) => {
   try {
     const limite = Math.min(20, Math.max(1, Number(req.query.limite || 4)));
-    const lista = await Reino.find().sort({ id:-1 }).limit(limite).lean();
-    res.json({ reinos:lista.map(r => serializarReino(r)), total:lista.length, criterio:'maior ID numérico' });
+    const lista = await Reino.find({ aberturaEm:{ $ne:null } }).sort({ aberturaEm:-1, id:-1 }).limit(limite).lean();
+    res.json({ reinos:lista.map(r => serializarReino(r)), total:lista.length, criterio:'data de abertura confirmada' });
   } catch (err) { res.status(500).json({ erro:err.message }); }
 });
 
@@ -36,7 +36,7 @@ router.get('/:slug', async (req, res) => {
     const reino = await Reino.findOne({ slug:req.params.slug }).lean();
     if (!reino) return res.status(404).json({ erro:'Reino não encontrado.' });
     const [fusoes, eventos] = await Promise.all([
-      ReinoFusao.find({ $or:[{ reinoOriginalId:reino.id }, { reinoParceiroId:reino.id }, { reinoResultanteId:reino.id }] }).sort({ dataFusao:-1 }).lean(),
+      ReinoFusao.find({ $or:[{ reinoOriginalId:reino.id }, { reinoParceiroId:reino.id }, { reinoIncorporadoId:reino.id }, { reinoResultanteId:reino.id }] }).sort({ dataFusao:-1 }).lean(),
       Evento.find({ ativo:true, 'ocorrencias.reinoId':reino.id }).lean(),
     ]);
     res.json({
@@ -86,7 +86,7 @@ router.get('/:slug/fusoes/historico', async (req, res) => {
   try {
     const reino = await Reino.findOne({ slug:req.params.slug }).lean();
     if (!reino) return res.status(404).json({ erro:'Reino não encontrado.' });
-    const fusoes = await ReinoFusao.find({ $or:[{ reinoOriginalId:reino.id }, { reinoParceiroId:reino.id }, { reinoResultanteId:reino.id }] }).sort({ dataFusao:-1 }).lean();
+    const fusoes = await ReinoFusao.find({ $or:[{ reinoOriginalId:reino.id }, { reinoParceiroId:reino.id }, { reinoIncorporadoId:reino.id }, { reinoResultanteId:reino.id }] }).sort({ dataFusao:-1 }).lean();
     res.json({ fusoes, total:fusoes.length });
   } catch (err) { res.status(500).json({ erro:err.message }); }
 });

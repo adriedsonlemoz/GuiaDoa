@@ -37,7 +37,7 @@ export const saveProfile = (profile) => {
 };
 
 export const clearProfile  = ()  => localStorage.removeItem(STORAGE_KEYS.PROFILE);
-export const getFusoOffset = ()  => parseInt(localStorage.getItem(STORAGE_KEYS.FUSO_OFFSET) || '0', 10);
+export const getFusoOffset = ()  => Number(localStorage.getItem(STORAGE_KEYS.FUSO_OFFSET) || '0') || 0;
 export const getTermoAceito= ()  => localStorage.getItem(STORAGE_KEYS.TERMO_ACEITO) === 'true';
 export const setTermoAceito= ()  => localStorage.setItem(STORAGE_KEYS.TERMO_ACEITO, 'true');
 export const getLocale     = ()  => localStorage.getItem(STORAGE_KEYS.LOCALE) || null;

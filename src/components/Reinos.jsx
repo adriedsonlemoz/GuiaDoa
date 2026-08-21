@@ -5,6 +5,8 @@ import { useI18n } from '../hooks/useI18n.jsx';
 import { occurrenceForRealm, eventStatus } from './eventos/eventUtils.js';
 import { API_URL as API } from '../config/api.js';
 import { formatRealmAge } from '../utils/realmAge.js';
+import { convertBaseUtcTimeToRealm, formatRealmClock, parseUtcOffset } from '../utils/timezone.js';
+import { GAME_CLOCK } from '../config/gameClock.js';
 
 function dateLong(value, locale) {
   const date = new Date(value);
@@ -13,16 +15,20 @@ function dateLong(value, locale) {
 }
 
 function timezoneCurrentTime(value, now = new Date(), locale = 'pt-BR') {
-  const offset=timezoneOrder(value);
-  const shifted=new Date(now.getTime()+offset*3600000);
-  return new Intl.DateTimeFormat(locale,{hour:'2-digit',minute:'2-digit',timeZone:'UTC',hour12:false}).format(shifted);
+  return formatRealmClock(value || 'UTC+0', now, locale, { seconds:false }).time;
 }
 
 function timezoneOrder(value) {
-  const match = String(value || '').match(/^UTC([+-])(\d{1,2})(?::(\d{2}))?$/);
-  if (!match) return 0;
-  const sign = match[1] === '-' ? -1 : 1;
-  return sign * (Number(match[2]) + Number(match[3] || 0) / 60);
+  return parseUtcOffset(value);
+}
+
+function derivedSchedule(realm, key) {
+  const explicit = String(realm?.horarios?.[key] || '').trim();
+  if (key === 'zyrvorthian' && GAME_CLOCK.zyrvorthian) {
+    const converted = convertBaseUtcTimeToRealm(GAME_CLOCK.zyrvorthian, realm?.fuso || 'UTC+0');
+    return converted ? { value:converted.time, dayDelta:converted.dayDelta, base:GAME_CLOCK.zyrvorthian } : { value:explicit, dayDelta:0, base:'' };
+  }
+  return { value:explicit, dayDelta:0, base:'' };
 }
 
 function realmIcon(realm) {
@@ -87,6 +93,7 @@ export default function Reinos() {
     const merges=Array.isArray(selected.fusoes)?selected.fusoes:[];
     const missing=t('realms.not_informed');
     const schedule=selected.horarios || {};
+    const zyrSchedule=derivedSchedule(selected,'zyrvorthian');
     const specialHelp = selected.tipoEspecial === 'hardcore'
       ? t('realms.hardcore_help')
       : selected.tipoEspecial === 'idade_dragao' ? t('realms.dragon_age_help') : '';
@@ -100,13 +107,13 @@ export default function Reinos() {
           <div><strong>{content(selected,'nome')}</strong><small>#{selected.id} · {selected.fuso || missing}</small><RealmTypeBadge realm={selected} t={t} /></div>
         </div>
         {specialHelp && <div className="realm-special-note"><span>{realmIcon(selected)}</span><p>{specialHelp}</p></div>}
-        <div className="realm-schedule-note">⏱️ {t('realms.schedule_server_note')}</div>
+        <div className="realm-schedule-note">⏱️ {t('realms.schedule_server_note')} <strong>{GAME_CLOCK.serverBase}</strong></div>
         <div className="realm-detail-grid">
           <RealmFact label={t('realms.opened_on')} value={selected.aberturaEm ? dateLong(selected.aberturaEm,locale) : missing} muted={!selected.aberturaEm} />
           <RealmFact label={t('realms.age')} value={age || missing} muted={!age} />
           <RealmFact label={t('realms.timezone')} value={selected.fuso || missing} muted={!selected.fuso} />
           <RealmFact label={t('realms.tournaments_end')} value={schedule.torneiosFim || missing} muted={!schedule.torneiosFim} />
-          <RealmFact label={t('realms.zyrvorthian')} value={schedule.zyrvorthian || missing} muted={!schedule.zyrvorthian} />
+          <RealmFact label={t('realms.zyrvorthian')} value={zyrSchedule.value ? `${zyrSchedule.value}${zyrSchedule.dayDelta < 0 ? ` · ${t('realms.previous_day')}` : zyrSchedule.dayDelta > 0 ? ` · ${t('realms.next_day')}` : ''}` : missing} muted={!zyrSchedule.value} />
           <RealmFact label={t('realms.dragon_battle')} value={schedule.batalhaDragao || missing} muted={!schedule.batalhaDragao} />
         </div>
         <section className="realm-detail-section"><h3>{t('realms.active_events')}</h3>{activeEvents.length ? <div className="realm-active-events">{activeEvents.map(evento=><div key={evento.slug}><span>⚡</span><strong>{content(evento,'nome')}</strong></div>)}</div> : <p>{t('realms.no_active_events')}</p>}</section>

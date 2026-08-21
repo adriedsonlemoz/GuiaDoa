@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import GameHeader from '../../shared/GameHeader.jsx';
 import { useGameData } from '../../../data/GameDataContext.jsx';
+import { convertBaseUtcTimeToRealm, parseUtcOffset } from '../../../utils/timezone.js';
 
 const local = (record, field, locale) => locale !== 'pt-BR'
   ? record?.i18n?.[locale]?.[field] || record?.[field] || ''
@@ -56,19 +57,22 @@ function BossCard({ entry, onOpen, locale }) {
   );
 }
 
-function ConfirmedSchedules() {
+function ConfirmedSchedules({ mechanics = {} }) {
   const { reinos } = useGameData();
-  const rows = useMemo(() => (reinos || [])
-    .filter(reino => String(reino?.horarios?.zyrvorthian || '').trim())
-    .sort((a,b) => Number(a.id || 0) - Number(b.id || 0)), [reinos]);
+  const baseTime = mechanics.horarioBaseUtc || mechanics.referenciaHorario?.hora || '19:00';
+  const rows = useMemo(() => {
+    const zones = [...new Set((reinos || []).map(reino => reino?.fuso).filter(Boolean))]
+      .sort((a,b) => parseUtcOffset(a) - parseUtcOffset(b));
+    return zones.map(fuso => ({ fuso, converted:convertBaseUtcTimeToRealm(baseTime, fuso) })).filter(row => row.converted);
+  }, [reinos, baseTime]);
   return (
     <section className="zyr-panel">
-      <div className="zyr-section-title"><span>🕐</span><div><small>POR REINO</small><strong>Horários confirmados</strong></div></div>
-      <p className="zyr-copy">O GUIA só mostra horários cadastrados como confirmados. Não calcula automaticamente o horário de um reino a partir de outro.</p>
-      {rows.length ? <div className="zyr-schedule-list">{rows.map(reino => (
-        <div key={reino.id}><span><b>{reino.id}</b> {reino.nome}</span><small>{reino.fuso || 'UTC'}</small><strong>{reino.horarios.zyrvorthian}</strong></div>
-      ))}</div> : <div className="zyr-empty">Nenhum horário de Zyrvorthian confirmado no catálogo de Reinos.</div>}
-      <div className="zyr-server-reset">🌐 Virada do servidor: <b>00:00 UTC</b>. Em Brasília (UTC−3), corresponde a <b>21:00 do dia anterior</b>.</div>
+      <div className="zyr-section-title"><span>🕐</span><div><small>SERVIDOR BASE</small><strong>Conversão por fuso</strong></div></div>
+      <p className="zyr-copy">A referência canônica é <b>{baseTime} UTC+0</b>. Os demais horários são calculados a partir do servidor base, incluindo a virada correta do dia.</p>
+      {rows.length ? <div className="zyr-schedule-list">{rows.map(({fuso,converted}) => (
+        <div key={fuso}><span><b>{fuso}</b></span><small>Base {baseTime} UTC+0</small><strong>{converted.time}{converted.dayDelta < 0 ? ' · dia anterior' : converted.dayDelta > 0 ? ' · dia seguinte' : ''}</strong></div>
+      ))}</div> : null}
+      <div className="zyr-server-reset">🌐 Virada diária do servidor base: <b>00:00 UTC+0</b>. A conversão para cada realm é feita automaticamente; Brasília não é referência interna.</div>
     </section>
   );
 }
@@ -88,7 +92,7 @@ export function ZyrvorthianLanding({ entries, mechanics = {}, onOpen, onBack, se
             <div><b>14 dias</b><span>loja disponível</span></div>
             <div><b>+{increase.maximoPercentual || 50}%</b><span>Aumentar máximo</span></div>
           </div>
-          <small className="zyr-reference">Referência confirmada: {ref.reinoNome || 'Corvith'} ({ref.fuso || 'UTC+0'}) — batalha {ref.hora || '19:00'}, com {ref.preparacaoMinutos || 5} min de preparação. Isso não é usado para inferir outros reinos.</small>
+          <small className="zyr-reference">Referência canônica confirmada: {ref.reinoNome || 'Corvith'} ({ref.fuso || 'UTC+0'}) — batalha {mechanics.horarioBaseUtc || ref.hora || '19:00'}, com {ref.preparacaoMinutos || 5} min de preparação. Os demais fusos são convertidos a partir de UTC+0.</small>
         </div>
       </div>
 
@@ -116,7 +120,7 @@ export function ZyrvorthianLanding({ entries, mechanics = {}, onOpen, onBack, se
         <p className="zyr-copy">Você pode preparar General, Dragão, Tomos e Tropas. Se não entrar manualmente no campo ou estiver offline quando começar, a formação é enviada automaticamente. Entrar manualmente no campo desfaz a organização. A reposição automática, quando ativada, recompõe as perdas a cada retorno.</p>
       </section>
 
-      <ConfirmedSchedules />
+      <ConfirmedSchedules mechanics={mechanics} />
 
       <div className="zyr-section-heading"><div><small>CHEFES DOCUMENTADOS</small><strong>Calamidades conhecidas</strong></div><span>{entries.length}</span></div>
       <div className="zyr-boss-grid">{entries.map(entry => <BossCard key={entry.slug} entry={entry} onOpen={onOpen} locale={locale} />)}</div>

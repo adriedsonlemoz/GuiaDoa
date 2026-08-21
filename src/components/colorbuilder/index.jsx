@@ -70,15 +70,15 @@ function WizardHome({ onChoose }) {
           >
             <span style={{ fontSize: tool.id === 'fontes' ? '1.25rem' : '1.15rem', fontWeight: 900, color: C.BG_HEADER }}>{tool.icon}</span>
             <span style={{ fontSize: '0.78rem', fontWeight: 800 }}>{t(tool.titleKey)}</span>
-            <span style={{ fontSize: '0.65rem', lineHeight: 1.45, color: C.TEXT_MUTED, flex: 1 }}>{t(tool.descKey)}</span>
-            <span style={{ fontSize: '0.63rem', color: C.TEXT_FAINT, overflowWrap: 'anywhere' }}>{tool.example}</span>
+            <span style={{ fontSize: '.72rem', lineHeight: 1.45, color: C.TEXT_MUTED, flex: 1 }}>{t(tool.descKey)}</span>
+            <span style={{ fontSize: '.72rem', color: C.TEXT_FAINT, overflowWrap: 'anywhere' }}>{tool.example}</span>
           </button>
         ))}
       </div>
 
       <div style={{ marginTop: 12, padding: '10px 11px', background: 'rgba(47,86,82,0.07)', border: `1px solid ${C.BORDER_SOFT}`, borderRadius: 8 }}>
-        <div style={{ fontSize: '0.68rem', fontWeight: 800, color: C.TEXT_PRIMARY, marginBottom: 3 }}>Aa + ✦ + ☺</div>
-        <div style={{ fontSize: '0.64rem', lineHeight: 1.5, color: C.TEXT_MUTED }}>{t('builder.wizard.characters_note')}</div>
+        <div style={{ fontSize: '.72rem', fontWeight: 800, color: C.TEXT_PRIMARY, marginBottom: 3 }}>Aa + ✦ + ☺</div>
+        <div style={{ fontSize: '.72rem', lineHeight: 1.5, color: C.TEXT_MUTED }}>{t('builder.wizard.characters_note')}</div>
       </div>
     </div>
   );
@@ -97,7 +97,7 @@ function ToolBar({ tool, onBack }) {
       <button type="button" onClick={onBack} style={{ ...T.btnOutline, height: 30, padding: '0 9px', textTransform: 'none', letterSpacing: 0 }}>‹ {t('builder.wizard.back')}</button>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: '0.72rem', fontWeight: 800, color: C.TEXT_PRIMARY }}>{current ? t(current.titleKey) : ''}</div>
-        <div style={{ fontSize: '0.58rem', color: C.TEXT_MUTED }}>{t('builder.wizard.steps')}</div>
+        <div style={{ fontSize: '.72rem', color: C.TEXT_MUTED }}>{t('builder.wizard.steps')}</div>
       </div>
     </div>
   );

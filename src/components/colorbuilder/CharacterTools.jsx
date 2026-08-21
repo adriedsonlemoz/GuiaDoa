@@ -55,13 +55,13 @@ export default function CharacterTools({ onInsert, compact = false }) {
           ☺ {t('builder.characters.emoticons')}
         </button>
       </div>
-      <div style={{ marginTop: 5, fontSize: '0.58rem', lineHeight: 1.45, color: C.TEXT_FAINT }}>
+      <div style={{ marginTop: 5, fontSize: '.72rem', lineHeight: 1.45, color: C.TEXT_FAINT }}>
         {t('builder.characters.game_safe_note')}
       </div>
 
       {panel === 'letters' && (
         <div style={{ marginTop: 8, padding: 9, background: C.BG_SECONDARY, border: `1px solid ${C.BORDER_SOFT}`, borderRadius: 8 }}>
-          <div style={{ fontSize: '0.66rem', color: C.TEXT_MUTED, marginBottom: 7 }}>{t('builder.characters.choose_letter')}</div>
+          <div style={{ fontSize: '.72rem', color: C.TEXT_MUTED, marginBottom: 7 }}>{t('builder.characters.choose_letter')}</div>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 9 }}>
             {Object.keys(LETTER_VARIANTS).map(base => (
               <button key={base} type="button" onClick={() => setLetter(base)} style={{
@@ -79,7 +79,7 @@ export default function CharacterTools({ onInsert, compact = false }) {
             ))}
           </div>
           <div style={{ ...T.divider, margin: '9px 0' }} />
-          <div style={{ fontSize: '0.62rem', color: C.TEXT_MUTED, marginBottom: 6 }}>{t('builder.characters.quick_marks')}</div>
+          <div style={{ fontSize: '.72rem', color: C.TEXT_MUTED, marginBottom: 6 }}>{t('builder.characters.quick_marks')}</div>
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
             {MARKS.map((value, index) => (
               <button key={`${value}-${index}`} type="button" style={T.exSym} onClick={() => onInsert(value)}>{value}</button>

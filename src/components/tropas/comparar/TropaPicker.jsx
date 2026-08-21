@@ -34,7 +34,7 @@ export default function TropaPicker({ tropas, selecionadas, onEscolher, onFechar
                   <span style={{ fontSize:'1.55rem' }}>{getIcone(item.nome)}</span>
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div className="game-list-name" style={{ fontSize:'.78rem' }}>{nome}</div>
+                  <div className="game-list-name" style={{ fontSize:'.82rem' }}>{nome}</div>
                   <div className="game-list-meta">{tipo.label}</div>
                 </div>
                 <div style={{ textAlign:'right' }}>

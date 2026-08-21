@@ -65,7 +65,7 @@ const TreinamentoDoDragao = () => {
           style={{ background: 'linear-gradient(135deg, #1E0A35 0%, #4A1E72 100%)' }}>
 
           <div className="flex-1 min-w-0">
-            <p className="font-nunito font-bold text-[0.6rem] tracking-[3px] uppercase m-0 mb-1"
+            <p className="font-nunito font-bold text-[0.72rem] tracking-[3px] uppercase m-0 mb-1"
               style={{ color: 'rgba(180,140,230,0.7)' }}>
               {t('torneio.aceleracoes.total_pontos')}
             </p>
@@ -79,7 +79,7 @@ const TreinamentoDoDragao = () => {
               {fmtN(totalFinal)}
             </p>
             {ptsPos > 0 && (
-              <p className="font-nunito font-semibold text-[0.6rem] m-0 mt-1"
+              <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-1"
                 style={{ color: 'rgba(180,140,230,0.55)' }}>
                 {fmtN(ptsDasCarnes)} {t('torneio.treinamento_dragao.detalhe_carnes')} + {fmtN(ptsPos)} {t('torneio.aceleracoes.detalhe_possuidos')}
               </p>
@@ -104,7 +104,7 @@ const TreinamentoDoDragao = () => {
         {/* Campo pontos possuídos */}
         <div className="px-4 py-3"
           style={{ background: C.BG_CARD, borderTop: `1px solid rgba(122,75,174,0.25)` }}>
-          <label className="font-nunito font-bold text-[0.65rem] tracking-widest uppercase block mb-1.5"
+          <label className="font-nunito font-bold text-[0.72rem] tracking-widest uppercase block mb-1.5"
             style={{ color: C.TEXT_MUTED }}>
             {t('torneio.label.possuidos')}
           </label>
@@ -146,7 +146,7 @@ const TreinamentoDoDragao = () => {
                   style={{ color: C.TEXT_PRIMARY }}>
                   {t(c.chave)}
                 </p>
-                <p className="font-nunito font-semibold text-[0.55rem] m-0 mt-0.5 text-center"
+                <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-0.5 text-center"
                   style={{ color: C.TEXT_MUTED }}>
                   {fmtN(c.pts)} {t('torneio.treinamento_dragao.pts_por_item')}
                 </p>
@@ -155,7 +155,7 @@ const TreinamentoDoDragao = () => {
               {/* Input com "= pts" inline */}
               <div className="px-2 py-2"
                 style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'nowrap' }}>
-                <span className="font-nunito font-bold text-[0.52rem] leading-none"
+                <span className="font-nunito font-bold text-[0.72rem] leading-none"
                   style={{ color: C.TEXT_FAINT, flexShrink: 0, whiteSpace: 'nowrap' }}>
                   {t('torneio.label.eq_pts')}
                 </span>

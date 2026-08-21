@@ -64,7 +64,7 @@ const AssistenteTatico = () => {
           }}>{t('assistant.title')}</p>
           <p style={{
             fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:600,
-            fontSize:'0.64rem', color:C.TEXT_MUTED, margin:'3px 0 0',
+            fontSize:'.72rem', color:C.TEXT_MUTED, margin:'3px 0 0',
           }}>
             {count > 0
               ? t('assistant.subtitle_messages', { count, suffix: pluralSuffix })
@@ -75,7 +75,7 @@ const AssistenteTatico = () => {
         <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4 }}>
           <span style={{
             fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:900,
-            fontSize:'0.6rem', padding:'4px 9px', borderRadius:6,
+            fontSize:'.72rem', padding:'4px 9px', borderRadius:6,
             background:`linear-gradient(135deg,${COR},#3A5A8A)`,
             color:'#fff', letterSpacing:'0.5px', boxShadow:`0 2px 8px ${COR}40`,
           }}>
@@ -84,7 +84,7 @@ const AssistenteTatico = () => {
           {count > 0 && (
             <span style={{
               fontFamily:"system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight:700,
-              fontSize:'0.55rem', color: COR,
+              fontSize:'.72rem', color: COR,
             }}>{t('assistant.active')}</span>
           )}
         </div>

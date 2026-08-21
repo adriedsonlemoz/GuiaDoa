@@ -13,7 +13,7 @@ const CORES_RAPIDAS = [
 function ColorPicker({ label, value, onChange }) {
   return (
     <div style={{ marginBottom: 10 }}>
-      <div style={{ fontSize: '0.62rem', color: C.TEXT_MUTED, marginBottom: 5, fontWeight: 700 }}>{label}</div>
+      <div style={{ fontSize: '.72rem', color: C.TEXT_MUTED, marginBottom: 5, fontWeight: 700 }}>{label}</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
         {CORES_RAPIDAS.map(hex => (
           <button key={hex} type="button" onClick={() => onChange(hex)} title={hex} style={{
@@ -97,7 +97,7 @@ export default function ModoPlacar({ showToast }) {
             aria-label={t('builder.score.team_b')} style={{ ...T.input, minWidth: 0, minHeight: 40, textAlign: 'center', padding: '7px 6px' }} />
         </div>
 
-        <div style={{ marginTop: 9, fontSize: '0.63rem', color: C.TEXT_MUTED }}>
+        <div style={{ marginTop: 9, fontSize: '.72rem', color: C.TEXT_MUTED }}>
           {t('builder.score.inserting_into', { team: activeTeam === 'A' ? (timeA || t('builder.score.team_a')) : (timeB || t('builder.score.team_b')) })}
         </div>
         <CharacterTools onInsert={insertCharacter} compact />

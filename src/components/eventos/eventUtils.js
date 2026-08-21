@@ -1,3 +1,5 @@
+import { formatRealmDateTime, realmDate, SERVER_BASE_TIMEZONE } from '../../utils/timezone.js';
+
 const DAY_MS = 86400000;
 
 export function occurrenceForRealm(evento, realmName) {
@@ -50,22 +52,20 @@ export function phaseEventDay(phase, occurrence) {
   return Math.floor((start.getTime() - eventStart) / DAY_MS) + 1;
 }
 
-export function formatUtcDate(value, locale = 'pt-BR') {
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return '—';
-  return new Intl.DateTimeFormat(locale, { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'UTC', hour12:false }).format(d) + ' UTC';
+export function formatUtcDate(value, locale = 'pt-BR', fuso = SERVER_BASE_TIMEZONE) {
+  return formatRealmDateTime(value, fuso || SERVER_BASE_TIMEZONE, locale, { withZone:true });
 }
 
-export function formatUtcDay(value, locale = 'pt-BR') {
-  const d = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(d.getTime())) return '—';
+export function formatUtcDay(value, locale = 'pt-BR', fuso = SERVER_BASE_TIMEZONE) {
+  const d = realmDate(value, fuso || SERVER_BASE_TIMEZONE);
+  if (!d) return '—';
   return new Intl.DateTimeFormat(locale, { day:'numeric', month:'long', year:'numeric', weekday:'long', timeZone:'UTC' }).format(d);
 }
 
-export function formatUtcTime(value, locale = 'pt-BR') {
-  const d = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(d.getTime())) return '—';
-  return new Intl.DateTimeFormat(locale, { hour:'2-digit', minute:'2-digit', timeZone:'UTC', hour12:false }).format(d) + ' UTC';
+export function formatUtcTime(value, locale = 'pt-BR', fuso = SERVER_BASE_TIMEZONE) {
+  const d = realmDate(value, fuso || SERVER_BASE_TIMEZONE);
+  if (!d) return '—';
+  return new Intl.DateTimeFormat(locale, { hour:'2-digit', minute:'2-digit', timeZone:'UTC', hour12:false, hourCycle:'h23' }).format(d) + ` ${fuso || SERVER_BASE_TIMEZONE}`;
 }
 
 export function timeRemaining(value, now = new Date()) {
@@ -104,7 +104,7 @@ export function buildEventShareText(evento, occurrence, {
   const confirmedRealms=(evento?.ocorrencias || []).filter(o => o.confirmado !== false).map(o => o.reinoNome).filter(Boolean);
   if (confirmedRealms.length) lines.push(`🌍 ${t('events.confirmed_in')}: ${confirmedRealms.join(', ')}`);
   else if (occurrence?.reinoNome) lines.push(`🌍 ${t('events.confirmed_in')}: ${occurrence.reinoNome}`);
-  if (occurrence?.inicioServidor && occurrence?.fimServidor) lines.push(`🗓️ ${formatUtcDate(occurrence.inicioServidor, locale)} → ${formatUtcDate(occurrence.fimServidor, locale)}`);
+  if (occurrence?.inicioServidor && occurrence?.fimServidor) lines.push(`🗓️ ${formatUtcDate(occurrence.inicioServidor, locale, occurrence.fusoReino)} → ${formatUtcDate(occurrence.fimServidor, locale, occurrence.fusoReino)}`);
   if (evento?.horarioReset) lines.push(`🌐 ${t('events.reset_global')}: ${evento.horarioReset} ${evento.servidorFuso || 'UTC'}`);
   const phases = evento?.fases || [];
   if (phases.length) {
@@ -113,7 +113,7 @@ export function buildEventShareText(evento, occurrence, {
       const { start } = phaseDates(phase, occurrence);
       const day = phaseEventDay(phase, occurrence);
       const title = content(phase, 'nome') || phase.nome || `${index + 1}`;
-      lines.push(`${title}${day ? ` · ${t('events.event_day', { day })}` : ''}${start ? ` · ${formatUtcDay(start, locale)}` : ''}`);
+      lines.push(`${title}${day ? ` · ${t('events.event_day', { day })}` : ''}${start ? ` · ${formatUtcDay(start, locale, occurrence?.fusoReino)}` : ''}`);
       const objective = content(phase, 'objetivo') || phase.objetivo || '';
       if (objective) lines.push(`› ${objective}`);
     });

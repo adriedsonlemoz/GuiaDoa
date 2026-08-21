@@ -119,9 +119,9 @@ export default function StartupGate({ children }) {
     <Tela>
       <div style={{ textAlign:'center', marginBottom:16 }}>
         <div style={{ fontSize:42 }}>🔐</div>
-        <div className="font-nunito" style={{ color:C.ACCENT, fontWeight:900, fontSize:'.62rem', letterSpacing:2 }}>{t('app.setup.admin_eyebrow')}</div>
+        <div className="font-nunito" style={{ color:C.ACCENT, fontWeight:900, fontSize:'.74rem', letterSpacing:2 }}>{t('app.setup.admin_eyebrow')}</div>
         <h1 className="font-cinzel" style={{ color:C.TEXT_PRIMARY, fontSize:'1.08rem', margin:'6px 0' }}>{t('app.setup.admin_title')}</h1>
-        <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.76rem', lineHeight:1.5, margin:0 }}>
+        <p className="font-nunito" style={{ color:C.TEXT_MUTED, fontSize:'.80rem', lineHeight:1.5, margin:0 }}>
           {t('app.setup.admin_text')}
         </p>
       </div>
@@ -132,16 +132,16 @@ export default function StartupGate({ children }) {
         {status.usuario?.setupKeyObrigatoria && (
           <>
             <input className="tw-input" type="password" placeholder={t('app.setup.security_code')} value={form.setupKey} onChange={e=>setForm(f=>({...f,setupKey:e.target.value}))} />
-            <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.62rem', lineHeight:1.4 }}>{t('app.setup.security_help')}</div>
+            <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.74rem', lineHeight:1.4 }}>{t('app.setup.security_help')}</div>
           </>
         )}
         {erro && <div style={{ padding:'8px 10px', borderRadius:8, background:'rgba(168,60,44,.07)', border:'1px solid rgba(168,60,44,.18)' }}>
-          <div className="font-nunito" style={{ color:C.ERROR, fontSize:'.72rem', fontWeight:800 }}>{erro.message}</div>
-          <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.58rem', marginTop:2 }}>Código: {erro.code}</div>
+          <div className="font-nunito" style={{ color:C.ERROR, fontSize:'.76rem', fontWeight:800 }}>{erro.message}</div>
+          <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.72rem', marginTop:2 }}>Código: {erro.code}</div>
         </div>}
         <button className="btn-gold" type="submit" disabled={salvando}>{salvando ? t('app.setup.creating') : t('app.setup.create')}</button>
       </form>
-      <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.62rem', marginTop:14, textAlign:'center' }}>{t('app.setup.online_note')}</div>
+      <div className="font-nunito" style={{ color:C.TEXT_FAINT, fontSize:'.74rem', marginTop:14, textAlign:'center' }}>{t('app.setup.online_note')}</div>
     </Tela>
   );
 

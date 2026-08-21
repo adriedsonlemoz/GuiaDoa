@@ -4,7 +4,7 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 
 ## Versão
 
-**1.0.0-beta.2.76**
+**1.0.0-beta.2.77**
 
 ## Principais módulos
 
@@ -15,6 +15,16 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 - **Extras → Reinos** com catálogo canônico, abertura/idade calculada, fuso, horários confirmados, eventos ativos e histórico
 - Extras: Reinos, Doação, Sobre, Texto Colorido e Backup
 - Painel Admin para manutenção dos conteúdos do MongoDB
+
+## Beta 2.77 — reinos, UTC+0, tipografia e primeiro acesso
+
+- Datas de abertura foram corrigidas para os únicos 12 reinos confirmados. Nenhuma data é inferida por número, proximidade ou fusão.
+- A idade dos reinos continua dinâmica, calculada exclusivamente a partir de `aberturaEm`; reinos sem data exibem estado não informado.
+- O catálogo offline também é saneado para impedir que caches de versões antigas reintroduzam datas estimadas.
+- O relógio canônico do jogo passa a ser **UTC+0**, com uma única rotina de conversão que trata corretamente dia anterior/seguinte. Torneios, Reinos, Eventos e Zyrvorthian reutilizam essa lógica.
+- O modelo de fusões mantém reino original, parceiro/incorporado, data, resultante, número anterior/atual e histórico sem substituir a abertura histórica conhecida.
+- A tipografia recebeu uma varredura global para celular: escala de títulos/corpo/metadados, piso mínimo para textos e ajustes de overflow em telas estreitas.
+- No primeiro acesso, o aviso de doação não interrompe idioma/nome/reino. O perfil é salvo, a Home é renderizada e somente depois os modais pendentes podem aparecer; usuários já configurados continuam direto para a Home.
 
 ## Beta 2.76 — níveis dos Dragões e nome do APK
 
@@ -95,8 +105,8 @@ Idioma e região do mundo não fazem parte do modelo de Reino. Nenhuma fusão fi
 Somente estas datas são preenchidas:
 
 - #345–#348: 12/08/2026;
-- #341–#344: 12/08/2025;
-- #337–#340: 12/08/2024.
+- #331 Mjolnheim, #332 Quetzara, #333 Solgracia e #334 Rainchant: 12/08/2025;
+- #327 Norsenholm, #328 Saguenay, #329 Eoswood e #330 Raya: 12/08/2024.
 
 Os demais reinos permanecem **sem data e sem idade**. A idade é sempre derivada da abertura e nunca armazenada manualmente. A apresentação usa:
 
@@ -122,15 +132,13 @@ A explicação superior descreve a Marca de Poder sem persistir Ápice/Excelênc
 
 ### Horários confirmados nesta versão
 
-Os horários abaixo são armazenados no **relógio oficial UTC do jogo**. Lacunas não são inferidas:
+A referência canônica é **UTC+0**. Horários que representam uma regra global são armazenados uma vez e convertidos para o fuso do reino, incluindo mudança de data. Lacunas não são inferidas.
 
-- UTC+0 — Zyrvorthian: 19:00 UTC;
-- UTC-3 — Zyrvorthian: 22:00 UTC; Batalha do Dragão: 17:00 UTC;
-- UTC-7 — Batalha do Dragão: 20:00 UTC;
-- UTC+1 — Batalha do Dragão: 06:00 UTC;
-- UTC-4 — Batalha do Dragão: 00:00 UTC.
+- virada diária do servidor: **00:00 UTC+0**;
+- Zyrvorthian: base confirmada **19:00 UTC+0**, apresentada por conversão no fuso de cada reino;
+- Batalha do Dragão: permanecem os horários específicos já confirmados por fuso (UTC-3 17:00, UTC-7 20:00, UTC+1 06:00 e UTC-4 00:00), porque ainda não há uma única base canônica confirmada que permita derivá-los sem inventar informação.
 
-O fim dos torneios continua vazio quando não houver valor confirmado no cadastro/migração.
+O fim dos torneios e quaisquer outros horários específicos continuam vazios quando não houver valor confirmado. Brasília não é usada como referência de cálculo.
 
 ## Doação e primeiro acesso
 

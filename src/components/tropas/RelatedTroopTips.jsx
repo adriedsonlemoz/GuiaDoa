@@ -29,7 +29,7 @@ export default function RelatedTroopTips({ troopName, onOpenTips }) {
         {tips.map(tip => (
           <button key={tip._id || tip.slug} onClick={() => open(tip)} className="game-list-row" style={{ padding:'9px 11px' }}>
             <div style={{ flex:1, minWidth:0 }}>
-              <div className="game-list-name" style={{ fontSize:'.76rem' }}>{content(tip,'titulo')}</div>
+              <div className="game-list-name" style={{ fontSize:'.80rem' }}>{content(tip,'titulo')}</div>
               <div className="game-list-meta">{t('troops.open_tip')} →</div>
             </div>
           </button>

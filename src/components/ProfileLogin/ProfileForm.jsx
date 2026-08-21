@@ -5,7 +5,7 @@ import { useI18n } from '../../hooks/useI18n.jsx';
 import ProfileLanguageStep from './ProfileLanguageStep.jsx';
 import ProfileDetailsStep from './ProfileDetailsStep.jsx';
 
-const ProfileForm = ({ onSave, perfilAtual, onCancel }) => {
+const ProfileForm = ({ onSave, perfilAtual, onCancel, deferSave = false }) => {
   const editing = Boolean(perfilAtual);
   const [step, setStep] = useState(editing ? 1 : 0);
   const [nome, setNome] = useState(perfilAtual?.nome || '');
@@ -25,7 +25,7 @@ const ProfileForm = ({ onSave, perfilAtual, onCancel }) => {
       return;
     }
     const p = { nome:nome.trim(), reino, fuso };
-    saveProfile(p);
+    if (!deferSave) saveProfile(p);
     onSave?.(p);
   };
 

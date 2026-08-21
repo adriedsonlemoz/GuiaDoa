@@ -60,6 +60,8 @@ const ITENS_DEFESA_ZYRVORTHIAN_275_KEY = 'content:itens-defesa-zyrvorthian:beta-
 const TUTORIAL_DEFESA_275_KEY = 'content:dica-defesa-inimigos:beta-2.75';
 const DRAGAO_AGUA_PAZ_275_KEY = 'content:dragao-agua-paz:beta-2.75';
 const DRAGOES_NIVEIS_276_KEY = 'content:dragoes-niveis:beta-2.76';
+const REINOS_UTC_277_KEY = 'content:reinos-utc-abertura:beta-2.77';
+const TUTORIAL_DEFESA_UTC_277_KEY = 'content:dica-defesa-utc:beta-2.77';
 
 
 const INICIANTE_CATEGORY = {
@@ -1249,7 +1251,7 @@ async function migrarEventosReinos271() {
     const fusoes = await ReinoFusao.find({}).lean();
     for (const fusao of fusoes) {
       const patch = {};
-      for (const field of ['reinoOriginalId','reinoParceiroId','reinoResultanteId']) {
+      for (const field of ['reinoOriginalId','reinoParceiroId','reinoIncorporadoId','reinoResultanteId']) {
         const oldId = Number(fusao[field]);
         if (oldIdToNewId.has(oldId) && oldIdToNewId.get(oldId) !== oldId) patch[field] = oldIdToNewId.get(oldId);
       }
@@ -1483,6 +1485,56 @@ async function migrarDragoesNiveis276() {
 }
 
 
+async function migrarReinosUtc277() {
+  return executarMigracao264(REINOS_UTC_277_KEY, 'reinosUtc277', async () => {
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const seed of REINOS_SEED) {
+      const basePatch = {
+        id:Number(seed.id),
+        slug:slugifyReino(seed.nome),
+        nome:seed.nome,
+        fuso:seed.fuso || '',
+        tipoEspecial:seed.tipoEspecial || '',
+        aberturaEm:seed.aberturaEm ? new Date(seed.aberturaEm) : null,
+        atualizadoEm:new Date(),
+      };
+      const atual = await Reino.findOne({ id:Number(seed.id) }).lean();
+      if (!atual) {
+        await Reino.create({ ...basePatch, horarios:seed.horarios || { torneiosFim:'', zyrvorthian:'', batalhaDragao:'' } });
+        inseridas += 1;
+      } else {
+        const result = await Reino.updateOne(
+          { id:Number(seed.id) },
+          { $set:{ ...basePatch, 'horarios.zyrvorthian':String(seed.horarios?.zyrvorthian || '') }, $unset:{ regiao:'', idioma:'' } },
+        );
+        atualizadas += result.modifiedCount || 0;
+      }
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
+
+async function migrarTutorialDefesaUtc277() {
+  return executarMigracao264(TUTORIAL_DEFESA_UTC_277_KEY, 'tutorialDefesaUtc277', async () => {
+    const seed = DICAS_SEED.find(item => item.slug === 'tutorial-defesa-inimigos');
+    if (!seed) throw new Error('Seed do tutorial de defesa não encontrada.');
+    const atual = await Dica.findOne({ slug:seed.slug }).lean();
+    if (!atual) {
+      await Dica.create(seed);
+      return { atualizadas:0, inseridas:1 };
+    }
+    await Dica.updateOne({ slug:seed.slug }, { $set:{
+      titulo:seed.titulo, resumo:seed.resumo, categoria:seed.categoria, tipo:seed.tipo, leituraMin:seed.leituraMin,
+      destaque:seed.destaque, ativo:seed.ativo, ordem:seed.ordem, relacionados:seed.relacionados,
+      conteudo:seed.conteudo, i18n:seed.i18n || {}, atualizadoEm:new Date(),
+    } });
+    return { atualizadas:1, inseridas:0 };
+  });
+}
+
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
@@ -1558,9 +1610,13 @@ export async function executarMigracoesConteudo() {
   if (!dragaoAguaPaz275.ok) return dragaoAguaPaz275;
   const dragoesNiveis276 = await migrarDragoesNiveis276();
   if (!dragoesNiveis276.ok) return dragoesNiveis276;
+  const reinosUtc277 = await migrarReinosUtc277();
+  if (!reinosUtc277.ok) return reinosUtc277;
+  const tutorialDefesaUtc277 = await migrarTutorialDefesaUtc277();
+  if (!tutorialDefesaUtc277.ok) return tutorialDefesaUtc277;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada && eventos270.ignorada && eventosReinos271.ignorada && eventosReinos272.ignorada && zyrvorthian275.ignorada && itensDefesa275.ignorada && tutorialDefesa275.ignorada && dragaoAguaPaz275.ignorada && dragoesNiveis276.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada && eventos270.ignorada && eventosReinos271.ignorada && eventosReinos272.ignorada && zyrvorthian275.ignorada && itensDefesa275.ignorada && tutorialDefesa275.ignorada && dragaoAguaPaz275.ignorada && dragoesNiveis276.ignorada && reinosUtc277.ignorada && tutorialDefesaUtc277.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
@@ -1587,5 +1643,7 @@ export async function executarMigracoesConteudo() {
     tutorialDefesa275Atualizado:(tutorialDefesa275.atualizadas || 0) + (tutorialDefesa275.inseridas || 0),
     dragaoAguaPaz275Atualizado:(dragaoAguaPaz275.atualizadas || 0) + (dragaoAguaPaz275.inseridas || 0),
     dragoesNiveis276Atualizados:(dragoesNiveis276.atualizadas || 0) + (dragoesNiveis276.inseridas || 0),
+    reinosUtc277Atualizados:(reinosUtc277.atualizadas || 0) + (reinosUtc277.inseridas || 0),
+    tutorialDefesaUtc277Atualizado:(tutorialDefesaUtc277.atualizadas || 0) + (tutorialDefesaUtc277.inseridas || 0),
   };
 }

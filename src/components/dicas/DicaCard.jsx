@@ -25,8 +25,8 @@ const DicaCard = ({ dica, catInfo, onClick }) => {
           {dica.destaque ? ` • ⭐ ${t('tips.featured')}` : ''}
         </div>
         <h2 className="game-list-name" style={{ marginTop:5, fontSize:'.94rem' }}>{titulo}</h2>
-        {resumo ? <p className="game-list-copy" style={{ fontSize:'.74rem' }}>{resumo}</p> : null}
-        <div style={{ display:'flex', gap:7, marginTop:9, color:'#806d4d', fontSize:'.61rem', fontWeight:800 }}>
+        {resumo ? <p className="game-list-copy" style={{ fontSize:'.80rem' }}>{resumo}</p> : null}
+        <div style={{ display:'flex', gap:7, marginTop:9, color:'#806d4d', fontSize:'.72rem', fontWeight:800 }}>
           {dica.leituraMin > 0 ? <span>⏱ {t('tips.minutes',{count:dica.leituraMin})}</span> : null}
           {dica.criadoEm ? <span>• {fmtData(dica.atualizadoEm || dica.criadoEm,locale)}</span> : null}
           <span style={{ marginLeft:'auto', color:'#725528' }}>{t('tips.read')} →</span>

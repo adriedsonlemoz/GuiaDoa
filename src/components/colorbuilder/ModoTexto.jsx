@@ -349,7 +349,7 @@ export default function ModoTexto({
                     textAlign: 'left',
                   }}
                 >
-                  <div style={{ color: C.TEXT_MUTED, fontSize: '0.67rem', marginBottom: 4 }}>{model.label}</div>
+                  <div style={{ color: C.TEXT_MUTED, fontSize: '.72rem', marginBottom: 4 }}>{model.label}</div>
                   <div style={{ fontSize: '0.92rem', fontWeight: 700 }}>
                     {preview.map((token, index) => (
                       <span key={index} style={{ color: token.color ? `#${token.color}` : C.TEXT_PRIMARY }}>{token.char}</span>
@@ -458,7 +458,7 @@ export default function ModoTexto({
         {styleMode === 'gradient' && (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-              <label style={{ fontSize: '0.68rem', color: C.TEXT_MUTED }}>
+              <label style={{ fontSize: '.72rem', color: C.TEXT_MUTED }}>
                 {t('builder.text.gradient_start')}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 5 }}>
                   <input
@@ -470,7 +470,7 @@ export default function ModoTexto({
                   <span style={{ color: C.TEXT_SECONDARY }}>#{gradientStart}</span>
                 </div>
               </label>
-              <label style={{ fontSize: '0.68rem', color: C.TEXT_MUTED }}>
+              <label style={{ fontSize: '.72rem', color: C.TEXT_MUTED }}>
                 {t('builder.text.gradient_end')}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 5 }}>
                   <input
@@ -580,7 +580,7 @@ export default function ModoTexto({
           )) : <span style={{ color: previewDark ? '#A9B8B3' : C.TEXT_FAINT }}>{t('builder.text.preview_empty')}</span>}
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 8, color: C.TEXT_MUTED, fontSize: '0.68rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 8, color: C.TEXT_MUTED, fontSize: '.72rem' }}>
           <span>{t('builder.text.text_count', { count: [...inputVal].length })}</span>
           <span>{t('builder.text.code_count', { count: code.length })}</span>
         </div>

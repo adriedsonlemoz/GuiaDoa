@@ -102,7 +102,7 @@ const TorneioTreinoTropa = () => {
         <div className="px-4 py-3 flex items-center gap-3"
           style={{ background: 'linear-gradient(135deg, #2A0A0A 0%, #5A1A1A 100%)' }}>
           <div className="flex-1 min-w-0">
-            <p className="font-nunito font-bold text-[0.6rem] tracking-[3px] uppercase m-0 mb-1"
+            <p className="font-nunito font-bold text-[0.72rem] tracking-[3px] uppercase m-0 mb-1"
               style={{ color: 'rgba(220,160,140,0.7)' }}>
               {t('torneio.aceleracoes.total_pontos')}
             </p>
@@ -116,7 +116,7 @@ const TorneioTreinoTropa = () => {
               {fmtN(totalFinal, locale)}
             </p>
             {ptsPos > 0 && (
-              <p className="font-nunito font-semibold text-[0.6rem] m-0 mt-1"
+              <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-1"
                 style={{ color: 'rgba(220,160,140,0.55)' }}>
                 {fmtN(ptsDasLinhas, locale)} {t('torneio.treino_tropa.detalhe_treino')} + {fmtN(ptsPos, locale)} {t('torneio.aceleracoes.detalhe_possuidos')}
               </p>
@@ -137,7 +137,7 @@ const TorneioTreinoTropa = () => {
         {/* Pontos possuídos */}
         <div className="px-4 py-3"
           style={{ background: C.BG_CARD, borderTop: `1px solid rgba(168,60,44,0.25)` }}>
-          <label className="font-nunito font-bold text-[0.65rem] tracking-widest uppercase block mb-1.5"
+          <label className="font-nunito font-bold text-[0.72rem] tracking-widest uppercase block mb-1.5"
             style={{ color: C.TEXT_MUTED }}>
             {t('torneio.label.possuidos')}
           </label>
@@ -210,7 +210,7 @@ const TorneioTreinoTropa = () => {
                 <div className="flex items-center gap-1.5">
                   {/* Quantidade */}
                   <div className="flex-1 min-w-0">
-                    <p className="font-nunito font-bold text-[0.58rem] uppercase tracking-wide m-0 mb-0.5"
+                    <p className="font-nunito font-bold text-[0.72rem] uppercase tracking-wide m-0 mb-0.5"
                       style={{ color: C.TEXT_FAINT }}>{t('torneio.label.quantidade')}</p>
                     <input
                       className="tw-input text-center font-mono font-black w-full"
@@ -227,7 +227,7 @@ const TorneioTreinoTropa = () => {
 
                   {/* Bônus */}
                   <div style={{ width: 90, flexShrink: 0 }}>
-                    <p className="font-nunito font-bold text-[0.58rem] uppercase tracking-wide m-0 mb-0.5"
+                    <p className="font-nunito font-bold text-[0.72rem] uppercase tracking-wide m-0 mb-0.5"
                       style={{ color: C.TEXT_FAINT }}>{t('torneio.treino_tropa.bonus_label')}</p>
                     <select
                       className="tw-select w-full"
@@ -243,7 +243,7 @@ const TorneioTreinoTropa = () => {
 
                   {/* Subtotal */}
                   <div className="text-right shrink-0" style={{ minWidth: 56 }}>
-                    <p className="font-nunito font-bold text-[0.58rem] uppercase tracking-wide m-0 mb-0.5"
+                    <p className="font-nunito font-bold text-[0.72rem] uppercase tracking-wide m-0 mb-0.5"
                       style={{ color: C.TEXT_FAINT }}>{t('torneio.label.pontos')}</p>
                     <p className="font-nunito font-black text-[0.9rem] leading-none m-0"
                       style={{ color: ativo ? COR : C.TEXT_FAINT }}>
@@ -254,7 +254,7 @@ const TorneioTreinoTropa = () => {
 
                 {/* Info poder (se tropa selecionada) */}
                 {tropa && (
-                  <p className="font-nunito font-semibold text-[0.6rem] m-0 mt-1"
+                  <p className="font-nunito font-semibold text-[0.72rem] m-0 mt-1"
                     style={{ color: C.TEXT_FAINT }}>
                     {content(tropa, 'nome')} · {fmtN(poder, locale)} {t('torneio.treino_tropa.poder_por_un')}
                     {l.bonus > 1 && <span style={{ color: COR }}> · {t('torneio.treino_tropa.bonus_x')} {l.bonus}×</span>}

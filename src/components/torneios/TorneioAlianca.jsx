@@ -49,7 +49,7 @@ const TorneioAlianca = () => {
         style={{ background: `linear-gradient(135deg, ${C.NAVY ?? '#2F5652'} 0%, #3C6863 100%)` }}
       >
         <p
-          className="font-nunito font-bold text-[0.6rem] tracking-[3px] uppercase m-0 mb-1"
+          className="font-nunito font-bold text-[0.72rem] tracking-[3px] uppercase m-0 mb-1"
           style={{ color: 'rgba(200,168,74,0.7)' }}
         >
           {t('torneio.alianca.badge')}

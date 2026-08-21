@@ -97,9 +97,9 @@ export default function Tropas({ setRoute }) {
           <button type="button" className={`game-compare-toggle${compareMode ? ' is-active' : ''}`} onClick={toggleCompareMode} aria-pressed={compareMode}>⚖ {compareMode ? `${t('troops.compare')} ${compareNames.length}/${QUICK_COMPARE_MAX}` : t('troops.compare')}</button>
         </div>
         <section className="game-list">
-          {carregando ? <div style={{ padding:24, textAlign:'center', color:'#687064', fontSize:'.72rem' }}>⟳ {t('troops.loading_units')}</div> : null}
+          {carregando ? <div style={{ padding:24, textAlign:'center', color:'#687064', fontSize:'.76rem' }}>⟳ {t('troops.loading_units')}</div> : null}
           {!carregando ? shown.map(troop => <TroopListRow key={troop._id || troop.nome} troop={troop} analysis={analysis} compareMode={compareMode} selected={compareNames.includes(troop.nome)} onSelect={() => toggleTroopCompare(troop)} onOpen={() => setDetail(troop)} />) : null}
-          {!carregando && !shown.length ? <div style={{ padding:30, textAlign:'center', color:'#687064', fontSize:'.72rem' }}>🔎 {t('troops.no_results')}</div> : null}
+          {!carregando && !shown.length ? <div style={{ padding:30, textAlign:'center', color:'#687064', fontSize:'.76rem' }}>🔎 {t('troops.no_results')}</div> : null}
         </section>
         {compareMode ? <div className="game-compare-bar"><div className="game-compare-bar-copy">{compareNames.length < 2 ? t('troops.compare_select_two') : `${compareNames.length} ${t('troops.compare_selected').toLowerCase()}`}</div><GameActionButton tone="green" disabled={compareNames.length < 2} onClick={openComparison}>⚖ {t('troops.compare')}</GameActionButton></div> : null}
       </div>

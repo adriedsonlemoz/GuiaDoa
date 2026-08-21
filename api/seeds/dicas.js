@@ -1218,9 +1218,9 @@ Preserve suas tropas quando a defesa não tiver chance real. Use proteção ou t
 ---
 
 🌐 Horário do servidor e do Reino
-A virada diária do servidor acontece às 00:00 UTC. Em Brasília (UTC−3), isso corresponde a 21:00 do dia anterior.
+A referência canônica do jogo é o servidor UTC+0. A virada diária acontece às 00:00 UTC+0 e o horário de cada Reino deve ser convertido a partir dessa base, respeitando corretamente quando a conversão cai no dia anterior ou seguinte.
 
-Eventos como Zyrvorthian podem possuir horários cadastrados diferentes entre os Reinos. O GUIA mostra somente os horários confirmados no módulo Reinos; ele não inventa um horário para Reinos que ainda não tenham esse dado.
+Horários específicos que ainda não foram confirmados permanecem em branco. O GUIA não usa Brasília como referência interna e não inventa horários ausentes.
 
 ---
 

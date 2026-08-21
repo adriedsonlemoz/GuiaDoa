@@ -19,7 +19,7 @@ export default function ModoBandeiras({ showToast }) {
         <div style={T.cardTitle}>
           <span style={{ color: C.ACCENT }}>🏳</span> {t('builder.flags.title')}
         </div>
-        <p style={{ fontSize: '0.67rem', color: C.TEXT_MUTED, marginBottom: 10, lineHeight: 1.6 }}>
+        <p style={{ fontSize: '.72rem', color: C.TEXT_MUTED, marginBottom: 10, lineHeight: 1.6 }}>
           {t('builder.flags.help')}
         </p>
 
@@ -82,14 +82,14 @@ export default function ModoBandeiras({ showToast }) {
                     {flag.emoji} {flag.name}
                   </div>
                   <div style={{
-                    fontSize: '0.65rem', color: C.TEXT_MUTED,
+                    fontSize: '.72rem', color: C.TEXT_MUTED,
                     fontFamily: 'monospace', whiteSpace: 'nowrap',
                     overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>
                     {code}
                   </div>
                   {flag.note && (
-                    <div style={{ fontSize: '0.6rem', color: C.TEXT_FAINT, fontStyle: 'italic', marginTop: 1 }}>
+                    <div style={{ fontSize: '.72rem', color: C.TEXT_FAINT, fontStyle: 'italic', marginTop: 1 }}>
                       ⚠ {flag.note}
                     </div>
                   )}

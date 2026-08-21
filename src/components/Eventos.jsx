@@ -51,7 +51,7 @@ export default function Eventos({ setRoute }) {
         <div className="event-card-top"><div><small>{ocorrencia.reinoNome} · {ocorrencia.fusoReino || '—'}</small><strong>{content(evento,'nome')}</strong></div><span className={`event-status is-${status}${fase?.codigo==='observacao'?' is-observation':''}`}>{fase?.codigo==='observacao'?t('events.observation'):t(`events.status.${status}`)}</span></div>
         <p>{content(evento,'resumo')}</p>
         {fase && <div className="event-current-phase"><small>{fase.codigo==='observacao'?t('events.observation_now'):t('events.current_phase')}</small><strong>{content(fase,'nome')}</strong></div>}
-        <div className="event-card-dates"><span>{formatUtcDate(ocorrencia.inicioServidor,locale)}</span><b>→</b><span>{formatUtcDate(ocorrencia.fimServidor,locale)}</span></div>
+        <div className="event-card-dates"><span>{formatUtcDate(ocorrencia.inicioServidor,locale,ocorrencia.fusoReino)}</span><b>→</b><span>{formatUtcDate(ocorrencia.fimServidor,locale,ocorrencia.fusoReino)}</span></div>
         {(status==='ativo'||status==='proximo') && <div className="event-countdown">⏳ {status==='proximo'?t('events.starts_in'):t('events.ends_in')} {left.days?`${left.days}d `:''}{left.hours}h {left.minutes}m</div>}
       </button>
       {expanded && <div className="event-card-detail">

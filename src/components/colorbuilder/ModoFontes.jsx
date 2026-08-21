@@ -222,7 +222,7 @@ export default function ModoFontes({ showToast }) {
       <div style={T.card}>
         <div style={{ ...T.cardTitle, justifyContent: 'space-between' }}>
           <span><span style={{ color: C.ACCENT }}>✏️</span> {t('builder.fonts.your_text')}</span>
-          <span style={{ fontSize: '0.65rem', color: charCount > 0 ? C.ACCENT : C.TEXT_FAINT, textTransform: 'none', letterSpacing: 0 }}>
+          <span style={{ fontSize: '.72rem', color: charCount > 0 ? C.ACCENT : C.TEXT_FAINT, textTransform: 'none', letterSpacing: 0 }}>
             {charCount} {charCount === 1 ? 'char' : 'chars'}
           </span>
         </div>
@@ -244,7 +244,7 @@ export default function ModoFontes({ showToast }) {
           )}
         </div>
         <CharacterTools onInsert={insertCharacter} />
-        <p style={{ fontSize: '0.63rem', color: C.TEXT_FAINT, marginTop: 7 }}>
+        <p style={{ fontSize: '.72rem', color: C.TEXT_FAINT, marginTop: 7 }}>
           {t('builder.fonts.help')}
         </p>
       </div>
@@ -259,7 +259,7 @@ export default function ModoFontes({ showToast }) {
                 background: C.BG_SECONDARY, borderRadius: 7, padding: '6px 10px',
               }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '0.58rem', color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  <span style={{ fontSize: '.72rem', color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                     {h.nome}
                   </span>
                   <div style={{ fontSize: '0.85rem', color: C.TEXT_PRIMARY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -268,7 +268,7 @@ export default function ModoFontes({ showToast }) {
                 </div>
                 <button
                   onClick={() => safeCopy(h.resultado, () => showToast(t('builder.fonts.recopied')))}
-                  style={{ ...T.btnOutline, height: 28, padding: '0 8px', fontSize: '0.65rem' }}
+                  style={{ ...T.btnOutline, height: 28, padding: '0 8px', fontSize: '.72rem' }}
                 >⎘</button>
               </div>
             ))}
@@ -334,7 +334,7 @@ export default function ModoFontes({ showToast }) {
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '0.58rem', color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 3 }}>
+                <div style={{ fontSize: '.72rem', color: C.TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 3 }}>
                   {fonte.nome}
                   {isEmpty && <span style={{ marginLeft: 6, color: C.TEXT_FAINT, fontStyle: 'italic', textTransform: 'none', letterSpacing: 0 }}>{t('builder.fonts.example')}</span>}
                 </div>

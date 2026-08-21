@@ -9,7 +9,7 @@ export default function MarchaPanel({ esquadroes, calcMarcha, onAdd, onQtd, onRe
   return (
     <div>
       <div className="tw-card mb-2.5"><GameHeader title={t('troops.march_formation')} fontSize="0.82rem" /><div className="p-3 flex flex-col gap-2">
-        {esquadroes.length === 0 && <div className="py-6 text-center opacity-50"><p className="font-nunito text-[0.68rem] tracking-widest m-0" style={{ color: C.TEXT_SECONDARY }}>{t('troops.no_units_added')}</p></div>}
+        {esquadroes.length === 0 && <div className="py-6 text-center opacity-50"><p className="font-nunito text-[0.72rem] tracking-widest m-0" style={{ color: C.TEXT_SECONDARY }}>{t('troops.no_units_added')}</p></div>}
         {esquadroes.map((esq, index) => (
           <div key={`${esq.tropa.nome}-${index}`} className="flex items-center gap-2 px-2.5 py-2 rounded-lg" style={{ border: `1px solid ${C.BORDER_SOFT}`, borderLeft: `3px solid ${C.BORDER}`, background: C.BG_CARD }}>
             <span className="text-2xl leading-none shrink-0 w-7 text-center">{getIcone(esq.tropa.nome)}</span>
@@ -27,7 +27,7 @@ export default function MarchaPanel({ esquadroes, calcMarcha, onAdd, onQtd, onRe
           { label: t('troops.loot'), value: fmt(calcMarcha.carga), color: C.ACCENT_HOVER, border: C.ACCENT_HOVER },
           { label: t('troops.base_speed'), value: fmtFull(calcMarcha.velocidade, locale), color: C.BLUE, border: C.BLUE },
         ].map(({ label, value, color, border }, index) => (
-          <div key={label} className="py-3 px-2 text-center" style={{ borderBottom: `3px solid ${border}`, borderRight: index % 2 === 0 ? `1px solid ${C.BORDER_SOFT}` : 'none', borderTop: index >= 2 ? `1px solid ${C.BORDER_SOFT}` : 'none' }}><p className="font-nunito font-bold text-[0.65rem] tracking-widest mb-1 m-0" style={{ color: C.TEXT_SECONDARY }}>{label.toUpperCase()}</p><p className="font-nunito font-black text-lg leading-none m-0" style={{ color }}>{value}</p></div>
+          <div key={label} className="py-3 px-2 text-center" style={{ borderBottom: `3px solid ${border}`, borderRight: index % 2 === 0 ? `1px solid ${C.BORDER_SOFT}` : 'none', borderTop: index >= 2 ? `1px solid ${C.BORDER_SOFT}` : 'none' }}><p className="font-nunito font-bold text-[0.72rem] tracking-widest mb-1 m-0" style={{ color: C.TEXT_SECONDARY }}>{label.toUpperCase()}</p><p className="font-nunito font-black text-lg leading-none m-0" style={{ color }}>{value}</p></div>
         ))}
       </div></div>
     </div>

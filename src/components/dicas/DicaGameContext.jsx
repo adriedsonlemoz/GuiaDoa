@@ -58,36 +58,36 @@ export default function DicaGameContext({ dica, setRoute }) {
     <div style={{ marginTop: 18, display: 'grid', gap: 12 }}>
       {capacidade > 0 && dica.slug === 'guia-inicial-construcoes' && (
         <div style={{ borderRadius: 14, padding: '14px 15px', background: `linear-gradient(135deg, ${C.BG_CARD_TOP}, ${C.BG_CARD})`, color: C.TEXT_PRIMARY, border: `1.5px solid ${C.BORDER}`, boxShadow: '0 6px 18px rgba(62,47,28,.09), inset 0 1px 0 rgba(255,248,238,.7)' }}>
-          <div className="font-cinzel" style={{ fontSize: '.73rem', color: C.ACCENT_DEEP, letterSpacing: '.06em', textTransform: 'uppercase' }}>{t('tips.live_data')}</div>
+          <div className="font-cinzel" style={{ fontSize:'.80rem', color: C.ACCENT_DEEP, letterSpacing: '.06em', textTransform: 'uppercase' }}>{t('tips.live_data')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
             <div>
-              <div className="font-nunito" style={{ fontSize: '.66rem', color: C.TEXT_MUTED }}>{t('tips.fountain_level_35')}</div>
+              <div className="font-nunito" style={{ fontSize:'.74rem', color: C.TEXT_MUTED }}>{t('tips.fountain_level_35')}</div>
               <div className="font-cinzel" style={{ fontSize: '1.05rem', marginTop: 2 }}>{fmt(capacidade, locale)}</div>
-              <div className="font-nunito" style={{ fontSize: '.64rem', color: C.TEXT_MUTED }}>{t('tips.troops_capacity')}</div>
+              <div className="font-nunito" style={{ fontSize:'.74rem', color: C.TEXT_MUTED }}>{t('tips.troops_capacity')}</div>
             </div>
             <div>
-              <div className="font-nunito" style={{ fontSize: '.66rem', color: C.TEXT_MUTED }}>{t('tips.plan_38_fountains')}</div>
+              <div className="font-nunito" style={{ fontSize:'.74rem', color: C.TEXT_MUTED }}>{t('tips.plan_38_fountains')}</div>
               <div className="font-cinzel" style={{ fontSize: '1.05rem', marginTop: 2 }}>{fmt(capacidade * 38, locale)}</div>
-              <div className="font-nunito" style={{ fontSize: '.64rem', color: C.TEXT_MUTED }}>{t('tips.before_bonuses')}</div>
+              <div className="font-nunito" style={{ fontSize:'.74rem', color: C.TEXT_MUTED }}>{t('tips.before_bonuses')}</div>
             </div>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:10, paddingTop:10, borderTop:`1px solid ${C.BORDER_SOFT}` }}>
-            <div className="font-nunito" style={{ fontSize:'.67rem', color:C.TEXT_SECONDARY }}>🏰 {t('tips.main_city_spaces', { count: SLOT_RULES.PRINC.normal })}</div>
-            <div className="font-nunito" style={{ fontSize:'.67rem', color:C.TEXT_SECONDARY }}>🐉💧 {t('tips.water_dragon_spaces', { count: SLOT_RULES['ÁGUA'].normal })}</div>
+            <div className="font-nunito" style={{ fontSize:'.74rem', color:C.TEXT_SECONDARY }}>🏰 {t('tips.main_city_spaces', { count: SLOT_RULES.PRINC.normal })}</div>
+            <div className="font-nunito" style={{ fontSize:'.74rem', color:C.TEXT_SECONDARY }}>🐉💧 {t('tips.water_dragon_spaces', { count: SLOT_RULES['ÁGUA'].normal })}</div>
           </div>
-          <div className="font-nunito" style={{ fontSize: '.64rem', color: C.TEXT_MUTED, marginTop: 9 }}>{t('tips.live_data_note')}</div>
+          <div className="font-nunito" style={{ fontSize:'.74rem', color: C.TEXT_MUTED, marginTop: 9 }}>{t('tips.live_data_note')}</div>
         </div>
       )}
 
       {modulos.length > 0 && (
         <div style={{ padding: '14px', borderRadius: 14, border: `1px solid ${C.BORDER_SOFT}`, background: C.BG_CARD }}>
-          <div className="font-cinzel" style={{ fontSize: '.78rem', color: C.TEXT_PRIMARY }}>{t('tips.explore_modules')}</div>
-          <div className="font-nunito" style={{ fontSize: '.68rem', color: C.TEXT_MUTED, marginTop: 3 }}>{t('tips.explore_modules_hint')}</div>
+          <div className="font-cinzel" style={{ fontSize:'.82rem', color: C.TEXT_PRIMARY }}>{t('tips.explore_modules')}</div>
+          <div className="font-nunito" style={{ fontSize:'.76rem', color: C.TEXT_MUTED, marginTop: 3 }}>{t('tips.explore_modules_hint')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8, marginTop: 11 }}>
             {modulos.map(item => (
               <button key={item.id} onClick={() => { setRoute?.(item.route); }} style={{ border: `1px solid ${C.BORDER_SOFT}`, borderRadius: 10, background: C.BG_SECONDARY, color: C.TEXT_PRIMARY, padding: '10px 9px', cursor: 'pointer', textAlign: 'left', display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
-                <span className="font-nunito" style={{ fontSize: '.72rem', fontWeight: 800 }}>{t(item.labelKey)}</span>
+                <span className="font-nunito" style={{ fontSize:'.76rem', fontWeight: 800 }}>{t(item.labelKey)}</span>
               </button>
             ))}
           </div>
@@ -96,7 +96,7 @@ export default function DicaGameContext({ dica, setRoute }) {
 
       {itensRelacionados.length > 0 && (
         <div style={{ padding: '0 2px' }}>
-          <div className="font-nunito" style={{ fontSize: '.66rem', color: C.TEXT_MUTED, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 7 }}>{t('tips.related_items')}</div>
+          <div className="font-nunito" style={{ fontSize:'.74rem', color: C.TEXT_MUTED, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 7 }}>{t('tips.related_items')}</div>
           <div className="item-contents-grid">
             {itensRelacionados.map(item => (
               <ItemReferenceCard key={item.slug} item={item} compact onClick={() => setRoute?.('itens')} />
@@ -107,10 +107,10 @@ export default function DicaGameContext({ dica, setRoute }) {
 
       {entidades.length > 0 && (
         <div style={{ padding: '0 2px' }}>
-          <div className="font-nunito" style={{ fontSize: '.66rem', color: C.TEXT_MUTED, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 7 }}>{t('tips.related_data')}</div>
+          <div className="font-nunito" style={{ fontSize:'.74rem', color: C.TEXT_MUTED, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 7 }}>{t('tips.related_data')}</div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {entidades.map((item, idx) => (
-              <button key={`${item.label}-${idx}`} onClick={() => setRoute?.(item.route)} style={{ border: `1px solid ${C.BORDER_SOFT}`, borderRadius: 999, background: C.BG_CARD, color: C.TEXT_SECONDARY, padding: '6px 9px', cursor: 'pointer', fontSize: '.68rem', fontWeight: 700 }}>
+              <button key={`${item.label}-${idx}`} onClick={() => setRoute?.(item.route)} style={{ border: `1px solid ${C.BORDER_SOFT}`, borderRadius: 999, background: C.BG_CARD, color: C.TEXT_SECONDARY, padding: '6px 9px', cursor: 'pointer', fontSize:'.76rem', fontWeight: 700 }}>
                 {item.icon} {item.label}
               </button>
             ))}

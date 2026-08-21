@@ -18,11 +18,11 @@ const SelectRow = ({ tropa, onClick }) => {
     <button onClick={onClick} className="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer rounded-lg transition-all text-left" style={{ border: `1px solid ${C.BORDER_SOFT}`, borderLeft: `3px solid ${C.BORDER}`, background: C.BG_CARD }}>
       <span className="text-3xl leading-none shrink-0 w-8 text-center">{getIcone(tropa.nome)}</span>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap"><span className="font-nunito font-black text-[0.82rem]" style={{ color: C.ACCENT }}>{nome}</span><span className="font-nunito font-bold text-[0.65rem] px-1.5 py-0.5 rounded-full shrink-0" style={{ border: `1px solid ${tipo.color}55`, background: `${tipo.color}12`, color: tipo.color }}>{tipo.label}</span></div>
-        <div className="flex gap-2 items-center mb-1">{resumo.map((item, index) => <span key={index} className="font-nunito text-[0.6rem] whitespace-nowrap" style={{ color: C.TEXT_SECONDARY }}>{item.icon} {item.val}</span>)}</div>
+        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap"><span className="font-nunito font-black text-[0.82rem]" style={{ color: C.ACCENT }}>{nome}</span><span className="font-nunito font-bold text-[0.72rem] px-1.5 py-0.5 rounded-full shrink-0" style={{ border: `1px solid ${tipo.color}55`, background: `${tipo.color}12`, color: tipo.color }}>{tipo.label}</span></div>
+        <div className="flex gap-2 items-center mb-1">{resumo.map((item, index) => <span key={index} className="font-nunito text-[0.72rem] whitespace-nowrap" style={{ color: C.TEXT_SECONDARY }}>{item.icon} {item.val}</span>)}</div>
         <div className="flex gap-1 items-center"><MiniBar value={tropa.vida} max={32000} color={C.HEALTH} /><MiniBar value={tropa.def} max={5000} color={C.DEFENSE} /><MiniBar value={Math.max(tropa.atqPerto, tropa.atqDist)} max={6000} color={C.ATTACK} /><MiniBar value={tropa.vel} max={3000} color={C.ENERGY} /></div>
       </div>
-      <div className="text-right shrink-0"><p className="font-nunito font-black text-[0.75rem] leading-none m-0" style={{ color: C.POWER }}>{tropa.poder}</p><p className="font-nunito text-[0.55rem] tracking-wider m-0" style={{ color: C.TEXT_MUTED }}>{t('common.power').slice(0,3).toUpperCase()}</p></div>
+      <div className="text-right shrink-0"><p className="font-nunito font-black text-[0.75rem] leading-none m-0" style={{ color: C.POWER }}>{tropa.poder}</p><p className="font-nunito text-[0.72rem] tracking-wider m-0" style={{ color: C.TEXT_MUTED }}>{t('common.power').slice(0,3).toUpperCase()}</p></div>
     </button>
   );
 };

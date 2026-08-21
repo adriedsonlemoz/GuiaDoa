@@ -30,10 +30,10 @@ const LanguageOption = ({ locale, active, onSelect, selectedLabel }) => (
       <strong className="font-nunito" style={{ display: 'block', color: active ? '#FFF9E8' : C.TEXT_PRIMARY, fontSize: '1rem', fontWeight: 900, lineHeight: 1.15 }}>
         {locale.nativo}
       </strong>
-      <span className="font-nunito" style={{ display: 'block', marginTop: 5, color: active ? 'rgba(255,249,232,.72)' : C.TEXT_MUTED, fontSize: '.7rem', fontWeight: 700 }}>
+      <span className="font-nunito" style={{ display: 'block', marginTop: 5, color: active ? 'rgba(255,249,232,.72)' : C.TEXT_MUTED, fontSize:'.76rem', fontWeight: 700 }}>
         {locale.label}
       </span>
-      <span className="font-nunito" style={{ display: 'inline-block', marginTop: 7, color: active ? '#E0C366' : C.TEXT_FAINT, fontSize: '.58rem', fontWeight: 900, letterSpacing: 1.2 }}>
+      <span className="font-nunito" style={{ display: 'inline-block', marginTop: 7, color: active ? '#E0C366' : C.TEXT_FAINT, fontSize:'.72rem', fontWeight: 900, letterSpacing: 1.2 }}>
         {locale.code.toUpperCase()}
       </span>
     </span>
@@ -82,7 +82,7 @@ export default function LanguageChooser({ onBack, onDone, setup = false }) {
               fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif", fontWeight: 900, fontSize: '.86rem', letterSpacing: 1,
             }}>DOA</div>
             <div>
-              <p className="font-nunito" style={{ margin: 0, color: C.ACCENT, fontSize: '.6rem', fontWeight: 900, letterSpacing: 2.2, textTransform: 'uppercase' }}>
+              <p className="font-nunito" style={{ margin: 0, color: C.ACCENT, fontSize:'.72rem', fontWeight: 900, letterSpacing: 2.2, textTransform: 'uppercase' }}>
                 {t('language.eyebrow')}
               </p>
               <h1 className="font-cinzel" style={{ margin: '5px 0 0', color: C.TEXT_HEADER, fontSize: '1.08rem', lineHeight: 1.25 }}>
@@ -90,14 +90,14 @@ export default function LanguageChooser({ onBack, onDone, setup = false }) {
               </h1>
             </div>
           </div>
-          <p className="font-nunito" style={{ margin: '14px 0 0', maxWidth: 390, color: 'rgba(248,242,224,.66)', fontSize: '.74rem', lineHeight: 1.55 }}>
+          <p className="font-nunito" style={{ margin: '14px 0 0', maxWidth: 390, color: 'rgba(248,242,224,.66)', fontSize:'.80rem', lineHeight: 1.55 }}>
             {t('language.choose_subtitle')}
           </p>
         </div>
       </header>
 
       <main style={{ flex: 1, width: '100%', maxWidth: 480, margin: '0 auto', padding: '22px 16px 30px' }}>
-        <p className="font-nunito" style={{ margin: '0 2px 12px', color: C.TEXT_SECONDARY, fontSize: '.69rem', fontWeight: 800, lineHeight: 1.5 }}>
+        <p className="font-nunito" style={{ margin: '0 2px 12px', color: C.TEXT_SECONDARY, fontSize:'.76rem', fontWeight: 800, lineHeight: 1.5 }}>
           {t('language.tap_hint')}
         </p>
         <div style={{ display: 'grid', gap: 11 }}>
@@ -117,7 +117,7 @@ export default function LanguageChooser({ onBack, onDone, setup = false }) {
           borderRadius: 12, background: 'rgba(49,72,74,.05)', border: '1px solid rgba(49,72,74,.10)',
         }}>
           <span aria-hidden="true" style={{ fontSize: 15, lineHeight: 1.4 }}>◈</span>
-          <p className="font-nunito" style={{ margin: 0, color: C.TEXT_MUTED, fontSize: '.66rem', fontWeight: 700, lineHeight: 1.5 }}>
+          <p className="font-nunito" style={{ margin: 0, color: C.TEXT_MUTED, fontSize:'.74rem', fontWeight: 700, lineHeight: 1.5 }}>
             {t('language.note')}
           </p>
         </div>

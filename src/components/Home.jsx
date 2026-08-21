@@ -17,7 +17,8 @@ import { useGameData } from '../data/GameDataContext.jsx';
 
 const Home = ({ setRoute }) => {
   const [profile, setProfile] = useState(() => getProfile());
-  const [termoAceito, setTermoAceito] = useState(() => getTermoAceito());
+  const [termoAceito, setTermoAceitoState] = useState(() => getTermoAceito());
+  const [showTerms, setShowTerms] = useState(false);
   const [alertaModal, setAlertaModal] = useState({ open: false, msg: '' });
   const { toast, closeToast } = useToast();
   const [verIdioma, setVerIdioma] = useState(false);
@@ -27,6 +28,33 @@ const Home = ({ setRoute }) => {
 
   // Mantém o fuso salvo no perfil sincronizado com o catálogo canônico do reino.
   // O nome do reino continua sendo a chave legível do perfil local.
+  // O onboarding termina antes de qualquer modal: idioma → nome/reino → perfil salvo → Home.
+  // Os termos (quando ainda pendentes) só são apresentados depois que a Home já foi pintada.
+  useEffect(() => {
+    if (!profile || termoAceito || showTerms) return undefined;
+    let timer = null;
+    const raf = window.requestAnimationFrame(() => {
+      timer = window.setTimeout(() => setShowTerms(true), 250);
+    });
+    return () => {
+      window.cancelAnimationFrame(raf);
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [profile, termoAceito, showTerms]);
+
+  // O aviso de doação é a última etapa: somente depois de Home renderizada e termos resolvidos.
+  useEffect(() => {
+    if (!profile || !termoAceito) return undefined;
+    let timer = null;
+    const raf = window.requestAnimationFrame(() => {
+      timer = window.setTimeout(() => window.dispatchEvent(new CustomEvent('guiadoa:home-ready')), 450);
+    });
+    return () => {
+      window.cancelAnimationFrame(raf);
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [profile, termoAceito]);
+
   useEffect(() => {
     if (!profile?.reino || !reinos.length) return;
     const aliases = { manre:'mamre', redforn:'redfern', siera:'sierra', solange:'solace' };
@@ -42,8 +70,13 @@ const Home = ({ setRoute }) => {
   }, [profile, reinos]);
 
   if (!profile) {
-    return <><TermosDialog open={!termoAceito} onAceitar={() => setTermoAceito(true)} />{termoAceito && <ProfileForm onSave={setProfile} />}</>;
+    return <ProfileForm onSave={setProfile} deferSave={false} />;
   }
+
+  const acceptTerms = () => {
+    setTermoAceitoState(true);
+    setShowTerms(false);
+  };
 
   const handleTool = id => {
     setRoute(id);
@@ -66,6 +99,7 @@ const Home = ({ setRoute }) => {
         </div>
       )}
       {verIdioma && <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }}><ConfiguracoesIdioma onVoltar={() => setVerIdioma(false)} /></div>}
+      <TermosDialog open={showTerms} onAceitar={acceptTerms} />
     </div>
   );
 };

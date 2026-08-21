@@ -10,7 +10,7 @@ function LevelSelect({ label, value, max, min = 0, onChange }) {
   for (let level = min; level <= max; level += 1) options.push(level);
   return (
     <label style={{ display:'grid', gap:4, flex:1 }}>
-      <span style={{ color:'#6d7468', fontSize:'.56rem', fontWeight:850, textTransform:'uppercase', letterSpacing:'.05em' }}>{label}</span>
+      <span style={{ color:'#6d7468', fontSize:'.72rem', fontWeight:850, textTransform:'uppercase', letterSpacing:'.05em' }}>{label}</span>
       <select className="game-field" value={value} onChange={event => onChange(Number(event.target.value))}>
         {options.map(level => <option key={level} value={level}>{level === 0 ? '—' : `Nv. ${level}`}</option>)}
       </select>
@@ -62,7 +62,7 @@ export default function PesquisaDetalhe({ slug }) {
           </div>
           <div>
             <div className="game-thumb" style={{ width:92, height:92, fontSize:'2.6rem' }}>{pesquisa.icone || '🔬'}</div>
-            <div style={{ marginTop:4, textAlign:'center', fontWeight:750, color:'#48564e', fontSize:'.7rem' }}>
+            <div style={{ marginTop:4, textAlign:'center', fontWeight:750, color:'#48564e', fontSize:'.76rem' }}>
               {current > 0 ? `${t('common.level')} ${current}` : t('research.not_set')}
             </div>
           </div>
@@ -79,10 +79,10 @@ export default function PesquisaDetalhe({ slug }) {
 
           <div style={{ marginTop:10, padding:'10px 11px', border:'1px solid rgba(76,100,88,.22)', background:'rgba(235,231,205,.72)', borderRadius:4 }}>
             <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:10 }}>
-              <span style={{ color:'#5f6a60', fontSize:'.62rem', fontWeight:800 }}>{t('research.known_time')}</span>
+              <span style={{ color:'#5f6a60', fontSize:'.74rem', fontWeight:800 }}>{t('research.known_time')}</span>
               <strong style={{ color:'#315d57', fontSize:'.9rem' }}>{range.formatted || '—'}</strong>
             </div>
-            <div style={{ marginTop:4, color:range.missing ? '#8a6d3a' : '#657467', fontSize:'.61rem', fontWeight:700 }}>
+            <div style={{ marginTop:4, color:range.missing ? '#8a6d3a' : '#657467', fontSize:'.72rem', fontWeight:700 }}>
               {range.total === 0
                 ? t('research.choose_target')
                 : range.missing
@@ -99,7 +99,7 @@ export default function PesquisaDetalhe({ slug }) {
       </div>
 
       {filledTimes < pesquisa.niveis.length ? (
-        <div style={{ marginTop:8, color:'#757866', fontSize:'.64rem', lineHeight:1.45, textAlign:'center' }}>
+        <div style={{ marginTop:8, color:'#757866', fontSize:'.74rem', lineHeight:1.45, textAlign:'center' }}>
           {t('research.missing_times_note')}
         </div>
       ) : null}

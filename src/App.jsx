@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { I18nProvider, useI18n } from './hooks/useI18n.jsx';
 import Modal from './ui/Modal.jsx';
 import { DISPLAY_VERSION } from './version.js';
@@ -9,18 +9,31 @@ import ErrorBoundary from './app/ErrorBoundary.jsx';
 import SyncProgressBanner from './app/SyncProgressBanner.jsx';
 import StartupGate from './app/StartupGate.jsx';
 import { GameDataProvider, useGameData } from './data/GameDataContext.jsx';
-import { getDonationNoticeSeen, setDonationNoticeSeen } from './utils/storage.js';
+import { getDonationNoticeSeen, getProfile, setDonationNoticeSeen } from './utils/storage.js';
 import { C } from './theme.js';
 
 const GuiaApp = () => {
   const { route, setRoute, canGoBack } = useHashRouter();
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
-  const [donationNoticeOpen, setDonationNoticeOpen] = useState(() => !getDonationNoticeSeen());
+  const [donationNoticeOpen, setDonationNoticeOpen] = useState(false);
   const { syncStatus, syncProgress, syncInfo, sincronizarAgora } = useAppSync();
   const { dragoes } = useGameData();
   const { t, content } = useI18n();
   const currentRoute = getRouteLabel(route, dragoes, t, content);
   const isHome = route === 'home';
+
+  useEffect(() => {
+    const maybeOpenDonation = () => {
+      if (route !== 'home' || getDonationNoticeSeen() || !getProfile()) return;
+      setDonationNoticeOpen(true);
+    };
+    window.addEventListener('guiadoa:home-ready', maybeOpenDonation);
+    return () => window.removeEventListener('guiadoa:home-ready', maybeOpenDonation);
+  }, [route]);
+
+  useEffect(() => {
+    if (route !== 'home') setDonationNoticeOpen(false);
+  }, [route]);
 
   const handleGoHome = () => {
     if (window.temAlteracoesNaoSalvas) setExitDialogOpen(true);
@@ -93,7 +106,7 @@ const GuiaApp = () => {
       </main>
 
       <footer style={{ width:'min(100%,760px)', margin:'0 auto', background:'linear-gradient(180deg,#3A5754,#304946)', borderTop:'1px solid #806033' }}>
-        <div className="py-2 text-center" style={{ color:'rgba(255,247,223,.72)', fontSize:'.62rem', letterSpacing:'2px', fontWeight:800 }}>
+        <div className="py-2 text-center" style={{ color:'rgba(255,247,223,.72)', fontSize:'.74rem', letterSpacing:'2px', fontWeight:800 }}>
           GUIA DOA · {DISPLAY_VERSION}
         </div>
       </footer>

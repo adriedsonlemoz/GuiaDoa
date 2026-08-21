@@ -85,13 +85,13 @@ const DicaArtigo = ({ dica, catInfo, onClose, setRoute }) => {
 
         <header className="game-panel" style={{ padding:'14px 14px 13px', marginTop:8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '.63rem', fontWeight: 900, color: C.ACCENT_DEEP, textTransform: 'uppercase', letterSpacing: '.06em' }}>{typeIcon[dica.tipo] || '💡'} {t(`tips.type_${dica.tipo || 'dica'}`)}</span>
-            {catInfo && <span style={{ fontSize: '.63rem', color: C.TEXT_MUTED }}>• {catInfo.icon} {categoria}</span>}
-            {dica.destaque && <span style={{ fontSize: '.62rem', color: C.ACCENT_DEEP, fontWeight: 900 }}>⭐ {t('tips.featured')}</span>}
+            <span style={{ fontSize:'.74rem', fontWeight: 900, color: C.ACCENT_DEEP, textTransform: 'uppercase', letterSpacing: '.06em' }}>{typeIcon[dica.tipo] || '💡'} {t(`tips.type_${dica.tipo || 'dica'}`)}</span>
+            {catInfo && <span style={{ fontSize:'.74rem', color: C.TEXT_MUTED }}>• {catInfo.icon} {categoria}</span>}
+            {dica.destaque && <span style={{ fontSize:'.74rem', color: C.ACCENT_DEEP, fontWeight: 900 }}>⭐ {t('tips.featured')}</span>}
           </div>
           <h1 className="font-cinzel" style={{ margin: '8px 0 0', color: C.TEXT_PRIMARY, fontSize:'1.12rem', lineHeight: 1.32 }}>{titulo}</h1>
           {resumo && <p className="font-nunito" style={{ margin: '9px 0 0', fontSize: '.84rem', lineHeight: 1.62, color: C.TEXT_SECONDARY }}>{resumo}</p>}
-          <div className="font-nunito" style={{ display: 'flex', gap: 9, flexWrap: 'wrap', marginTop: 11, fontSize: '.64rem', color: C.TEXT_FAINT }}>
+          <div className="font-nunito" style={{ display: 'flex', gap: 9, flexWrap: 'wrap', marginTop: 11, fontSize:'.74rem', color: C.TEXT_FAINT }}>
             {dica.leituraMin > 0 && <span>⏱️ {t('tips.minutes', { count: dica.leituraMin })}</span>}
             {dica.atualizadoEm && <span>• {t('tips.updated')} {fmtData(dica.atualizadoEm, locale)}</span>}
           </div>

@@ -62,11 +62,11 @@ const TorneioStatusCard = ({ horaLocal, horaSomente, countdown, isUrgente, faseT
           {faseTexto}
         </span>
         <span className="text-aoe-gold shrink-0 text-xs">·</span>
-        <span className="font-nunito font-bold text-[0.65rem] tracking-wider text-aoe-muted whitespace-nowrap shrink-0">
+        <span className="font-nunito font-bold text-[0.72rem] tracking-wider text-aoe-muted whitespace-nowrap shrink-0">
           {fuso || reino || t('torneio.status.utc')}
         </span>
         <span className="text-aoe-gold shrink-0 text-xs">·</span>
-        <span className="font-nunito text-[0.7rem] text-aoe-muted whitespace-nowrap tracking-widest shrink-0">
+        <span className="font-nunito text-[0.72rem] text-aoe-muted whitespace-nowrap tracking-widest shrink-0">
           {horaSomente || horaLocal}
         </span>
       </div>

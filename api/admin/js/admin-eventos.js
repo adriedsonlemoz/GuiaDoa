@@ -54,7 +54,7 @@ function renderEventos(lista) {
   document.getElementById('content').innerHTML=`
     <div class="admin-page-head"><div><span class="admin-eyebrow">Conteúdo temporal</span><h1>Eventos</h1><p>Eventos são confirmados somente nos reinos que possuem ocorrência cadastrada.</p></div><button class="btn btn-gold" onclick="abrirInformacoesGeraisEvento(null)">＋ Novo evento</button></div>
     <div class="stats-row"><div class="stat-box"><div class="stat-val">${lista.length}</div><div class="stat-lbl">Eventos</div></div><div class="stat-box"><div class="stat-val">${ocorrencias.length}</div><div class="stat-lbl">Ocorrências</div></div><div class="stat-box"><div class="stat-val">${ativos}</div><div class="stat-lbl">Ativas</div></div><div class="stat-box"><div class="stat-val">${proximos}</div><div class="stat-lbl">Próximas</div></div></div>
-    <div class="admin-callout"><strong>Fonte de verdade</strong><span>Ocorrência cadastrada = confirmado. Sem ocorrência = não confirmado. A opção de selecionar os 4 reinos mais recentes é apenas um atalho do Admin.</span></div>
+    <div class="admin-callout"><strong>Fonte de verdade</strong><span>Ocorrência cadastrada = confirmado. Sem ocorrência = não confirmado. O atalho de quatro reinos considera somente datas de abertura confirmadas; a numeração não define idade.</span></div>
     <div class="admin-event-list">${lista.length?lista.map(e=>{
       const status=(e.ocorrencias||[]).some(o=>o.status==='ativo')?'ativo':(e.ocorrencias||[]).some(o=>o.status==='proximo')?'proximo':(e.ocorrencias||[]).length?'encerrado':'nao_confirmado';
       return `<button class="admin-event-list-card" onclick="abrirGerenciadorEvento(fromStrArg('${strArg(e.slug)}'))"><div class="admin-event-list-main"><span class="admin-status-pill is-${eventoStatusTone(status)}">${eventoStatusLabel(status)}</span><strong>${esc(e.nome)}</strong><small>${esc(eventoPeriodLabel(e))}</small></div><div class="admin-event-list-meta"><span>🌍 ${(e.ocorrencias||[]).length} reino(s)</span><span>◫ ${(e.fases||[]).length} fase(s)</span><span>🎁 ${eventoCountRewards(e)} grupo(s)</span></div><b>›</b></button>`;
@@ -79,7 +79,7 @@ function renderGerenciadorEvento() {
     <div class="admin-manage-card"><div class="admin-manage-card-title">Configuração</div>
       ${section('ℹ️','Informações gerais','Nome, descrição, categoria, imagem e disponibilidade.','abrirInformacoesGeraisEvento(EVENTO_ATUAL)')}
       ${section('🗓️','Datas e fases','Período oficial, fases, dia do evento e prévia automática.','abrirDatasFasesEvento()',`${(e.fases||[]).length}`)}
-      ${section('🌍','Reinos','Ocorrências confirmadas por reino e atalho dos 4 mais recentes.','abrirReinosEvento()',`${(e.ocorrencias||[]).length}`)}
+      ${section('🌍','Reinos','Ocorrências confirmadas por reino e atalho das 4 aberturas confirmadas mais recentes.','abrirReinosEvento()',`${(e.ocorrencias||[]).length}`)}
       ${section('🎁','Recompensas','Metas individuais, ranking, faixas e múltiplos itens.','abrirRecompensasEvento()',`${eventoCountRewards(e)}`)}
       ${section('›','Regras','Instruções estruturadas exibidas no guia e no botão Copiar.','abrirRegrasEvento()',`${(e.regras||[]).length}`)}
       ${section('🕘','Histórico','Ocorrências, fonte e alterações registradas.','abrirHistoricoEvento()',`${(e.historico||[]).length}`)}

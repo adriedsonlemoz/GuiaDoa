@@ -4,8 +4,11 @@ import { COLLECTIONS } from '../config/database.js';
 const ReinoFusaoSchema = new mongoose.Schema({
   reinoOriginalId:{ type:Number, required:true, min:1, index:true },
   reinoParceiroId:{ type:Number, required:true, min:1, index:true },
+  reinoIncorporadoId:{ type:Number, default:null, min:1, index:true },
   dataFusao:{ type:Date, required:true },
   reinoResultanteId:{ type:Number, required:true, min:1, index:true },
+  numeroAnterior:{ type:Number, default:null, min:1 },
+  numeroAtual:{ type:Number, default:null, min:1 },
   observacoes:{ type:String, default:'', trim:true },
   historico:{ type:[new mongoose.Schema({
     data:{ type:Date, default:Date.now },

@@ -3,10 +3,9 @@ import { useGameData } from '../../data/GameDataContext.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
 import { GameSectionTitle, GameTabs } from '../shared/GameChrome.jsx';
 import { ATTRS_BASE, ATTRS_ELEM, fmtDragaoValor } from './dragaoCompareConfig.js';
+import DragonLevelNavigator from './ui/DragonLevelNavigator.jsx';
 
 const LEVEL_KEY = id => `guiadoa_dragao_nivel_${id}`;
-const ALL_ZERO = Object.fromEntries([...ATTRS_BASE, ...ATTRS_ELEM].map(a => [a.key, 0]));
-
 function getSavedLevel(id) {
   try { return Math.max(0, Number(localStorage.getItem(LEVEL_KEY(id))) || 0); } catch { return 0; }
 }
@@ -59,7 +58,11 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
   const [nivelConsulta, setNivelConsulta] = useState(null);
 
   useEffect(() => {
-    if (nivelConsulta == null && niveis.length) setNivelConsulta(niveis[0].nivel);
+    if (!niveis.length) {
+      if (nivelConsulta != null) setNivelConsulta(null);
+      return;
+    }
+    if (!niveis.some(n => Number(n.nivel) === Number(nivelConsulta))) setNivelConsulta(niveis[0].nivel);
   }, [niveis, nivelConsulta]);
   useEffect(() => {
     try { localStorage.setItem(LEVEL_KEY(dragaoId), String(meuNivel)); } catch { /* local only */ }
@@ -67,7 +70,7 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
 
   if (!dragao) return <div className="game-panel" style={{ padding:28, textAlign:'center' }}>🐉<div>{t('dragons.not_found')}</div></div>;
 
-  const snapshot = nivelConsulta === 0 ? { nivel:0, ...ALL_ZERO } : niveis.find(n => n.nivel === nivelConsulta) || null;
+  const snapshot = niveis.find(n => n.nivel === nivelConsulta) || null;
   const habilidades = Array.isArray(dragao.habilidades) ? dragao.habilidades : [];
   const batalha = habilidades.filter(h => h.tipo !== 'comum');
   const comuns = habilidades.filter(h => h.tipo === 'comum');
@@ -97,17 +100,19 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
 
   return (
     <div style={{ maxWidth:620, margin:'0 auto', paddingBottom:24, animation:'reveal-up .3s ease both' }}>
-      <section className="game-panel" style={{ overflow:'hidden', padding:0 }}>
-        <div style={{ padding:'14px 14px 12px', display:'flex', gap:13, alignItems:'center', background:'linear-gradient(180deg,#365B57,#294946)', color:'#fff6dc' }}>
-          {dragao.imagem ? <img src={dragao.imagem} alt={content(dragao,'nome')} style={{ width:84, height:80, objectFit:'cover', borderRadius:7, border:'1.5px solid #b99b62', background:'#263b39' }} /> : <div style={{ width:84, height:80, display:'grid', placeItems:'center', fontSize:42 }}>🐉</div>}
-          <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontWeight:900, fontSize:'1.08rem' }}>{content(dragao,'nome')}</div>
-            <div style={{ opacity:.72, fontSize:'.75rem', marginTop:2 }}>{content(dragao,'elemento') || t('dragons.dragon_label')}</div>
-            <div style={{ marginTop:9, display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
-              <span style={{ fontSize:'.7rem', fontWeight:800, opacity:.8 }}>{t('dragons.my_level')}</span>
-              <button type="button" className="game-action-button" style={{ padding:'4px 10px' }} onClick={()=>setMeuNivel(v=>Math.max(0,v-1))}>−</button>
-              <strong style={{ minWidth:34, textAlign:'center' }}>{t('common.level_short')}{meuNivel}</strong>
-              <button type="button" className="game-action-button" style={{ padding:'4px 10px' }} onClick={()=>setMeuNivel(v=>Math.min(90,v+1))}>+</button>
+      <section className="game-panel dragon-detail-hero-panel">
+        <div className="dragon-detail-hero">
+          <div className="dragon-detail-portrait-wrap">
+            {dragao.imagem ? <img className="dragon-detail-portrait" src={dragao.imagem} alt={content(dragao,'nome')} /> : <div className="dragon-detail-portrait dragon-detail-portrait-fallback">🐉</div>}
+          </div>
+          <div className="dragon-detail-identity">
+            <div className="dragon-detail-name">{content(dragao,'nome')}</div>
+            <div className="dragon-detail-element">{content(dragao,'elemento') || t('dragons.dragon_label')}</div>
+            <div className="dragon-my-level">
+              <span>{t('dragons.my_level')}</span>
+              <button type="button" className="dragon-my-level-button" onClick={()=>setMeuNivel(v=>Math.max(0,v-1))}>−</button>
+              <strong>{t('common.level_short')}{meuNivel}</strong>
+              <button type="button" className="dragon-my-level-button" onClick={()=>setMeuNivel(v=>Math.min(90,v+1))}>+</button>
             </div>
           </div>
         </div>
@@ -123,12 +128,13 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
       {aba === 'atributos' && (
         <section className="game-panel" style={{ marginTop:8 }}>
           <GameSectionTitle>{t('dragons.known_attributes')}</GameSectionTitle>
-          <p className="game-list-copy" style={{ margin:'8px 12px' }}>{t('dragons.sparse_levels_help')}</p>
-          <div style={{ display:'flex', gap:6, overflowX:'auto', padding:'0 12px 4px' }}>
-            <button type="button" className={`game-tab ${nivelConsulta === 0 ? 'is-active':''}`} onClick={()=>setNivelConsulta(0)}>{t('common.level_short')}0</button>
-            {niveis.map(n => <button type="button" key={n.nivel} className={`game-tab ${nivelConsulta === n.nivel ? 'is-active':''}`} onClick={()=>setNivelConsulta(n.nivel)}>{t('common.level_short')}{n.nivel}</button>)}
-          </div>
-          {snapshot ? <div style={{ padding:'0 12px 12px' }}><AttributeTable snapshot={snapshot} locale={locale} t={t} />{snapshot.nivel < 51 ? <p className="game-list-copy" style={{ marginTop:8 }}>{t('dragons.elemental_from_51')}</p> : null}</div> : <div style={{ padding:24, textAlign:'center' }}>{t('dragons.attributes_unavailable')}</div>}
+          <p className="game-list-copy dragon-confirmed-help">{t('dragons.confirmed_levels_help')}</p>
+          {niveis.length ? (
+            <div className="dragon-attributes-body">
+              <DragonLevelNavigator levels={niveis.map(n=>n.nivel)} value={nivelConsulta} onChange={setNivelConsulta} label={t('dragons.attributes_at_level')} />
+              {snapshot ? <><AttributeTable snapshot={snapshot} locale={locale} t={t} />{snapshot.nivel < 51 ? <p className="game-list-copy" style={{ marginTop:8 }}>{t('dragons.elemental_from_51')}</p> : null}</> : <div style={{ padding:24, textAlign:'center' }}>{t('dragons.attributes_unavailable')}</div>}
+            </div>
+          ) : <div style={{ padding:24, textAlign:'center' }}>{t('dragons.attributes_unavailable')}</div>}
         </section>
       )}
 

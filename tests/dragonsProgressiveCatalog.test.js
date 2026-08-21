@@ -56,8 +56,26 @@ test('frontend de dragões tem Atributos, Habilidades, Como obter e comparação
   assert.match(detail, /battle_skills/);
   assert.match(detail, /how_to_get/);
   assert.match(detail, /snapshot\.nivel < 51/);
-  assert.match(compare, /nivel >= 51/);
-  assert.match(compare, /find\(n=>n\.nivel===nivel\)/);
+  assert.match(compare, /Number\(nivel\) >= 51/);
+  assert.match(compare, /Number\(n\.nivel\)===Number\(nivel\)/);
+  assert.match(detail, /DragonLevelNavigator/);
+  assert.match(compare, /DragonLevelNavigator/);
+});
+
+
+test('navegação de atributos usa setas e seletor, e comparação não usa cor própria do dragão', () => {
+  const detail = read('src/components/dragoes/DragaoDetalhe.jsx');
+  const compare = read('src/components/dragoes/ui/DragaoComparacao.jsx');
+  const navigator = read('src/components/dragoes/ui/DragonLevelNavigator.jsx');
+  const css = read('src/index.css');
+  assert.match(navigator, /dragon-level-arrow/);
+  assert.match(navigator, /<select/);
+  assert.doesNotMatch(detail, /overflowX:'auto'.*nivelConsulta/);
+  assert.doesNotMatch(compare, /d\.cor/);
+  assert.match(compare, /comparison_summary/);
+  assert.match(compare, /fmtDragaoValor\(diff/);
+  assert.match(css, /dragon-detail-portrait/);
+  assert.match(css, /dragon-compare-value\.is-best/);
 });
 
 test('Hoplitas Imortais é removida do catálogo canônico', () => {

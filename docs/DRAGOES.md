@@ -27,3 +27,12 @@ A ordem pública passa a ser fixa: Grande Dragão, Água, Fogo, Terra, Beladona,
 A alimentação usa dados confirmados do jogo: Carneiro/Mutton +100 XP, Bovina/Beef +200 XP, Frango/Chicken +500 XP e Veado/Venison +1.000 XP. Os três primeiros são ligados à Savana quando aparecem como recompensa.
 
 Os nomes oficiais ingleses também viraram aliases de busca. Exemplos corrigidos: Nightshade Dragon, Frost Dragon, Blackspine Dragon e Faerie Dragon.
+
+## Interface de atributos — Beta 2.69
+
+- A ficha não exibe mais uma faixa horizontal com todos os níveis cadastrados.
+- Os níveis confirmados são percorridos por setas `‹ ›` e também podem ser escolhidos diretamente em um seletor.
+- No celular, o retrato do dragão fica centralizado e usa `object-fit: contain`, evitando cortes do asset original.
+- A comparação considera somente níveis confirmados em comum entre os dois dragões.
+- Valores deixam de usar a cor própria de cada dragão: somente a vantagem recebe destaque positivo neutro, com a diferença numérica; empates ficam neutros.
+- Um resumo automático lista em quais atributos cada dragão leva vantagem e quais ficaram empatados.

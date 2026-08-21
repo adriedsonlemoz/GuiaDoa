@@ -7,12 +7,13 @@ import GuideContentRenderer from './GuideContentRenderer.jsx';
 import DicaGameContext from './DicaGameContext.jsx';
 import { useI18n } from '../../hooks/useI18n.jsx';
 import { useGameData } from '../../data/GameDataContext.jsx';
-import { buildDicaGameVariables } from './dicaGameUtils.js';
+import { applyDicaVariables, buildDicaGameVariables } from './dicaGameUtils.js';
 
 const typeIcon = { guia: '🧭', tutorial: '📘', dica: '💡' };
 
 const DicaArtigo = ({ dica, catInfo, onClose, setRoute }) => {
   const [lightboxIdx, setLightboxIdx] = useState(null);
+  const [copyState, setCopyState] = useState('idle');
   const { t, content, locale } = useI18n();
   const { edificios, tropas, dragoes } = useGameData();
   const gameVariables = buildDicaGameVariables(edificios, tropas, dragoes, locale);
@@ -24,6 +25,29 @@ const DicaArtigo = ({ dica, catInfo, onClose, setRoute }) => {
   const navegar = route => {
     onClose?.();
     setRoute?.(route);
+  };
+
+  const copiarTutorial = async () => {
+    const texto = `${titulo}\n\n${applyDicaVariables(conteudo, gameVariables)}`.trim();
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(texto);
+      } else {
+        const area = document.createElement('textarea');
+        area.value = texto;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }
+      setCopyState('copied');
+      window.setTimeout(() => setCopyState('idle'), 1800);
+    } catch {
+      setCopyState('error');
+      window.setTimeout(() => setCopyState('idle'), 1800);
+    }
   };
 
   useEffect(() => {
@@ -50,7 +74,7 @@ const DicaArtigo = ({ dica, catInfo, onClose, setRoute }) => {
         <div style={{ display:'grid', placeItems:'center', color:'#efd06b' }}>{typeIcon[dica.tipo] || '💡'}</div>
       </div>
 
-      <main style={{ maxWidth:640, width:'100%', margin:'0 auto', padding:'0 8px 34px' }}>
+      <main style={{ maxWidth:640, width:'100%', margin:'0 auto', padding:'0 2px 34px' }}>
         {dica.imagens?.length > 0 && (
           <div style={{ position:'relative', height:245, overflow:'hidden', cursor:'zoom-in', background:C.BG_SECONDARY, border:'1px solid #9d804b', borderTop:0 }} onClick={() => setLightboxIdx(0)}>
             <img src={dica.imagens[0].url} alt={titulo} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -70,10 +94,13 @@ const DicaArtigo = ({ dica, catInfo, onClose, setRoute }) => {
             {dica.leituraMin > 0 && <span>⏱️ {t('tips.minutes', { count: dica.leituraMin })}</span>}
             {dica.atualizadoEm && <span>• {t('tips.updated')} {fmtData(dica.atualizadoEm, locale)}</span>}
           </div>
+          <button type="button" className="game-action-button" onClick={copiarTutorial} style={{ marginTop:11, width:'100%', justifyContent:'center' }}>
+            {copyState === 'copied' ? `✓ ${t('tips.copied')}` : copyState === 'error' ? `⚠ ${t('tips.copy_failed')}` : `📋 ${t('tips.copy_tutorial')}`}
+          </button>
         </header>
 
-        <div style={{ padding: '0 12px' }}>
-          <GuideContentRenderer content={conteudo} variables={gameVariables} collapsible={['guia-inicial-construcoes', 'tutorial-atacar-antropos'].includes(dica.slug)} />
+        <div style={{ padding: 0 }}>
+          <GuideContentRenderer content={conteudo} variables={gameVariables} collapsible={['guia-inicial-construcoes', 'tutorial-atacar-antropos', 'tutorial-capturar-dragoes'].includes(dica.slug)} />
           <DicaGameContext dica={dica} setRoute={navegar} />
         </div>
       </main>

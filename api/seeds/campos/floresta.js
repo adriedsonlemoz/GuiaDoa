@@ -56,17 +56,14 @@ export function florestaRewardsForLevel(nivel) {
   return [...DRAGON_EMBLEMS];
 }
 
-function rewardStatusForLevel(nivel) {
-  // Os pop-ups enviados confirmam ausência de recompensas nos Nv.1, 2 e 5.
-  // Nv.3 e 4 vieram somente em relatórios de batalha; a ausência de itens não é inferida.
-  if ([1,2,5].includes(nivel)) return 'confirmado';
-  if ([3,4].includes(nivel)) return 'pendente';
+function rewardStatusForLevel() {
+  // Regra confirmada pelo usuário: a Savana é o único Campo com recompensas abaixo do Nv.6.
+  // Portanto Floresta Nv.1–5 confirma ausência de recompensas mesmo sem pop-up individual dos Nv.3–4.
   return 'confirmado';
 }
 
 function tagsForLevel(nivel) {
-  if ([1,2,5].includes(nivel)) return ['sem-recompensas'];
-  if ([3,4].includes(nivel)) return ['recompensas-nao-confirmadas'];
+  if (nivel <= 5) return ['sem-recompensas'];
   if (nivel === 10) return ['recompensas','obtencao-dragoes','recompensa-especial'];
   return ['recompensas','obtencao-dragoes'];
 }
@@ -75,12 +72,10 @@ function tagsForLevel(nivel) {
  * Floresta Nv.1–10, estruturada a partir das telas e relatórios enviados em 20/08/2026.
  *
  * Cobertura das referências:
- * - Nv.1, 2, 5–10: pop-up do campo disponível;
- * - Nv.1, 3–10: relatório de batalha disponível;
- * - Nv.3–4: a composição inimiga é confirmada pelo relatório, mas a lista de recompensas
- *   permanece pendente porque não foi enviado o pop-up do campo desses dois níveis;
- * - Nv.2: o recurso/produção são confirmados pelo pop-up e a composição segue a progressão
- *   comum já consolidada em `shared.js` para Campos.
+ * - Nv.1–10: progressão estrutural cadastrada;
+ * - Nv.2: novo relatório de batalha confirma 100 Canibais + 50 Fedor;
+ * - Regra global confirmada pelo usuário: somente a Savana possui recompensas nos Nv.1–5;
+ * - Nv.6–10: os emblemas e o item especial seguem as telas já enviadas.
  *
  * Os recortes locais são derivados diretamente das imagens fornecidas; nenhuma arte foi gerada.
  */
@@ -95,7 +90,7 @@ export const FLORESTA_SEED = createFieldSeed({
   source:{
     tipo:'screenshot',
     data:'2026-08-20',
-    descricao:'Telas da Floresta e relatórios de batalha enviados pelo usuário; Nv.3–4 sem pop-up de recompensas e Nv.2 sem relatório de batalha',
+    descricao:'Telas da Floresta e relatórios de batalha enviados pelo usuário; Nv.2 confirmado com 100 Canibais + 50 Fedor e ausência de recompensas confirmada nos Nv.1–5',
     verificado:true,
   },
 });

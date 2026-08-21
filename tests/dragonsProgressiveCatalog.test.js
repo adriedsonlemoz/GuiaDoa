@@ -23,17 +23,30 @@ test('Grande Dragão registra somente snapshots confirmados e elementais do Nv.5
   assert.ok(d.habilidades.every(h => !('nivelAtual' in h) && !('nivelMax' in h) && !('xpConhecida' in h)));
 });
 
-test('obtenção já prepara ligação futura com Campos sem inventar origens desconhecidas', () => {
+test('obtenção dos dragões está conectada aos itens dos Campos', () => {
+  const grande = DRAGOES_SEED.find(x => x.id === 'grande_dragao');
+  assert.equal(grande.obtencao.tipo, 'inicial');
+  assert.equal(grande.obtencao.captura, undefined);
+
   const agua = DRAGOES_SEED.find(x => x.id === 'dragao_agua');
-  assert.equal(agua.obtencao.tipo, 'recompensa');
+  assert.equal(agua.obtencao.tipo, 'recompensa_ou_captura');
   assert.equal(agua.obtencao.dia, 2);
-  const bela = DRAGOES_SEED.find(x => x.id === 'dragao_beladona');
-  assert.equal(bela.obtencao.fonte.modulo, 'campos');
-  assert.equal(bela.obtencao.fonte.nivelMin, 6);
-  assert.equal(bela.obtencao.fonte.nivelMax, 10);
-  const fogo = DRAGOES_SEED.find(x => x.id === 'dragao_fogo');
-  assert.equal(fogo.obtencao.tipo, 'captura');
-  assert.equal(fogo.obtencao.fonte, null);
+  assert.equal(agua.obtencao.captura.quantidade, 100);
+  assert.equal(agua.obtencao.captura.campo.subtipo, 'lago');
+
+  const trovao = DRAGOES_SEED.find(x => x.id === 'dragao_trovao');
+  assert.equal(trovao.obtencao.tipo, 'captura');
+  assert.equal(trovao.obtencao.captura.quantidade, 100);
+  assert.equal(trovao.obtencao.captura.item.codigo, 'emblema-dragao-trovao');
+  assert.equal(trovao.obtencao.captura.campo.subtipo, 'savana');
+  assert.deepEqual(trovao.obtencao.captura.niveis, [6,7,8,9,10]);
+
+  for (const d of DRAGOES_SEED.filter(x => x.id !== 'grande_dragao')) {
+    assert.equal(d.obtencao.captura?.quantidade, 100, d.nome);
+    assert.equal(d.obtencao.fonte?.modulo, 'campos', d.nome);
+    assert.equal(d.obtencao.fonte?.nivelMin, 6, d.nome);
+    assert.equal(d.obtencao.fonte?.nivelMax, 10, d.nome);
+  }
 });
 
 test('frontend de dragões tem Atributos, Habilidades, Como obter e comparação por nível exato', () => {
@@ -49,4 +62,20 @@ test('frontend de dragões tem Atributos, Habilidades, Como obter e comparação
 
 test('Hoplitas Imortais é removida do catálogo canônico', () => {
   assert.equal(TODAS_TROPAS.some(t => t.nome === 'Hoplitas Imortais'), false);
+});
+
+test('Como obter oferece item, tutorial e atalho direto para o Campo com PT/EN', () => {
+  const detail = read('src/components/dragoes/DragaoDetalhe.jsx');
+  const pt = read('src/locales/pt-BR.js');
+  const en = read('src/locales/en-US.js');
+  assert.match(detail, /obt\.captura/);
+  assert.match(detail, /guiadoa_open_tip/);
+  assert.match(detail, /tutorial-capturar-dragoes/);
+  assert.match(detail, /guiadoa_open_field/);
+  assert.match(detail, /captureItemName/);
+  assert.match(detail, /captureFieldName/);
+  assert.match(pt, /dragons\.required_item/);
+  assert.match(en, /dragons\.required_item/);
+  assert.match(pt, /dragons\.obtain_reward_or_capture/);
+  assert.match(en, /dragons\.obtain_reward_or_capture/);
 });

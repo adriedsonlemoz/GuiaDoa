@@ -273,7 +273,8 @@ function AttackGuidesBlock({ entry, t, locale }) {
   const risky = guides.filter(guide => guide.resultado === 'possiveis_perdas').length;
   const meta = [safeGuides.length ? `${safeGuides.length} ✓` : '', risky ? `${risky} ⚠` : ''].filter(Boolean).join(' · ');
   return (
-    <CollapsibleSection title={t('campaign.how_to_attack')} meta={meta} className="campaign-attack-section">
+    <CollapsibleSection title={t('campaign.how_to_attack')} meta={meta} className="campaign-attack-section" defaultOpen={entry.categoria === 'antropos'}>
+      {entry.categoria === 'antropos' && <div className="campaign-combat-warning">ℹ️ {t('campaign.recommendations_disclaimer')}</div>}
       {showCommon && <SpecialTroopsTactic t={t} locale={locale} />}
       {safeGuides.map(guide => <AttackGuide key={guide.codigo} guide={guide} t={t} locale={locale} />)}
       {showCommon && <FedorTactic entry={entry} t={t} locale={locale} />}
@@ -312,9 +313,9 @@ function StrategyBlock({ strategy, t, locale, hasGuides = false }) {
   );
 }
 
-function RewardsBlock({ rewards, t, locale, confirmedEmpty = false }) {
+function RewardsBlock({ rewards, t, locale, confirmedEmpty = false, defaultOpen = false }) {
   return (
-    <CollapsibleSection title={t('campaign.possible_rewards')} meta={confirmedEmpty ? '0' : (rewards.length ? String(rewards.length) : '—')}>
+    <CollapsibleSection title={t('campaign.possible_rewards')} meta={confirmedEmpty ? '0' : (rewards.length ? String(rewards.length) : '—')} defaultOpen={defaultOpen}>
       {rewards.length ? (
         <div className="campaign-reward-grid">
           {rewards.map((reward, index) => {
@@ -372,7 +373,7 @@ function Detail({ entry, onBack, t, locale, content }) {
 
         <AttackGuidesBlock entry={entry} t={t} locale={locale} />
 
-        <CollapsibleSection title={t('campaign.resources')} meta={String((entry.recursos || []).length)}>
+        <CollapsibleSection title={t('campaign.resources')} meta={String((entry.recursos || []).length)} defaultOpen={entry.categoria === 'antropos'}>
           <div className="campaign-resources-grid">
             {(entry.recursos || []).map(resource => (
               <div className="campaign-resource" key={resource.tipo}>
@@ -384,13 +385,13 @@ function Detail({ entry, onBack, t, locale, content }) {
           {(entry.recursos || []).some(r => !r.exato) && <p className="campaign-abbrev-note">{t('campaign.abbrev_note')}</p>}
         </CollapsibleSection>
 
-        <RewardsBlock rewards={rewards} t={t} locale={locale} confirmedEmpty={entry.categoria === 'campos' && entry.subtipo === 'lago' && Number(entry.nivel) <= 5} />
+        <RewardsBlock rewards={rewards} t={t} locale={locale} confirmedEmpty={entry.categoria === 'campos' && entry.recompensasStatus === 'confirmado' && rewards.length === 0} defaultOpen={entry.categoria === 'antropos'} />
 
-        <CollapsibleSection title={t('campaign.enemy_composition')} meta={fmt.format(totalTroops)}>
+        <CollapsibleSection title={t('campaign.enemy_composition')} meta={fmt.format(totalTroops)} defaultOpen={entry.categoria === 'antropos'}>
           <div className="campaign-troop-table">
             <div className="campaign-troop-head"><span>{t('campaign.troop')}</span><span>{t('campaign.quantity')}</span></div>
             {(entry.tropas || []).map((troop, index) => (
-              <div className="campaign-troop-row" key={`${troop.nome}-${index}`}><span>{troop.nome}</span><strong>{fmt.format(troop.quantidade)}</strong></div>
+              <div className="campaign-troop-row" key={`${troop.nome}-${index}`}><span>{(locale !== 'pt-BR' ? troop?.i18n?.[locale]?.nome : '') || troop.nome}</span><strong>{fmt.format(troop.quantidade)}</strong></div>
             ))}
           </div>
         </CollapsibleSection>
@@ -421,7 +422,17 @@ export default function CampanhaMapa() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    try {
+      const requestedField = sessionStorage.getItem('guiadoa_open_field');
+      if (requestedField) {
+        sessionStorage.removeItem('guiadoa_open_field');
+        setCategory('campos');
+        setFieldType(requestedField);
+      }
+    } catch { /* optional navigation hint */ }
+    load();
+  }, []);
 
   const categoryEntries = useMemo(() => (data.locais || []).filter(x => x.categoria === category), [data.locais, category]);
   const entries = useMemo(() => categoryEntries

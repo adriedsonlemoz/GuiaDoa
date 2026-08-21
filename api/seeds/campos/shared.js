@@ -1,4 +1,15 @@
-const troop = (nome, quantidade) => ({ nome, quantidade });
+const FIELD_TROOP_EN = Object.freeze({
+  'Canibal':'Cannibal',
+  'Fedor':'Stench',
+  'Demônia':'Demoness',
+  'Porreteiro':'Clubber',
+  'Lançadores':'Throwers',
+  'Retalhador':'Slasher',
+  'Chefes':'Chieftains',
+  'Sanguíneos':'Bloodthirsty',
+  'Raivoso':'Enraged',
+});
+const troop = (nome, quantidade) => ({ nome, quantidade, i18n:{ 'en-US': { nome:FIELD_TROOP_EN[nome] || nome } } });
 
 /**
  * Progressão básica confirmada para Campos no jogo mobile.

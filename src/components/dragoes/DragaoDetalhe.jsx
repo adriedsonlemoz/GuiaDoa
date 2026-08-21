@@ -72,6 +72,22 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
   const batalha = habilidades.filter(h => h.tipo !== 'comum');
   const comuns = habilidades.filter(h => h.tipo === 'comum');
   const obt = dragao.obtencao || {};
+  const obtLocale = locale !== 'pt-BR' ? obt?.i18n?.[locale] || {} : {};
+  const obtResumo = obtLocale.resumo || obt.resumo || '';
+  const captura = obt.captura || null;
+  const captureItemName = captura ? ((locale !== 'pt-BR' ? captura.item?.i18n?.[locale]?.nome : '') || captura.item?.nome || '') : '';
+  const captureFieldName = captura ? ((locale !== 'pt-BR' ? captura.campo?.i18n?.[locale]?.nome : '') || captura.campo?.nome || '') : '';
+
+  const abrirTutorialCaptura = () => {
+    try { sessionStorage.setItem('guiadoa_open_tip', 'tutorial-capturar-dragoes'); } catch { /* navigation still works */ }
+    setRoute?.('dicas');
+  };
+
+  const abrirCampoCaptura = () => {
+    if (!captura?.campo?.subtipo) return;
+    try { sessionStorage.setItem('guiadoa_open_field', captura.campo.subtipo); } catch { /* navigation still works */ }
+    setRoute?.('campanha');
+  };
 
   return (
     <div style={{ maxWidth:620, margin:'0 auto', paddingBottom:24, animation:'reveal-up .3s ease both' }}>
@@ -123,11 +139,41 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
         <section className="game-panel" style={{ marginTop:8 }}>
           <GameSectionTitle>{t('dragons.how_to_get')}</GameSectionTitle>
           <div style={{ padding:14 }}>
-            <div style={{ fontWeight:900, color:'#334d48', marginBottom:7 }}>{obt.tipo === 'fragmentos' ? `🧩 ${t('dragons.obtain_fragments')}` : obt.tipo === 'recompensa' ? `🎁 ${t('dragons.obtain_reward')}` : obt.tipo === 'inicial' ? `🏰 ${t('dragons.obtain_initial')}` : `🐉 ${t('dragons.obtain_capture')}`}</div>
-            <p style={{ margin:0, lineHeight:1.55, color:'#574f40' }}>{obt.resumo || t('dragons.capture_pending')}</p>
+            <div style={{ fontWeight:900, color:'#334d48', marginBottom:7 }}>
+              {obt.tipo === 'fragmentos' ? `🧩 ${t('dragons.obtain_fragments')}` : obt.tipo === 'recompensa' ? `🎁 ${t('dragons.obtain_reward')}` : obt.tipo === 'recompensa_ou_captura' ? `🎁🐉 ${t('dragons.obtain_reward_or_capture')}` : obt.tipo === 'inicial' ? `🏰 ${t('dragons.obtain_initial')}` : `🐉 ${t('dragons.obtain_capture')}`}
+            </div>
+            <p style={{ margin:0, lineHeight:1.55, color:'#574f40' }}>{obtResumo || t('dragons.capture_pending')}</p>
             {obt.dia ? <div className="game-info-table" style={{ marginTop:12 }}><div className="game-info-table-row"><span>{t('common.day')}</span><strong>{obt.dia}</strong></div></div> : null}
-            {obt.fonte ? <div className="game-info-table" style={{ marginTop:12 }}><div className="game-info-table-row"><span>{t('dragons.source')}</span><strong>{obt.fonte.nome || obt.fonte.slug}</strong></div>{(obt.fonte.nivelMin != null || obt.fonte.nivelMax != null) ? <div className="game-info-table-row"><span>{t('dragons.field_levels')}</span><strong>{obt.fonte.nivelMin ?? '?'}–{obt.fonte.nivelMax ?? '?'}</strong></div> : null}</div> : null}
-            {obt.fonte?.modulo === 'campos' ? <p className="game-list-copy" style={{ marginTop:10 }}>{t('dragons.fields_future_link')}</p> : null}
+
+            {captura ? (
+              <>
+                <div className="game-list-row" style={{ marginTop:12, border:'1px solid #b99b62', borderRadius:7, background:'rgba(255,250,232,.68)' }}>
+                  <div className="game-thumb" style={{ display:'grid', placeItems:'center', overflow:'hidden' }}>
+                    {captura.item?.imagem ? <img src={captura.item.imagem} alt={captureItemName} style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : '◆'}
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div className="game-list-copy">{t('dragons.required_item')}</div>
+                    <div className="game-list-name">{captura.quantidade || 100} × {captureItemName}</div>
+                  </div>
+                </div>
+                <div className="game-info-table" style={{ marginTop:12 }}>
+                  <div className="game-info-table-row"><span>{t('dragons.source')}</span><strong>{captureFieldName}</strong></div>
+                  <div className="game-info-table-row"><span>{t('dragons.field_levels')}</span><strong>{captura.nivelMin ?? '?'}–{captura.nivelMax ?? '?'}</strong></div>
+                  <div className="game-info-table-row"><span>{t('dragons.required_quantity')}</span><strong>{captura.quantidade || 100}</strong></div>
+                </div>
+                {setRoute ? (
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:12 }}>
+                    <button type="button" className="game-action-button" onClick={abrirTutorialCaptura}>📘 {t('dragons.open_capture_tutorial')}</button>
+                    <button type="button" className="game-action-button" onClick={abrirCampoCaptura}>🗺️ {t('dragons.open_field')}</button>
+                  </div>
+                ) : null}
+              </>
+            ) : obt.fonte ? (
+              <div className="game-info-table" style={{ marginTop:12 }}>
+                <div className="game-info-table-row"><span>{t('dragons.source')}</span><strong>{obt.fonte.nome || obt.fonte.slug}</strong></div>
+                {(obt.fonte.nivelMin != null || obt.fonte.nivelMax != null) ? <div className="game-info-table-row"><span>{t('dragons.field_levels')}</span><strong>{obt.fonte.nivelMin ?? '?'}–{obt.fonte.nivelMax ?? '?'}</strong></div> : null}
+              </div>
+            ) : null}
           </div>
         </section>
       )}

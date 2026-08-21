@@ -73,3 +73,16 @@ test('Dicas seguem paleta de pergaminho e não exibem botão de voltar duplicado
   assert.match(artigo, /createPortal/);
   assert.match(artigo, /document\.body/);
 });
+
+test('artigos oferecem cópia no idioma ativo e usam quase toda a largura no celular', () => {
+  const artigo = read('src/components/dicas/DicaArtigo.jsx');
+  const pt = read('src/locales/pt-BR.js');
+  const en = read('src/locales/en-US.js');
+  assert.match(artigo, /applyDicaVariables/);
+  assert.match(artigo, /navigator\?\.clipboard\?\.writeText/);
+  assert.match(artigo, /tips\.copy_tutorial/);
+  assert.match(artigo, /padding:'0 2px 34px'/);
+  assert.match(artigo, /<div style=\{\{ padding: 0 \}\}>/);
+  assert.match(pt, /'tips\.copy_tutorial': 'Copiar tutorial'/);
+  assert.match(en, /'tips\.copy_tutorial': 'Copy tutorial'/);
+});

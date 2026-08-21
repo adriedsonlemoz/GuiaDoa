@@ -13,6 +13,33 @@ const I18N_FIELDS = ['nome', 'elemento', 'raridade', 'bonusMarcha', 'atributo', 
 const str = value => String(value ?? '').trim();
 const numOrNull = value => value === '' || value == null ? null : Number.isFinite(Number(value)) ? Number(value) : null;
 
+function sanitizeCapture(input) {
+  if (!input || typeof input !== 'object') return null;
+  const item = input.item && typeof input.item === 'object' ? {
+    codigo: str(input.item.codigo),
+    nome: str(input.item.nome),
+    imagem: str(input.item.imagem),
+    i18n: sanitizeContentI18n(input.item.i18n, ['nome']),
+  } : null;
+  const campo = input.campo && typeof input.campo === 'object' ? {
+    subtipo: str(input.campo.subtipo),
+    nome: str(input.campo.nome),
+    i18n: sanitizeContentI18n(input.campo.i18n, ['nome']),
+  } : null;
+  const niveis = Array.isArray(input.niveis)
+    ? [...new Set(input.niveis.map(Number).filter(Number.isFinite))].sort((a,b) => a-b)
+    : [];
+  return {
+    dragonId: str(input.dragonId),
+    item,
+    quantidade: numOrNull(input.quantidade),
+    campo,
+    niveis,
+    nivelMin: numOrNull(input.nivelMin),
+    nivelMax: numOrNull(input.nivelMax),
+  };
+}
+
 function sanitizeObtencao(input) {
   if (!input || typeof input !== 'object') return {};
   const fonte = input.fonte && typeof input.fonte === 'object' ? {
@@ -27,6 +54,8 @@ function sanitizeObtencao(input) {
     resumo: str(input.resumo),
     dia: numOrNull(input.dia),
     fonte,
+    captura: sanitizeCapture(input.captura),
+    i18n: sanitizeContentI18n(input.i18n, ['resumo']),
   };
 }
 

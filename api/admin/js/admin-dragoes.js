@@ -18,6 +18,7 @@ const ATTRS_ELEMENTAL = [
 const TODOS_ATTRS = [...ATTRS_BASE, ...ATTRS_ELEMENTAL];
 const fmtAttr = v => v == null ? '—' : typeof v === 'number' ? v.toLocaleString('pt-BR') : esc(v);
 let DRAGAO_HAB_ATUAL_ID = null;
+let DRAGAO_OBTENCAO_ATUAL = {};
 const valNum = id => { const raw = document.getElementById(id)?.value; return raw === '' || raw == null ? null : Number(raw); };
 
 async function carregarDragoes() {
@@ -102,6 +103,7 @@ function renderDragoes(d) {
 // ── Modal: Novo/Editar Dragão (meta) ──────────────────────────────────────────
 function abrirModalNovoDragao() {
   DRAGAO_ED_SLUG = null;
+  DRAGAO_OBTENCAO_ATUAL = {};
   document.getElementById('modal-dragao-titulo').textContent = '✦ Novo Dragão';
   ['fdr-slug','fdr-nome','fdr-elemento','fdr-emoji','fdr-emojidragao','fdr-cor','fdr-raridade','fdr-descricao','fdr-imagem','fdr-bonus','fdr-atributo','fdr-obt-resumo','fdr-obt-dia','fdr-obt-fonte','fdr-obt-slug','fdr-obt-min','fdr-obt-max','fdr-en-nome','fdr-en-elemento','fdr-en-raridade','fdr-en-descricao','fdr-en-bonus','fdr-en-atributo'].forEach(id => {
     const el = document.getElementById(id);
@@ -114,6 +116,7 @@ function abrirModalNovoDragao() {
 
 function editarDragao(dr) {
   DRAGAO_ED_SLUG = dr.slug;
+  DRAGAO_OBTENCAO_ATUAL = dr.obtencao && typeof dr.obtencao === 'object' ? dr.obtencao : {};
   document.getElementById('modal-dragao-titulo').textContent = `✏ Editar: ${dr.nome}`;
   document.getElementById('fdr-slug').value       = dr.slug;
   document.getElementById('fdr-slug').disabled    = true;
@@ -156,6 +159,7 @@ async function salvarDragao() {
   const fonteNome  = document.getElementById('fdr-obt-fonte').value.trim();
   const fonteSlug  = document.getElementById('fdr-obt-slug').value.trim();
   const obtencao = {
+    ...DRAGAO_OBTENCAO_ATUAL,
     tipo: document.getElementById('fdr-obt-tipo').value,
     resumo: document.getElementById('fdr-obt-resumo').value.trim(),
     dia: valNum('fdr-obt-dia'),

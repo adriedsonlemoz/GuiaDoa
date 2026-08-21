@@ -129,3 +129,21 @@ test('Lago usa módulo de dados próprio e diferencia ausência confirmada de re
     assert.equal(existsSync(`public/assets/items/fields/lake/${asset}`), true);
   }
 });
+
+test('Antropos abre recomendações, recursos, recompensas e composição expandidos e traduz tropas', () => {
+  const source = read('src/components/CampanhaMapa.jsx');
+  assert.match(source, /recommendations_disclaimer/);
+  assert.match(source, /className="campaign-attack-section" defaultOpen=\{entry\.categoria === 'antropos'\}/);
+  assert.match(source, /campaign\.resources[\s\S]*defaultOpen=\{entry\.categoria === 'antropos'\}/);
+  assert.match(source, /RewardsBlock[\s\S]*defaultOpen=\{entry\.categoria === 'antropos'\}/);
+  assert.match(source, /campaign\.enemy_composition[\s\S]*defaultOpen=\{entry\.categoria === 'antropos'\}/);
+  assert.match(source, /troop\?\.i18n\?\.\[locale\]\?\.nome/);
+});
+
+test('Mapa & Campanha aceita atalho direto para o Campo indicado pelo Dragão', () => {
+  const source = read('src/components/CampanhaMapa.jsx');
+  assert.match(source, /guiadoa_open_field/);
+  assert.match(source, /setCategory\('campos'\)/);
+  assert.match(source, /setFieldType\(requestedField\)/);
+  assert.match(source, /recompensasStatus === 'confirmado'/);
+});

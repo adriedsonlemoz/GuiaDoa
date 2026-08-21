@@ -4,11 +4,13 @@ import Dica from '../models/Dica.js';
 import Tropa from '../models/Tropa.js';
 import Item from '../models/Item.js';
 import CampanhaLocal from '../models/CampanhaLocal.js';
+import Dragao from '../models/Dragao.js';
 import { DICAS_SEED } from '../seeds/dicas.js';
 import { tacticalMetadata } from '../seeds/tropasTaticas.js';
 import { TROOP_COMBAT_EVIDENCE } from '../seeds/tropasCombate.js';
 import { ITEM_SCREENSHOT_CATALOG } from '../seeds/itensCatalogo.js';
 import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MORRO_SEED } from '../seeds/campanha.js';
+import { DRAGOES_SEED } from '../seeds/dragoes.js';
 import { mesclarSeed } from '../utils/seedMerge.js';
 
 const MIGRATION_KEY = 'content:dicas:beta-2.14';
@@ -28,6 +30,10 @@ const CAMPANHA_STRATEGY_KEY = 'content:campanha-estrategias:beta-2.46';
 const CAMPANHA_STRATEGY_CONFIRMED_KEY = 'content:campanha-estrategias-confirmadas:beta-2.47';
 const CAMPANHA_REWARDS_KEY = 'content:campanha-recompensas:beta-2.48';
 const CAMPANHA_STRATEGY_POLISH_KEY = 'content:campanha-estrategias-polimento:beta-2.50';
+const CAMPANHA_ANTROPOS_RECOMMENDATIONS_264_KEY = 'content:campanha-antropos-recomendacoes:beta-2.64';
+const CAMPANHA_FIELDS_CAPTURE_SYNC_264_KEY = 'content:campanha-campos-captura:beta-2.64';
+const DRAGON_CAPTURE_SYNC_264_KEY = 'content:dragoes-obtencao-campos:beta-2.64';
+const TUTORIALS_264_KEY = 'content:dicas-antropos-captura:beta-2.64';
 
 const INICIANTE_CATEGORY = {
   slug: 'iniciante',
@@ -755,6 +761,161 @@ async function migrarCampanhaRecompensas() {
   }
 }
 
+
+async function executarMigracao264(chave, relatorioNome, executor) {
+  const aplicado = await AppConfig.findOne({ chave }).lean();
+  if (aplicado?.migracaoEstado === 'pronto') return { ok:true, ignorada:true, atualizadas:0, inseridas:0 };
+  await AppConfig.findOneAndUpdate(
+    { chave },
+    { $set:{ migracaoEstado:'executando', migracaoVersao:'1', ultimoErro:'', atualizadoEm:new Date() } },
+    { upsert:true, setDefaultsOnInsert:true },
+  );
+  try {
+    const relatorio = await executor();
+    await AppConfig.findOneAndUpdate(
+      { chave },
+      { $set:{ migracaoEstado:'pronto', migracaoVersao:'1', migracaoEm:new Date(), atualizadoEm:new Date(), ultimoErro:'', relatorioMigracao:{ [relatorioNome]:relatorio } } },
+      { upsert:true, setDefaultsOnInsert:true },
+    );
+    return { ok:true, ignorada:false, ...relatorio };
+  } catch (err) {
+    await AppConfig.findOneAndUpdate(
+      { chave },
+      { $set:{ migracaoEstado:'erro', ultimoErro:err.message, atualizadoEm:new Date() } },
+      { upsert:true, setDefaultsOnInsert:true },
+    ).catch(()=>{});
+    return { ok:false, erro:err.message, atualizadas:0, inseridas:0 };
+  }
+}
+
+async function migrarCampanhaAntroposRecomendacoes264() {
+  return executarMigracao264(CAMPANHA_ANTROPOS_RECOMMENDATIONS_264_KEY, 'antroposRecomendacoes264', async () => {
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const seed of ANTROPOS_SEED) {
+      const atual = await CampanhaLocal.findOne({ slug:seed.slug }).lean();
+      if (!atual) {
+        await CampanhaLocal.create(seed);
+        inseridas += 1;
+        continue;
+      }
+      await CampanhaLocal.updateOne(
+        { slug:seed.slug },
+        { $set:{
+          guiasAtaque:seed.guiasAtaque,
+          tropas:seed.tropas,
+          recursos:seed.recursos,
+          i18n:seed.i18n || {},
+          atualizadoEm:new Date(),
+        } },
+      );
+      atualizadas += 1;
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
+async function migrarCampanhaCamposCaptura264() {
+  return executarMigracao264(CAMPANHA_FIELDS_CAPTURE_SYNC_264_KEY, 'camposCaptura264', async () => {
+    await garantirIndiceCampanhaPorSubtipo();
+    const seeds = [SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MORRO_SEED].flat();
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const seed of seeds) {
+      const atual = await CampanhaLocal.findOne({ slug:seed.slug }).lean();
+      if (!atual) {
+        await CampanhaLocal.create(seed);
+        inseridas += 1;
+        continue;
+      }
+      await CampanhaLocal.updateOne(
+        { slug:seed.slug },
+        { $set:{
+          nome:seed.nome,
+          tropas:seed.tropas,
+          recursos:seed.recursos,
+          recompensas:seed.recompensas,
+          recompensasStatus:seed.recompensasStatus,
+          tags:seed.tags || [],
+          campo:seed.campo,
+          fonte:seed.fonte,
+          i18n:seed.i18n || {},
+          atualizadoEm:new Date(),
+        } },
+      );
+      atualizadas += 1;
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
+async function migrarDragoesCaptura264() {
+  return executarMigracao264(DRAGON_CAPTURE_SYNC_264_KEY, 'dragoesCaptura264', async () => {
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const seed of DRAGOES_SEED) {
+      const slug = seed.id;
+      const atual = await Dragao.findOne({ slug }).lean();
+      if (!atual) {
+        const { id, ...rest } = seed;
+        await Dragao.create({ slug, ...rest });
+        inseridas += 1;
+        continue;
+      }
+      await Dragao.updateOne(
+        { slug },
+        { $set:{
+          nome:seed.nome,
+          elemento:seed.elemento,
+          imagem:seed.imagem,
+          obtencao:seed.obtencao,
+          i18n:seed.i18n || {},
+          atualizadoEm:new Date(),
+        } },
+      );
+      atualizadas += 1;
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
+async function migrarTutoriais264() {
+  return executarMigracao264(TUTORIALS_264_KEY, 'tutoriais264', async () => {
+    const slugs = ['guia-inicial-construcoes', 'tutorial-atacar-antropos', 'tutorial-capturar-dragoes'];
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const slug of slugs) {
+      const seed = DICAS_SEED.find(item => item.slug === slug);
+      if (!seed) throw new Error(`Seed da dica ${slug} não encontrada.`);
+      const atual = await Dica.findOne({ slug }).lean();
+      if (!atual) {
+        await Dica.create(seed);
+        inseridas += 1;
+        continue;
+      }
+      await Dica.updateOne(
+        { slug },
+        { $set:{
+          titulo:seed.titulo,
+          resumo:seed.resumo,
+          categoria:seed.categoria,
+          tipo:seed.tipo,
+          leituraMin:seed.leituraMin,
+          destaque:seed.destaque,
+          ativo:seed.ativo,
+          ordem:seed.ordem,
+          relacionados:seed.relacionados,
+          conteudo:seed.conteudo,
+          i18n:seed.i18n,
+          atualizadoEm:new Date(),
+        } },
+      );
+      atualizadas += 1;
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
@@ -790,9 +951,17 @@ export async function executarMigracoesConteudo() {
   if (!estrategiasPolidas.ok) return estrategiasPolidas;
   const recompensas = await migrarCampanhaRecompensas();
   if (!recompensas.ok) return recompensas;
+  const antropos264 = await migrarCampanhaAntroposRecomendacoes264();
+  if (!antropos264.ok) return antropos264;
+  const campos264 = await migrarCampanhaCamposCaptura264();
+  if (!campos264.ok) return campos264;
+  const dragoes264 = await migrarDragoesCaptura264();
+  if (!dragoes264.ok) return dragoes264;
+  const tutoriais264 = await migrarTutoriais264();
+  if (!tutoriais264.ok) return tutoriais264;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
@@ -801,6 +970,8 @@ export async function executarMigracoesConteudo() {
     itensInseridos:itensCatalogo.inseridas || 0,
     itensCompletados:itensCatalogo.completadas || 0,
     campanhaInseridas:(campanha.inseridas || 0) + (campos.inseridas || 0) + (lago.inseridas || 0) + (floresta.inseridas || 0) + (montanha.inseridas || 0) + (morro.inseridas || 0) + (savanaRecompensas.inseridas || 0),
-    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (lago.completadas || 0) + (floresta.completadas || 0) + (montanha.completadas || 0) + (morro.completadas || 0) + (savanaRecompensas.atualizadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (estrategiasPolidas.atualizadas || 0) + (recompensas.completadas || 0),
+    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (lago.completadas || 0) + (floresta.completadas || 0) + (montanha.completadas || 0) + (morro.completadas || 0) + (savanaRecompensas.atualizadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (estrategiasPolidas.atualizadas || 0) + (recompensas.completadas || 0) + (antropos264.atualizadas || 0) + (campos264.atualizadas || 0),
+    dragoesCapturaAtualizados:(dragoes264.atualizadas || 0) + (dragoes264.inseridas || 0),
+    tutoriaisAtualizados:(tutoriais264.atualizadas || 0) + (tutoriais264.inseridas || 0),
   };
 }

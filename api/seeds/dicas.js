@@ -1,4 +1,6 @@
 import { ANTROPOS_SEED } from './campanha.js';
+import { DRAGON_CAPTURE_MAP } from './dragonCapture.js';
+import { DRAGOES_SEED } from './dragoes.js';
 
 
 const fmtGuideNumber = (value, locale = 'pt-BR') => new Intl.NumberFormat(locale).format(Number(value || 0));
@@ -24,6 +26,7 @@ function attackGuideRows(codePrefix, locale = 'pt-BR') {
   const levelWord = locale === 'pt-BR' ? 'Nv.' : 'Lv.';
   const risk = locale === 'pt-BR' ? '⚠ possíveis perdas' : '⚠ possible losses';
   const safe = locale === 'pt-BR' ? '✓ sem perdas' : '✓ zero loss';
+  const incomplete = locale === 'pt-BR' ? '⚠ configuração isolada não confirmada' : '⚠ standalone setup not confirmed';
   const rows = [];
   for (const entry of ANTROPOS_SEED) {
     const guides = (entry.guiasAtaque || []).filter(g => codePrefix === 'dragoes-ataque-rapido-ssd'
@@ -37,7 +40,7 @@ function attackGuideRows(codePrefix, locale = 'pt-BR') {
       const support = guideSupportText(guide, locale);
       const companion = localField(guide, 'complemento', locale);
       const research = guideResearchText(guide, locale);
-      const result = guide.resultado === 'possiveis_perdas' ? risk : guide.resultado === 'sem_perdas' ? safe : '';
+      const result = guide.resultado === 'possiveis_perdas' ? risk : guide.resultado === 'sem_perdas' ? safe : guide.resultado === 'incompleto' ? incomplete : '';
       const alt = idx > 0 ? (locale === 'pt-BR' ? ' alternativa' : ' alternative') : '';
       const pieces = [main, support, companion].filter(Boolean).join(' + ');
       rows.push(`- ${levelWord} ${entry.nivel}${alt} → ${pieces}${research ? ` | ${research}` : ''}${result ? ` | ${result}` : ''}`);
@@ -55,45 +58,41 @@ function fedorRows(locale = 'pt-BR') {
   }).join('\n');
 }
 
-const ANTROPOS_ATTACK_TUTORIAL_PT = `«⚠️ Este tutorial usa as marchas confirmadas que já estão cadastradas em Mapa & Campanha para Antropos Nv.1–10.
-Se a sua pesquisa estiver abaixo do nível indicado, não trate a marcha como segura. No mobile não existe Antropos Nv.11 neste guia.»
+const dragonById = new Map(DRAGOES_SEED.map(dragon => [dragon.id, dragon]));
 
-🧭 Antes de apertar Atacar
+function captureTutorialRows(locale = 'pt-BR') {
+  const level = locale === 'pt-BR' ? 'Nv.' : 'Lv.';
+  return Object.values(DRAGON_CAPTURE_MAP)
+    .sort((a,b) => `${a.campo.subtipo}:${a.dragonId}`.localeCompare(`${b.campo.subtipo}:${b.dragonId}`))
+    .map(capture => {
+      const dragon = dragonById.get(capture.dragonId);
+      const dragonName = locale === 'pt-BR' ? dragon?.nome : (dragon?.i18n?.[locale]?.nome || dragon?.nome);
+      const itemName = locale === 'pt-BR' ? capture.item.nome : (capture.item?.i18n?.[locale]?.nome || capture.item.nome);
+      const fieldName = locale === 'pt-BR' ? capture.campo.nome : (capture.campo?.i18n?.[locale]?.nome || capture.campo.nome);
+      return `- ${dragonName} → ${capture.quantidade} ${itemName} → ${fieldName} ${level}${capture.nivelMin}–${capture.nivelMax}`;
+    }).join('\n');
+}
 
-Se você nunca atacou Antropos, pense em quatro perguntas simples:
+const ANTROPOS_ATTACK_TUTORIAL_PT = `«⚠️ Estas são recomendações baseadas nas configurações confirmadas do GUIA. Você pode testar outros métodos também.
+As quantidades principais recebem 20% de margem de segurança. As tropas premium de 500 unidades permanecem com 500.»
 
-- Qual é o nível exato do Antropos?
-- Qual método sem perdas você já consegue montar?
-- Suas pesquisas atingem os níveis mínimos da receita?
-- Você está misturando tropas que não deveriam estar juntas?
+🧭 Antes de atacar
 
-Abra Mapa & Campanha → Antropos → escolha o nível. A ficha já mostra inimigos, recursos, itens possíveis e as marchas confirmadas.
+Abra Mapa & Campanha → Antropos → escolha o nível. A ficha mostra inimigos, recursos, recompensas e as recomendações já calculadas.
 
-Regra para iniciante: se você não consegue cumprir a receita inteira, desça um nível. É melhor farmar um Antropos mais baixo sem perdas do que improvisar uma marcha e perder horas de treinamento.
+Use somente uma tropa ofensiva por marcha entre as três opções abaixo:
 
----
+- Arqueiros / LBM
+- Lava Jaws / Magmassauros
+- Dragões de Ataque Rápido / SSD
 
-🕵️ Fedor e espionagem: por que ele merece atenção
-
-No método tradicional, Fedor é a quantidade que usamos como referência para a espionagem.
-
-Espione primeiro com a mesma quantidade de Espiões que existem de Fedor, ou mais. Depois envie a marcha principal com 1 Espião + sua tropa ofensiva.
-
-Esse 1 Espião é a perda esperada da marcha; a ideia é preservar a tropa principal quando a configuração estiver correta.
-
-Quantidade de Fedor cadastrada em cada nível:
-
-${fedorRows('pt-BR')}
-
-Exemplo: Antropos Nv.6 possui 10.000 Fedor → espione com 10.000 Espiões ou mais → depois envie 1 Espião + a marcha ofensiva escolhida.
-
-Se você usar uma das tropas especiais de 500 unidades explicadas abaixo, não precisa fazer essa espionagem prévia.
+Carregadores e Transportes Blindados não contam como segunda tropa ofensiva: entram apenas para transportar recursos.
 
 ---
 
-✨ Caminho mais simples: 500 tropas especiais
+✨ Opção premium: 500 tropas especiais
 
-Se você já desbloqueou uma destas tropas, este é o método mais fácil de entender para farming:
+Se você já possui uma destas tropas, mantenha 500 unidades, sem aplicar os 20%:
 
 - 500 Medusas
 - 500 Esmagadores Colossais
@@ -102,164 +101,101 @@ Se você já desbloqueou uma destas tropas, este é o método mais fácil de ent
 - 500 Fadas da Selva
 - 500 Caçadores de Almas
 
-Para a configuração cadastrada no GUIA, mantenha no mínimo:
-
-- Metalurgia Nv.4
-- Medicina Nv.4
-- Calibração de Armas Nv.4
-
-Com essas condições atendidas, o método está marcado como sem perdas e dispensa espionagem prévia.
-
-Se você ainda não possui essas tropas, use um dos métodos abaixo.
+Para a configuração cadastrada no GUIA, mantenha no mínimo Metalurgia 4, Medicina 4 e Calibração de Armas 4.
 
 ---
 
-🏹 Método com Arqueiros (LBM)
+📦 Como o transporte é calculado
 
-Arqueiros são um dos métodos mais acessíveis porque funcionam com apoio de transporte e pesquisas específicas.
+O GUIA soma todos os recursos cadastrados no Antropos e calcula quanto a própria tropa ofensiva consegue carregar.
 
-Nos níveis em que aparecem duas opções de apoio, use Carregadores OU Transportes Blindados — nunca os dois juntos. Se optar por Transportes Blindados, o guia permite até 10% a mais como margem extra de segurança.
+Capacidade por unidade:
 
-Não misture Arqueiros, que são tropas de ataque à distância, com tropas rápidas de combate corpo a corpo como SSD/BD na mesma marcha. Essa combinação pode causar perdas nas tropas rápidas.
+- Arqueiro / LBM → 25
+- Lava Jaws / Magmassauro → 10
+- SSD → 100
+- Carregador → 200
+- Transporte Blindado → 5.000
 
-Marchas confirmadas:
+Fórmula:
+
+Recursos restantes = recursos do Antropos − capacidade da tropa ofensiva
+
+Depois o GUIA mostra a quantidade exata de Transportes Blindados OU Carregadores necessária para completar a carga. Escolha apenas uma das duas opções.
+
+Se a tropa principal já consegue carregar tudo, nenhum transporte é acrescentado.
+
+---
+
+🏹 Arqueiros / LBM
+
+A quantidade-base confirmada recebe 20% a mais. Exemplo: 100 vira 120.
 
 ${attackGuideRows('arqueiros-lbm', 'pt-BR')}
 
-Como ler uma linha: “Nv.3 → 600 Arqueiros + 1.815 Carregadores OU 72 Transportes Blindados | Metalurgia 4 · Medicina 4 · Calibração de Armas 5” significa que você escolhe apenas uma das duas opções de transporte e precisa ter pelo menos esses níveis de pesquisa.
-
 ---
 
-🔥 Método com Lava Jaws (LJ)
+🔥 Lava Jaws / Magmassauros
 
-Lava Jaws exigem quantidades muito menores de tropas principais, mas usam Transportes Blindados como apoio.
-
-Marchas cadastradas:
+Também recebem 20% sobre a quantidade-base. Não misture Lava Jaws com outra tropa ofensiva.
 
 ${attackGuideRows('lava-jaws-lj8', 'pt-BR')}
 
-A referência confirmada informa que as pesquisas relevantes devem estar em níveis altos, 9 ou 10, mas não detalha nesta tabela quais pesquisas correspondem a cada marcha. O GUIA não inventa esse detalhe: trate Lava Jaws como método de conta mais avançada e confira suas pesquisas de combate antes de enviar.
+A referência original recomenda pesquisas de combate altas para Lava Jaws, mas não informa a combinação exata por nível; o GUIA não inventa esse dado.
 
 ---
 
-🐲 Método com Dragões de Ataque Rápido (SSD)
-
-Dragões de Ataque Rápido são uma ótima ponte entre o começo do Realm e marchas mais avançadas. Aqui a quantidade sozinha não basta: Metalurgia, Medicina e a pesquisa de dragões indicada na receita fazem parte do método.
-
-Marchas cadastradas:
+🐲 Dragões de Ataque Rápido / SSD
 
 ${attackGuideRows('dragoes-ataque-rapido-ssd', 'pt-BR')}
 
-Atenção especial ao Nv.9: as duas configurações cadastradas estão marcadas como POSSÍVEIS PERDAS. Não trate Antropos Nv.9 com SSD como marcha garantida sem perdas.
+No Nv.9 a referência continua marcada como possíveis perdas. O acréscimo de 20% é uma margem e não transforma esse ataque em garantia de perdas zero.
 
-No Nv.10, o método cadastrado usa 200.000 SSD + Serpente Mefítica e exige Metalurgia 10, Medicina 10 e Dragoria 9.
-
-Nunca misture SSD com Arqueiros ou outras tropas de ataque à distância na mesma marcha. O próprio conjunto de estratégias do projeto alerta que essa mistura pode provocar perdas nas tropas rápidas.
+No Nv.10 a única referência anterior misturava SSD com Serpente Mefítica. Como agora não usamos combinações ofensivas, a quantidade de SSD sozinho fica marcada como não confirmada em vez de ser inventada.
 
 ---
 
-🔬 O que as pesquisas fazem
+🕵️ Fedor e espionagem
 
-As pesquisas não são decoração da receita. Se o método pede um nível, trate aquele número como mínimo.
+A tática de espionagem continua como orientação adicional e não é uma quarta composição ofensiva.
 
-🔩 Metalurgia
-Cada nível aumenta ataque e defesa das tropas em 5%, conforme o cadastro atual do módulo Pesquisas.
+${fedorRows('pt-BR')}
 
-💊 Medicina
-Cada nível aumenta a Vida das tropas em 5%.
-
-🎯 Calibração de Armas
-Aumenta o alcance das tropas de longo alcance. Por isso aparece principalmente nas receitas de Arqueiros.
-
-🐉 Dragoria
-Nas receitas de SSD, siga o nível indicado para a pesquisa de dragões. Não substitua esse requisito por outra pesquisa só porque o número é parecido.
-
-Exemplo: se a receita pede Metalurgia 7, Medicina 7 e Dragoria 8 e você possui 7 / 6 / 8, a marcha ainda NÃO atende ao método confirmado porque Medicina está abaixo do mínimo.
+Se quiser usar o método tradicional, espione com quantidade de Espiões igual ou superior ao Fedor do nível. Depois siga a sua marcha escolhida.
 
 ---
 
-🧠 Qual método escolher?
+✅ Checklist rápido
 
-Use esta ordem simples:
+- Escolhi apenas uma tropa ofensiva? ✓
+- O GUIA já acrescentou 20%? ✓
+- Escolhi Blindados OU Carregadores, nunca os dois? ✓
+- A capacidade total cobre todos os recursos? ✓
+- Minhas pesquisas atendem ao mínimo indicado? ✓
+- Se for SSD Nv.9, aceitei o aviso de possíveis perdas? ✓
 
-- Tem Medusa, Esmagador Colossal, Sapo Tóxico, Centauro Infernal, Fada da Selva ou Caçador de Almas? → 500 unidades + pesquisas 4/4/4 é o caminho mais simples.
-- Não tem? Veja se consegue montar a receita de Lava Jaws do nível.
-- Não tem Lava Jaws? Confira a tabela de Arqueiros e use os transportes corretos.
-- Está no começo e já desbloqueou SSD? Use a receita exata do nível e confira todas as pesquisas antes de enviar.
-- Nenhuma receita cabe na sua conta? Ataque um nível mais baixo.
+Depois do ataque, confira o relatório. Recomendações ajudam a reduzir risco, mas você também pode testar outros métodos.`;
 
-A melhor marcha não é a que tem mais poder; é a que atende aos requisitos sem desperdiçar tropas.
+const ANTROPOS_ATTACK_TUTORIAL_EN = `«⚠️ These are recommendations based on GUIA's confirmed setups. You can test other methods too.
+Main troop amounts receive a 20% safety margin. The premium 500-unit setups remain at 500.»
 
----
+🧭 Before attacking
 
-❌ Erros que mais causam perdas
+Open Map & Campaign → Anthropus → choose the level. The page shows enemies, resources, rewards, and the calculated recommendations.
 
-- Atacar um nível diferente do que você consultou.
-- Ignorar uma pesquisa porque “falta só um nível”.
-- Misturar Carregadores e Transportes Blindados quando a receita manda escolher um deles.
-- Misturar Arqueiros com SSD/BD na mesma marcha.
-- Copiar a quantidade da tropa principal e esquecer o apoio.
-- Usar SSD no Nv.9 achando que a receita é garantida sem perdas.
-- Aumentar ou trocar a composição no improviso sem saber o efeito.
+Use only one offensive troop per march from these three options:
 
-Se estiver em dúvida, volte ao Mapa & Campanha e compare sua marcha linha por linha com o método cadastrado.
+- Longbowmen / LBM
+- Lava Jaws
+- Swift Strike Dragons / SSD
 
----
-
-✅ Checklist de 20 segundos
-
-Antes de enviar:
-
-- Nível do Antropos correto? ✓
-- Quantidade da tropa principal correta? ✓
-- Apoio correto? ✓
-- Pesquisas iguais ou acima do mínimo? ✓
-- Nenhuma tropa incompatível misturada? ✓
-- O método está marcado como “Sem perdas”? ✓
-
-Se todas as respostas forem sim, envie a marcha. Se alguma for não, ajuste primeiro.
-
-Depois do ataque, confira o relatório. Ele é a melhor confirmação de que sua configuração continua funcionando na sua conta e no Realm atual.`;
-
-const ANTROPOS_ATTACK_TUTORIAL_EN = `«⚠️ This tutorial uses the confirmed marches already stored in Map & Campaign for Anthropus Lv.1–10.
-If your research is below the listed level, do not treat the march as safe. This mobile guide does not include Anthropus Lv.11.»
-
-🧭 Before tapping Attack
-
-If you have never attacked Anthropus, ask four simple questions:
-
-- What is the exact Anthropus level?
-- Which zero-loss method can you already build?
-- Do your research levels meet the recipe minimums?
-- Are you mixing troops that should not be used together?
-
-Open Map & Campaign → Anthropus → choose the level. The page already shows enemies, resources, possible items, and confirmed marches.
-
-Beginner rule: if you cannot meet the full recipe, attack a lower level. Farming a lower Anthropus without losses is better than improvising and losing hours of training.
+Porters and Armored Transports are not a second offensive troop; they are used only to carry resources.
 
 ---
 
-🕵️ Fedor and scouting: why it matters
+✨ Premium option: 500 special troops
 
-In the traditional method, the Fedor amount is used as the scouting reference.
-
-Scout first with the same number of Spies as Fedor, or more. Then send the main march with 1 Spy + your offensive troop.
-
-That 1 Spy is the expected march loss; the goal is to preserve the main troops when the setup is correct.
-
-Fedor amount stored for each level:
-
-${fedorRows('en-US')}
-
-Example: Anthropus Lv.6 has 10,000 Fedor → scout with 10,000 Spies or more → then send 1 Spy + your chosen offensive march.
-
-If you use one of the 500-unit special troop methods below, prior scouting is not required.
-
----
-
-✨ Easiest route: 500 special troops
-
-If you have already unlocked one of these troops, this is the easiest farming method to understand:
+If you already own one of these troops, keep the amount at 500 without adding 20%:
 
 - 500 Snake-headed Maidens
 - 500 Colossal Smashers
@@ -268,124 +204,192 @@ If you have already unlocked one of these troops, this is the easiest farming me
 - 500 Forest Fairies
 - 500 Soul Hunters
 
-For the setup stored in GUIA, keep at least:
-
-- Metallurgy Lv.4
-- Medicine Lv.4
-- Weapons Calibration Lv.4
-
-With those requirements met, this method is marked as zero loss and does not require prior scouting.
-
-If you do not own these troops yet, use one of the methods below.
+For the setup stored in GUIA, keep at least Metallurgy 4, Medicine 4, and Weapons Calibration 4.
 
 ---
 
-🏹 Longbowmen (LBM) method
+📦 How transport is calculated
 
-Longbowmen are one of the more accessible methods because they work with transport support and specific research levels.
+GUIA adds all resources stored for the Anthropus level and calculates how much the offensive troop can carry by itself.
 
-When two support options are shown, use Porters OR Armored Transports — never both. If using Armored Transports, the guide allows up to 10% extra as an additional safety margin.
+Carry capacity per unit:
 
-Do not mix ranged Longbowmen with fast melee troops such as SSD/BD in the same march. That combination may cause losses among the speed troops.
+- Longbowman / LBM → 25
+- Lava Jaws → 10
+- SSD → 100
+- Porter → 200
+- Armored Transport → 5,000
 
-Confirmed marches:
+Formula:
+
+Remaining resources = Anthropus resources − offensive troop carry capacity
+
+GUIA then shows the exact amount of Armored Transports OR Porters needed to complete the load. Choose only one option.
+
+If the main troop can already carry everything, no transport is added.
+
+---
+
+🏹 Longbowmen / LBM
+
+The confirmed base amount receives 20% extra. Example: 100 becomes 120.
 
 ${attackGuideRows('arqueiros-lbm', 'en-US')}
 
-How to read a line: “Lv.3 → 600 Longbowmen + 1,815 Porters OR 72 Armored Transports | Metallurgy 4 · Medicine 4 · Weapons Calibration 5” means you choose only one transport option and must meet at least those research levels.
-
 ---
 
-🔥 Lava Jaws (LJ) method
+🔥 Lava Jaws
 
-Lava Jaws need far fewer main troops but use Armored Transports as support.
-
-Stored marches:
+They also receive 20% over the confirmed base amount. Do not mix Lava Jaws with another offensive troop.
 
 ${attackGuideRows('lava-jaws-lj8', 'en-US')}
 
-The confirmed reference says relevant research should be at high levels, 9 or 10, but this table does not specify the exact research mix for each march. GUIA does not invent that detail: treat Lava Jaws as an advanced-account method and check your combat research before sending.
+The original reference recommends high combat research for Lava Jaws but does not specify the exact mix by level; GUIA does not invent that data.
 
 ---
 
-🐲 Swift Strike Dragons (SSD) method
-
-Swift Strike Dragons are a useful bridge between early Realm development and advanced marches. Quantity alone is not enough: Metallurgy, Medicine, and the dragon research listed in the recipe are part of the method.
-
-Stored marches:
+🐲 Swift Strike Dragons / SSD
 
 ${attackGuideRows('dragoes-ataque-rapido-ssd', 'en-US')}
 
-Pay special attention to Lv.9: both stored setups are marked as POSSIBLE LOSSES. Do not treat SSD against Anthropus Lv.9 as a guaranteed zero-loss march.
+At Lv.9 the reference remains marked as possible losses. The 20% increase is a margin and does not turn it into a guaranteed zero-loss attack.
 
-At Lv.10, the stored method uses 200,000 SSD + Mephitic Serpent and requires Metallurgy 10, Medicine 10, and Dragonry 9.
-
-Never mix SSD with Longbowmen or other ranged troops in the same march. The project's own strategy set warns that this combination may cause speed-troop losses.
+At Lv.10 the only previous reference mixed SSD with a Mephitic Serpent. Since offensive combinations are now removed, the standalone SSD amount is marked unconfirmed instead of being invented.
 
 ---
 
-🔬 What the research does
+🕵️ Fedor scouting
 
-Research is not decoration in a recipe. If a method lists a level, treat it as a minimum.
+The scouting tactic remains an additional orientation and is not a fourth offensive setup.
 
-🔩 Metallurgy
-Each level increases troop attack and defense by 5%, according to the current Research module data.
+${fedorRows('en-US')}
 
-💊 Medicine
-Each level increases troop Life by 5%.
-
-🎯 Weapons Calibration
-Increases the range of ranged troops. That is why it appears mainly in Longbowmen recipes.
-
-🐉 Dragonry
-For SSD recipes, follow the listed dragon-research level. Do not replace that requirement with another research just because the number looks similar.
-
-Example: if the recipe requires Metallurgy 7, Medicine 7, and Dragonry 8 and you have 7 / 6 / 8, the confirmed method is NOT met because Medicine is below the minimum.
+If you want to use the traditional method, scout with at least as many Spies as the level has Fedor, then send the offensive march you selected.
 
 ---
 
-🧠 Which method should I choose?
+✅ Quick checklist
 
-Use this simple order:
+- Did I choose only one offensive troop? ✓
+- Has GUIA already added the 20% margin? ✓
+- Did I choose Armored Transports OR Porters, never both? ✓
+- Does the total carry capacity cover all resources? ✓
+- Do my research levels meet the listed minimums? ✓
+- For SSD Lv.9, did I accept the possible-loss warning? ✓
 
-- Have Snake-headed Maiden, Colossal Smasher, Toxic Toad, Infernal Centaur, Forest Fairy, or Soul Hunter? → 500 units + 4/4/4 research is the easiest route.
-- No? Check whether you can build the Lava Jaws recipe for the level.
-- No Lava Jaws? Check the Longbowmen table and use the correct transport.
-- Still early and already unlocked SSD? Use the exact recipe for the level and verify every research requirement.
-- None of the recipes fit your account? Attack a lower level.
+Check the battle report after attacking. Recommendations help reduce risk, but you can test other methods too.`;
 
-The best march is not the one with the most power; it is the one that meets the requirements without wasting troops.
+const DRAGON_CAPTURE_TUTORIAL_PT = `«🐉 Todos os dragões capturáveis cadastrados aqui exigem 100 itens do próprio dragão.
+Os dados abaixo vêm diretamente das recompensas dos Campos, para que Campo, Dragão e Tutorial permaneçam sincronizados.»
 
----
+🧭 Como capturar
 
-❌ Mistakes that most often cause losses
+1. Abra Mapa & Campanha → Campos.
+2. Entre no Campo indicado para o dragão desejado.
+3. Ataque os níveis de 6 a 10.
+4. Reúna 100 itens de captura do dragão.
+5. Use os 100 itens para capturá-lo no sistema correspondente do jogo.
 
-- Attacking a different level from the one you checked.
-- Ignoring a research requirement because it is “only one level short”.
-- Mixing Porters and Armored Transports when the recipe says to choose one.
-- Mixing Longbowmen with SSD/BD in the same march.
-- Copying the main troop amount and forgetting support troops.
-- Using SSD at Lv.9 as if it were guaranteed zero loss.
-- Changing the composition without understanding the effect.
-
-When in doubt, return to Map & Campaign and compare your march line by line with the stored method.
+A Savana é a única exceção de recompensas em níveis baixos: ela também possui recompensa nos Nv.1–5. Porém o Emblema do Dragão do Trovão aparece nos Nv.6–10.
 
 ---
 
-✅ 20-second checklist
+📚 Dragões, itens e Campos
 
-Before sending:
+${captureTutorialRows('pt-BR')}
 
-- Correct Anthropus level? ✓
-- Correct main troop amount? ✓
-- Correct support? ✓
-- Research at or above the minimum? ✓
-- No incompatible troops mixed together? ✓
-- Is the method marked “Zero loss”? ✓
+---
 
-If every answer is yes, send the march. If any answer is no, fix it first.
+💧 Dragão da Água
 
-After the attack, check the battle report. It is the best confirmation that the setup still works for your account and current Realm.`;
+Em conta nova ou Realm elegível, o Dragão da Água pode ser recebido como recompensa de novo usuário, normalmente associada ao 2º dia.
+
+Se a conta for antiga e não tiver recebido essa recompensa, ele também pode ser capturado: reúna 100 Emblemas do Dragão da Água atacando Lagos Nv.6–10.
+
+---
+
+⚡ Dragão do Trovão
+
+O Emblema do Dragão do Trovão foi confirmado na Savana. Para capturá-lo, reúna 100 emblemas atacando Savanas Nv.6–10.
+
+---
+
+⚔️ Qual tropa usar nos Campos?
+
+Campos são mais simples que Antropos. Uma opção prática já mostrada pelo GUIA é usar 500 unidades de uma das tropas premium compatíveis, quando você possuir essas tropas e as pesquisas necessárias.
+
+Você também pode testar marchas menores ou outros métodos. O objetivo deste tutorial é indicar onde obter os itens, não afirmar que existe uma única composição obrigatória para todos os jogadores.
+
+---
+
+🔗 Informação conectada
+
+Na página de cada dragão capturável, a aba Como obter mostra:
+
+- item necessário
+- quantidade: 100
+- Campo correto
+- níveis 6–10
+- botão para abrir este tutorial
+- botão para abrir diretamente o tipo de Campo
+
+O Grande Dragão não aparece nesta lista porque faz parte da progressão inicial e não precisa ser capturado.`;
+
+const DRAGON_CAPTURE_TUTORIAL_EN = `«🐉 Every capturable dragon registered here requires 100 of its own capture item.
+The data below comes directly from Field rewards so Field, Dragon, and Tutorial stay synchronized.»
+
+🧭 How to capture
+
+1. Open Map & Campaign → Fields.
+2. Open the Field listed for the dragon you want.
+3. Attack levels 6 through 10.
+4. Collect 100 of that dragon's capture item.
+5. Use the 100 items to capture it through the corresponding game system.
+
+Savannah is the only Field with rewards at low levels as well: it also has rewards at Lv.1–5. The Thunder Dragon Emblem itself appears at Lv.6–10.
+
+---
+
+📚 Dragons, items, and Fields
+
+${captureTutorialRows('en-US')}
+
+---
+
+💧 Water Dragon
+
+On a new account or eligible Realm, the Water Dragon may be received as a new-user reward, normally associated with day 2.
+
+If an older account did not receive that reward, it can also be captured: collect 100 Water Dragon Emblems by attacking Lake Fields from Lv.6–10.
+
+---
+
+⚡ Thunder Dragon
+
+The Thunder Dragon Emblem is confirmed in Savannah. To capture it, collect 100 emblems by attacking Savannah Fields from Lv.6–10.
+
+---
+
+⚔️ What troop should I use against Fields?
+
+Fields are easier than Anthropus. One practical option already shown by GUIA is 500 units of one compatible premium troop, when you own those troops and meet the research requirements.
+
+You can also test smaller marches or other methods. This tutorial's purpose is to show where to get the items, not to claim one mandatory march for every player.
+
+---
+
+🔗 Connected information
+
+On each capturable dragon's How to get tab, GUIA shows:
+
+- required item
+- quantity: 100
+- correct Field
+- levels 6–10
+- button to open this tutorial
+- button to open the Field type directly
+
+The Great Dragon is not on this list because it is part of initial progression and does not need to be captured.`;
 
 export const DICAS_SEED = [
   {
@@ -412,7 +416,7 @@ Adapte a cidade e a ordem de evolução ao seu estilo de jogo, ao tempo disponí
 🧭 Rota rápida para os primeiros dias
 
 - Dia 1 → comece com 1 Casa e decida se quer priorizar Guarnições, Fontes de Cura ou equilíbrio entre as duas.
-- Dia {{agua_dia}} → o Dragão da Água libera 4 espaços adicionais; uma boa opção é usá-los para completar 5 Casas no total.
+- Conta nova ou Realm elegível → o Dragão da Água pode chegar pela recompensa de novo usuário e libera 4 espaços adicionais; se sua conta não recebeu a recompensa, capture-o com 100 Emblemas do Dragão da Água em Lagos Nv.6–10.
 - Todos os dias → construa, pesquise, treine, ataque Campos e Antropos e evolua seus dragões aos poucos.
 - Guarde recursos, aceleradores e itens quando puder aproveitar melhor em torneios.
 - Não aumente poder apenas por aumentar: priorize desbloqueios e melhorias que tragam benefício real.
@@ -451,7 +455,7 @@ Não é necessário preencher vários espaços com Casas logo no começo.
 
 Comece com 1 Casa.
 
-Quando o Dragão da Água for liberado no dia {{agua_dia}}, os 4 espaços adicionais podem ser usados para construir mais 4 Casas.
+Quando você obtiver o Dragão da Água — pela recompensa de novo usuário em conta/Realm elegível ou capturando-o com 100 Emblemas em Lagos Nv.6–10 — os 4 espaços adicionais podem ser usados para construir mais 4 Casas.
 
 1 Casa inicial + 4 Casas do Dragão da Água → 5 Casas
 
@@ -482,7 +486,7 @@ Isso é apenas um exemplo. Quem prefere treinamento intenso pode inverter a prio
 
 Capture e desenvolva seus dragões aos poucos. Não é necessário tentar obter tudo nos primeiros dias.
 
-Campos de níveis mais altos são importantes para fragmentos, itens e evolução. O catálogo atual do GUIA confirma, por exemplo, fragmentos do Dragão Beladona em Campos de Floresta do Nv.{{beladona_min}} ao Nv.{{beladona_max}}.
+Campos de níveis mais altos são importantes para emblemas, itens e evolução. O catálogo atual do GUIA confirma, por exemplo, Emblemas do Dragão Beladona em Campos de Floresta do Nv.{{beladona_min}} ao Nv.{{beladona_max}}.
 
 Confira sempre a ficha de cada dragão: nem todos possuem a mesma forma de obtenção.
 
@@ -493,7 +497,7 @@ Também não ignore os Antropos. O módulo Mapa & Campanha já possui os níveis
 - composição inimiga
 - recursos obtidos
 - itens/recompensas possíveis
-- marchas confirmadas sem perdas
+- recomendações de ataque com status de risco confirmado
 
 Use esse módulo antes de atacar para escolher o nível e a marcha adequada ao que sua conta já possui.
 
@@ -638,7 +642,7 @@ Adapt your city and upgrade order to your playstyle, available time, and account
 🧭 Quick route for the first days
 
 - Day 1 → start with 1 House and decide whether to prioritize Garrisons, Healing Fountains, or a balance between both.
-- Day {{agua_dia}} → the Water Dragon unlocks 4 additional spaces; using them to reach 5 Houses total is a strong option.
+- New account or eligible Realm → the Water Dragon may come from the new-user reward and unlocks 4 additional spaces; if your account did not receive that reward, capture it with 100 Water Dragon Emblems from Lake Fields Lv.6–10.
 - Every day → build, research, train, attack Fields and Anthropus, and develop your dragons gradually.
 - Save resources, speedups, and items when they can be used more efficiently during tournaments.
 - Do not raise power only for the number itself: prioritize unlocks and upgrades that provide a real benefit.
@@ -677,7 +681,7 @@ You do not need to fill many spaces with Houses at the beginning.
 
 Start with 1 House.
 
-When the Water Dragon unlocks on day {{agua_dia}}, its 4 additional spaces can be used for 4 more Houses.
+When you obtain the Water Dragon — through the new-user reward on an eligible account/Realm or by capturing it with 100 Water Dragon Emblems from Lake Fields Lv.6–10 — its 4 additional spaces can be used for 4 more Houses.
 
 1 starting House + 4 Water Dragon Houses → 5 Houses
 
@@ -708,7 +712,7 @@ This is only an example. Players focused on heavy training can reverse the prior
 
 Capture and develop your dragons gradually. There is no need to obtain everything during the first days.
 
-Higher-level Fields are important for fragments, items, and progression. The current GUIA catalog confirms, for example, Belladonna Dragon fragments in Forest Fields from Lv.{{beladona_min}} to Lv.{{beladona_max}}.
+Higher-level Fields are important for emblems, items, and progression. The current GUIA catalog confirms, for example, Belladonna Dragon Emblems in Forest Fields from Lv.{{beladona_min}} to Lv.{{beladona_max}}.
 
 Always check each dragon's page: not every dragon has the same acquisition method.
 
@@ -719,7 +723,7 @@ Do not ignore Anthropus either. The Map & Campaign module already contains level
 - enemy composition
 - obtained resources
 - possible items/rewards
-- confirmed zero-loss marches
+- attack recommendations with confirmed risk status
 
 Use that module before attacking to choose a level and a march that matches what your account already owns.
 
@@ -860,7 +864,7 @@ There is no need to do everything immediately. Build a solid foundation, use the
   {
     slug: 'tutorial-atacar-antropos',
     titulo: '⚔️ Como Atacar Antropos sem Perdas',
-    resumo: 'Tutorial para iniciantes com decisão passo a passo, espionagem contra Fedor, 500 tropas especiais, Arqueiros, Lava Jaws, SSD e as pesquisas mínimas de cada método.',
+    resumo: 'Tutorial conectado aos dados dos Antropos: 500 tropas premium, LBM, Lava Jaws e SSD, com margem de 20% e transporte calculado para recolher todos os recursos.',
     categoria: 'iniciante',
     tipo: 'tutorial',
     leituraMin: 14,
@@ -870,7 +874,7 @@ There is no need to do everything immediately. Build a solid foundation, use the
     relacionados: {
       modulos: ['campanha', 'tropas', 'pesquisas', 'itens'],
       edificios: [],
-      tropas: ['Espiões', 'Arqueiros', 'Carregadores', 'Transportes Blindados', 'Dragões de Ataque Rápido', 'Medusa', 'Esmagadores Colossais', 'Sapo Tóxico', 'Centauros Infernais', 'Fada da Selva', 'Caçador de Almas'],
+      tropas: ['Espiões', 'Arqueiros', 'Lava Jaws (LJ)', 'Carregadores', 'Transportes Blindados', 'Dragões de Ataque Rápido', 'Medusa', 'Esmagadores Colossais', 'Sapo Tóxico', 'Centauros Infernais', 'Fada da Selva', 'Caçador de Almas'],
       dragoes: [],
       pesquisas: ['Metalurgia', 'Medicina', 'Calibração de Armas', 'Dragoria'],
       reinos: [],
@@ -879,8 +883,35 @@ There is no need to do everything immediately. Build a solid foundation, use the
     i18n: {
       'en-US': {
         titulo: '⚔️ How to Attack Anthropus Without Losses',
-        resumo: 'A beginner-friendly step-by-step tutorial covering Fedor scouting, 500-unit special troops, Longbowmen, Lava Jaws, SSD, and the minimum research for each method.',
+        resumo: 'A data-connected Anthropus tutorial with 500-unit premium troops, LBM, Lava Jaws and SSD, a 20% safety margin, and transport calculated to carry every resource.',
         conteudo: ANTROPOS_ATTACK_TUTORIAL_EN,
+      },
+    },
+  },
+  {
+    slug: 'tutorial-capturar-dragoes',
+    titulo: '🐉 Como Capturar Dragões nos Campos',
+    resumo: 'Veja quais Campos atacar, os níveis corretos e os 100 itens necessários para capturar cada dragão, com os dados sincronizados ao catálogo de Dragões.',
+    categoria: 'iniciante',
+    tipo: 'tutorial',
+    leituraMin: 8,
+    destaque: true,
+    ativo: true,
+    ordem: 2,
+    relacionados: {
+      modulos: ['dragoes', 'campanha', 'tropas', 'itens'],
+      edificios: [],
+      tropas: ['Medusa', 'Esmagadores Colossais', 'Sapo Tóxico', 'Centauros Infernais', 'Fada da Selva', 'Caçador de Almas'],
+      dragoes: Object.keys(DRAGON_CAPTURE_MAP),
+      pesquisas: ['Metalurgia', 'Medicina', 'Calibração de Armas'],
+      reinos: [],
+    },
+    conteudo: DRAGON_CAPTURE_TUTORIAL_PT,
+    i18n: {
+      'en-US': {
+        titulo: '🐉 How to Capture Dragons in Fields',
+        resumo: 'See which Fields to attack, the correct levels, and the 100 items required for each dragon, synchronized with the Dragon catalog.',
+        conteudo: DRAGON_CAPTURE_TUTORIAL_EN,
       },
     },
   },

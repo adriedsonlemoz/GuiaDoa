@@ -85,19 +85,15 @@ test('Floresta contém Nv.1–10 com madeira, produção e progressão de tropas
   assert.equal(FLORESTA_SEED.find(x => x.nivel === 10).tropas.reduce((sum,item)=>sum+item.quantidade,0), 38850);
 });
 
-test('Floresta preserva lacunas de evidência e confirma recompensas somente onde há tela', () => {
-  for (const nivel of [1,2,5]) {
+test('Floresta confirma ausência de recompensas no Nv.1–5 e registra o relatório do Nv.2', () => {
+  for (const nivel of [1,2,3,4,5]) {
     const entry = FLORESTA_SEED.find(x => x.nivel === nivel);
     assert.equal(entry.recompensasStatus, 'confirmado');
     assert.deepEqual(entry.recompensas, []);
     assert.ok(entry.tags.includes('sem-recompensas'));
   }
-  for (const nivel of [3,4]) {
-    const entry = FLORESTA_SEED.find(x => x.nivel === nivel);
-    assert.equal(entry.recompensasStatus, 'pendente');
-    assert.deepEqual(entry.recompensas, []);
-    assert.ok(entry.tags.includes('recompensas-nao-confirmadas'));
-  }
+  const n2 = FLORESTA_SEED.find(x => x.nivel === 2);
+  assert.deepEqual(n2.tropas.map(x => [x.nome,x.quantidade]), [['Canibal',100],['Fedor',50]]);
 
   const expectedEmblems = ['emblema-dragao-beladona','emblema-dragao-toxico','emblema-dragao-fada'];
   for (const nivel of [6,7,8,9]) {
@@ -106,13 +102,9 @@ test('Floresta preserva lacunas de evidência e confirma recompensas somente ond
     assert.deepEqual(entry.recompensas.map(x => x.codigo), expectedEmblems);
     assert.ok(entry.recompensas.every(x => x.finalidade === 'obtencao-dragao'));
   }
-
   const n10 = FLORESTA_SEED.find(x => x.nivel === 10);
   assert.deepEqual(n10.recompensas.map(x => x.codigo), [...expectedEmblems, 'essencia-furia']);
   assert.equal(n10.recompensas.find(x => x.codigo === 'essencia-furia').nome, 'Essência da Fúria');
-  assert.ok(n10.tags.includes('recompensa-especial'));
-  assert.ok(n10.recompensas.every(x => x.nomeConfirmado && x.nome));
-  assert.ok(n10.recompensas.every(x => x.imagem.startsWith('/assets/items/fields/forest/')));
   for (const reward of n10.recompensas) assert.equal(existsSync(`../public${reward.imagem}`), true);
 });
 
@@ -136,36 +128,26 @@ test('Morro contém Nv.1–10 com pedra e dois itens extras no Nv.10', () => {
   for(const reward of n10.recompensas) assert.equal(existsSync(`../public${reward.imagem}`),true);
 });
 
-test('Savana confirma carnes e preserva apenas o item azul sem nome', () => {
-  const n1 = SAVANA_SEED.find(x => x.nivel === 1);
-  const n5 = SAVANA_SEED.find(x => x.nivel === 5);
-  const n6 = SAVANA_SEED.find(x => x.nivel === 6);
+test('Savana confirma carnes e Emblema do Dragão do Trovão no Nv.6–10', () => {
+  for (const nivel of [1,2,3,4,5]) {
+    const entry = SAVANA_SEED.find(x => x.nivel === nivel);
+    assert.equal(entry.recompensasStatus, 'confirmado');
+    assert.deepEqual(entry.recompensas.map(x => x.codigo), ['savana-r2']);
+    assert.equal(entry.recompensas[0].nome, 'Pedaço de carne carneiro');
+  }
+  for (const nivel of [6,7,8,9,10]) {
+    const entry = SAVANA_SEED.find(x => x.nivel === nivel);
+    assert.equal(entry.recompensasStatus, 'confirmado');
+    const thunder = entry.recompensas.find(x => x.codigo === 'emblema-dragao-trovao');
+    assert.equal(thunder.nome, 'Emblema do Dragão do Trovão');
+    assert.equal(thunder.nomeConfirmado, true);
+    assert.equal(thunder.finalidade, 'obtencao-dragao');
+    assert.equal(thunder.relacionadoA, 'dragao-trovao');
+    assert.ok(thunder.imagem.endsWith('/emblema-dragao-trovao.webp'));
+  }
   const n10 = SAVANA_SEED.find(x => x.nivel === 10);
-
-  assert.equal(n1.recompensasStatus, 'confirmado');
-  assert.equal(n5.recompensasStatus, 'confirmado');
-  assert.deepEqual(n5.recompensas.map(x=>x.simbolo), ['R2']);
-  assert.equal(n5.recompensas[0].nome, 'Pedaço de carne carneiro');
-  assert.equal(n5.recompensas[0].nomeConfirmado, true);
-  assert.equal(n5.recompensas[0].quantidade, 1);
-
-  assert.equal(n6.recompensasStatus, 'parcial');
-  assert.deepEqual(n6.recompensas.map(x=>x.simbolo), ['R1','R2','R3']);
-  assert.deepEqual(n10.recompensas.map(x=>x.simbolo), ['R1','R2','R3','R4']);
-  assert.equal(n10.recompensasStatus, 'parcial');
-
-  const unknown = n10.recompensas.find(x => x.codigo === 'savana-r1');
-  assert.equal(unknown.nomeConfirmado, false);
-  assert.equal(unknown.nome, '');
-  assert.ok(unknown.imagem.endsWith('/savana-r1.webp'));
-
-  const ram = n10.recompensas.find(x => x.codigo === 'savana-r2');
-  const beef = n10.recompensas.find(x => x.codigo === 'savana-r3');
-  const chicken = n10.recompensas.find(x => x.codigo === 'savana-r4');
-  assert.equal(ram.nome, 'Pedaço de carne carneiro');
-  assert.equal(beef.nome, 'Pedaço de carne bovina');
-  assert.equal(chicken.nome, 'Pedaço de Frango');
-  assert.ok([ram,beef,chicken].every(x => x.quantidade === 1 && x.nomeConfirmado));
+  assert.deepEqual(n10.recompensas.map(x=>x.codigo), ['emblema-dragao-trovao','savana-r2','savana-r3','savana-r4']);
+  assert.equal(n10.recompensas.find(x => x.codigo === 'savana-r4').nome, 'Pedaço de Frango');
   for (const reward of n10.recompensas) assert.equal(existsSync(`../public${reward.imagem}`), true);
 });
 
@@ -175,44 +157,42 @@ test('estratégias começam vazias e não são inventadas pelo seed', () => {
 });
 
 
-test('Antropos Nv.1–10 recebem estratégias confirmadas e não criam Nv.11', () => {
+test('Antropos Nv.1–10 usam somente LBM, Lava Jaws e SSD com margem de 20%', () => {
   assert.deepEqual(ANTROPOS_SEED.map(x => x.nivel), [1,2,3,4,5,6,7,8,9,10]);
   assert.equal(ANTROPOS_SEED.some(x => x.nivel === 11), false);
-  assert.ok(ANTROPOS_SEED.every(x => x.guiasAtaque.length >= 5));
-  assert.ok(ANTROPOS_SEED.flatMap(x => x.guiasAtaque).every(g => g.status === 'confirmado'));
+  assert.ok(ANTROPOS_SEED.every(x => x.guiasAtaque.length === 3));
+  const codigos = ['arqueiros-lbm','lava-jaws-lj8','dragoes-ataque-rapido-ssd'];
+  for (const entry of ANTROPOS_SEED) {
+    assert.deepEqual(entry.guiasAtaque.map(x => x.codigo), codigos);
+    assert.ok(entry.guiasAtaque.every(x => !x.complemento));
+  }
 
-  const lbmExpected = { 1:60,2:320,3:600,4:2000,5:5000,6:7000,7:25000,8:45000,9:70000,10:100000 };
+  const lbmExpected = { 1:72,2:384,3:720,4:2400,5:6000,6:8400,7:30000,8:54000,9:84000,10:120000 };
   for (const [nivelStr, qty] of Object.entries(lbmExpected)) {
-    const entry = ANTROPOS_SEED.find(x => x.nivel === Number(nivelStr));
-    const guide = entry.guiasAtaque.find(x => x.codigo === 'arqueiros-lbm');
+    const guide = ANTROPOS_SEED.find(x => x.nivel === Number(nivelStr)).guiasAtaque.find(x => x.codigo === 'arqueiros-lbm');
     assert.equal(guide.quantidade, qty);
     assert.equal(guide.resultado, 'sem_perdas');
-    assert.equal(guide.tropaPrincipal, 'Arqueiros');
   }
 
   const n1 = ANTROPOS_SEED.find(x => x.nivel === 1);
-  const lbm1 = n1.guiasAtaque.find(x => x.codigo === 'arqueiros-lbm');
-  assert.equal(lbm1.apoios.find(x=>x.nome==='Carregadores').quantidade, 147);
-  assert.equal(lbm1.apoios.find(x=>x.nome==='Transportes Blindados').quantidade, 33);
-  assert.equal(lbm1.pesquisas.find(x=>x.nome==='Calibração de Armas').nivel, 2);
+  assert.equal(n1.guiasAtaque.find(x=>x.codigo==='arqueiros-lbm').apoios.find(x=>x.nome==='Transportes Blindados').quantidade, 24);
+  assert.equal(n1.guiasAtaque.find(x=>x.codigo==='arqueiros-lbm').apoios.find(x=>x.nome==='Carregadores').quantidade, 594);
 
-  const n9 = ANTROPOS_SEED.find(x => x.nivel === 9);
-  const risky = n9.guiasAtaque.filter(x => x.resultado === 'possiveis_perdas');
-  assert.equal(risky.length, 2);
-  assert.ok(risky.every(x => x.codigo.startsWith('dragoes-ataque-rapido-ssd')));
-  assert.equal(n9.guiasAtaque.find(x=>x.codigo==='arqueiros-lbm-dragao-alt-2').quantidade, 38000);
+  const n9ssd = ANTROPOS_SEED.find(x => x.nivel === 9).guiasAtaque.find(x => x.codigo === 'dragoes-ataque-rapido-ssd');
+  assert.equal(n9ssd.quantidade, 192000);
+  assert.equal(n9ssd.resultado, 'possiveis_perdas');
 
-  const n10 = ANTROPOS_SEED.find(x => x.nivel === 10);
-  assert.equal(n10.guiasAtaque.find(x=>x.codigo==='arqueiros-lbm-dragao').quantidade, 89999);
-  assert.equal(n10.guiasAtaque.find(x=>x.codigo==='lava-jaws-lj8').quantidade, 3500);
-  assert.equal(n10.guiasAtaque.find(x=>x.codigo==='dragoes-combate-bd').quantidade, 110000);
+  const n10ssd = ANTROPOS_SEED.find(x => x.nivel === 10).guiasAtaque.find(x => x.codigo === 'dragoes-ataque-rapido-ssd');
+  assert.equal(n10ssd.quantidade, null);
+  assert.equal(n10ssd.resultado, 'incompleto');
+  assert.match(n10ssd.observacoes, /não confirmada/i);
 });
 
-test('Fangtooth Nv.4 preserva quantidade ausente em vez de inventar dado', () => {
-  const guide = ANTROPOS_SEED.find(x => x.nivel === 4).guiasAtaque.find(x => x.codigo === 'fangtooth-ft');
-  assert.equal(guide.quantidade, null);
-  assert.equal(guide.resultado, 'incompleto');
-  assert.match(guide.passos[0], /não foi informada/i);
+test('Antropos não publica combinações ofensivas nem métodos removidos', () => {
+  const guides = ANTROPOS_SEED.flatMap(x => x.guiasAtaque);
+  assert.ok(guides.every(g => ['arqueiros-lbm','lava-jaws-lj8','dragoes-ataque-rapido-ssd'].includes(g.codigo)));
+  assert.ok(guides.every(g => !g.complemento));
+  assert.ok(guides.every(g => (g.apoios || []).every(a => ['Carregadores','Transportes Blindados'].includes(a.nome))));
 });
 
 

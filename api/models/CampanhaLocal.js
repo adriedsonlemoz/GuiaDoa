@@ -80,6 +80,29 @@ const GuiaAtaqueSchema = new mongoose.Schema({
   i18n:{ type:mongoose.Schema.Types.Mixed, default:{} },
 }, { _id:false });
 
+
+const GrodzRecommendedTroopSchema = new mongoose.Schema({
+  nome:{ type:String, required:true, trim:true },
+  quantidade:{ type:Number, required:true, min:0 },
+  catalogoTropa:{ type:String, default:'', trim:true },
+  i18n:{ type:mongoose.Schema.Types.Mixed, default:{} },
+}, { _id:false });
+
+const GrodzDialogueSchema = new mongoose.Schema({
+  ordem:{ type:Number, required:true, min:1 },
+  personagem:{ type:String, default:'', trim:true },
+  texto:{ type:String, required:true, trim:true },
+  i18n:{ type:mongoose.Schema.Types.Mixed, default:{} },
+}, { _id:false });
+
+const GrodzSchema = new mongoose.Schema({
+  composicaoStatus:{ type:String, enum:['pendente','parcial','confirmado'], default:'pendente' },
+  observacaoComposicao:{ type:String, default:'', trim:true },
+  recomendacaoJogo:{ type:[GrodzRecommendedTroopSchema], default:[] },
+  dialogos:{ type:[GrodzDialogueSchema], default:[] },
+  i18n:{ type:mongoose.Schema.Types.Mixed, default:{} },
+}, { _id:false });
+
 const CampanhaLocalSchema = new mongoose.Schema({
   slug:{ type:String, required:true, unique:true, trim:true },
   categoria:{ type:String, required:true, enum:['antropos','campos','zyrvorthian','grodz'], index:true },
@@ -96,6 +119,7 @@ const CampanhaLocalSchema = new mongoose.Schema({
   campo:{ type:CampoSchema, default:() => ({}) },
   estrategia:{ type:EstrategiaSchema, default:() => ({}) },
   guiasAtaque:{ type:[GuiaAtaqueSchema], default:[] },
+  grodz:{ type:GrodzSchema, default:() => ({}) },
   fonte:{
     tipo:{ type:String, default:'manual' },
     data:{ type:String, default:'' },

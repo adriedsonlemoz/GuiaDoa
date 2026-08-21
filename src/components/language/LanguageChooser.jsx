@@ -11,40 +11,42 @@ const LanguageOption = ({ locale, active, onSelect, selectedLabel }) => (
       width: '100%', minHeight: 104, padding: '16px 16px 15px', textAlign: 'left', cursor: 'pointer',
       display: 'grid', gridTemplateColumns: '54px 1fr auto', alignItems: 'center', gap: 14,
       borderRadius: 18,
-      border: `1.5px solid ${active ? 'rgba(200,168,74,.78)' : 'rgba(200,168,74,.22)'}`,
+      border: `2px solid ${active ? 'rgba(218,185,82,.98)' : 'rgba(200,168,74,.22)'}`,
       background: active
-        ? 'linear-gradient(135deg,rgba(49,72,74,.10),rgba(200,168,74,.12))'
+        ? 'linear-gradient(145deg,#244A46 0%,#2F5C56 58%,#376B64 100%)'
         : 'linear-gradient(180deg,rgba(248,244,232,.98),rgba(242,234,218,.98))',
-      boxShadow: active ? '0 12px 28px rgba(62,47,28,.12), inset 0 0 0 1px rgba(255,255,255,.32)' : '0 6px 18px rgba(62,47,28,.06)',
+      boxShadow: active ? '0 14px 30px rgba(31,65,61,.26), 0 0 0 3px rgba(200,168,74,.15), inset 0 0 0 1px rgba(255,255,255,.07)' : '0 6px 18px rgba(62,47,28,.06)',
       transition: 'transform .16s ease, border-color .16s ease, box-shadow .16s ease',
     }}
   >
     <span style={{
       width: 54, height: 54, borderRadius: 16, display: 'grid', placeItems: 'center', fontSize: 28,
-      background: active ? 'linear-gradient(145deg,#3C6863,#2F5652)' : 'rgba(49,72,74,.06)',
+      background: active ? 'rgba(255,255,255,.10)' : 'rgba(49,72,74,.06)',
       border: `1px solid ${active ? 'rgba(200,168,74,.55)' : 'rgba(49,72,74,.10)'}`,
       boxShadow: active ? '0 7px 18px rgba(49,72,74,.22)' : 'none',
     }}>{locale.flag}</span>
 
     <span style={{ minWidth: 0 }}>
-      <strong className="font-nunito" style={{ display: 'block', color: C.TEXT_PRIMARY, fontSize: '1rem', fontWeight: 900, lineHeight: 1.15 }}>
+      <strong className="font-nunito" style={{ display: 'block', color: active ? '#FFF9E8' : C.TEXT_PRIMARY, fontSize: '1rem', fontWeight: 900, lineHeight: 1.15 }}>
         {locale.nativo}
       </strong>
-      <span className="font-nunito" style={{ display: 'block', marginTop: 5, color: C.TEXT_MUTED, fontSize: '.7rem', fontWeight: 700 }}>
+      <span className="font-nunito" style={{ display: 'block', marginTop: 5, color: active ? 'rgba(255,249,232,.72)' : C.TEXT_MUTED, fontSize: '.7rem', fontWeight: 700 }}>
         {locale.label}
       </span>
-      <span className="font-nunito" style={{ display: 'inline-block', marginTop: 7, color: C.TEXT_FAINT, fontSize: '.58rem', fontWeight: 900, letterSpacing: 1.2 }}>
+      <span className="font-nunito" style={{ display: 'inline-block', marginTop: 7, color: active ? '#E0C366' : C.TEXT_FAINT, fontSize: '.58rem', fontWeight: 900, letterSpacing: 1.2 }}>
         {locale.code.toUpperCase()}
       </span>
     </span>
 
     <span style={{
-      width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', flexShrink: 0,
-      background: active ? C.ACCENT : 'transparent',
-      border: `1.5px solid ${active ? C.ACCENT : 'rgba(154,125,86,.28)'}`,
-      color: active ? '#213F3C' : C.TEXT_FAINT, fontSize: 14, fontWeight: 900,
+      minWidth: active ? 92 : 32, height: 32, padding: active ? '0 10px' : 0, borderRadius: 999,
+      display: 'grid', placeItems: 'center', flexShrink: 0,
+      background: active ? '#E0C366' : 'transparent',
+      border: `1.5px solid ${active ? '#F0D780' : 'rgba(154,125,86,.28)'}`,
+      color: active ? '#203F3B' : C.TEXT_FAINT, fontSize: active ? '.62rem' : 14, fontWeight: 1000,
+      letterSpacing: active ? .2 : 0,
     }} aria-label={active ? selectedLabel : undefined}>
-      {active ? '✓' : ''}
+      {active ? `✓ ${selectedLabel}` : ''}
     </span>
   </button>
 );
@@ -95,6 +97,9 @@ export default function LanguageChooser({ onBack, onDone, setup = false }) {
       </header>
 
       <main style={{ flex: 1, width: '100%', maxWidth: 480, margin: '0 auto', padding: '22px 16px 30px' }}>
+        <p className="font-nunito" style={{ margin: '0 2px 12px', color: C.TEXT_SECONDARY, fontSize: '.69rem', fontWeight: 800, lineHeight: 1.5 }}>
+          {t('language.tap_hint')}
+        </p>
         <div style={{ display: 'grid', gap: 11 }}>
           {LOCALES_DISPONIVEIS.map(item => (
             <LanguageOption

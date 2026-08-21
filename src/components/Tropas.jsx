@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTropas } from '../hooks/useTropas.js';
 import { useI18n } from '../hooks/useI18n.jsx';
 import GameHeader from './shared/GameHeader.jsx';
@@ -20,6 +20,22 @@ export default function Tropas({ setRoute }) {
   const [compareMode, setCompareMode] = useState(false);
   const [compareNames, setCompareNames] = useState([]);
   const analysis = useMemo(() => buildTroopCatalogAnalysis(tropas), [tropas]);
+
+  useEffect(() => {
+    if (!tropas.length) return;
+    let target = '';
+    try { target = sessionStorage.getItem('guiadoa_open_troop') || ''; } catch { return; }
+    if (!target) return;
+    const normalized = target.trim().toLocaleLowerCase();
+    const found = tropas.find(troop => {
+      const aliases = Array.isArray(troop.aliases) ? troop.aliases : [];
+      return [troop.nome, troop.slug, content(troop, 'nome'), ...aliases]
+        .filter(Boolean).some(value => String(value).trim().toLocaleLowerCase() === normalized);
+    });
+    if (!found) return;
+    try { sessionStorage.removeItem('guiadoa_open_troop'); } catch {}
+    setDetail(found);
+  }, [tropas, content]);
 
   const counts = useMemo(() => Object.fromEntries(
     TROOP_FILTER_IDS.map(id => [id, tropas.filter(troop => matchesTroopFilter(troop, id, analysis)).length]),

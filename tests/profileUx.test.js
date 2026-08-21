@@ -62,3 +62,14 @@ test('primeiro acesso e configurações compartilham o mesmo seletor premium de 
   assert.match(chooser, /language\.continue/);
   assert.match(chooser, /language\.done/);
 });
+
+test('seletor inicial de idioma deixa a opção ativa inequivocamente destacada', () => {
+  const chooser = read('src/components/language/LanguageChooser.jsx');
+  const pt = read('src/locales/pt-BR.js');
+  const en = read('src/locales/en-US.js');
+  assert.match(chooser, /linear-gradient\(145deg,#244A46/);
+  assert.match(chooser, /✓ \$\{selectedLabel\}/);
+  assert.match(chooser, /language\.tap_hint/);
+  assert.match(pt, /language\.tap_hint/);
+  assert.match(en, /language\.tap_hint/);
+});

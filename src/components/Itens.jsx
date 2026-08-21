@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useGameData } from '../data/GameDataContext.jsx';
 import { useI18n } from '../hooks/useI18n.jsx';
 import GameHeader from './shared/GameHeader.jsx';
@@ -139,6 +139,19 @@ export default function Itens() {
     .sort((a,b) => Number(b.destaque) - Number(a.destaque) || (a.ordem ?? 999) - (b.ordem ?? 999) || a.nome.localeCompare(b.nome)), [itensOnline,content]);
   const itemMap = useMemo(() => buildItemMap(catalogo), [catalogo]);
   const containersMap = useMemo(() => buildContainerMap(catalogo), [catalogo]);
+
+  useEffect(() => {
+    if (!catalogo.length) return;
+    let target = '';
+    try { target = sessionStorage.getItem('guiadoa_open_item') || ''; } catch { return; }
+    if (!target) return;
+    const normalized = target.trim().toLocaleLowerCase();
+    const found = catalogo.find(item => [item.slug, item.nome]
+      .filter(Boolean).some(value => String(value).trim().toLocaleLowerCase() === normalized));
+    if (!found) return;
+    try { sessionStorage.removeItem('guiadoa_open_item'); } catch {}
+    setSelecionado(found);
+  }, [catalogo]);
 
   const subcategorias = useMemo(() => {
     const source = grupo === 'all' || grupo === 'featured' ? catalogo : catalogo.filter(item => item.grupo === grupo);

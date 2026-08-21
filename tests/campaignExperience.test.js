@@ -147,3 +147,29 @@ test('Mapa & Campanha aceita atalho direto para o Campo indicado pelo Dragão', 
   assert.match(source, /setFieldType\(requestedField\)/);
   assert.match(source, /recompensasStatus === 'confirmado'/);
 });
+
+test('Grodz usa experiência especializada com 10 cards e detalhes recolhíveis', () => {
+  const source = read('src/components/CampanhaMapa.jsx');
+  const grodz = read('src/components/campanha/grodz/GrodzView.jsx');
+  const css = read('src/index.css');
+  assert.match(source, /GrodzLanding/);
+  assert.match(source, /GrodzDetail/);
+  assert.match(source, /category === 'grodz'/);
+  assert.match(grodz, /grodz-level-grid/);
+  assert.match(grodz, /story_dialogue/);
+  assert.match(grodz, /defaultOpen=\{false\}/);
+  assert.match(grodz, /game_recommendation/);
+  assert.match(grodz, /guide_recommendation/);
+  assert.match(css, /\.grodz-level-grid\{display:grid;grid-template-columns:1fr/);
+});
+
+test('Grodz conecta tutorial, tropa e item por atalhos profundos', () => {
+  const grodz = read('src/components/campanha/grodz/GrodzView.jsx');
+  const troops = read('src/components/Tropas.jsx');
+  const items = read('src/components/Itens.jsx');
+  assert.match(grodz, /guiadoa_open_tip/);
+  assert.match(grodz, /guiadoa_open_troop/);
+  assert.match(grodz, /guiadoa_open_item/);
+  assert.match(troops, /sessionStorage\.getItem\('guiadoa_open_troop'\)/);
+  assert.match(items, /sessionStorage\.getItem\('guiadoa_open_item'\)/);
+});

@@ -102,6 +102,41 @@ function normalizarGuiasAtaque(input) {
   });
 }
 
+
+function normalizarGrodz(input, categoria) {
+  if (categoria !== 'grodz') return {};
+  const raw = input && typeof input === 'object' ? input : {};
+  const composicaoStatus = ['pendente','parcial','confirmado'].includes(raw.composicaoStatus) ? raw.composicaoStatus : 'pendente';
+  const recomendacaoJogo = (Array.isArray(raw.recomendacaoJogo) ? raw.recomendacaoJogo : []).slice(0, 20).map((item, index) => {
+    const nome = cleanString(item?.nome, 100);
+    const quantidade = Number(item?.quantidade);
+    if (!nome || !Number.isSafeInteger(quantidade) || quantidade < 0) {
+      throw Object.assign(new Error(`Recomendação do jogo de Grodz inválida na linha ${index + 1}.`), { status:400 });
+    }
+    return {
+      nome, quantidade,
+      catalogoTropa:cleanString(item?.catalogoTropa, 100),
+      i18n:item?.i18n && typeof item.i18n === 'object' ? item.i18n : {},
+    };
+  });
+  const dialogos = (Array.isArray(raw.dialogos) ? raw.dialogos : []).slice(0, 40).map((item, index) => {
+    const ordem = Number(item?.ordem ?? index + 1);
+    const personagem = cleanString(item?.personagem, 80);
+    const texto = cleanString(item?.texto, 1800);
+    if (!Number.isSafeInteger(ordem) || ordem < 1 || !texto) {
+      throw Object.assign(new Error(`Diálogo de Grodz inválido na linha ${index + 1}.`), { status:400 });
+    }
+    return { ordem, personagem, texto, i18n:item?.i18n && typeof item.i18n === 'object' ? item.i18n : {} };
+  });
+  return {
+    composicaoStatus,
+    observacaoComposicao:cleanString(raw.observacaoComposicao, 1200),
+    recomendacaoJogo,
+    dialogos,
+    i18n:raw.i18n && typeof raw.i18n === 'object' ? raw.i18n : {},
+  };
+}
+
 export function normalizarCampanhaPayload(body = {}, { parcial = false } = {}) {
   const categoria = cleanString(body.categoria, 32).toLowerCase();
   if (!CAMPANHA_CATEGORIAS.includes(categoria)) throw Object.assign(new Error('Categoria inválida.'), { status:400 });
@@ -174,6 +209,7 @@ export function normalizarCampanhaPayload(body = {}, { parcial = false } = {}) {
     : (recompensas.length ? 'parcial' : 'pendente');
   const tags = cleanTags(body.tags);
   const guiasAtaque = normalizarGuiasAtaque(body.guiasAtaque);
+  const grodz = normalizarGrodz(body.grodz, categoria);
 
   const slugBase = cleanString(body.slug, 120)
     || (subtipo && nivelRaw != null ? `${categoria}-${subtipo}-${nivelRaw}` : `${categoria}-${nivelRaw ?? nome}`);
@@ -185,7 +221,7 @@ export function normalizarCampanhaPayload(body = {}, { parcial = false } = {}) {
     ordem:Number.isFinite(Number(body.ordem)) ? Number(body.ordem) : (nivelRaw ?? 0),
     ativo:body.ativo !== false,
     tropas, recursos, recompensas, recompensasStatus, tags, campo,
-    estrategia, guiasAtaque,
+    estrategia, guiasAtaque, grodz,
     i18n:body.i18n && typeof body.i18n === 'object' ? body.i18n : {},
     fonte:body.fonte && typeof body.fonte === 'object' ? {
       tipo:cleanString(body.fonte.tipo, 30) || 'manual',

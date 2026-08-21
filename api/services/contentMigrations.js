@@ -9,7 +9,7 @@ import { DICAS_SEED } from '../seeds/dicas.js';
 import { tacticalMetadata } from '../seeds/tropasTaticas.js';
 import { TROOP_COMBAT_EVIDENCE } from '../seeds/tropasCombate.js';
 import { ITEM_SCREENSHOT_CATALOG } from '../seeds/itensCatalogo.js';
-import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MORRO_SEED } from '../seeds/campanha.js';
+import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MORRO_SEED, GRODZ_SEED } from '../seeds/campanha.js';
 import { DRAGOES_SEED } from '../seeds/dragoes.js';
 import { mesclarSeed } from '../utils/seedMerge.js';
 
@@ -34,6 +34,9 @@ const CAMPANHA_ANTROPOS_RECOMMENDATIONS_264_KEY = 'content:campanha-antropos-rec
 const CAMPANHA_FIELDS_CAPTURE_SYNC_264_KEY = 'content:campanha-campos-captura:beta-2.64';
 const DRAGON_CAPTURE_SYNC_264_KEY = 'content:dragoes-obtencao-campos:beta-2.64';
 const TUTORIALS_264_KEY = 'content:dicas-antropos-captura:beta-2.64';
+const CAMPANHA_GRODZ_265_KEY = 'content:campanha-grodz:beta-2.65';
+const TUTORIAL_GRODZ_265_KEY = 'content:dicas-grodz:beta-2.65';
+const ITEM_DEVASTAR_265_KEY = 'content:item-pergaminho-devastar:beta-2.65';
 
 const INICIANTE_CATEGORY = {
   slug: 'iniciante',
@@ -916,6 +919,62 @@ async function migrarTutoriais264() {
   });
 }
 
+
+async function migrarCampanhaGrodz265() {
+  return executarMigracao264(CAMPANHA_GRODZ_265_KEY, 'campanhaGrodz265', async () => {
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const seed of GRODZ_SEED) {
+      const atual = await CampanhaLocal.findOne({ slug:seed.slug }).lean();
+      if (!atual) {
+        await CampanhaLocal.create(seed);
+        inseridas += 1;
+        continue;
+      }
+      await CampanhaLocal.updateOne(
+        { slug:seed.slug },
+        { $set:{
+          categoria:seed.categoria, nivel:seed.nivel, ordem:seed.ordem, nome:seed.nome, ativo:seed.ativo,
+          tropas:seed.tropas, recompensas:seed.recompensas || [], recompensasStatus:seed.recompensasStatus || 'pendente',
+          guiasAtaque:seed.guiasAtaque || [], grodz:seed.grodz || {}, fonte:seed.fonte, i18n:seed.i18n || {}, atualizadoEm:new Date(),
+        } },
+      );
+      atualizadas += 1;
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
+async function migrarTutorialGrodz265() {
+  return executarMigracao264(TUTORIAL_GRODZ_265_KEY, 'tutorialGrodz265', async () => {
+    const seed = DICAS_SEED.find(item => item.slug === 'tutorial-campanha-grodz');
+    if (!seed) throw new Error('Seed do tutorial Grodz não encontrada.');
+    const atual = await Dica.findOne({ slug:seed.slug }).lean();
+    if (!atual) { await Dica.create(seed); return { atualizadas:0, inseridas:1 }; }
+    await Dica.updateOne({ slug:seed.slug }, { $set:{
+      titulo:seed.titulo, resumo:seed.resumo, categoria:seed.categoria, tipo:seed.tipo, leituraMin:seed.leituraMin,
+      destaque:seed.destaque, ativo:seed.ativo, ordem:seed.ordem, relacionados:seed.relacionados,
+      conteudo:seed.conteudo, i18n:seed.i18n, atualizadoEm:new Date(),
+    } });
+    return { atualizadas:1, inseridas:0 };
+  });
+}
+
+async function migrarPergaminhoDevastar265() {
+  return executarMigracao264(ITEM_DEVASTAR_265_KEY, 'itemDevastar265', async () => {
+    const seed = ITEM_SCREENSHOT_CATALOG.find(item => item.slug === 'pergaminho-devastar');
+    if (!seed) throw new Error('Seed do Pergaminho Devastar não encontrada.');
+    const atual = await Item.findOne({ slug:seed.slug }).lean();
+    if (!atual) { await Item.create(seed); return { atualizadas:0, inseridas:1 }; }
+    await Item.updateOne({ slug:seed.slug }, { $set:{
+      nome:seed.nome, grupo:seed.grupo, categoria:seed.categoria, preco:seed.preco, ordem:seed.ordem,
+      descricao:seed.descricao, origem:seed.origem, uso:seed.uso, limites:seed.limites, tags:seed.tags || [],
+      i18n:seed.i18n || {}, atualizadoEm:new Date(),
+    } });
+    return { atualizadas:1, inseridas:0 };
+  });
+}
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
@@ -959,9 +1018,15 @@ export async function executarMigracoesConteudo() {
   if (!dragoes264.ok) return dragoes264;
   const tutoriais264 = await migrarTutoriais264();
   if (!tutoriais264.ok) return tutoriais264;
+  const grodz265 = await migrarCampanhaGrodz265();
+  if (!grodz265.ok) return grodz265;
+  const tutorialGrodz265 = await migrarTutorialGrodz265();
+  if (!tutorialGrodz265.ok) return tutorialGrodz265;
+  const itemDevastar265 = await migrarPergaminhoDevastar265();
+  if (!itemDevastar265.ok) return itemDevastar265;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz265.ignorada && tutorialGrodz265.ignorada && itemDevastar265.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
@@ -970,8 +1035,10 @@ export async function executarMigracoesConteudo() {
     itensInseridos:itensCatalogo.inseridas || 0,
     itensCompletados:itensCatalogo.completadas || 0,
     campanhaInseridas:(campanha.inseridas || 0) + (campos.inseridas || 0) + (lago.inseridas || 0) + (floresta.inseridas || 0) + (montanha.inseridas || 0) + (morro.inseridas || 0) + (savanaRecompensas.inseridas || 0),
-    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (lago.completadas || 0) + (floresta.completadas || 0) + (montanha.completadas || 0) + (morro.completadas || 0) + (savanaRecompensas.atualizadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (estrategiasPolidas.atualizadas || 0) + (recompensas.completadas || 0) + (antropos264.atualizadas || 0) + (campos264.atualizadas || 0),
+    campanhaCompletadas:(campanha.completadas || 0) + (campos.completadas || 0) + (lago.completadas || 0) + (floresta.completadas || 0) + (montanha.completadas || 0) + (morro.completadas || 0) + (savanaRecompensas.atualizadas || 0) + (estrategias.completadas || 0) + (estrategiasConfirmadas.atualizadas || 0) + (estrategiasPolidas.atualizadas || 0) + (recompensas.completadas || 0) + (antropos264.atualizadas || 0) + (campos264.atualizadas || 0) + (grodz265.atualizadas || 0),
     dragoesCapturaAtualizados:(dragoes264.atualizadas || 0) + (dragoes264.inseridas || 0),
-    tutoriaisAtualizados:(tutoriais264.atualizadas || 0) + (tutoriais264.inseridas || 0),
+    tutoriaisAtualizados:(tutoriais264.atualizadas || 0) + (tutoriais264.inseridas || 0) + (tutorialGrodz265.atualizadas || 0) + (tutorialGrodz265.inseridas || 0),
+    grodzInseridos:grodz265.inseridas || 0,
+    itemDevastarAtualizado:(itemDevastar265.atualizadas || 0) + (itemDevastar265.inseridas || 0),
   };
 }

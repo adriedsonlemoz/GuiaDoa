@@ -16,7 +16,7 @@ test('Home organiza módulos em grupos lógicos e mantém Sobre por último', ()
   assert.equal((tools.match(/id: /g) || []).length, expected.length);
 });
 
-test('Sobre usa histórico recolhível e a nova chave PIX', () => {
+test('Sobre mantém atualização recolhível, mostra só as cinco novidades atuais e preserva a chave PIX', () => {
   const about = read('src/components/Sobre.jsx');
   const css = read('src/index.css');
   assert.match(about, /<details/);
@@ -25,7 +25,8 @@ test('Sobre usa histórico recolhível e a nova chave PIX', () => {
   assert.match(css, /about-changelog-entry\[open\]/);
   assert.match(about, /adriedson@outlook\.com/);
   assert.doesNotMatch(about, /37991260524/);
-  assert.match(about, /history\.2_48/);
+  assert.match(about, /key: 'latest'.*count: 5/);
+  assert.doesNotMatch(about, /history\.2_48/);
 });
 
 test('Login Admin é um formulário compatível com autocomplete e lembra apenas o usuário', () => {

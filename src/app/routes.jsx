@@ -92,7 +92,7 @@ export function renderRoute(route, setRoute) {
     case 'pesquisas': return <Pesquisas setRoute={setRoute} />;
     case 'dicas': return <Dicas setRoute={setRoute} />;
     case 'pocoes_antigas': return <TorneioPocoes />;
-    case 'campanha': return <CampanhaMapa />;
+    case 'campanha': return <CampanhaMapa setRoute={setRoute} />;
     default:
       if (route.startsWith('pesquisa_')) {
         return <PesquisaDetalhe slug={route.replace('pesquisa_', '')} />;

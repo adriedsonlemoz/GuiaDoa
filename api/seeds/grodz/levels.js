@@ -27,10 +27,10 @@ const zeroLossGuide = (nivel) => ({
   observacoes:'Configuração prática testada pelo GUIA como suficiente do nível 1 ao 9 sem perdas. Partes de armadura podem se repetir entre os ataques.',
   fonte:{ tipo:'guia', descricao:'Configuração prática testada no GUIA para Campanha/Grodz.' },
   i18n:{ 'en-US':{
-    titulo:'Magmassaurs / Lava Jaws',
+    titulo:'Lava Jaws / Lava Jaws',
     resumo:'GUIA primary recommendation for this Campaign level.',
-    tropaPrincipal:'Magmassaurs',
-    passos:['Select the dragon whose armor you want before attacking.','Send 1,000 Magmassaurs as the main offensive troop.'],
+    tropaPrincipal:'Lava Jaws',
+    passos:['Select the dragon whose armor you want before attacking.','Send 1,000 Lava Jaws as the main offensive troop.'],
     observacoes:'This practical GUIA setup has been tested as sufficient for levels 1–9 with zero losses. Armor parts may repeat across attacks.',
   } },
 });
@@ -45,10 +45,10 @@ const level10Guides = [{
   observacoes:'O nível 10 representa o próprio Grodz por uma barra de vida e não possui uma composição de tropas conhecida. Perdas fazem parte deste combate; tropas elegíveis podem ser recuperadas nas Fontes de Recuperação conforme as regras do jogo.',
   fonte:{ tipo:'guia', descricao:'Marcha prática recomendada pelo GUIA; comportamento do nível 10 cruzado com documentação da comunidade.' },
   i18n:{ 'en-US':{
-    titulo:'5,000 Magmassaurs + 5,000 Granite Ogres',
+    titulo:'5,000 Lava Jaws + 5,000 Granite Ogres',
     resumo:'GUIA primary recommended march for Grodz at level 10. Losses are expected.',
-    tropaPrincipal:'Magmassaurs',
-    passos:['Send 5,000 Magmassaurs together with 5,000 Granite Ogres.','If you want armor for a specific dragon, select that dragon before attacking.','If no dragon is selected, the armor reward is random among dragons you own.'],
+    tropaPrincipal:'Lava Jaws',
+    passos:['Send 5,000 Lava Jaws together with 5,000 Granite Ogres.','If you want armor for a specific dragon, select that dragon before attacking.','If no dragon is selected, the armor reward is random among dragons you own.'],
     observacoes:'Level 10 represents Grodz himself with a health bar and has no known troop composition. Losses are part of this fight; eligible troops can be recovered through Recovery Pools according to game rules.',
   } },
 }];
@@ -65,7 +65,7 @@ export const GRODZ_SEED = [
   {
     slug:'grodz-1', categoria:'grodz', nivel:1, ordem:1, nome:'Campo de Grodz — Nv. 1', ativo:true,
     tropas:[t('Carregadores',5,'Porters','carregadores')], guiasAtaque:[zeroLossGuide(1)],
-    grodz:{ inimigoNome:'Campo de Grodz (Nv. 1)', inimigoTipo:'tropas', composicaoStatus:'confirmado', recomendacaoJogo:official(t('Milicianos',5,'Militiamen','milicianos')), dialogos:[
+    grodz:{ inimigoNome:'Campo de Grodz (Nv. 1)', inimigoTipo:'tropas', composicaoStatus:'confirmado', recomendacaoJogo:official(t('Milicianos',5,'Conscripts','milicianos')), dialogos:[
       d(1,'Grodz','Esta terra é dos Antropos agora! Você entra, você morre!','This land belongs to the Anthropus now! You enter, you die!'),
       d(2,'Allecto','Ele ousa nos ameaçar? Este selvagem precisa aprender uma lição!','He dares threaten us? This savage needs to be taught a lesson!'),
       d(3,'Comandante','Calma, Allecto. Mas ela está certa. Os Antropos são muitos e, se este Grodz conseguir reuni-los, eles poderão acabar com todos os povos de Atlantis. O conhecimento dos Antigos será para sempre perdido.','Easy, Allecto. But she is right. The Anthropus are many, and if this Grodz can unite them, they could destroy every people of Atlantis. The knowledge of the Ancients would be lost forever.'),
@@ -73,8 +73,8 @@ export const GRODZ_SEED = [
   },
   {
     slug:'grodz-2', categoria:'grodz', nivel:2, ordem:2, nome:'Campo de Grodz — Nv. 2', ativo:true,
-    tropas:[t('Milicianos',25,'Militiamen','milicianos')], guiasAtaque:[zeroLossGuide(2)],
-    grodz:{ inimigoNome:'Campo de Grodz (Nv. 2)', inimigoTipo:'tropas', composicaoStatus:'confirmado', recomendacaoJogo:official(t('Milicianos',40,'Militiamen','milicianos')), dialogos:[
+    tropas:[t('Milicianos',25,'Conscripts','milicianos')], guiasAtaque:[zeroLossGuide(2)],
+    grodz:{ inimigoNome:'Campo de Grodz (Nv. 2)', inimigoTipo:'tropas', composicaoStatus:'confirmado', recomendacaoJogo:official(t('Milicianos',40,'Conscripts','milicianos')), dialogos:[
       d(1,'Grodz','Ah! Você mata pequeno campo, pensa que é tão grande! Grodz não morre fácil. Grodz é chefe de Atlantis agora - não escravo!','Ah! You kill small camp, think you are so great! Grodz does not die easily. Grodz is ruler of Atlantis now — not slave!'),
       d(2,'Comandante','Escravo? O que ele quer dizer?','Slave? What does he mean?'),
       d(3,'Daedalus','Segundo minhas pesquisas, os Antigos criaram os Antropos para serem seus trabalhadores. Quando os Antigos desapareceram, os Antropos se rebelaram. Eles se veem como os legítimos soberanos de Atlantis.','According to my research, the Ancients created the Anthropus to be their workers. When the Ancients disappeared, the Anthropus rebelled. They see themselves as the rightful rulers of Atlantis.'),
@@ -82,7 +82,7 @@ export const GRODZ_SEED = [
   },
   {
     slug:'grodz-3', categoria:'grodz', nivel:3, ordem:3, nome:'Campo de Grodz — Nv. 3', ativo:true,
-    tropas:[t('Carregadores',1000,'Porters','carregadores'),t('Milicianos',400,'Militiamen','milicianos')], guiasAtaque:[zeroLossGuide(3)],
+    tropas:[t('Carregadores',1000,'Porters','carregadores'),t('Milicianos',400,'Conscripts','milicianos')], guiasAtaque:[zeroLossGuide(3)],
     grodz:{ inimigoNome:'Campo de Grodz (Nv. 3)', inimigoTipo:'tropas', composicaoStatus:'confirmado', recomendacaoJogo:official(t('Alabardeiros',300,'Halberdiers','alabardeiros')), dialogos:[
       d(1,'Grodz','Povo novo, fraco como os outros! Grodz come seu coração, joga seus ossos para os filhotes mastigarem!','New people, weak like the others! Grodz eats your heart, throws your bones to the young ones to chew!'),
       d(2,'Comandante','Outros? Daedalus, de quem ele está falando?','Others? Daedalus, who is he talking about?'),

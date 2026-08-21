@@ -100,7 +100,7 @@ test('tutorial e Ticket de Campanha de Devastar usam a mesma mecânica e imagem 
   assert.match(tip.conteudo, /5\.000 Magmassauros[\s\S]*5\.000 Ogros de Granito/);
   assert.match(tip.conteudo, /sem tropas definidas/i);
   assert.match(tip.conteudo, /não selecionar nenhum dragão[\s\S]*aleatória/i);
-  assert.match(tip.i18n['en-US'].conteudo, /1,000 Magmassaurs/);
+  assert.match(tip.i18n['en-US'].conteudo, /1,000 Lava Jaws/);
   assert.equal(ticket.nome, 'Ticket de Campanha de Devastar');
   assert.equal(ticket.i18n['en-US'].nome, 'Devastate Campaign Ticket');
   assert.match(ticket.origem, /6 horas/);

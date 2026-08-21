@@ -26,6 +26,8 @@ const DragaoSchema = new mongoose.Schema({
   // Identidade (espelhada do frontend para facilitar a busca)
   slug:          { type: String, required: true, unique: true, trim: true },
   nome:          { type: String, required: true, trim: true },
+  ordem:         { type: Number, default: 999, index: true },
+  aliases:       { type: [String], default: [] },
   elemento:      { type: String, default: '' },
   emoji:         { type: String, default: '🔥' },
   emojiDragao:   { type: String, default: '🐉' },

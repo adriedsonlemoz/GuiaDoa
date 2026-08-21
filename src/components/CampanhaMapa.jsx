@@ -332,6 +332,7 @@ function RewardsBlock({ rewards, t, locale, confirmedEmpty = false, defaultOpen 
                 <div>
                   <strong>{name || t('campaign.reward_unknown')}</strong>
                   {!reward.nomeConfirmado && <small>{t('campaign.reward_name_pending')}</small>}
+                  {reward.xpDragao != null && <small style={{ color:'#2f675e', fontWeight:800 }}>🐉 +{Number(reward.xpDragao).toLocaleString(locale)} {t('campaign.dragon_xp')}</small>}
                 </div>
               </div>
             );

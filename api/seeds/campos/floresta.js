@@ -11,7 +11,7 @@ export const FLORESTA_REWARDS = Object.freeze({
     finalidade:'obtencao-dragao',
     relacionadoA:'dragao-beladona',
     tags:['dragao','obtencao','beladona'],
-    i18n:{ 'en-US': { nome:'Belladonna Dragon Emblem' } },
+    i18n:{ 'en-US': { nome:'Nightshade Dragon Emblem' } },
   }),
   EMBLEMA_TOXICO:createFieldReward({
     codigo:'emblema-dragao-toxico',
@@ -31,7 +31,7 @@ export const FLORESTA_REWARDS = Object.freeze({
     finalidade:'obtencao-dragao',
     relacionadoA:'dragao-fada',
     tags:['dragao','obtencao','fada'],
-    i18n:{ 'en-US': { nome:'Fairy Dragon Emblem' } },
+    i18n:{ 'en-US': { nome:'Faerie Dragon Emblem' } },
   }),
   ESSENCIA_FURIA:createFieldReward({
     codigo:'essencia-furia',

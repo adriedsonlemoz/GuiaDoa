@@ -52,7 +52,7 @@ async function corrigirCatalogoDragoesLegado() {
   const grande = await Dragao.findOne({ slug:'grande_dragao' });
   if (grande && Array.isArray(grande.habilidades) && grande.habilidades.some(h => h?.nivelAtual || h?.nivelMax || h?.xpConhecida)) {
     grande.habilidades = grandeSeed?.habilidades || [];
-    grande.itensAlimentacao = [];
+    grande.itensAlimentacao = grandeSeed?.itensAlimentacao || [];
     await grande.save();
   }
 

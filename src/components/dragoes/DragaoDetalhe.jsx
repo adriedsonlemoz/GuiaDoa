@@ -71,12 +71,18 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
   const habilidades = Array.isArray(dragao.habilidades) ? dragao.habilidades : [];
   const batalha = habilidades.filter(h => h.tipo !== 'comum');
   const comuns = habilidades.filter(h => h.tipo === 'comum');
+  const alimentos = Array.isArray(dragao.itensAlimentacao) ? dragao.itensAlimentacao : [];
   const obt = dragao.obtencao || {};
   const obtLocale = locale !== 'pt-BR' ? obt?.i18n?.[locale] || {} : {};
   const obtResumo = obtLocale.resumo || obt.resumo || '';
   const captura = obt.captura || null;
   const captureItemName = captura ? ((locale !== 'pt-BR' ? captura.item?.i18n?.[locale]?.nome : '') || captura.item?.nome || '') : '';
   const captureFieldName = captura ? ((locale !== 'pt-BR' ? captura.campo?.i18n?.[locale]?.nome : '') || captura.campo?.nome || '') : '';
+
+  const abrirSavana = () => {
+    try { sessionStorage.setItem('guiadoa_open_field', 'savana'); } catch { /* navigation still works */ }
+    setRoute?.('campanha');
+  };
 
   const abrirTutorialCaptura = () => {
     try { sessionStorage.setItem('guiadoa_open_tip', 'tutorial-capturar-dragoes'); } catch { /* navigation still works */ }
@@ -110,6 +116,7 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
       <GameTabs tabs={[
         { id:'atributos', label:t('dragons.attributes_tab') },
         { id:'habilidades', label:t('dragons.skills') },
+        { id:'evoluir', label:t('dragons.level_up_tab') },
         { id:'obtencao', label:t('dragons.how_to_get') },
       ]} value={aba} onChange={setAba} />
 
@@ -133,6 +140,36 @@ const DragaoDetalhe = ({ dragaoId, setRoute }) => {
           </section>
           {comuns.length ? <section className="game-panel"><GameSectionTitle>{t('dragons.common_skills')}</GameSectionTitle>{comuns.map(h => <button type="button" key={h.id || h.nome} className="game-list-row" onClick={()=>setSkill(h)} style={{ width:'100%', textAlign:'left', borderLeft:0, borderRight:0, borderTop:0, background:'transparent' }}><div className="game-thumb" style={{ display:'grid', placeItems:'center' }}>◇</div><div style={{ flex:1 }}><div className="game-list-name">{h.nome}</div><div className="game-list-copy">{h.descricao || t('dragons.skill_pending')}</div></div><strong>›</strong></button>)}</section> : null}
         </div>
+      )}
+
+      {aba === 'evoluir' && (
+        <section className="game-panel" style={{ marginTop:8 }}>
+          <GameSectionTitle>{t('dragons.level_up_title')}</GameSectionTitle>
+          <div style={{ padding:14 }}>
+            <p style={{ margin:'0 0 12px', lineHeight:1.55, color:'#574f40' }}>{t('dragons.level_up_help')}</p>
+            <div style={{ display:'grid', gap:8 }}>
+              {alimentos.map(food => {
+                const localized = locale !== 'pt-BR' ? food?.i18n?.[locale] || {} : {};
+                const foodName = localized.nome || food.nome || '';
+                const foodDesc = localized.descricao || food.descricao || '';
+                return (
+                  <div className="game-list-row" key={food.id || foodName} style={{ border:'1px solid #c7af78', borderRadius:7, background:'rgba(255,250,232,.72)' }}>
+                    <div className="game-thumb" style={{ display:'grid', placeItems:'center', overflow:'hidden' }}>
+                      {food.imagem ? <img src={food.imagem} alt={foodName} style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : '🍖'}
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div className="game-list-name">{foodName}</div>
+                      <div className="game-list-copy">{foodDesc}</div>
+                    </div>
+                    <strong style={{ color:'#2f675e', whiteSpace:'nowrap' }}>+{Number(food.xp || 0).toLocaleString(locale)} XP</strong>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="game-list-copy" style={{ marginTop:12 }}>{t('dragons.level_xp_pending')}</p>
+            {setRoute ? <button type="button" className="game-action-button" style={{ marginTop:10, width:'100%' }} onClick={abrirSavana}>🗺️ {t('dragons.open_savanna')}</button> : null}
+          </div>
+        </section>
       )}
 
       {aba === 'obtencao' && (

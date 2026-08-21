@@ -14,8 +14,8 @@ export const buildContext = async (locale = 'pt-BR') => {
       ? [...tropas].sort((a, b) => (b.poder || 0) - (a.poder || 0)).map((t, i) => {
           const nome = localizedValue(t, 'nome', locale);
           const desc = localizedValue(t, 'desc', locale);
-          const combate = t.combate === 'distancia' ? 'Distância' : 'Corpo a Corpo';
-          const flags   = [t.rapida && 'Rápida', t.tipo === 'especial' && 'Especial'].filter(Boolean).join(' · ');
+          const combate = t.combate === 'distancia' ? (locale === 'en-US' ? 'Ranged' : 'Distância') : (locale === 'en-US' ? 'Melee' : 'Corpo a Corpo');
+          const flags   = [t.rapida && (locale === 'en-US' ? 'Fast' : 'Rápida'), t.tipo === 'especial' && (locale === 'en-US' ? 'Special' : 'Especial')].filter(Boolean).join(' · ');
           return (
             `${i + 1}. **${nome}** [${combate}${flags ? ' · ' + flags : ''}]\n` +
             `   Poder:${t.poder ?? 0} | Vida:${t.vida ?? 0} | Def:${t.def ?? 0} | ` +
@@ -89,10 +89,15 @@ export const buildContext = async (locale = 'pt-BR') => {
                 ` | AtqDist:${n.ataqueDistante ?? 0} | Elemental:${n.ataqueElemental ?? 0}`
               ).join('\n')
             : '';
+          const alimentos = (d.itensAlimentacao || []).map(food => {
+            const nomeComida = localizedValue(food, 'nome', locale);
+            return `${nomeComida}: ${food.xp || 0} XP`;
+          }).join(' · ');
           return (
             `• **${nome}**` +
             (elemento ? ` [${elemento}]` : '') +
             (raridade ? ` — ${raridade}` : '') +
+            (alimentos ? `\n  ${locale === 'en-US' ? 'Feeding' : 'Alimentação'}: ${alimentos}` : '') +
             tabelaNiveis
           );
         }).join('\n\n')

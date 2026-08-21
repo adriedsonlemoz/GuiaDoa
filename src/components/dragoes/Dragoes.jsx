@@ -14,7 +14,7 @@ const Dragoes = ({ setRoute }) => {
   const [aba, setAba] = useState('lista');
   const filtrados = useMemo(() => {
     const term = busca.trim().toLowerCase();
-    return dragoes.filter(d => !term || content(d,'nome')?.toLowerCase().includes(term) || content(d,'elemento')?.toLowerCase().includes(term));
+    return dragoes.filter(d => !term || content(d,'nome')?.toLowerCase().includes(term) || content(d,'elemento')?.toLowerCase().includes(term) || (d.aliases || []).some(alias => String(alias).toLowerCase().includes(term)));
   }, [dragoes,busca,content]);
   const toggleComparar = id => setComparando(current => current.includes(id) ? current.filter(v => v !== id) : current.length >= 2 ? current : [...current,id]);
   return (

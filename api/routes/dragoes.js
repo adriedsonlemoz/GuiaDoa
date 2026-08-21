@@ -75,7 +75,7 @@ function sanitizeHabilidade(input) {
 // ── GET público ──────────────────────────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
-    const lista = await Dragao.find().sort({ nome: 1 });
+    const lista = await Dragao.find().sort({ ordem: 1, nome: 1 });
     res.json({ dragoes: lista, total: lista.length });
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
@@ -90,11 +90,11 @@ router.get('/:slug', async (req, res) => {
 
 // ── Metadados / obtenção ─────────────────────────────────────────────────────
 router.post('/', autenticar, async (req, res) => {
-  const { slug, nome, elemento, emoji, emojiDragao, imagem, cor, raridade, bonusMarcha, atributo, descricao, obtencao, i18n } = req.body;
+  const { slug, nome, ordem, aliases, elemento, emoji, emojiDragao, imagem, cor, raridade, bonusMarcha, atributo, descricao, obtencao, i18n } = req.body;
   if (!str(slug) || !str(nome)) return res.status(400).json({ erro: 'Slug e nome são obrigatórios.' });
   try {
     const d = await Dragao.create({
-      slug:str(slug), nome:str(nome), elemento:str(elemento), emoji:str(emoji), emojiDragao:str(emojiDragao), imagem:str(imagem),
+      slug:str(slug), nome:str(nome), ordem:numOrNull(ordem) ?? 999, aliases:Array.isArray(aliases) ? aliases.map(str).filter(Boolean) : [], elemento:str(elemento), emoji:str(emoji), emojiDragao:str(emojiDragao), imagem:str(imagem),
       cor, raridade:str(raridade), bonusMarcha:str(bonusMarcha), atributo:str(atributo), descricao:str(descricao),
       obtencao:sanitizeObtencao(obtencao), i18n:sanitizeContentI18n(i18n, I18N_FIELDS), niveis:[], habilidades:[],
     });
@@ -106,11 +106,11 @@ router.post('/', autenticar, async (req, res) => {
 });
 
 router.put('/:slug/meta', autenticar, async (req, res) => {
-  const { nome, elemento, emoji, emojiDragao, imagem, cor, raridade, bonusMarcha, atributo, descricao, obtencao, i18n } = req.body;
+  const { nome, ordem, aliases, elemento, emoji, emojiDragao, imagem, cor, raridade, bonusMarcha, atributo, descricao, obtencao, i18n } = req.body;
   try {
     const d = await Dragao.findOneAndUpdate(
       { slug:req.params.slug },
-      { nome:str(nome), elemento:str(elemento), emoji:str(emoji), emojiDragao:str(emojiDragao), imagem:str(imagem), cor,
+      { nome:str(nome), ordem:numOrNull(ordem) ?? 999, aliases:Array.isArray(aliases) ? aliases.map(str).filter(Boolean) : [], elemento:str(elemento), emoji:str(emoji), emojiDragao:str(emojiDragao), imagem:str(imagem), cor,
         raridade:str(raridade), bonusMarcha:str(bonusMarcha), atributo:str(atributo), descricao:str(descricao),
         obtencao:sanitizeObtencao(obtencao), i18n:sanitizeContentI18n(i18n, I18N_FIELDS), atualizadoEm:new Date() },
       { new:true },

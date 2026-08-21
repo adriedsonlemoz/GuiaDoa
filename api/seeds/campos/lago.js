@@ -21,7 +21,7 @@ export const LAGO_REWARDS = Object.freeze({
     finalidade:'obtencao-dragao',
     relacionadoA:'dragao-gelo',
     tags:['dragao','obtencao','gelo'],
-    i18n:{ 'en-US': { nome:'Ice Dragon Emblem' } },
+    i18n:{ 'en-US': { nome:'Frost Dragon Emblem' } },
   }),
   EMBLEMA_PARADISIACO:createFieldReward({
     codigo:'emblema-dragao-paradisiaco',

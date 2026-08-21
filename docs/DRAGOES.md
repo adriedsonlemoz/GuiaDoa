@@ -19,3 +19,11 @@ Cada habilidade guarda apenas `id`, `nome`, `tipo`, `imagem` opcional e `descric
 ## Como obter
 
 `obtencao` é estruturado para permitir ligação futura com Campos/Anthropus. O Dragão Beladona já referencia Campo de Floresta Nv.6–10. Dragões sem origem confirmada permanecem como captura pendente, sem dados inventados.
+
+## Catálogo confirmado — Beta 2.68
+
+A ordem pública passa a ser fixa: Grande Dragão, Água, Fogo, Terra, Beladona, Tóxico, Espinha Negra e depois os demais. Grande Dragão e Dragão da Água possuem snapshots confirmados do Nv.1 ao Nv.30; o Grande Dragão mantém também o Nv.51 elemental. O guia não estima XP necessário entre níveis sem evidência.
+
+A alimentação usa dados confirmados do jogo: Carneiro/Mutton +100 XP, Bovina/Beef +200 XP, Frango/Chicken +500 XP e Veado/Venison +1.000 XP. Os três primeiros são ligados à Savana quando aparecem como recompensa.
+
+Os nomes oficiais ingleses também viraram aliases de busca. Exemplos corrigidos: Nightshade Dragon, Frost Dragon, Blackspine Dragon e Faerie Dragon.

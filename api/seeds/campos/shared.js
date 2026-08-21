@@ -42,6 +42,7 @@ export const createFieldReward = ({
   relacionadoA = '',
   tags = [],
   i18n = {},
+  xpDragao = null,
 }) => ({
   codigo,
   simbolo,
@@ -55,6 +56,7 @@ export const createFieldReward = ({
   relacionadoA,
   tags,
   i18n,
+  xpDragao,
 });
 
 const cloneTroops = tropas => tropas.map(item => ({ ...item }));

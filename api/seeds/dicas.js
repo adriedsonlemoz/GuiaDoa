@@ -515,7 +515,7 @@ Armor parts remain random and may repeat. Multiple attacks do not guarantee a di
 
 🔥 GUIA main recommendation — Lv.1–9
 
-Use ${fmtGuideNumber(GRODZ_MECHANICS.tropaPrincipal.quantidade, 'en-US')} Magmassaurs (Lava Jaws).
+Use ${fmtGuideNumber(GRODZ_MECHANICS.tropaPrincipal.quantidade, 'en-US')} Lava Jaws (Lava Jaws).
 
 This setup has been tested by GUIA and is the main recommendation for clearing levels 1 through ${GRODZ_MECHANICS.tropaPrincipal.nivelMaxSemPerdas} with zero losses.
 
@@ -529,7 +529,7 @@ Lv.10 has no known enemy troop count. Grodz is represented by a health bar rathe
 
 GUIA recommendation:
 
-- ${fmtGuideNumber(GRODZ_MECHANICS.nivel10.magmassauros, 'en-US')} Magmassaurs
+- ${fmtGuideNumber(GRODZ_MECHANICS.nivel10.magmassauros, 'en-US')} Lava Jaws
 - ${fmtGuideNumber(GRODZ_MECHANICS.nivel10.ogrosGranito, 'en-US')} Granite Ogres
 
 Send both troop types together in the same march.
@@ -565,7 +565,7 @@ The item used by Devastate is the **Devastate Campaign Ticket**.
 
 Defeating Grodz at the final level can grant a dragon armor part. Parts are random and may repeat.
 
-GUIA also keeps armor, dragons, Magmassaurs, Granite Ogres, and the Devastate Campaign Ticket connected so future corrections are maintained from a single source.`;
+GUIA also keeps armor, dragons, Lava Jaws, Granite Ogres, and the Devastate Campaign Ticket connected so future corrections are maintained from a single source.`;
 
 export const DICAS_SEED = [
   {
@@ -888,7 +888,7 @@ This is only an example. Players focused on heavy training can reverse the prior
 
 Capture and develop your dragons gradually. There is no need to obtain everything during the first days.
 
-Higher-level Fields are important for emblems, items, and progression. The current GUIA catalog confirms, for example, Belladonna Dragon Emblems in Forest Fields from Lv.{{beladona_min}} to Lv.{{beladona_max}}.
+Higher-level Fields are important for emblems, items, and progression. The current GUIA catalog confirms, for example, Nightshade Dragon Emblems in Forest Fields from Lv.{{beladona_min}} to Lv.{{beladona_max}}.
 
 Always check each dragon's page: not every dragon has the same acquisition method.
 

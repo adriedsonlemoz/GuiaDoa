@@ -51,7 +51,7 @@ export const TROOP_COMBAT_EVIDENCE = [
       confiancaCampos: { observacoesEstrategicas:'experimental', prioridadeAlvo:'hipotese' },
     },
     i18n: { 'en-US': {
-      combateObservacoesEstrategicas: 'Results vary widely: reports include 1,200/1,200 and 1,614/1,614 survivors, but another battle sent 1,800 and only 192 survived. There is no basis for a rule claiming Magmassaurs are ignored by the enemy.',
+      combateObservacoesEstrategicas: 'Results vary widely: reports include 1,200/1,200 and 1,614/1,614 survivors, but another battle sent 1,800 and only 192 survived. There is no basis for a rule claiming Lava Jaws are ignored by the enemy.',
       combateFonteInformacao: 'Battle reports and experimental observations from the GUIA DOA project (August 2026).',
     } },
   },

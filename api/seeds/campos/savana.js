@@ -17,18 +17,18 @@ const SAVANA_REWARDS = Object.freeze({
   }),
   CARNEIRO:createFieldReward({
     codigo:'savana-r2', simbolo:'R2', nome:'Pedaço de carne carneiro', imagem:'/assets/items/fields/savanna/pedaco-carne-carneiro.webp', quantidade:1, nomeConfirmado:true,
-    categoria:'item', finalidade:'treinamento-dragao', tags:['campo','savana','carne','treinamento-dragao'],
-    i18n:{ 'en-US': { nome:'Piece of ram meat' } },
+    categoria:'item', finalidade:'treinamento-dragao', xpDragao:100, observacao:'Concede 100 XP ao alimentar um dragão.', tags:['campo','savana','carne','treinamento-dragao'],
+    i18n:{ 'en-US': { nome:'Mutton', observacao:'Grants 100 XP when fed to a dragon.' } },
   }),
   BOVINA:createFieldReward({
     codigo:'savana-r3', simbolo:'R3', nome:'Pedaço de carne bovina', imagem:'/assets/items/fields/savanna/pedaco-carne-bovina.webp', quantidade:1, nomeConfirmado:true,
-    categoria:'item', finalidade:'treinamento-dragao', tags:['campo','savana','carne','treinamento-dragao'],
-    i18n:{ 'en-US': { nome:'Piece of beef' } },
+    categoria:'item', finalidade:'treinamento-dragao', xpDragao:200, observacao:'Concede 200 XP ao alimentar um dragão.', tags:['campo','savana','carne','treinamento-dragao'],
+    i18n:{ 'en-US': { nome:'Beef', observacao:'Grants 200 XP when fed to a dragon.' } },
   }),
   FRANGO:createFieldReward({
     codigo:'savana-r4', simbolo:'R4', nome:'Pedaço de Frango', imagem:'/assets/items/fields/savanna/pedaco-frango.webp', quantidade:1, nomeConfirmado:true,
-    categoria:'item', finalidade:'treinamento-dragao', tags:['campo','savana','carne','treinamento-dragao'],
-    i18n:{ 'en-US': { nome:'Piece of chicken' } },
+    categoria:'item', finalidade:'treinamento-dragao', xpDragao:500, observacao:'Concede 500 XP ao alimentar um dragão.', tags:['campo','savana','carne','treinamento-dragao'],
+    i18n:{ 'en-US': { nome:'Chicken', observacao:'Grants 500 XP when fed to a dragon.' } },
   }),
 });
 

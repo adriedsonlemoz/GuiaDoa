@@ -97,3 +97,7 @@ A Enciclopédia pública não depende mais apenas de `perfilCombate.funcoesTatic
 O usuário também pode ordenar a lista por nome, vida, defesa, velocidade, carga, ataque à distância, ataque corpo a corpo, alcance, poder e **equilíbrio**. O equilíbrio é um índice apenas de ordenação do GUIA: utiliza percentis de vida, defesa, melhor ataque e velocidade, evitando comparar diretamente escalas numéricas diferentes. Não é uma estatística oficial do jogo.
 
 A lista e o detalhe destacam os atributos em que a tropa melhor se posiciona em relação às demais unidades cadastradas. Nenhum valor novo é criado; o destaque usa somente os números já presentes no catálogo online.
+
+## Inglês oficial — Beta 2.68
+
+As 53 tropas do catálogo agora têm `i18n.en-US.nome` e `i18n.en-US.desc` transcritos das telas em inglês fornecidas ao projeto. O nome inglês oficial também entra em `aliases`, permitindo buscas e integrações sem depender de tradução literal. Exemplos: Milicianos → Conscripts, Arqueiros → Longbowmen e Magmassauros → Lava Jaws.

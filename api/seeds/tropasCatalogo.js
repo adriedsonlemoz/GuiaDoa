@@ -1,3 +1,4 @@
+import { getTroopEnglish } from './tropasI18n.js';
 function slugify(texto) {
   return String(texto || '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -156,30 +157,21 @@ export const TROPA_EXTRA_SEEDS = [{
 
 export function enriquecerTropa(tropa) {
   const training = TROOP_TRAINING[tropa.nome];
-  const aliases = [...new Set([...(ALIASES[tropa.nome] || []), ...(training?.aliases || [])])];
+  const english = getTroopEnglish(tropa.nome);
+  const aliases = [...new Set([...(ALIASES[tropa.nome] || []), ...(training?.aliases || []), ...(english?.nome ? [english.nome] : [])])];
   const slug = slugify(tropa.nome);
   const imagem = PORTRAIT_NAMES.has(tropa.nome) ? `/assets/troops/${slug}.webp` : (tropa.imagem || '');
+  const i18n = english ? { ...(tropa.i18n || {}), 'en-US': { ...(tropa.i18n?.['en-US'] || {}), nome:english.nome, desc:english.desc } } : (tropa.i18n || {});
+  const base = { ...tropa, slug, i18n, ...(aliases.length ? { aliases } : {}), ...(imagem ? { imagem } : {}) };
 
   if (tropa.tipo === 'especial') {
-    return {
-      ...tropa,
-      slug,
-      ...(aliases.length ? { aliases } : {}),
-      ...(imagem ? { imagem } : {}),
-      treinamento:{ disponivel:false, obtencao:'evento', dadosCompletos:true, custos:[], requisitos:[], populacao:0 },
-    };
+    return { ...base, treinamento:{ disponivel:false, obtencao:'evento', dadosCompletos:true, custos:[], requisitos:[], populacao:0 } };
   }
-
-  if (!training) {
-    return { ...tropa, slug, ...(aliases.length ? { aliases } : {}), ...(imagem ? { imagem } : {}) };
-  }
+  if (!training) return base;
 
   const { aliases:_ignored, dadosCompletos = true, ...trainingData } = training;
   return {
-    ...tropa,
-    slug,
-    ...(aliases.length ? { aliases } : {}),
-    ...(imagem ? { imagem } : {}),
+    ...base,
     treinamento:{ disponivel:true, obtencao:'treino', dadosCompletos, custos:[], requisitos:[], populacao:0, ...trainingData },
   };
 }

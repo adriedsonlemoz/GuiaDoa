@@ -13,9 +13,9 @@ test('catálogo progressivo possui 14 dragões e retratos extraídos das captura
   for (const d of DRAGOES_SEED) assert.ok(existsSync(new URL(`../public${d.imagem}`, import.meta.url)), d.nome);
 });
 
-test('Grande Dragão registra somente snapshots confirmados e elementais do Nv.51', () => {
+test('Grande Dragão registra níveis confirmados 1–30 e elementais do Nv.51', () => {
   const d = DRAGOES_SEED.find(x => x.id === 'grande_dragao');
-  assert.deepEqual(d.niveis.map(n => n.nivel), [1, 51]);
+  assert.deepEqual(d.niveis.map(n => n.nivel), [...Array.from({ length:30 }, (_,i)=>i+1), 51]);
   const n51 = d.niveis.find(n => n.nivel === 51);
   assert.equal(n51.vida, 20459996);
   assert.equal(n51.ataqueElemental, 569625);

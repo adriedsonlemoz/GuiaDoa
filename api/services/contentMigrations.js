@@ -12,6 +12,7 @@ import { TROOP_COMBAT_EVIDENCE } from '../seeds/tropasCombate.js';
 import { ITEM_SCREENSHOT_CATALOG } from '../seeds/itensCatalogo.js';
 import { ANTROPOS_SEED, SAVANA_SEED, LAGO_SEED, FLORESTA_SEED, MONTANHA_SEED, MORRO_SEED, GRODZ_SEED } from '../seeds/campanha.js';
 import { DRAGOES_SEED } from '../seeds/dragoes.js';
+import { TODAS_TROPAS } from '../seeds/core.js';
 import { EDIFICIOS_ESPECIAIS } from '../seeds/edificiosEspeciais.js';
 import { mesclarSeed } from '../utils/seedMerge.js';
 
@@ -40,6 +41,11 @@ const CAMPANHA_GRODZ_266_KEY = 'content:campanha-grodz:beta-2.66';
 const TUTORIAL_GRODZ_266_KEY = 'content:dicas-grodz:beta-2.66';
 const ITEM_DEVASTAR_266_KEY = 'content:item-pergaminho-devastar:beta-2.66';
 const EDIFICIOS_ESPECIAIS_267_KEY = 'content:edificios-especiais:beta-2.67';
+const DRAGOES_CATALOGO_268_KEY = 'content:dragoes-catalogo:beta-2.68';
+const TROPAS_I18N_268_KEY = 'content:tropas-i18n:beta-2.68';
+const CAMPANHA_EN_XP_268_KEY = 'content:campanha-en-xp:beta-2.68';
+const TUTORIALS_EN_268_KEY = 'content:tutoriais-en:beta-2.68';
+
 
 const INICIANTE_CATEGORY = {
   slug: 'iniciante',
@@ -1011,6 +1017,100 @@ async function migrarEdificiosEspeciais267() {
   });
 }
 
+
+async function migrarDragoesCatalogo268() {
+  return executarMigracao264(DRAGOES_CATALOGO_268_KEY, 'dragoesCatalogo268', async () => {
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const seed of DRAGOES_SEED) {
+      const slug = seed.id;
+      const atual = await Dragao.findOne({ slug }).lean();
+      if (!atual) {
+        const { id, ...rest } = seed;
+        await Dragao.create({ slug, ...rest });
+        inseridas += 1;
+        continue;
+      }
+      const niveisMap = new Map((atual.niveis || []).map(n => [Number(n.nivel), n]));
+      for (const nivel of seed.niveis || []) niveisMap.set(Number(nivel.nivel), nivel);
+      const niveis = [...niveisMap.values()].sort((a,b) => Number(a.nivel) - Number(b.nivel));
+      const aliases = [...new Set([...(atual.aliases || []), ...(seed.aliases || [])].filter(Boolean))];
+      await Dragao.updateOne({ slug }, { $set:{
+        ordem:seed.ordem ?? 999, nome:seed.nome, aliases, elemento:seed.elemento, imagem:seed.imagem,
+        obtencao:seed.obtencao, itensAlimentacao:seed.itensAlimentacao || [], i18n:seed.i18n || {},
+        niveis, atualizadoEm:new Date(),
+      } });
+      atualizadas += 1;
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
+async function migrarTropasI18n268() {
+  return executarMigracao264(TROPAS_I18N_268_KEY, 'tropasI18n268', async () => {
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const seed of TODAS_TROPAS) {
+      const atual = await Tropa.findOne({ nome:seed.nome }).lean();
+      if (!atual) {
+        await Tropa.create(seed);
+        inseridas += 1;
+        continue;
+      }
+      const aliases = [...new Set([...(atual.aliases || []), ...(seed.aliases || [])].filter(Boolean))];
+      const i18n = { ...(atual.i18n || {}), ...(seed.i18n || {}) };
+      await Tropa.updateOne({ nome:seed.nome }, { $set:{ aliases, i18n, atualizadoEm:new Date() } });
+      atualizadas += 1;
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
+async function migrarCampanhaEnglishXp268() {
+  return executarMigracao264(CAMPANHA_EN_XP_268_KEY, 'campanhaEnglishXp268', async () => {
+    const seeds = [...SAVANA_SEED, ...LAGO_SEED, ...FLORESTA_SEED, ...MONTANHA_SEED, ...MORRO_SEED, ...GRODZ_SEED];
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const seed of seeds) {
+      const atual = await CampanhaLocal.findOne({ slug:seed.slug }).lean();
+      if (!atual) {
+        await CampanhaLocal.create(seed);
+        inseridas += 1;
+        continue;
+      }
+      await CampanhaLocal.updateOne({ slug:seed.slug }, { $set:{
+        nome:seed.nome, tropas:seed.tropas || [], recompensas:seed.recompensas || [],
+        recompensasStatus:seed.recompensasStatus || 'pendente', guiasAtaque:seed.guiasAtaque || [],
+        grodz:seed.grodz || {}, campo:seed.campo || atual.campo || {}, fonte:seed.fonte, i18n:seed.i18n || {}, atualizadoEm:new Date(),
+      } });
+      atualizadas += 1;
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
+
+async function migrarTutoriaisEnglish268() {
+  return executarMigracao264(TUTORIALS_EN_268_KEY, 'tutoriaisEnglish268', async () => {
+    const slugs = ['tutorial-campanha-grodz', 'tutorial-capturar-dragoes'];
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const slug of slugs) {
+      const seed = DICAS_SEED.find(item => item.slug === slug);
+      if (!seed) continue;
+      const atual = await Dica.findOne({ slug }).lean();
+      if (!atual) {
+        await Dica.create(seed);
+        inseridas += 1;
+      } else {
+        await Dica.updateOne({ slug }, { $set:{ i18n:seed.i18n || {}, relacionados:seed.relacionados || [], atualizadoEm:new Date() } });
+        atualizadas += 1;
+      }
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
@@ -1062,9 +1162,17 @@ export async function executarMigracoesConteudo() {
   if (!ticketDevastar266.ok) return ticketDevastar266;
   const edificiosEspeciais267 = await migrarEdificiosEspeciais267();
   if (!edificiosEspeciais267.ok) return edificiosEspeciais267;
+  const dragoes268 = await migrarDragoesCatalogo268();
+  if (!dragoes268.ok) return dragoes268;
+  const tropas268 = await migrarTropasI18n268();
+  if (!tropas268.ok) return tropas268;
+  const campanha268 = await migrarCampanhaEnglishXp268();
+  if (!campanha268.ok) return campanha268;
+  const tutoriaisEn268 = await migrarTutoriaisEnglish268();
+  if (!tutoriaisEn268.ok) return tutoriaisEn268;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
@@ -1079,5 +1187,9 @@ export async function executarMigracoesConteudo() {
     grodzInseridos:grodz266.inseridas || 0,
     itemDevastarAtualizado:(ticketDevastar266.atualizadas || 0) + (ticketDevastar266.inseridas || 0),
     edificiosEspeciaisAtualizados:(edificiosEspeciais267.atualizadas || 0) + (edificiosEspeciais267.inseridas || 0),
+    dragoesCatalogoAtualizados:(dragoes268.atualizadas || 0) + (dragoes268.inseridas || 0),
+    tropasI18nAtualizadas:(tropas268.atualizadas || 0) + (tropas268.inseridas || 0),
+    campanha268Atualizada:(campanha268.atualizadas || 0) + (campanha268.inseridas || 0),
+    tutoriaisEn268Atualizados:(tutoriaisEn268.atualizadas || 0) + (tutoriaisEn268.inseridas || 0),
   };
 }

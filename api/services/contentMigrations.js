@@ -59,6 +59,7 @@ const CAMPANHA_ZYRVORTHIAN_275_KEY = 'content:campanha-zyrvorthian:beta-2.75';
 const ITENS_DEFESA_ZYRVORTHIAN_275_KEY = 'content:itens-defesa-zyrvorthian:beta-2.75';
 const TUTORIAL_DEFESA_275_KEY = 'content:dica-defesa-inimigos:beta-2.75';
 const DRAGAO_AGUA_PAZ_275_KEY = 'content:dragao-agua-paz:beta-2.75';
+const DRAGOES_NIVEIS_276_KEY = 'content:dragoes-niveis:beta-2.76';
 
 
 const INICIANTE_CATEGORY = {
@@ -1455,6 +1456,33 @@ async function migrarDragaoAguaPaz275() {
   });
 }
 
+
+async function migrarDragoesNiveis276() {
+  return executarMigracao264(DRAGOES_NIVEIS_276_KEY, 'dragoesNiveis276', async () => {
+    const slugs = ['dragao_fogo', 'dragao_terra', 'dragao_beladona'];
+    let atualizadas = 0;
+    let inseridas = 0;
+    for (const slug of slugs) {
+      const seed = DRAGOES_SEED.find(item => item.id === slug);
+      if (!seed) throw new Error(`Seed do dragão ${slug} não encontrada.`);
+      const atual = await Dragao.findOne({ slug }).lean();
+      if (!atual) {
+        const { id, ...rest } = seed;
+        await Dragao.create({ slug:id, ...rest });
+        inseridas += 1;
+        continue;
+      }
+      await Dragao.updateOne(
+        { slug },
+        { $set:{ niveis:seed.niveis || [], atualizadoEm:new Date() } },
+      );
+      atualizadas += 1;
+    }
+    return { atualizadas, inseridas };
+  });
+}
+
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
@@ -1528,9 +1556,11 @@ export async function executarMigracoesConteudo() {
   if (!tutorialDefesa275.ok) return tutorialDefesa275;
   const dragaoAguaPaz275 = await migrarDragaoAguaPaz275();
   if (!dragaoAguaPaz275.ok) return dragaoAguaPaz275;
+  const dragoesNiveis276 = await migrarDragoesNiveis276();
+  if (!dragoesNiveis276.ok) return dragoesNiveis276;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada && eventos270.ignorada && eventosReinos271.ignorada && eventosReinos272.ignorada && zyrvorthian275.ignorada && itensDefesa275.ignorada && tutorialDefesa275.ignorada && dragaoAguaPaz275.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada && eventos270.ignorada && eventosReinos271.ignorada && eventosReinos272.ignorada && zyrvorthian275.ignorada && itensDefesa275.ignorada && tutorialDefesa275.ignorada && dragaoAguaPaz275.ignorada && dragoesNiveis276.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
@@ -1556,5 +1586,6 @@ export async function executarMigracoesConteudo() {
     itensDefesa275Atualizados:(itensDefesa275.atualizadas || 0) + (itensDefesa275.inseridas || 0),
     tutorialDefesa275Atualizado:(tutorialDefesa275.atualizadas || 0) + (tutorialDefesa275.inseridas || 0),
     dragaoAguaPaz275Atualizado:(dragaoAguaPaz275.atualizadas || 0) + (dragaoAguaPaz275.inseridas || 0),
+    dragoesNiveis276Atualizados:(dragoesNiveis276.atualizadas || 0) + (dragoesNiveis276.inseridas || 0),
   };
 }

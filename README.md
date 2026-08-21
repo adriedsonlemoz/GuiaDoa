@@ -4,7 +4,7 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 
 ## Versão
 
-**1.0.0-beta.2.75**
+**1.0.0-beta.2.76**
 
 ## Principais módulos
 
@@ -15,6 +15,14 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 - **Extras → Reinos** com catálogo canônico, abertura/idade calculada, fuso, horários confirmados, eventos ativos e histórico
 - Extras: Reinos, Doação, Sobre, Texto Colorido e Backup
 - Painel Admin para manutenção dos conteúdos do MongoDB
+
+## Beta 2.76 — níveis dos Dragões e nome do APK
+
+- Dragão do Fogo, Dragão da Terra e Dragão Beladona recebem os atributos confirmados dos níveis 1–30, cada um transcrito exclusivamente do ZIP correspondente.
+- A estrutura do módulo de Dragões foi preservada: somente o campo `niveis` dos três registros passou a apontar para suas respectivas tabelas canônicas.
+- O nome padrão do APK passa de `GUIA DOA` para **Guia Doa**.
+- O Android agora aplica nome localizado no build: **Guia Doa** em português e **Guide Doa** em inglês, seguindo o idioma do sistema.
+- Testes de regressão verificam níveis sentinela dos três dragões para evitar mistura acidental das progressões.
 
 ## Beta 2.75 — Zyrvorthian e defesa
 

@@ -117,7 +117,11 @@ jobs:
       - name: 🔄 Capacitor sync
         run: npx cap sync android
 
-      # ── 13. Aplicar ícone oficial do GUIA DOA ─────────────────────────────────
+      # ── 13. Aplicar nome localizado do aplicativo ───────────────────────────────
+      - name: 🏷️ Aplicar nome Android por idioma
+        run: node scripts/apply-android-name.mjs
+
+      # ── 14. Aplicar ícone oficial do Guia Doa ─────────────────────────────────
       - name: 🐉 Aplicar ícone Android
         run: node scripts/apply-android-icon.mjs
 

@@ -44,3 +44,17 @@ export const REINOS_SEED = [
 ];
 
 export const REINO_IDS_CANONICOS = new Set(REINOS_SEED.map(reino => reino.id));
+
+
+// Horários confirmados pelo usuário em 21/08/2026. São exibidos no relógio oficial UTC do jogo.
+// Campos não fornecidos permanecem vazios; nenhum horário é inferido para outros fusos.
+const HORARIOS_CONFIRMADOS_272 = {
+  'UTC+0': { zyrvorthian:'19:00' },
+  'UTC-3': { zyrvorthian:'22:00', batalhaDragao:'17:00' },
+  'UTC-7': { batalhaDragao:'20:00' },
+  'UTC+1': { batalhaDragao:'06:00' },
+  'UTC-4': { batalhaDragao:'00:00' },
+};
+for (const reino of REINOS_SEED) {
+  reino.horarios = { torneiosFim:'', zyrvorthian:'', batalhaDragao:'', ...(HORARIOS_CONFIRMADOS_272[reino.fuso] || {}) };
+}

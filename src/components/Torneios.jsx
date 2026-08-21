@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { getFusoOffset, getProfile } from '../utils/storage.js';
 import { useTorneioTimer } from '../hooks/useTorneioTimer.js';
 import { useI18n } from '../hooks/useI18n.jsx';
 import { C } from '../theme.js';
 import { GameActionButton, GamePanel, GameSectionTitle, GameTabs } from './shared/GameChrome.jsx';
+import TutorialCopyButton from './shared/TutorialCopyButton.jsx';
 import EvolucaoTropas            from './torneios/EvolucaoTropas.jsx';
 import PontosTalisma             from './torneios/PontosTalisma.jsx';
 import TorneioPoder              from './torneios/TorneioPoder.jsx';
@@ -98,6 +99,7 @@ const Torneios = () => {
   const [hubTab, setHubTab] = useState('all');
   const [detailTab, setDetailTab] = useState('summary');
   const [recent, setRecent] = useState(() => readRecentTournaments());
+  const tutorialContentRef = useRef(null);
   const profile = getProfile() || {};
   const offset = getFusoOffset();
   const { horaSomente, countdown, isUrgente } = useTorneioTimer(offset);
@@ -176,7 +178,10 @@ const Torneios = () => {
           ) : detailTab === 'plan' ? (
             <TournamentPlan tournamentId={active.id} />
           ) : (
-            MODULES[active.id] || null
+            <>
+              {!calculator ? <div className="tournament-tutorial-copy"><TutorialCopyButton getText={() => tutorialContentRef.current?.innerText || ''} /></div> : null}
+              <div ref={tutorialContentRef}>{MODULES[active.id] || null}</div>
+            </>
           )}
         </div>
       </div>

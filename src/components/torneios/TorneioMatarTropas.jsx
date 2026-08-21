@@ -1,96 +1,20 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { C } from '../../theme.js';
 import { useI18n } from '../../hooks/useI18n.jsx';
+import { useGameData } from '../../data/GameDataContext.jsx';
 
-const DICAS_CHAVES = [
-  { icon: '☠️', tituloChave: 'torneio.label.como_pontuar',          textoChave: 'torneio.matar_tropas.dica1.texto' },
-  { icon: '🤝', tituloChave: 'torneio.matar_tropas.dica2.titulo',    textoChave: 'torneio.matar_tropas.dica2.texto' },
-  { icon: '🏰', tituloChave: 'torneio.matar_tropas.dica3.titulo',    textoChave: 'torneio.matar_tropas.dica3.texto' },
-  { icon: '⚔️', tituloChave: 'torneio.matar_tropas.dica4.titulo',    textoChave: 'torneio.matar_tropas.dica4.texto' },
-  { icon: '📢', tituloChave: 'torneio.matar_tropas.dica5.titulo',    textoChave: 'torneio.matar_tropas.dica5.texto' },
-  { icon: '💡', tituloChave: 'torneio.matar_tropas.dica6.titulo',    textoChave: 'torneio.matar_tropas.dica6.texto' },
-];
+const fmt=(n,locale)=>Number(n||0).toLocaleString(locale);
+const row=()=>({id:Date.now()+Math.random(),tropa:'',qtd:''});
 
-const TorneioMatarTropas = () => {
-  const { t } = useI18n();
-  return (
-  <div className="max-w-md mx-auto pb-4" style={{ animation: 'reveal-up 0.4s ease both' }}>
-
-    {/* ── Cabeçalho ──────────────────────────────────────────────────────────── */}
-    <div
-      className="rounded-xl overflow-hidden mb-3"
-      style={{ border: `1.5px solid ${C.BORDER}`, boxShadow: '0 3px 14px rgba(62,47,28,0.15)' }}
-    >
-      <div
-        className="px-4 py-3"
-        style={{ background: `linear-gradient(135deg, ${C.NAVY ?? '#2F5652'} 0%, #3C6863 100%)` }}
-      >
-        <p
-          className="font-nunito font-bold text-[0.6rem] tracking-[3px] uppercase m-0 mb-1"
-          style={{ color: 'rgba(200,168,74,0.7)' }}
-        >
-          {t('torneio.matar_tropas.badge')}
-        </p>
-        <p
-          className="font-nunito font-black leading-tight m-0"
-          style={{ fontSize: '1.1rem', color: C.ACCENT }}
-        >
-          ☠️ {t('torneio.titulo.matar_tropas')}
-        </p>
-      </div>
-      <div className="px-4 py-3" style={{ background: C.BG_CARD }}>
-        <p
-          className="font-nunito font-semibold text-[0.76rem] leading-relaxed m-0"
-          style={{ color: C.TEXT_SECONDARY }}
-        >
-          {t('torneio.matar_tropas.intro_pre')}<strong>{t('torneio.matar_tropas.intro_bold')}</strong>{t('torneio.matar_tropas.intro_pos')}
-        </p>
-      </div>
-    </div>
-
-    {/* ── Como Funciona ──────────────────────────────────────────────────────── */}
-    <div
-      className="rounded-xl overflow-hidden"
-      style={{ border: `1px solid ${C.BORDER_SOFT}`, borderTop: `3px solid ${C.ERROR}` }}
-    >
-      <div
-        className="px-4 py-2.5"
-        style={{
-          background: `linear-gradient(180deg, ${C.BG_CARD_TOP}, ${C.BG_CARD})`,
-          borderBottom: `1.5px solid ${C.BORDER_SOFT}`,
-        }}
-      >
-        <p
-          className="font-nunito font-black text-[0.72rem] uppercase tracking-widest m-0"
-          style={{ color: C.TEXT_MUTED }}
-        >
-          📖 {t('torneio.label.estrategias_dicas')}
-        </p>
-      </div>
-      <div className="px-4 py-3" style={{ background: C.BG_CARD }}>
-        {DICAS_CHAVES.map((item, i) => (
-          <div key={i} className="flex gap-2.5 items-start mb-3 last:mb-0">
-            <span className="text-base leading-none shrink-0 mt-0.5">{item.icon}</span>
-            <div>
-              <p
-                className="font-nunito font-black text-[0.74rem] m-0 mb-0.5"
-                style={{ color: C.TEXT_PRIMARY }}
-              >
-                {t(item.tituloChave)}
-              </p>
-              <p
-                className="font-nunito font-semibold text-[0.73rem] leading-relaxed m-0"
-                style={{ color: C.TEXT_SECONDARY }}
-              >
-                {t(item.textoChave)}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-  );
-};
-
-export default TorneioMatarTropas;
+export default function TorneioMatarTropas(){
+  const { t,content,locale }=useI18n(); const { tropas=[] }=useGameData();
+  const sorted=useMemo(()=>[...tropas].filter(x=>Number(x.poder)>0).sort((a,b)=>content(a,'nome').localeCompare(content(b,'nome'))),[tropas,content]);
+  const [rows,setRows]=useState([row(),row()]);
+  const total=rows.reduce((sum,r)=>{const tr=sorted.find(x=>x.slug===r.tropa||x.nome===r.tropa);return sum+(parseInt(String(r.qtd).replace(/\D/g,''))||0)*Number(tr?.poder||0);},0);
+  const update=(id,k,v)=>setRows(all=>all.map(r=>r.id===id?{...r,[k]:v}:r));
+  return <div className="max-w-md mx-auto pb-4" style={{animation:'reveal-up .4s ease both'}}>
+    <div className="rounded-xl overflow-hidden mb-3" style={{border:`1.5px solid ${C.BORDER}`}}><div className="px-4 py-3" style={{background:'linear-gradient(135deg,#2A0A0A,#5A1A1A)'}}><p className="font-nunito font-bold text-[0.65rem] uppercase m-0" style={{color:'rgba(255,210,200,.7)'}}>{t('torneio.matar_tropas.badge')}</p><p className="font-nunito font-black m-0 mt-1" style={{fontSize:'1.15rem',color:'#F0A090'}}>☠️ {t('torneio.titulo.matar_tropas')}</p></div><div className="px-4 py-3" style={{background:C.BG_CARD}}><p className="m-0 font-nunito font-semibold text-[0.78rem]" style={{color:C.TEXT_SECONDARY}}>{t('torneio.matar_tropas.calc_help')}</p></div></div>
+    <div className="rounded-xl overflow-hidden mb-3" style={{border:`1px solid ${C.BORDER_SOFT}`,background:C.BG_CARD}}><div className="px-4 py-3" style={{background:C.NAVY,color:'#fff'}}><small className="font-nunito font-bold uppercase">{t('torneio.aceleracoes.total_pontos')}</small><strong className="block font-nunito font-black text-3xl">{fmt(total,locale)}</strong></div><div className="p-3 grid gap-2">{rows.map((r,i)=>{const tr=sorted.find(x=>x.slug===r.tropa||x.nome===r.tropa);const pts=(parseInt(String(r.qtd).replace(/\D/g,''))||0)*Number(tr?.poder||0);return <div className="tournament-kill-row" key={r.id}><select className="tw-input" value={r.tropa} onChange={e=>update(r.id,'tropa',e.target.value)}><option value="">{t('torneio.matar_tropas.select_troop')}</option>{sorted.map(x=><option key={x.slug||x.nome} value={x.slug||x.nome}>{content(x,'nome')} · ⭐ {x.poder}</option>)}</select><input className="tw-input" inputMode="numeric" placeholder={t('torneio.matar_tropas.eliminated_qty')} value={r.qtd} onChange={e=>update(r.id,'qtd',e.target.value.replace(/\D/g,''))}/><div><small>{tr?`${fmt(tr.poder,locale)} × ${fmt(parseInt(r.qtd)||0,locale)}`:'—'}</small><strong>{fmt(pts,locale)} pts</strong></div>{rows.length>1?<button className="btn-ghost btn-sm" onClick={()=>setRows(x=>x.filter(y=>y.id!==r.id))}>×</button>:null}</div>})}<button className="btn-ghost btn-sm" onClick={()=>setRows(x=>[...x,row()])}>＋ {t('torneio.matar_tropas.add_troop')}</button></div></div>
+    <div className="rounded-xl p-3" style={{border:`1px solid ${C.BORDER_SOFT}`,background:C.BG_CARD}}><strong className="font-nunito text-sm">{t('torneio.label.como_funciona')}</strong><p className="font-nunito text-[0.76rem] leading-relaxed" style={{color:C.TEXT_SECONDARY}}>{t('torneio.matar_tropas.formula')}</p><p className="font-nunito text-[0.72rem]" style={{color:C.TEXT_MUTED}}>{t('torneio.matar_tropas.examples')}</p></div>
+  </div>;
+}

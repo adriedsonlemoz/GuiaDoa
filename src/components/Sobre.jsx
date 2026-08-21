@@ -9,12 +9,12 @@ import { API_URL as API } from '../config/api.js';
 
 const CHANGELOG_CONFIG = [
   { ver: DISPLAY_VERSION, icon: '🛡️', key: 'latest', color: '#4E716A', count: 5 },
+  { ver: 'Beta 2.71', icon: '🌍', key: 'history.2_71', color: '#4B6D65', count: 5 },
   { ver: 'Beta 2.70', icon: '⚡', key: 'history.2_70', color: '#7A5C24', count: 5 },
 ];
 
 const Sobre = () => {
   const { t } = useI18n();
-  const [openApoio, setOpenApoio] = useState(false);
   const [openContato, setOpenContato] = useState(false);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
 
@@ -47,25 +47,6 @@ const Sobre = () => {
   return (
     <div className="max-w-md mx-auto pb-6">
       <Toast {...toast} onClose={closeToast} />
-
-      <Modal open={openApoio} onClose={() => setOpenApoio(false)} maxWidth={320}>
-        <div className="p-4 text-center">
-          <p className="text-4xl m-0 mb-2">💎</p>
-          <p className="font-cinzel font-bold text-base tracking-wide m-0 mb-1" style={{ color: C.ACCENT_DEEP }}>{t('about.donate_title')}</p>
-          <div className="gold-stripe mb-3 opacity-40" />
-          <p className="font-nunito font-semibold text-sm leading-relaxed text-justify m-0 mb-3" style={{ color: C.TEXT_SECONDARY }}>
-            {t('about.donate_text')}
-          </p>
-          <div className="py-2.5 px-3 rounded-lg mb-3" style={{ background: C.BG_SECONDARY, border: `2px dashed ${C.BORDER}` }}>
-            <p className="font-nunito font-black text-[0.7rem] uppercase tracking-wider m-0 mb-0.5" style={{ color: C.TEXT_MUTED }}>{t('about.pix_key')}:</p>
-            <p className="font-mono font-black text-xl tracking-wide m-0" style={{ color: C.BLUE }}>adriedson@outlook.com</p>
-          </div>
-          <div className="flex gap-2">
-            <button className="btn-ghost flex-1" onClick={() => setOpenApoio(false)}>{t('common.close')}</button>
-            <button className="btn-success flex-1" onClick={() => handleCopy('adriedson@outlook.com', t('about.pix_copy_success'))}>{t('about.copy_pix')}</button>
-          </div>
-        </div>
-      </Modal>
 
       <Modal open={openContato} onClose={() => setOpenContato(false)} maxWidth={320}>
         <div className="p-4 text-center">
@@ -146,7 +127,6 @@ const Sobre = () => {
       </div>
 
       <div className="flex flex-col gap-2">
-        <button className="btn-gold btn-lg w-full" onClick={() => setOpenApoio(true)}>💎 {t('about.support_project')}</button>
         <button className="btn-navy btn-lg w-full" onClick={() => setOpenContato(true)}>📬 {t('about.support')}</button>
       </div>
 

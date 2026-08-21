@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DISPLAY_VERSION } from '../version.js';
 import { useI18n } from '../hooks/useI18n.jsx';
 
@@ -21,6 +21,19 @@ export default function DataSyncScene({
   phase = 'sync',
 }) {
   const { t } = useI18n();
+  useEffect(() => {
+    const bodyOverflow=document.body.style.overflow;
+    const htmlOverflow=document.documentElement.style.overflow;
+    const bodyOverscroll=document.body.style.overscrollBehavior;
+    document.body.style.overflow='hidden';
+    document.documentElement.style.overflow='hidden';
+    document.body.style.overscrollBehavior='none';
+    return () => {
+      document.body.style.overflow=bodyOverflow;
+      document.documentElement.style.overflow=htmlOverflow;
+      document.body.style.overscrollBehavior=bodyOverscroll;
+    };
+  }, []);
   const total = progress?.total || nodes.length || 1;
   const step = Math.min(progress?.step || 0, total);
   const pct = Math.round((step / total) * 100);

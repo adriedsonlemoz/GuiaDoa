@@ -16,15 +16,17 @@ test('Home organiza módulos em grupos lógicos e concentra secundários em Extr
   assert.equal((tools.match(/id: /g) || []).length, expected.length);
 });
 
-test('Sobre mantém atualização recolhível, mostra só as cinco novidades atuais e preserva a chave PIX', () => {
+test('Sobre mantém atualização recolhível com cinco novidades e Doação preserva a chave PIX separadamente', () => {
   const about = read('src/components/Sobre.jsx');
+  const donation = read('src/components/Doacao.jsx');
   const css = read('src/index.css');
   assert.match(about, /<details/);
   assert.match(about, /about-changelog-summary/);
   assert.match(about, /about-changelog-chevron/);
   assert.match(css, /about-changelog-entry\[open\]/);
-  assert.match(about, /adriedson@outlook\.com/);
-  assert.doesNotMatch(about, /37991260524/);
+  assert.doesNotMatch(about, /adriedson@outlook\.com/);
+  assert.match(donation, /adriedson@outlook\.com/);
+  assert.doesNotMatch(donation, /37991260524/);
   assert.match(about, /key: 'latest'.*count: 5/);
   assert.doesNotMatch(about, /history\.2_48/);
 });

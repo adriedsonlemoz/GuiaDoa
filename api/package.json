@@ -1,6 +1,6 @@
 {
   "name": "guiadoa-api",
-  "version": "1.0.0-beta.2.71",
+  "version": "1.0.0-beta.2.72",
   "description": "API admin do Guia DOA",
   "type": "module",
   "main": "server.js",

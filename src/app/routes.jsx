@@ -33,6 +33,7 @@ import CampanhaMapa from '../components/CampanhaMapa.jsx';
 import Eventos from '../components/Eventos.jsx';
 import Extras from '../components/Extras.jsx';
 import Reinos from '../components/Reinos.jsx';
+import Doacao from '../components/Doacao.jsx';
 
 const BASE_LABELS = {
   torneios: { key: 'home.botao.torneios', icon: '🏆' },
@@ -69,6 +70,7 @@ const BASE_LABELS = {
   eventos: { key: 'events.title', icon: '⚡' },
   extras: { key: 'extras.title', icon: '🧰' },
   reinos: { key: 'realms.title', icon: '🌍' },
+  doacao: { key: 'donation.title', icon: '💎' },
 };
 
 export function renderRoute(route, setRoute) {
@@ -108,6 +110,7 @@ export function renderRoute(route, setRoute) {
     case 'eventos': return <Eventos setRoute={setRoute} />;
     case 'extras': return <Extras setRoute={setRoute} />;
     case 'reinos': return <Reinos />;
+    case 'doacao': return <Doacao />;
     default:
       if (route.startsWith('pesquisa_')) {
         return <PesquisaDetalhe slug={route.replace('pesquisa_', '')} />;

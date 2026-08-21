@@ -12,6 +12,8 @@ const EventoFaseSchema = new mongoose.Schema({
   objetivo:{ type:String, default:'', trim:true },
   descricao:{ type:String, default:'', trim:true },
   observacao:{ type:String, default:'', trim:true },
+  torneioId:{ type:String, default:'', trim:true },
+  mecanica:{ type:String, default:'', trim:true },
   recompensas:{ type:[EventoRecompensaSchema], default:[] },
   i18n:{ type:mongoose.Schema.Types.Mixed, default:{} },
 }, { _id:false });

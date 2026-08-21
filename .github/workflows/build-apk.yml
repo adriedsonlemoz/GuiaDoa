@@ -66,25 +66,24 @@ jobs:
         run: npm ci
 
       # ── 7. Validar URL da API em builds release ───────────────────────────────
-      - name: 🛡️ Validar API de produção
-        if: ${{ github.event.inputs.build_type == 'release' }}
+      - name: 🛡️ Validar API do APK
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL || '' }}
         run: |
           if [ -z "$VITE_API_URL" ]; then
-            echo "::error::VITE_API_URL é obrigatória para build release."
+            echo "::error::VITE_API_URL é obrigatória para qualquer APK. Configure o secret do backend Render."
             exit 1
           fi
           case "$VITE_API_URL" in
             *localhost*|*127.0.0.1*)
-              echo "::error::Build release não pode apontar para localhost/127.0.0.1."
+              echo "::error::Build APK não pode apontar para localhost/127.0.0.1."
               exit 1
               ;;
           esac
           case "$VITE_API_URL" in
             https://*) ;;
             *)
-              echo "::error::VITE_API_URL de release deve usar HTTPS."
+              echo "::error::VITE_API_URL do APK deve usar HTTPS."
               exit 1
               ;;
           esac

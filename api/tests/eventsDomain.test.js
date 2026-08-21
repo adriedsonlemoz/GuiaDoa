@@ -156,8 +156,15 @@ test('seed Corrida Armamentista mantém sete dias e confirma somente os quatro r
   assert.equal(event.recompensas.length, 4);
   assert.equal(event.recompensas.at(-1).classificacao, '11-20');
   assert.equal(event.fases.find(f => f.codigo === 'fase-4').recompensas.find(r => r.requisito === 1000).itens.length, 3);
-  const phase = faseAtual(event, event.ocorrencias.find(o=>o.reinoId===348), new Date('2026-08-21T01:30:00Z'));
-  assert.equal(phase.codigo, 'fase-1');
+  assert.equal(event.inicioServidor, '2026-08-21T00:00:00.000Z');
+  assert.equal(event.fimServidor, '2026-08-28T00:00:00.000Z');
+  const occ = event.ocorrencias.find(o=>o.reinoId===348);
+  assert.equal(faseAtual(event, occ, new Date('2026-08-21T15:40:00Z')).codigo, 'observacao');
+  assert.equal(faseAtual(event, occ, new Date('2026-08-22T00:00:00Z')).codigo, 'fase-1');
+  assert.equal(event.fases.find(f=>f.codigo==='fase-1').torneioId, 'aceleracoes');
+  assert.equal(event.fases.find(f=>f.codigo==='fase-2').torneioId, 'general');
+  assert.equal(event.fases.find(f=>f.codigo==='fase-3').torneioId, 'treino_tropa');
+  assert.equal(event.fases.find(f=>f.codigo==='fase-4').torneioId, 'matar_tropas');
 });
 
 test('seed canônico contém somente os 33 reinos informados, com IDs reais e datas confirmadas', () => {
@@ -193,4 +200,37 @@ test('período central do evento realinha todas as ocorrências ao mesmo reset',
     assert.equal(occurrence.inicioServidor.toISOString(), '2026-08-21T00:00:00.000Z');
     assert.equal(occurrence.fimServidor.toISOString(), '2026-08-28T00:00:00.000Z');
   }
+});
+
+
+test('seed 2.72 não inventa abertura e aplica apenas horários de reino confirmados', () => {
+  const byId=new Map(REINOS_SEED.map(r=>[r.id,r]));
+  const dated=REINOS_SEED.filter(r=>r.aberturaEm);
+  assert.equal(dated.length,12);
+  assert.equal(byId.get(336).aberturaEm,undefined);
+  assert.equal(byId.get(291).aberturaEm,undefined);
+  assert.equal(byId.get(291).horarios.batalhaDragao,'');
+  assert.equal(byId.get(291).horarios.zyrvorthian,'19:00');
+  assert.equal(byId.get(313).horarios.zyrvorthian,'22:00');
+  assert.equal(byId.get(313).horarios.batalhaDragao,'17:00');
+  assert.equal(byId.get(346).horarios.batalhaDragao,'20:00');
+  assert.equal(byId.get(347).horarios.batalhaDragao,'06:00');
+  assert.equal(byId.get(348).horarios.batalhaDragao,'00:00');
+});
+
+test('catálogo canônico mantém a distribuição confirmada por fuso', () => {
+  const counts=REINOS_SEED.reduce((acc,r)=>(acc[r.fuso]=(acc[r.fuso]||0)+1,acc),{});
+  assert.deepEqual(counts,{'UTC-4':2,'UTC+1':10,'UTC-7':9,'UTC+0':8,'UTC+3':2,'UTC+9':1,'UTC-3':1});
+});
+
+test('mecânica das quatro fases competitivas fica estruturada para reutilização em tutoriais', () => {
+  const event=EVENTOS_SEED[0];
+  const expected={ 'fase-1':'aceleracoes','fase-2':'general','fase-3':'treino_tropa','fase-4':'matar_tropas' };
+  for (const [codigo,torneioId] of Object.entries(expected)) {
+    const fase=event.fases.find(f=>f.codigo===codigo);
+    assert.equal(fase.torneioId,torneioId);
+    assert.equal(fase.mecanica,torneioId);
+  }
+  assert.match(event.fases.find(f=>f.codigo==='fase-1').descricao,/1 minuto/i);
+  assert.match(event.fases.find(f=>f.codigo==='fase-4').descricao,/10\.000 Espiões/);
 });

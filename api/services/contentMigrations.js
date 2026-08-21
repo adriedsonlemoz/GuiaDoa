@@ -54,6 +54,7 @@ const CAMPANHA_EN_XP_268_KEY = 'content:campanha-en-xp:beta-2.68';
 const TUTORIALS_EN_268_KEY = 'content:tutoriais-en:beta-2.68';
 const EVENTOS_270_KEY = 'content:eventos:beta-2.70';
 const EVENTOS_REINOS_271_KEY = 'content:eventos-reinos:beta-2.71';
+const EVENTOS_REINOS_272_KEY = 'content:eventos-reinos:beta-2.72';
 
 
 const INICIANTE_CATEGORY = {
@@ -1317,6 +1318,55 @@ async function migrarEventosReinos271() {
   });
 }
 
+
+async function migrarEventosReinos272() {
+  return executarMigracao264(EVENTOS_REINOS_272_KEY, 'eventosReinos272', async () => {
+    let reinosAtualizados=0;
+    let eventosAtualizados=0;
+
+    // Datas de abertura: somente as 12 datas confirmadas permanecem preenchidas.
+    // Qualquer data herdada nos demais reinos é removida para evitar idade fictícia.
+    for (const seed of REINOS_SEED) {
+      const horariosSeed=seed.horarios || {};
+      const patch={
+        aberturaEm:seed.aberturaEm ? new Date(seed.aberturaEm) : null,
+        fuso:seed.fuso || '',
+        tipoEspecial:seed.tipoEspecial || '',
+        atualizadoEm:new Date(),
+      };
+      if (horariosSeed.zyrvorthian) patch['horarios.zyrvorthian']=horariosSeed.zyrvorthian;
+      if (horariosSeed.batalhaDragao) patch['horarios.batalhaDragao']=horariosSeed.batalhaDragao;
+      // torneiosFim só é alterado quando houver dado confirmado no seed.
+      if (horariosSeed.torneiosFim) patch['horarios.torneiosFim']=horariosSeed.torneiosFim;
+      const result=await Reino.updateOne({id:Number(seed.id)},{$set:patch,$unset:{regiao:'',idioma:''}});
+      reinosAtualizados += result.modifiedCount || 0;
+    }
+
+    // A Corrida Armamentista é o evento confirmado desta revisão. Atualiza o
+    // calendário, a ordem das fases, regras e links para calculadores, preservando
+    // o histórico administrativo já existente quando houver.
+    const seed=EVENTOS_SEED.find(item=>item.slug==='corrida-armamentista');
+    if (seed) {
+      const atual=await Evento.findOne({slug:seed.slug}).lean();
+      if (!atual) {
+        await Evento.create(seed);
+        eventosAtualizados += 1;
+      } else {
+        const historico=Array.isArray(atual.historico)?atual.historico:[];
+        const fonte={...(atual.fonte||{}),...(seed.fonte||{})};
+        await Evento.updateOne({slug:seed.slug},{$set:{
+          nome:seed.nome,resumo:seed.resumo,descricao:seed.descricao,categoria:seed.categoria,
+          servidorFuso:'UTC',horarioReset:'00:00',inicioServidor:new Date(seed.inicioServidor),fimServidor:new Date(seed.fimServidor),
+          ativo:true,fases:seed.fases,regras:seed.regras,recompensas:seed.recompensas,ocorrencias:seed.ocorrencias,
+          i18n:seed.i18n,fonte,historico,atualizadoEm:new Date(),
+        }});
+        eventosAtualizados += 1;
+      }
+    }
+    return { atualizadas:reinosAtualizados+eventosAtualizados,reinosAtualizados,eventosAtualizados };
+  });
+}
+
 export async function executarMigracoesConteudo() {
   const dicas = await migrarDicas();
   if (!dicas.ok) return dicas;
@@ -1380,9 +1430,11 @@ export async function executarMigracoesConteudo() {
   if (!eventos270.ok) return eventos270;
   const eventosReinos271 = await migrarEventosReinos271();
   if (!eventosReinos271.ok) return eventosReinos271;
+  const eventosReinos272 = await migrarEventosReinos272();
+  if (!eventosReinos272.ok) return eventosReinos272;
   return {
     ok:true,
-    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada && eventos270.ignorada && eventosReinos271.ignorada),
+    ignorada:Boolean(dicas.ignorada && guiaInicioRealm.ignorada && tutorialAntropos.ignorada && tropas.ignorada && tropasCombate.ignorada && itensCatalogo.ignorada && campanha.ignorada && campos.ignorada && lago.ignorada && floresta.ignorada && montanha.ignorada && morro.ignorada && savanaRecompensas.ignorada && estrategias.ignorada && estrategiasConfirmadas.ignorada && estrategiasPolidas.ignorada && recompensas.ignorada && antropos264.ignorada && campos264.ignorada && dragoes264.ignorada && tutoriais264.ignorada && grodz266.ignorada && tutoriaisGrodz266.ignorada && ticketDevastar266.ignorada && edificiosEspeciais267.ignorada && dragoes268.ignorada && tropas268.ignorada && campanha268.ignorada && tutoriaisEn268.ignorada && eventos270.ignorada && eventosReinos271.ignorada && eventosReinos272.ignorada),
     inseridas:dicas.inseridas || 0,
     adaptadas:dicas.adaptadas || 0,
     guiaInicioRealmAtualizado:guiaInicioRealm.atualizadas || 0,
@@ -1403,5 +1455,6 @@ export async function executarMigracoesConteudo() {
     tutoriaisEn268Atualizados:(tutoriaisEn268.atualizadas || 0) + (tutoriaisEn268.inseridas || 0),
     eventos270Atualizados:(eventos270.atualizadas || 0) + (eventos270.inseridas || 0),
     eventosReinos271Atualizados:eventosReinos271.atualizadas || 0,
+    eventosReinos272Atualizados:eventosReinos272.atualizadas || 0,
   };
 }

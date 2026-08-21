@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { eventStatus, phaseEventDay, formatUtcDay, buildEventShareText, occurrenceForRealm } from '../src/components/eventos/eventUtils.js';
+import { formatRealmAge, realmAgeParts } from '../src/utils/realmAge.js';
 
 const read = p => fs.readFileSync(p, 'utf8');
 
@@ -198,4 +199,101 @@ test('links de recompensas cobrem tropas, itens, dragões, pesquisas e edifício
   assert.match(rewards,/edificios_gruta/);
   assert.match(rewards,/edificios_basilica/);
   assert.match(buildings,/guiadoa_open_building/);
+});
+
+
+test('Beta 2.72 mantém observação antes da Fase 1 e arquiva eventos encerrados', () => {
+  const events=read('src/components/Eventos.jsx');
+  const home=read('src/components/eventos/EventHomeHighlight.jsx');
+  const seed=read('api/seeds/eventos.js');
+  assert.match(seed,/inicio='2026-08-21T00:00:00\.000Z'/);
+  assert.match(seed,/phase\('observacao'/);
+  assert.match(seed,/phase\('fase-1'.*Acelerações/);
+  assert.match(events,/events\.past_events/);
+  assert.match(events,/status==='encerrado'/);
+  assert.match(events,/events\.observation/);
+  assert.match(home,/fase\?\.codigo==='observacao'/);
+});
+
+test('idade de reino melhora a leitura após um mês sem inventar data', () => {
+  assert.equal(formatRealmAge('2026-06-08T00:00:00Z','pt-BR',new Date('2026-08-21T12:00:00Z')),'2 meses e 13 dias');
+  assert.equal(formatRealmAge('2025-04-21T00:00:00Z','pt-BR',new Date('2026-08-21T12:00:00Z')),'1 ano e 4 meses');
+  assert.equal(formatRealmAge('2026-08-12T00:00:00Z','pt-BR',new Date('2026-08-21T12:00:00Z')),'9 dias');
+  assert.equal(formatRealmAge(null,'pt-BR',new Date('2026-08-21T12:00:00Z')),null);
+  assert.deepEqual(realmAgeParts('2026-06-08T00:00:00Z',new Date('2026-08-21T12:00:00Z')),{years:0,months:2,days:13,totalDays:74});
+});
+
+test('filtros de Reinos são cards com quantidade e hora atual por fuso', () => {
+  const realms=read('src/components/Reinos.jsx');
+  const css=read('src/index.css');
+  assert.match(realms,/timezoneCounts/);
+  assert.match(realms,/timezoneCurrentTime/);
+  assert.match(realms,/realms\.timezone_realm_count/);
+  assert.match(css,/realm-filter-chips\{display:grid/);
+  assert.doesNotMatch(realms,/<select/);
+});
+
+test('manual do evento e tutoriais possuem ação de copiar e calculadores vinculados', () => {
+  const tutorial=read('src/components/eventos/EventTutorial.jsx');
+  const phases=read('src/components/eventos/EventPhaseList.jsx');
+  const tournaments=read('src/components/Torneios.jsx');
+  const tips=read('src/components/dicas/DicaArtigo.jsx');
+  assert.match(tutorial,/TutorialCopyButton/);
+  assert.match(tutorial,/guiadoa_open_tournament/);
+  assert.match(phases,/events\.open_calculator/);
+  assert.match(tournaments,/TutorialCopyButton/);
+  assert.match(tips,/copiarTutorial/);
+});
+
+test('calculadores de Generais e Eliminação não dependem de tabelas inventadas', () => {
+  const general=read('src/components/torneios/TorneioGeneral.jsx');
+  const kill=read('src/components/torneios/TorneioMatarTropas.jsx');
+  assert.match(general,/card_value/);
+  assert.doesNotMatch(general,/3000.*raridade|raridade.*3000/i);
+  assert.match(kill,/tr\?\.poder/);
+  assert.match(kill,/tropas=\[\]/);
+});
+
+test('Doação fica separada de Sobre e aviso de primeiro acesso é persistido', () => {
+  const extras=read('src/components/Extras.jsx');
+  const about=read('src/components/Sobre.jsx');
+  const donation=read('src/components/Doacao.jsx');
+  const app=read('src/App.jsx');
+  const storage=read('src/utils/storage.js');
+  assert.match(extras,/setRoute\('doacao'\)/);
+  assert.doesNotMatch(about,/openApoio/);
+  assert.match(donation,/PIX='adriedson@outlook\.com'/);
+  assert.match(app,/getDonationNoticeSeen/);
+  assert.match(app,/setDonationNoticeSeen/);
+  assert.match(storage,/DONATION_NOTICE_SEEN/);
+});
+
+test('APK não usa localhost silenciosamente e startup possui limite de tentativas', () => {
+  const api=read('src/config/api.js');
+  const startup=read('src/app/StartupGate.jsx');
+  const workflow=read('.github/workflows/build-apk.yml');
+  const sync=read('src/app/DataSyncScene.jsx');
+  assert.match(api,/API_CONFIGURED/);
+  assert.match(api,/looksNative/);
+  assert.match(startup,/MAX_AUTO_RETRIES = 3/);
+  assert.match(startup,/CONNECTION_TIMEOUT_MS = 20000/);
+  assert.match(workflow,/VITE_API_URL é obrigatória para qualquer APK/);
+  assert.match(workflow,/https:\/\/\*/);
+  assert.match(sync,/document\.body\.style\.overflow='hidden'/);
+});
+
+test('Admin permite clonar evento sem reaproveitar datas ou ocorrências', () => {
+  const admin=read('api/admin/js/admin-eventos.js');
+  const route=read('api/routes/eventos.js');
+  assert.match(admin,/clonarEventoAtual/);
+  assert.match(route,/admin\/:slug\/clonar/);
+  assert.match(route,/inicioServidor:null, fimServidor:null/);
+  assert.match(route,/ocorrencias:\[\], historico:\[\]/);
+});
+
+test('migração 2.72 remove datas herdadas desconhecidas e preserva horários não substituídos', () => {
+  const migration=read('api/services/contentMigrations.js');
+  assert.match(migration,/EVENTOS_REINOS_272_KEY/);
+  assert.match(migration,/aberturaEm:seed\.aberturaEm \? new Date\(seed\.aberturaEm\) : null/);
+  assert.match(migration,/torneiosFim só é alterado quando houver dado confirmado/);
 });

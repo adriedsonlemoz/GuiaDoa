@@ -144,6 +144,8 @@ export function normalizarFase(phase = {}, idx = 0, eventStart = null) {
     objetivo:String(phase.objetivo || '').trim(),
     descricao:String(phase.descricao || '').trim(),
     observacao:String(phase.observacao || '').trim(),
+    torneioId:String(phase.torneioId || '').trim(),
+    mecanica:String(phase.mecanica || '').trim(),
     recompensas:(Array.isArray(phase.recompensas) ? phase.recompensas : []).map(normalizarRecompensa),
     i18n:phase.i18n && typeof phase.i18n === 'object' ? phase.i18n : {},
   };

@@ -7,8 +7,8 @@ export const TOURNAMENT_REGISTRY = [
   { id: 'pocoes_antigas',      icon: '📚', catKey: 'poder',   type: 'calculator' },
   { id: 'talisma',             icon: '🧿', catKey: 'magia',   type: 'calculator' },
   { id: 'aceleracoes',         icon: '⏩', catKey: 'poder',   type: 'calculator' },
-  { id: 'general',             icon: '🎖️', catKey: 'poder',   type: 'guide' },
-  { id: 'matar_tropas',        icon: '☠️', catKey: 'combate', type: 'guide' },
+  { id: 'general',             icon: '🎖️', catKey: 'poder',   type: 'calculator' },
+  { id: 'matar_tropas',        icon: '☠️', catKey: 'combate', type: 'calculator' },
   { id: 'alianca',             icon: '🤝', catKey: 'alianca', type: 'guide' },
   { id: 'poder',               icon: '⚡', catKey: 'poder',   type: 'guide' },
 ];

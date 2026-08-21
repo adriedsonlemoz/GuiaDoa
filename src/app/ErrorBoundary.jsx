@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import AppErrorState from '../ui/AppErrorState.jsx';
 import { buildDiagnostic } from '../errors/appErrors.js';
+import { DISPLAY_VERSION } from '../version.js';
+import { API_URL, API_CONFIGURATION_SOURCE } from '../config/api.js';
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -26,6 +28,7 @@ export default class ErrorBoundary extends Component {
         error:this.state.error,
         componentStack:this.state.componentStack,
         context:typeof window !== 'undefined' ? window.location.hash || 'interface' : 'interface',
+        extra:{ versao:DISPLAY_VERSION, api:API_URL || 'não configurada', apiSource:API_CONFIGURATION_SOURCE },
       });
       return (
         <div style={{ padding:'24px 10px' }}>

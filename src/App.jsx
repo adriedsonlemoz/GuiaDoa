@@ -9,10 +9,13 @@ import ErrorBoundary from './app/ErrorBoundary.jsx';
 import SyncProgressBanner from './app/SyncProgressBanner.jsx';
 import StartupGate from './app/StartupGate.jsx';
 import { GameDataProvider, useGameData } from './data/GameDataContext.jsx';
+import { getDonationNoticeSeen, setDonationNoticeSeen } from './utils/storage.js';
+import { C } from './theme.js';
 
 const GuiaApp = () => {
   const { route, setRoute, canGoBack } = useHashRouter();
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
+  const [donationNoticeOpen, setDonationNoticeOpen] = useState(() => !getDonationNoticeSeen());
   const { syncStatus, syncProgress } = useAppSync();
   const { dragoes } = useGameData();
   const { t, content } = useI18n();
@@ -37,6 +40,18 @@ const GuiaApp = () => {
   return (
     <>
       <SyncProgressBanner status={syncStatus} progress={syncProgress} />
+
+      <Modal open={donationNoticeOpen} onClose={() => { setDonationNoticeSeen(); setDonationNoticeOpen(false); }} maxWidth={340}>
+        <div className="p-4 text-center donation-first-modal">
+          <div className="text-4xl mb-2">💎</div>
+          <h2 className="font-cinzel m-0 mb-2" style={{color:C.TEXT_PRIMARY,fontSize:'1rem'}}>{t('donation.first_title')}</h2>
+          <p className="font-nunito m-0 mb-4" style={{color:C.TEXT_SECONDARY,fontSize:'.8rem',lineHeight:1.55}}>{t('donation.first_text')}</p>
+          <div className="flex gap-2">
+            <button className="btn-ghost flex-1" onClick={()=>{setDonationNoticeSeen();setDonationNoticeOpen(false);}}>{t('donation.not_now')}</button>
+            <button className="btn-gold flex-1" onClick={()=>{setDonationNoticeSeen();setDonationNoticeOpen(false);setRoute('doacao');}}>{t('donation.help')}</button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal open={exitDialogOpen} onClose={() => setExitDialogOpen(false)} maxWidth={320}>
         <div className="p-4 text-center">

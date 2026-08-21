@@ -6,13 +6,16 @@ import { buildDiagnostic, classifyConnectionError } from '../errors/appErrors.js
 import { useI18n } from '../hooks/useI18n.jsx';
 import DataSyncScene from './DataSyncScene.jsx';
 
-import { API_URL as API } from '../config/api.js';
+import { API_URL as API, API_CONFIGURED, API_CONFIGURATION_SOURCE } from '../config/api.js';
+import { DISPLAY_VERSION } from '../version.js';
 
 const RETRYABLE_CONNECTION_CODES = new Set(['GD-NET-001', 'GD-NET-002', 'GD-SRV-001']);
-const AUTO_RETRY_MS = 3000;
+const AUTO_RETRY_MS = 5000;
+const MAX_AUTO_RETRIES = 3;
+const CONNECTION_TIMEOUT_MS = 20000;
 
 const Tela = ({ children }) => (
-  <div style={{ minHeight:'100vh', display:'grid', placeItems:'center', padding:20, background:C.BG_PRIMARY }}>
+  <div style={{ minHeight:'100dvh', display:'grid', placeItems:'center', padding:20, background:C.BG_PRIMARY, overflow:'hidden' }}>
     <div style={{ width:'100%', maxWidth:420, background:C.BG_CARD, border:`1.5px solid ${C.BORDER}`, borderRadius:16, padding:22, boxShadow:'0 12px 40px rgba(62,47,28,.18)' }}>
       {children}
     </div>
@@ -26,13 +29,18 @@ export default function StartupGate({ children }) {
   const [carregando, setCarregando] = useState(true);
   const [form, setForm] = useState({ usuario:'', senha:'', confirmar:'', setupKey:'' });
   const [salvando, setSalvando] = useState(false);
+  const [autoRetries, setAutoRetries] = useState(0);
 
-  const verificar = async () => {
+  const verificar = async ({ resetRetries = false } = {}) => {
+    if (resetRetries) setAutoRetries(0);
     setCarregando(true);
     setErro(null);
     try {
       limparCachesDeDadosLegados();
-      const r = await fetch(`${API}/api/setup/bootstrap-status`, { signal:AbortSignal.timeout(12000), cache:'no-store' });
+      if (!API_CONFIGURED) {
+        const err=new Error('VITE_API_URL não foi configurada para este build.'); err.name='ApiConfigurationError'; throw err;
+      }
+      const r = await fetch(`${API}/api/setup/bootstrap-status`, { signal:AbortSignal.timeout(CONNECTION_TIMEOUT_MS), cache:'no-store' });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.mensagem || d.erro || `HTTP ${r.status}`);
       setStatus(d);
@@ -45,14 +53,19 @@ export default function StartupGate({ children }) {
         });
       }
     } catch (e) {
-      const info = classifyConnectionError(e, 'GD-START-001');
-      setErro({ ...info, raw:e });
+      if (e?.name === 'ApiConfigurationError') {
+        setErro({ code:'GD-CONFIG-001', title:t('app.setup.api_missing_title'), message:t('app.setup.api_missing_message'), raw:e });
+      } else {
+        const info = classifyConnectionError(e, 'GD-START-001');
+        setErro({ ...info, raw:e });
+        if (RETRYABLE_CONNECTION_CODES.has(info.code)) setAutoRetries(n=>n+1);
+      }
     } finally {
       setCarregando(false);
     }
   };
 
-  useEffect(() => { verificar(); }, []);
+  useEffect(() => { verificar({ resetRetries:true }); }, []);
 
   useEffect(() => {
     if (!status || status.migracao?.estado === 'pronto' || status.migracao?.estado === 'erro') return undefined;
@@ -61,10 +74,10 @@ export default function StartupGate({ children }) {
   }, [status]);
 
   useEffect(() => {
-    if (!erro || !RETRYABLE_CONNECTION_CODES.has(erro.code) || status) return undefined;
+    if (!erro || !RETRYABLE_CONNECTION_CODES.has(erro.code) || status || autoRetries >= MAX_AUTO_RETRIES) return undefined;
     const id = setTimeout(() => verificar(), AUTO_RETRY_MS);
     return () => clearTimeout(id);
-  }, [erro, status]);
+  }, [erro, status, autoRetries]);
 
   const criarAdmin = async (e) => {
     e.preventDefault();
@@ -77,7 +90,7 @@ export default function StartupGate({ children }) {
       const headers = { 'Content-Type':'application/json' };
       if (status?.usuario?.setupKeyObrigatoria && form.setupKey) headers['X-Setup-Key'] = form.setupKey;
       const r = await fetch(`${API}/api/setup/usuario`, {
-        method:'POST', headers, body:JSON.stringify({ usuario:form.usuario.trim(), senha:form.senha }), signal:AbortSignal.timeout(12000),
+        method:'POST', headers, body:JSON.stringify({ usuario:form.usuario.trim(), senha:form.senha }), signal:AbortSignal.timeout(CONNECTION_TIMEOUT_MS),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.mensagem || d.erro || `HTTP ${r.status}`);
@@ -90,7 +103,7 @@ export default function StartupGate({ children }) {
     }
   };
 
-  const diagnostic = useMemo(() => erro ? buildDiagnostic({ code:erro.code, error:erro.raw, context:'Inicialização' }) : '', [erro]);
+  const diagnostic = useMemo(() => erro ? buildDiagnostic({ code:erro.code, error:erro.raw, context:'Inicialização', extra:{ versao:DISPLAY_VERSION, api:API || 'não configurada', apiSource:API_CONFIGURATION_SOURCE, tentativas:autoRetries, origem:typeof window!=='undefined'?window.location.origin:'' } }) : '', [erro, autoRetries]);
 
   if (carregando && !status) return (
     <DataSyncScene
@@ -100,17 +113,13 @@ export default function StartupGate({ children }) {
     />
   );
 
-  if (erro && !status && RETRYABLE_CONNECTION_CODES.has(erro.code)) return (
-    <DataSyncScene
-      title={t('app.sync.waiting_connection')}
-      subtitle={t('app.sync.auto_retry_note')}
-      phase="connect"
-    />
+  if (erro && !status && RETRYABLE_CONNECTION_CODES.has(erro.code) && autoRetries < MAX_AUTO_RETRIES) return (
+    <DataSyncScene title={t('app.sync.waiting_connection')} subtitle={t('app.sync.retry_progress',{current:autoRetries,total:MAX_AUTO_RETRIES})} phase="connect" />
   );
 
   if (erro && (!status || status.migracao?.estado === 'erro')) return (
     <Tela>
-      <AppErrorState title={erro.title} message={erro.message} code={erro.code} diagnostic={diagnostic} onRetry={verificar} compact />
+      <AppErrorState title={erro.title} message={erro.message} code={erro.code} diagnostic={diagnostic} onRetry={()=>verificar({resetRetries:true})} compact />
     </Tela>
   );
 
@@ -132,7 +141,7 @@ export default function StartupGate({ children }) {
           message={t('app.setup.content_unavailable_message')}
           code="GD-START-003"
           diagnostic={buildDiagnostic({ code:'GD-START-003', error:raw, context:'Inicialização', extra:{ faltantes } })}
-          onRetry={verificar}
+          onRetry={()=>verificar({resetRetries:true})}
           compact
         />
       </Tela>

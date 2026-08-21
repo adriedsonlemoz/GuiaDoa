@@ -1,47 +1,40 @@
-# Corrida Armamentista — levantamento inicial
+# Corrida Armamentista — dados confirmados (Beta 2.72)
 
-Fonte: 23 capturas do jogo fornecidas em 20/08/2026.
+Fontes: capturas do jogo fornecidas em 20/08/2026 e ajustes de calendário/mecânicas confirmados pelo usuário em 21/08/2026.
 
-## Mecânica confirmada nas capturas
+## Regra de relógio
 
-- Duração: 7 dias.
-- Atualização diária: 00:00 UTC.
-- Dia 1: pré-abertura.
-- Dia 2: Fase 1 — Aceleração de Desenvolvimento.
-- Dia 3: Fase 2 — Recrutamento de soldado.
-- Dia 4: Fase 3 — Aprimoramento de general.
-- Dias 5 e 6: Fase 4 — Eliminação de soldado inimigo.
-- Dia 7: classificação e recompensas finais.
-- Pontos das fases são somados na classificação do evento.
-- Recompensas progressivas são enviadas ao cumprir requisitos; recompensas de ranking são enviadas no fechamento da fase correspondente.
+- O evento usa o reset global do jogo às **00:00 UTC**.
+- O fuso de um reino não muda o momento do reset.
+- Período geral confirmado: **21/08/2026 00:00 UTC até 28/08/2026 00:00 UTC**.
+- Em 21/08/2026 o evento está em **Observação**, não na Fase 1.
 
-## Ocorrências confirmadas cadastradas
+## Fases
 
-Além das capturas, foi informado que o evento atual acontece nos quatro reinos mais recentes já cadastrados no projeto. Portanto, a ocorrência foi confirmada para:
+1. **Dia 1 — Observação**: preparação; a primeira fase competitiva ainda não começou.
+2. **Dia 2 — Fase 1: Acelerações**: começa em 22/08/2026 00:00 UTC. Cada 1 minuto de aceleração usado vale 1 ponto.
+3. **Dia 3 — Fase 2: Aprimoramento de General**: escolher um General e aumentar seu XP usando cartas/outros Generais. A pontuação usa o XP efetivamente adicionado. Não existe no guia uma tabela de raridade inventada.
+4. **Dia 4 — Fase 3: Recrutamento de Tropas**: treinar tropas; a pontuação usa quantidade treinada e poder cadastrado da tropa.
+5. **Dias 5 e 6 — Fase 4: Eliminação de Tropas Inimigas**: quantidade eliminada × poder da tropa. Exemplo confirmado pelos dados de Tropas: 10.000 Espiões (poder 2) = 20.000 pontos; 10.000 Espelhos de Fogo (poder 10) = 100.000 pontos.
+6. **Dia 7 — Classificação final**.
 
-- Realm 345 — Corvith (UTC+0).
-- Realm 346 — Kenorax (UTC-7).
-- Realm 347 — Eisenhold (UTC+1).
-- Realm 348 — Zulanka (UTC-4).
-- Início oficial comum: 20/08/2026 00:00 UTC.
-- Encerramento comum: 27/08/2026 00:00 UTC.
+Cada fase competitiva pode abrir o calculador correspondente do módulo Torneios.
 
-Os fusos são metadados dos reinos e não deslocam o reset global do evento. Reinos sem ocorrência cadastrada permanecem **não confirmados**; a existência deste grupo de quatro não cria uma regra automática para eventos futuros.
+## Ocorrências confirmadas
+
+- #345 Corvith — UTC+0
+- #346 Kenorax — UTC-7
+- #347 Eisenhold — UTC+1
+- #348 Zulanka — UTC-4
+
+A confirmação desses quatro reinos não cria regra para eventos futuros. Sem ocorrência cadastrada, o evento permanece **não confirmado** para o reino.
+
+## Ciclo de vida
+
+Enquanto estiver no período, o evento pode aparecer na Home do reino confirmado. Ao atingir `fimServidor`, sai automaticamente da Home e permanece consultável em **Eventos passados**. Não é necessário desativar manualmente.
 
 ## Recompensas
 
-As capturas confirmam recompensas progressivas e de ranking nas Fases 1–4. O seed `api/seeds/eventos.js` registra os itens e quantidades legíveis das imagens e mantém o formato extensível para novas capturas.
+O seed `api/seeds/eventos.js` preserva somente itens/quantidades confirmados nas capturas. A faixa 21º–50º não é completada por inferência. Na meta de 1000 pontos da Fase 4 permanecem apenas os três itens realmente visíveis na captura.
 
-
-## Recompensas finais confirmadas nas capturas
-
-Foram cadastradas apenas faixas completamente visíveis nas imagens, sem completar valores ocultos por padrão:
-
-- 1º: Arca de Recursos ×10; 1000 Ogros de Granito ×10; Estilhaço de Alma Luna ×100; Arca Customizável de Poção de Tomos ×20; Chave dos Tomos de Matador de Dragão ×1.
-- 2º–3º: Arca de Recursos ×8; 1000 Ogros de Granito ×8; Estilhaço de Alma Luna ×80; Arca Customizável de Poção de Tomos ×15; Chave ×1.
-- 4º–10º: Arca de Recursos ×5; 1000 Ogros de Granito ×5; Estilhaço de Alma Luna ×60; Arca Customizável de Poção de Tomos ×10; Chave ×1.
-- 11º–20º: Estilhaço de Alma Luna ×50; Arca de Recursos ×4; 1000 Ogros de Granito ×4; Arca Customizável de Poção de Tomos ×8; Chave ×1.
-
-A faixa 21º–50º aparece apenas parcialmente em uma captura e, por isso, não foi completada por inferência.
-
-Na Fase 4, a meta de 1000 pontos mostra exatamente Pedra do Florescer do Bosque ×5, Aceleração de 15 Minutos ×1 e 100 Terror do Pântano ×5; não foi adicionado um quarto item que não aparece na captura.
+As recompensas suportam metas individuais, ranking por posição/faixa e múltiplos itens. Quando um item possui referência interna conhecida (por exemplo, uma tropa), a interface pode abrir a ficha correspondente no guia.

@@ -5,6 +5,7 @@ import { useI18n } from '../hooks/useI18n.jsx';
 import GameHeader from './shared/GameHeader.jsx';
 import EventRewards from './eventos/EventRewards.jsx';
 import EventPhaseList from './eventos/EventPhaseList.jsx';
+import EventTutorial from './eventos/EventTutorial.jsx';
 import { occurrenceForRealm, eventStatus, currentPhase, formatUtcDate, timeRemaining, ruleText, buildEventShareText } from './eventos/eventUtils.js';
 
 const STATUS_ORDER = { ativo:0, proximo:1, encerrado:2, nao_confirmado:3 };
@@ -31,13 +32,38 @@ export default function Eventos({ setRoute }) {
   }, [eventos, realmName, scope]);
 
   const sorted = rows.map(row => ({ ...row, status:eventStatus(row.ocorrencia, now), fase:currentPhase(row.evento,row.ocorrencia, now) }))
-    .sort((a,b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9) || new Date(a.ocorrencia.inicioServidor) - new Date(b.ocorrencia.inicioServidor));
+    .sort((a,b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9) || new Date(b.ocorrencia.inicioServidor) - new Date(a.ocorrencia.inicioServidor));
+  const currentRows=sorted.filter(row=>row.status!=='encerrado');
+  const pastRows=sorted.filter(row=>row.status==='encerrado');
 
   const handleCopy = async (evento, ocorrencia, key) => {
     try {
       await copyToClipboard(buildEventShareText(evento, ocorrencia, { content, locale, t }));
       setCopiedKey(key); window.setTimeout(() => setCopiedKey(current => current===key ? '' : current), 1800);
     } catch { setCopiedKey(''); }
+  };
+
+  const renderCard=({ evento, ocorrencia, status, fase })=>{
+    const key=`${evento.slug}:${ocorrencia.codigo}`; const expanded=openSlug===key; const left=timeRemaining(status==='proximo'?ocorrencia.inicioServidor:ocorrencia.fimServidor, now);
+    const confirmedRealms=(evento.ocorrencias||[]).filter(o=>o.confirmado!==false).map(o=>o.reinoNome).filter(Boolean);
+    return <article className={`tw-card event-card${status==='encerrado'?' is-past':''}`} key={key}>
+      <button className="event-card-summary" onClick={()=>setOpenSlug(expanded?'':key)}>
+        <div className="event-card-top"><div><small>{ocorrencia.reinoNome} · {ocorrencia.fusoReino || '—'}</small><strong>{content(evento,'nome')}</strong></div><span className={`event-status is-${status}${fase?.codigo==='observacao'?' is-observation':''}`}>{fase?.codigo==='observacao'?t('events.observation'):t(`events.status.${status}`)}</span></div>
+        <p>{content(evento,'resumo')}</p>
+        {fase && <div className="event-current-phase"><small>{fase.codigo==='observacao'?t('events.observation_now'):t('events.current_phase')}</small><strong>{content(fase,'nome')}</strong></div>}
+        <div className="event-card-dates"><span>{formatUtcDate(ocorrencia.inicioServidor,locale)}</span><b>→</b><span>{formatUtcDate(ocorrencia.fimServidor,locale)}</span></div>
+        {(status==='ativo'||status==='proximo') && <div className="event-countdown">⏳ {status==='proximo'?t('events.starts_in'):t('events.ends_in')} {left.days?`${left.days}d `:''}{left.hours}h {left.minutes}m</div>}
+      </button>
+      {expanded && <div className="event-card-detail">
+        <div className="event-detail-actions"><button type="button" className="event-copy-button" onClick={()=>handleCopy(evento,ocorrencia,key)}>{copiedKey===key?'✓ '+t('events.copied'):'⧉ '+t('events.copy_instructions')}</button></div>
+        <div className="event-reset-rule"><strong>🌐 {t('events.server_clock')}</strong><span>{t('events.server_clock_help',{time:evento.horarioReset||'00:00',zone:evento.servidorFuso||'UTC'})}</span></div>
+        <div className="event-confirmed-realms"><small>{t('events.confirmed_in')}</small><div>{confirmedRealms.map(name=><span key={name}>{name}</span>)}</div></div>
+        <EventTutorial evento={evento} occurrence={ocorrencia} t={t} content={content} locale={locale} setRoute={setRoute} />
+        <EventPhaseList evento={evento} occurrence={ocorrencia} current={fase} t={t} content={content} locale={locale} setRoute={setRoute} />
+        {(evento.recompensas||[]).length>0 && <details className="event-rules event-final-rewards"><summary>{t('events.final_ranking_rewards')}</summary><div className="event-rules-body"><EventRewards groups={evento.recompensas} t={t} content={content} setRoute={setRoute} /></div></details>}
+        {(evento.regras||[]).length>0 && <details className="event-rules"><summary>{t('events.rules')}</summary><ul>{evento.regras.map((r,i)=>{const text=typeof r==='string'?r:(content(r,'texto')||ruleText(r));return text?<li key={r?.id||i}><span aria-hidden="true">›</span><p>{text}</p></li>:null;})}</ul></details>}
+      </div>}
+    </article>;
   };
 
   return <div className="max-w-md mx-auto pb-6">
@@ -48,26 +74,9 @@ export default function Eventos({ setRoute }) {
       <div className="event-scope-tabs"><button className={scope==='realm'?'active':''} onClick={()=>setScope('realm')}>{t('events.this_realm')}</button><button className={scope==='all'?'active':''} onClick={()=>setScope('all')}>{t('events.confirmed_realms')}</button></div>
     </div></div>
 
-    {sorted.length === 0 ? <div className="tw-card event-empty"><span>📭</span><strong>{t('events.none_confirmed')}</strong><p>{t('events.none_confirmed_help')}</p></div> : sorted.map(({ evento, ocorrencia, status, fase }) => {
-      const key=`${evento.slug}:${ocorrencia.codigo}`; const expanded=openSlug===key; const left=timeRemaining(status==='proximo'?ocorrencia.inicioServidor:ocorrencia.fimServidor, now);
-      const confirmedRealms=(evento.ocorrencias||[]).filter(o=>o.confirmado!==false).map(o=>o.reinoNome).filter(Boolean);
-      return <article className="tw-card event-card" key={key}>
-        <button className="event-card-summary" onClick={()=>setOpenSlug(expanded?'':key)}>
-          <div className="event-card-top"><div><small>{ocorrencia.reinoNome} · {ocorrencia.fusoReino || '—'}</small><strong>{content(evento,'nome')}</strong></div><span className={`event-status is-${status}`}>{t(`events.status.${status}`)}</span></div>
-          <p>{content(evento,'resumo')}</p>
-          {fase && <div className="event-current-phase"><small>{t('events.current_phase')}</small><strong>{content(fase,'nome')}</strong></div>}
-          <div className="event-card-dates"><span>{formatUtcDate(ocorrencia.inicioServidor,locale)}</span><b>→</b><span>{formatUtcDate(ocorrencia.fimServidor,locale)}</span></div>
-          {(status==='ativo'||status==='proximo') && <div className="event-countdown">⏳ {status==='proximo'?t('events.starts_in'):t('events.ends_in')} {left.days?`${left.days}d `:''}{left.hours}h {left.minutes}m</div>}
-        </button>
-        {expanded && <div className="event-card-detail">
-          <div className="event-detail-actions"><button type="button" className="event-copy-button" onClick={()=>handleCopy(evento,ocorrencia,key)}>{copiedKey===key?'✓ '+t('events.copied'):'⧉ '+t('events.copy_instructions')}</button></div>
-          <div className="event-reset-rule"><strong>🌐 {t('events.server_clock')}</strong><span>{t('events.server_clock_help',{time:evento.horarioReset||'00:00',zone:evento.servidorFuso||'UTC'})}</span></div>
-          <div className="event-confirmed-realms"><small>{t('events.confirmed_in')}</small><div>{confirmedRealms.map(name=><span key={name}>{name}</span>)}</div></div>
-          <EventPhaseList evento={evento} occurrence={ocorrencia} current={fase} t={t} content={content} locale={locale} setRoute={setRoute} />
-          {(evento.recompensas||[]).length>0 && <details className="event-rules event-final-rewards"><summary>{t('events.final_ranking_rewards')}</summary><div className="event-rules-body"><EventRewards groups={evento.recompensas} t={t} content={content} setRoute={setRoute} /></div></details>}
-          {(evento.regras||[]).length>0 && <details className="event-rules"><summary>{t('events.rules')}</summary><ul>{evento.regras.map((r,i)=>{const text=typeof r==='string'?r:(content(r,'texto')||ruleText(r));return text?<li key={r?.id||i}><span aria-hidden="true">›</span><p>{text}</p></li>:null;})}</ul></details>}
-        </div>}
-      </article>;
-    })}
+    {sorted.length === 0 ? <div className="tw-card event-empty"><span>📭</span><strong>{t('events.none_confirmed')}</strong><p>{t('events.none_confirmed_help')}</p></div> : <>
+      {currentRows.length ? <><div className="event-list-section-title">{t('events.current_events')}<span>{currentRows.length}</span></div>{currentRows.map(renderCard)}</> : null}
+      {pastRows.length ? <><div className="event-list-section-title is-past">{t('events.past_events')}<span>{pastRows.length}</span></div>{pastRows.map(renderCard)}</> : null}
+    </>}
   </div>;
 }

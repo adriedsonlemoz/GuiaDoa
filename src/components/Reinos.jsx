@@ -4,21 +4,18 @@ import { useGameData } from '../data/GameDataContext.jsx';
 import { useI18n } from '../hooks/useI18n.jsx';
 import { occurrenceForRealm, eventStatus } from './eventos/eventUtils.js';
 import { API_URL as API } from '../config/api.js';
-
-const DAY_MS = 86400000;
-
-function realmAge(opening, now = new Date()) {
-  const start = new Date(opening).getTime();
-  if (!Number.isFinite(start)) return null;
-  const diff = now.getTime() - start;
-  if (diff < 0) return null;
-  return Math.floor(diff / DAY_MS);
-}
+import { formatRealmAge } from '../utils/realmAge.js';
 
 function dateLong(value, locale) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return new Intl.DateTimeFormat(locale, { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }).format(date);
+}
+
+function timezoneCurrentTime(value, now = new Date(), locale = 'pt-BR') {
+  const offset=timezoneOrder(value);
+  const shifted=new Date(now.getTime()+offset*3600000);
+  return new Intl.DateTimeFormat(locale,{hour:'2-digit',minute:'2-digit',timeZone:'UTC',hour12:false}).format(shifted);
 }
 
 function timezoneOrder(value) {
@@ -51,9 +48,12 @@ export default function Reinos() {
   const [timezone, setTimezone] = useState('all');
   const [selectedId, setSelectedId] = useState(null);
   const [remoteDetail, setRemoteDetail] = useState(null);
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => { const id=window.setInterval(()=>setNow(new Date()),30000); return()=>window.clearInterval(id); }, []);
 
   const sorted = useMemo(() => [...reinos].sort((a,b) => Number(b.id||0)-Number(a.id||0)), [reinos]);
   const timezones = useMemo(() => [...new Set(sorted.map(realm => realm.fuso).filter(Boolean))].sort((a,b) => timezoneOrder(a)-timezoneOrder(b)), [sorted]);
+  const timezoneCounts = useMemo(() => Object.fromEntries(timezones.map(zone => [zone, sorted.filter(realm=>realm.fuso===zone).length])), [sorted,timezones]);
   const filtered = useMemo(() => {
     const q=query.trim().toLowerCase();
     return sorted.filter(realm => {
@@ -77,7 +77,7 @@ export default function Reinos() {
   const selected = remoteDetail && String(remoteDetail.id) === String(selectedId) ? remoteDetail : selectedBase;
 
   if (selected) {
-    const age=realmAge(selected.aberturaEm);
+    const age=formatRealmAge(selected.aberturaEm, locale, now);
     const activeEvents=eventos.filter(evento => {
       const occurrence=occurrenceForRealm(evento, selected.nome);
       return occurrence && eventStatus(occurrence)==='ativo';
@@ -100,9 +100,10 @@ export default function Reinos() {
           <div><strong>{content(selected,'nome')}</strong><small>#{selected.id} · {selected.fuso || missing}</small><RealmTypeBadge realm={selected} t={t} /></div>
         </div>
         {specialHelp && <div className="realm-special-note"><span>{realmIcon(selected)}</span><p>{specialHelp}</p></div>}
+        <div className="realm-schedule-note">⏱️ {t('realms.schedule_server_note')}</div>
         <div className="realm-detail-grid">
           <RealmFact label={t('realms.opened_on')} value={selected.aberturaEm ? dateLong(selected.aberturaEm,locale) : missing} muted={!selected.aberturaEm} />
-          <RealmFact label={t('realms.age')} value={age===null ? missing : t('realms.age_days',{count:age})} muted={age===null} />
+          <RealmFact label={t('realms.age')} value={age || missing} muted={!age} />
           <RealmFact label={t('realms.timezone')} value={selected.fuso || missing} muted={!selected.fuso} />
           <RealmFact label={t('realms.tournaments_end')} value={schedule.torneiosFim || missing} muted={!schedule.torneiosFim} />
           <RealmFact label={t('realms.zyrvorthian')} value={schedule.zyrvorthian || missing} muted={!schedule.zyrvorthian} />
@@ -146,8 +147,8 @@ export default function Reinos() {
         <div className="realm-filter-block">
           <span>{t('realms.filter_timezone')}</span>
           <div className="realm-filter-chips" role="group" aria-label={t('realms.filter_timezone')}>
-            <button type="button" className={timezone==='all'?'active':''} onClick={()=>setTimezone('all')}>{t('realms.filter_all')}</button>
-            {timezones.map(zone=><button type="button" key={zone} className={timezone===zone?'active':''} onClick={()=>setTimezone(zone)}>{zone}</button>)}
+            <button type="button" className={`is-all${timezone==='all'?' active':''}`} onClick={()=>setTimezone('all')}><strong>{t('realms.filter_all')}</strong><small>{t('realms.timezone_realm_count',{count:sorted.length})}</small></button>
+            {timezones.map(zone=><button type="button" key={zone} className={timezone===zone?'active':''} onClick={()=>setTimezone(zone)}><strong>{zone}</strong><small>{t('realms.timezone_realm_count',{count:timezoneCounts[zone]})}</small><em>{timezoneCurrentTime(zone,now,locale)}</em></button>)}
           </div>
         </div>
       </div>
@@ -155,13 +156,13 @@ export default function Reinos() {
     <div className="realms-result-meta">{t('realms.showing_count',{shown:filtered.length,total:sorted.length})}</div>
     <div className="realms-public-list">
       {filtered.map(realm => {
-        const age=realmAge(realm.aberturaEm);
+        const age=formatRealmAge(realm.aberturaEm, locale, now);
         return <button type="button" key={realm.id} className={`realm-public-card${realm.tipoEspecial?` is-${realm.tipoEspecial}`:''}`} onClick={()=>setSelectedId(realm.id)}>
           <span className="realm-public-icon">{realmIcon(realm)}</span>
           <div>
             <div className="realm-public-title"><strong>{content(realm,'nome')}</strong><RealmTypeBadge realm={realm} t={t} /></div>
             <small>#{realm.id} · {realm.fuso || t('realms.not_informed')}</small>
-            {age!==null && <p>{t('realms.age_days',{count:age})}</p>}
+            {age && <p>{age}</p>}
           </div><b>›</b>
         </button>;
       })}
@@ -170,4 +171,5 @@ export default function Reinos() {
   </div>;
 }
 
-export { realmAge, realmIcon, timezoneOrder };
+export { realmIcon, timezoneOrder };
+export { formatRealmAge as realmAge };

@@ -19,8 +19,10 @@ test('falhas temporárias de conexão usam nova tentativa automática na tela in
     assert.match(source, /RETRYABLE_CONNECTION_CODES/);
     assert.match(source, /AUTO_RETRY_MS/);
     assert.match(source, /setTimeout/);
-    assert.match(source, /app\.sync\.auto_retry_note/);
   }
+  assert.match(provider, /app\.sync\.auto_retry_note/);
+  assert.match(startup, /app\.sync\.retry_progress/);
+  assert.match(startup, /MAX_AUTO_RETRIES/);
   assert.match(startup, /DataSyncScene/);
   assert.doesNotMatch(startup, /code=\{erro\.code\}[^]*onRetry=\{verificar\}[^]*GD-NET-002/);
 });

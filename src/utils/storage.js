@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   FUSO_OFFSET:  'doa_fuso_offset',
   TERMO_ACEITO: 'doa_termo_aceito',
   LOCALE:       'doa_locale',
+  DONATION_NOTICE_SEEN: 'doa_donation_notice_seen_v1',
   // dados pessoais do dispositivo
   TROPAS_QTD:   'doa_tropas_quantidades',
   PODER_NIVEIS: 'doa_poder_niveis',
@@ -41,3 +42,6 @@ export const getTermoAceito= ()  => localStorage.getItem(STORAGE_KEYS.TERMO_ACEI
 export const setTermoAceito= ()  => localStorage.setItem(STORAGE_KEYS.TERMO_ACEITO, 'true');
 export const getLocale     = ()  => localStorage.getItem(STORAGE_KEYS.LOCALE) || null;
 export const saveLocale    = (l) => localStorage.setItem(STORAGE_KEYS.LOCALE, l);
+
+export const getDonationNoticeSeen = () => localStorage.getItem(STORAGE_KEYS.DONATION_NOTICE_SEEN) === 'true';
+export const setDonationNoticeSeen = () => localStorage.setItem(STORAGE_KEYS.DONATION_NOTICE_SEEN, 'true');

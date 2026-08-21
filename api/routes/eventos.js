@@ -100,6 +100,26 @@ router.patch('/:slug/secao/:secao', autenticar, async (req, res) => {
   } catch (err) { sendError(res, err); }
 });
 
+router.post('/admin/:slug/clonar', autenticar, async (req, res) => {
+  try {
+    const atual = await Evento.findOne({ slug:req.params.slug }).lean();
+    if (!atual) return res.status(404).json({ erro:'Evento não encontrado.' });
+    const suffix = Date.now().toString(36);
+    const fases = (atual.fases || []).map(fase => ({ ...fase, inicioServidor:null, fimServidor:null }));
+    const base = {
+      ...atual,
+      _id:undefined, criadoEm:undefined, atualizadoEm:undefined,
+      nome:`${atual.nome} — cópia`, slug:`${atual.slug}-copia-${suffix}`,
+      inicioServidor:null, fimServidor:null, fases,
+      ocorrencias:[], historico:[], ativo:true,
+      fonte:{ tipo:'clone', data:new Date().toISOString().slice(0,10), descricao:`Clonado de ${atual.slug}. Datas e reinos precisam ser confirmados.`, verificado:false },
+    };
+    const payload = await normalizeWithRealms(base);
+    const criado = await Evento.create(payload);
+    res.status(201).json(serializarEvento(criado));
+  } catch (err) { sendError(res, err); }
+});
+
 router.delete('/:slug', autenticar, async (req, res) => {
   try {
     const doc = await Evento.findOne({ slug:req.params.slug }).lean();

@@ -69,6 +69,8 @@ guiadoa_reinos
 guiadoa_itens
 guiadoa_dicas
 guiadoa_dicas_categorias
+guiadoa_eventos
+guiadoa_reino_fusoes
 ```
 
 `guiadoa_config` registra a versão/estado da migração. A migração canônica usa uma **versão de dados independente da versão visual do aplicativo**. Atualizações apenas de interface não reimportam seeds. A versão de dados só deve avançar quando houver uma migração real de conteúdo; reiniciar o Render não recria registros apagados quando a migração já estiver concluída.
@@ -82,6 +84,19 @@ FORCE_DATA_MIGRATION=true
 ```
 
 Faça um deploy e depois remova/desative essa variável. Isso não é parte do fluxo normal do usuário/admin.
+
+
+## 🌍 Eventos e Reinos — Beta 2.72
+
+Eventos são armazenados em `guiadoa_eventos`. Fases, regras, ocorrências e recompensas são subdocumentos estruturados; itens de recompensa possuem estrutura própria. **Ausência de ocorrência para um reino significa evento não confirmado**.
+
+O endpoint administrativo de clonagem (`POST /api/eventos/admin/:slug/clonar`) reaproveita a estrutura do evento, mas remove datas, ocorrências e histórico para evitar a reutilização acidental de confirmações antigas.
+
+`guiadoa_reinos` usa os 33 IDs canônicos do jogo. A migração Beta 2.72 mantém data de abertura somente para #337–#348 nos três grupos anuais confirmados; datas desconhecidas ficam `null`. A idade é sempre calculada no frontend/Admin e nunca persistida.
+
+Horários de reino são armazenados no relógio oficial UTC do jogo e somente quando confirmados. A arquitetura de fusões fica isolada em `guiadoa_reino_fusoes`; nenhuma fusão é criada automaticamente.
+
+A migração `content:eventos-reinos:beta-2.72` também corrige o calendário da Corrida Armamentista para 21/08/2026 00:00 UTC → 28/08/2026 00:00 UTC, com Dia 1 de observação.
 
 ## 🔗 Frontend e modo online
 

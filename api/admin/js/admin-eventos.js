@@ -75,7 +75,7 @@ function renderGerenciadorEvento() {
   const status=ativas.length?'ativo':proxima.length?'proximo':(e.ocorrencias||[]).length?'encerrado':'nao_confirmado';
   const section=(icon,title,desc,fn,count='')=>`<button class="admin-manage-row" onclick="${fn}"><span class="admin-manage-icon">${icon}</span><span><strong>${title}</strong><small>${desc}</small></span>${count?`<em>${count}</em>`:''}<b>›</b></button>`;
   document.getElementById('content').innerHTML=`
-    <div class="admin-event-manager-head"><button class="btn btn-ghost btn-sm" onclick="irModulo('eventos')">‹ Eventos</button><div class="admin-event-manager-title"><span class="admin-status-pill is-${eventoStatusTone(status)}">${eventoStatusLabel(status)}</span><h1>${esc(e.nome)}</h1><p>${esc(e.resumo||'Sem resumo cadastrado.')}</p><small>${esc(eventoPeriodLabel(e))}</small></div><div class="admin-event-manager-actions"><button class="btn btn-navy btn-sm" onclick="abrirInformacoesGeraisEvento(EVENTO_ATUAL)">✏ Editar</button><button class="btn btn-red btn-sm" onclick="excluirEventoComImpacto()">🗑 Excluir</button></div></div>
+    <div class="admin-event-manager-head"><button class="btn btn-ghost btn-sm" onclick="irModulo('eventos')">‹ Eventos</button><div class="admin-event-manager-title"><span class="admin-status-pill is-${eventoStatusTone(status)}">${eventoStatusLabel(status)}</span><h1>${esc(e.nome)}</h1><p>${esc(e.resumo||'Sem resumo cadastrado.')}</p><small>${esc(eventoPeriodLabel(e))}</small></div><div class="admin-event-manager-actions"><button class="btn btn-navy btn-sm" onclick="abrirInformacoesGeraisEvento(EVENTO_ATUAL)">✏ Editar</button><button class="btn btn-ghost btn-sm" onclick="clonarEventoAtual()">⧉ Clonar</button><button class="btn btn-red btn-sm" onclick="excluirEventoComImpacto()">🗑 Excluir</button></div></div>
     <div class="admin-manage-card"><div class="admin-manage-card-title">Configuração</div>
       ${section('ℹ️','Informações gerais','Nome, descrição, categoria, imagem e disponibilidade.','abrirInformacoesGeraisEvento(EVENTO_ATUAL)')}
       ${section('🗓️','Datas e fases','Período oficial, fases, dia do evento e prévia automática.','abrirDatasFasesEvento()',`${(e.fases||[]).length}`)}
@@ -85,6 +85,17 @@ function renderGerenciadorEvento() {
       ${section('🕘','Histórico','Ocorrências, fonte e alterações registradas.','abrirHistoricoEvento()',`${(e.historico||[]).length}`)}
     </div>
     <div class="admin-callout compact"><strong>Encerramento automático</strong><span>O campo “disponível no guia” não precisa ser desligado quando o evento termina. Home e status usam as datas; ao atingir o término, o destaque ativo desaparece automaticamente.</span></div>`;
+}
+
+
+async function clonarEventoAtual(){
+  if(!EVENTO_ATUAL)return;
+  if(!confirm(`Clonar "${EVENTO_ATUAL.nome}"? A cópia manterá estrutura, fases, regras e recompensas, mas ficará sem datas e sem reinos confirmados.`))return;
+  try{
+    const r=await fetch(`${API}/eventos/admin/${EVENTO_ATUAL.slug}/clonar`,{method:'POST',headers:{Authorization:`Bearer ${TOKEN}`}});const d=await r.json();
+    if(!r.ok)return toast(d.erro||'Erro ao clonar evento.','erro');
+    EVENTOS_CACHE.push(d);EVENTO_ATUAL=d;toast('Evento clonado. Confirme novas datas e reinos antes de usar.','ok');renderGerenciadorEvento();
+  }catch(err){toast('Erro: '+err.message,'erro');}
 }
 
 function abrirModalEvento(e) { abrirInformacoesGeraisEvento(e||null); }

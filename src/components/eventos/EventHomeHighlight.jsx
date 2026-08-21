@@ -31,9 +31,9 @@ export default function EventHomeHighlight({ realmName, onOpen }) {
           <button className="event-home-card" type="button" key={`${evento.slug}-${ocorrencia.codigo}`} onClick={onOpen}>
             <div className="event-home-title">
               <div><small>{realmName}</small><strong>{content(evento, 'nome')}</strong></div>
-              <span className="event-status is-active">{t('events.status.active')}</span>
+              <span className="event-status is-active">{fase?.codigo==='observacao'?t('events.observation'):t('events.status.active')}</span>
             </div>
-            {fase && <p className="event-home-phase">{content(fase, 'nome')}</p>}
+            {fase && <p className="event-home-phase"><small>{fase.codigo==='observacao'?t('events.observation_now'):t('events.current_phase')}</small>{content(fase, 'nome')}</p>}
             <div className="event-home-meta">
               <span>🌍 {t('events.confirmed_in')}: {confirmedActiveRealms.join(', ')}</span>
               <span>🌐 {t('events.reset_global')}: {evento.horarioReset || '00:00'} {evento.servidorFuso || 'UTC'}</span>

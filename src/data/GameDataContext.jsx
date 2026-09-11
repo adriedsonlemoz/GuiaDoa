@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { classifyConnectionError } from '../errors/appErrors.js';
 import { useI18n } from '../hooks/useI18n.jsx';
 import { API_URL as API, API_CONFIGURED } from '../config/api.js';
@@ -39,6 +39,10 @@ async function wakeBackend() {
 
 export function GameDataProvider({ children }) {
   const { t } = useI18n();
+  const translateRef = useRef(t);
+  translateRef.current = t;
+  const inFlightRef = useRef(null);
+  const hasSyncedRef = useRef(false);
   const [dados, setDados] = useState(() => ({ ...EMPTY_DATA }));
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState(null);
@@ -47,52 +51,62 @@ export function GameDataProvider({ children }) {
   const [dataSource, setDataSource] = useState('empty');
   const [retryAttempt, setRetryAttempt] = useState(0);
 
-  const refresh = useCallback(async ({ wake = true } = {}) => {
-    setLoading(true);
-    setErro(null);
-    setProgress({ step:0, total:ENDPOINTS.length, label:wake ? t('app.sync.waking_backend') : t('app.sync.connecting'), completedKeys:[], currentKey:'' });
-    try {
-      if (wake) await wakeBackend();
-      let concluidos = 0;
-      const entries = await Promise.all(ENDPOINTS.map(async ([key,labelKey,path,parse]) => {
-        const r = await fetch(`${API}${path}`, { signal:AbortSignal.timeout(DATA_TIMEOUT_MS), cache:'no-store' });
-        if (!r.ok) throw new Error(`${t(labelKey)}: HTTP ${r.status}`);
-        const json = await r.json();
-        concluidos += 1;
-        setProgress(current => ({
-          step:concluidos,
-          total:ENDPOINTS.length,
-          label:t(labelKey),
-          currentKey:key,
-          completedKeys:[...new Set([...(current.completedKeys || []), key])],
+  const refresh = useCallback(({ wake = true } = {}) => {
+    // Manual sync, retry and online events share one request and one cache write.
+    if (inFlightRef.current) return inFlightRef.current;
+    const t = (...args) => translateRef.current(...args);
+    let finished = false;
+    const request = (async () => {
+      setLoading(true);
+      setErro(null);
+      setProgress({ step:0, total:ENDPOINTS.length, label:wake ? t('app.sync.waking_backend') : t('app.sync.connecting'), completedKeys:[], currentKey:'' });
+      try {
+        if (wake) await wakeBackend();
+        let concluidos = 0;
+        const entries = await Promise.all(ENDPOINTS.map(async ([key,labelKey,path,parse]) => {
+          const r = await fetch(`${API}${path}`, { signal:AbortSignal.timeout(DATA_TIMEOUT_MS), cache:'no-store' });
+          if (!r.ok) throw new Error(`${t(labelKey)}: HTTP ${r.status}`);
+          const json = await r.json();
+          concluidos += 1;
+          if (!finished) setProgress(current => ({
+            step:concluidos,
+            total:ENDPOINTS.length,
+            label:t(labelKey),
+            currentKey:key,
+            completedKeys:[...new Set([...(current.completedKeys || []), key])],
+          }));
+          return [key, parse(json)];
         }));
-        return [key, parse(json)];
-      }));
-      const novo = Object.fromEntries(entries);
-      const updatedAt = new Date().toISOString();
-      setDados(novo);
-      setLastUpdated(updatedAt);
-      setDataSource('online');
-      setRetryAttempt(0);
-      await writeGameDataCache(novo, { updatedAt }).catch(() => false);
-      return novo;
-    } catch (e) {
-      const info = e?.name === 'ApiConfigurationError'
-        ? { code:'GD-CONFIG-001', title:t('app.setup.api_missing_title'), message:t('app.setup.api_missing_message') }
-        : classifyConnectionError(e, 'GD-DATA-001');
-      setErro({ ...info, raw:e });
-      if (RETRYABLE_CONNECTION_CODES.has(info.code)) setRetryAttempt(current => current + 1);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
+        const novo = Object.fromEntries(entries);
+        const updatedAt = new Date().toISOString();
+        hasSyncedRef.current = true;
+        setDados(novo);
+        setLastUpdated(updatedAt);
+        setDataSource('online');
+        setRetryAttempt(0);
+        await writeGameDataCache(novo, { updatedAt }).catch(() => false);
+        return novo;
+      } catch (e) {
+        const info = e?.name === 'ApiConfigurationError'
+          ? { code:'GD-CONFIG-001', title:t('app.setup.api_missing_title'), message:t('app.setup.api_missing_message') }
+          : classifyConnectionError(e, 'GD-DATA-001');
+        setErro({ ...info, raw:e });
+        if (RETRYABLE_CONNECTION_CODES.has(info.code)) setRetryAttempt(current => current + 1);
+        throw e;
+      } finally {
+        finished = true;
+        setLoading(false);
+      }
+    })();
+    inFlightRef.current = request.finally(() => { inFlightRef.current = null; });
+    return inFlightRef.current;
+  }, []);
 
   useEffect(() => {
     let active = true;
     (async () => {
       const snapshot = await readGameDataCache().catch(() => null);
-      if (!active) return;
+      if (!active || hasSyncedRef.current) return;
       if (snapshot?.data && hasUsableGameData(snapshot.data)) {
         setDados({ ...snapshot.data, reinos:sanitizeRealmCatalog(snapshot.data.reinos || []) });
         setLastUpdated(snapshot.updatedAt || null);

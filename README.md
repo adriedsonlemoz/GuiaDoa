@@ -4,7 +4,7 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 
 ## Versão
 
-**1.0.0-beta.2.77**
+**1.0.0-beta.2.78** | Android `versionCode`: **100078**
 
 ## Principais módulos
 
@@ -15,6 +15,18 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 - **Extras → Reinos** com catálogo canônico, abertura/idade calculada, fuso, horários confirmados, eventos ativos e histórico
 - Extras: Reinos, Doação, Sobre, Texto Colorido e Backup
 - Painel Admin para manutenção dos conteúdos do MongoDB
+
+## Beta 2.78 — validação, APK e estabilidade
+
+- O workflow executa testes do frontend/API, verificações, testes de navegador e build web antes de gerar o APK.
+- `GuiaDOA.apk` passa a ser publicado diretamente como asset de Release, sem ZIP de artifact. A publicação confirma nome, tamanho e estado do único asset.
+- A versão nativa recebe o `versionName` de `package.json` e o `versionCode` de `mobile/android-version.json`.
+- Release exige keystore real, alinhamento e assinatura verificável. Debug continua disponível para testes, sem exigir secrets de assinatura.
+- Sincronizações simultâneas compartilham a mesma requisição. Trocar de idioma não dispara nova leitura de cache nem outra sincronização.
+- A abertura do IndexedDB tem tempo limite e fallback, preservando acesso ao catálogo durante falhas de armazenamento ou conexão.
+- Corrigida a interpolação de nicknames no botão de confirmação do Admin e a perda de contexto dos callbacks de navegação.
+
+Configuração de assinatura, publicação e limites da validação: [Estabilização Beta 2.78](docs/ESTABILIZACAO_BETA_2_78.md).
 
 ## Beta 2.77 — reinos, UTC+0, tipografia e primeiro acesso
 
@@ -195,8 +207,8 @@ A migração `content:eventos-reinos:beta-2.71` introduziu a normalização de e
 Requisitos: Node.js >= 20.19 e uma instância MongoDB para a API.
 
 ```bash
-npm install
-npm --prefix api install
+npm ci
+npm --prefix api ci
 npm run dev
 ```
 
@@ -208,7 +220,7 @@ npm --prefix api run dev
 
 ## Variáveis de ambiente
 
-Copie `.env.example` e `api/.env.example`. A API exige `MONGO_URI` e `JWT_SECRET`. O frontend de produção/APK exige `VITE_API_URL` apontando para a API publicada.
+Copie `.env.example` e `api/.env.example`. A API exige `MONGO_URI` e `JWT_SECRET`. O frontend de produção/APK usa a API canônica; `VITE_API_URL` é um override opcional HTTPS, sem credenciais ou endereço de loopback.
 
 ## Qualidade
 
@@ -216,6 +228,8 @@ Copie `.env.example` e `api/.env.example`. A API exige `MONGO_URI` e `JWT_SECRET
 npm test
 npm run check
 npm run build
+npx --no-install playwright install chromium
+npm run test:browser
 ```
 
 ## Beta 2.72

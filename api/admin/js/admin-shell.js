@@ -23,16 +23,21 @@ function irModulo(id) {
 
 function setBreadcrumb(items) {
   const bc = document.getElementById('breadcrumb');
-  let html = `<span class="breadcrumb-item" onclick="irHome()">🏠 Início</span>`;
+  const home = document.createElement('span');
+  home.className = 'breadcrumb-item';
+  home.textContent = '🏠 Início';
+  home.addEventListener('click', irHome);
+  bc.replaceChildren(home);
   items.forEach((item, i) => {
-    html += `<span class="breadcrumb-sep">›</span>`;
-    if (i === items.length - 1) {
-      html += `<span class="breadcrumb-current">${esc(item.label)}</span>`;
-    } else {
-      html += `<span class="breadcrumb-item" onclick="(${item.action})()">${esc(item.label)}</span>`;
-    }
+    const separator = document.createElement('span');
+    separator.className = 'breadcrumb-sep';
+    separator.textContent = '›';
+    const link = document.createElement('span');
+    link.className = i === items.length - 1 ? 'breadcrumb-current' : 'breadcrumb-item';
+    link.textContent = item.label;
+    if (i !== items.length - 1 && typeof item.action === 'function') link.addEventListener('click', item.action);
+    bc.append(separator, link);
   });
-  bc.innerHTML = html;
 }
 
 // ── HOME ─────────────────────────────────────────────────────────────────────

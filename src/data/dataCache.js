@@ -3,6 +3,7 @@ const DB_VERSION = 1;
 const STORE_NAME = 'snapshots';
 const GAME_DATA_KEY = 'game-data-v1';
 const META_KEY = 'doa_game_cache_meta_v1';
+const CACHE_OPEN_TIMEOUT_MS = 1500;
 
 export const GAME_DATA_CACHE_SCHEMA = 1;
 export const GAME_DATA_CACHE_FRESH_MS = 12 * 60 * 60 * 1000;
@@ -31,12 +32,28 @@ function openDb() {
   if (typeof indexedDB === 'undefined') return Promise.resolve(null);
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
+    let settled = false;
+    const fail = error => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(error);
+    };
+    const timer = setTimeout(() => fail(new Error('Cache local indisponível')), CACHE_OPEN_TIMEOUT_MS);
     request.onupgradeneeded = () => {
+      if (settled) { request.transaction?.abort(); return; }
       const db = request.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
     };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('Falha ao abrir cache local'));
+    request.onsuccess = () => {
+      if (settled) { request.result.close(); return; }
+      settled = true;
+      clearTimeout(timer);
+      request.result.onversionchange = () => request.result.close();
+      resolve(request.result);
+    };
+    request.onerror = () => fail(request.error || new Error('Falha ao abrir cache local'));
+    request.onblocked = () => fail(new Error('Cache local bloqueado'));
   });
 }
 
@@ -49,6 +66,7 @@ async function readIndexedDb() {
       const request = tx.objectStore(STORE_NAME).get(GAME_DATA_KEY);
       request.onsuccess = () => resolve(request.result || null);
       request.onerror = () => reject(request.error || new Error('Falha ao ler cache local'));
+      tx.onabort = () => reject(tx.error || new Error('Leitura do cache local abortada'));
     });
   } finally {
     db.close();

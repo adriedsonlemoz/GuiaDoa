@@ -1094,7 +1094,7 @@ function atRenderChanges() {
   const panel = document.getElementById('at-panel');
   const changes = AT.summary?.changes || [];
   panel.innerHTML = `<div class="at-card"><h3>Alterações recentes</h3><p class="at-muted">Entradas e saídas só são detectadas a partir de capturas marcadas como lista completa.</p>
-    <div class="at-change-list">${changes.map(c => `<div class="at-change at-change-${esc(c.type)}"><div><strong>${esc(atChangeLabel(c.type))}</strong><span>${esc(c.name || '')}${c.otherName ? ` → ${esc(c.otherName)}` : ''}</span><small>${esc(atFmtDate(c.capturedAt))}${c.note ? ` · ${esc(c.note)}` : ''}</small></div>${c.type==='nickname_candidate' && c.memberId && c.otherMemberId ? `<button class="btn btn-gold btn-sm" onclick="atConfirmRename('${esc(c.memberId)}','${esc(c.otherMemberId)}','${esc(c.name)}','${esc(c.otherName)}')">Confirmar troca</button>` : ''}</div>`).join('') || '<div class="at-empty">Ainda não há alterações detectadas.</div>'}</div>
+    <div class="at-change-list">${changes.map(c => `<div class="at-change at-change-${esc(c.type)}"><div><strong>${esc(atChangeLabel(c.type))}</strong><span>${esc(c.name || '')}${c.otherName ? ` → ${esc(c.otherName)}` : ''}</span><small>${esc(atFmtDate(c.capturedAt))}${c.note ? ` · ${esc(c.note)}` : ''}</small></div>${c.type==='nickname_candidate' && c.memberId && c.otherMemberId ? `<button class="btn btn-gold btn-sm" onclick="atConfirmRename(fromStrArg('${strArg(c.memberId)}'),fromStrArg('${strArg(c.otherMemberId)}'),fromStrArg('${strArg(c.name)}'),fromStrArg('${strArg(c.otherName)}'))">Confirmar troca</button>` : ''}</div>`).join('') || '<div class="at-empty">Ainda não há alterações detectadas.</div>'}</div>
   </div>`;
 }
 

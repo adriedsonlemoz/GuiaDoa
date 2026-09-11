@@ -4,3 +4,9 @@ dist/
 api/.env
 *.local
 .DS_Store
+android/
+release-apk/
+test-results/
+playwright-report/
+*.keystore
+*.jks

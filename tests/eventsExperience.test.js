@@ -283,7 +283,7 @@ test('APK não usa localhost silenciosamente e cold start não bloqueia a interf
   assert.match(provider,/wakeBackend/);
   assert.match(api,/https:\/\/guiadoa-agrq\.onrender\.com/);
   assert.match(workflow,/guiadoa-agrq\.onrender\.com/);
-  assert.match(workflow,/https:\/\/\*/);
+  assert.match(workflow,/node scripts\/android-build-config\.mjs validate/);
 });
 
 test('Admin permite clonar evento sem reaproveitar datas ou ocorrências', () => {

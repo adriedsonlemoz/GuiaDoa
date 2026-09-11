@@ -105,7 +105,7 @@ const GuiaApp = () => {
         </ErrorBoundary>
       </main>
 
-      <footer style={{ width:'min(100%,760px)', margin:'0 auto', background:'linear-gradient(180deg,#3A5754,#304946)', borderTop:'1px solid #806033' }}>
+      <footer className="game-footer">
         <div className="py-2 text-center" style={{ color:'rgba(255,247,223,.72)', fontSize:'.74rem', letterSpacing:'2px', fontWeight:800 }}>
           GUIA DOA · {DISPLAY_VERSION}
         </div>

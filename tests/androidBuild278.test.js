@@ -49,7 +49,7 @@ test('application and API locks agree with the native release metadata', () => {
     assert.equal(read(file).version, version);
     assert.equal(read(file).packages[''].version, version);
   }
-  assert.equal(read('mobile/android-version.json').versionCode, 100078);
+  assert.equal(read('mobile/android-version.json').versionCode, 100079);
 });
 
 test('workflow validates before publishing exactly one signed APK and no artifact archive', () => {

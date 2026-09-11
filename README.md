@@ -4,7 +4,7 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 
 ## Versão
 
-**1.0.0-beta.2.78** | Android `versionCode`: **100078**
+**1.0.0-beta.2.79** | Android `versionCode`: **100079**
 
 ## Principais módulos
 
@@ -15,6 +15,16 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 - **Extras → Reinos** com catálogo canônico, abertura/idade calculada, fuso, horários confirmados, eventos ativos e histórico
 - Extras: Reinos, Doação, Sobre, Texto Colorido e Backup
 - Painel Admin para manutenção dos conteúdos do MongoDB
+
+## Beta 2.79 — tela inteira no Android
+
+- O APK Android agora entra em **modo imersivo**: barra de status e barra de navegação ficam ocultas durante o uso.
+- As barras do sistema podem aparecer temporariamente por gesto e voltam a ser ocultadas quando a janela recupera o foco.
+- O conteúdo passa a usar a área edge-to-edge, inclusive em aparelhos com recorte/câmera, com `viewport-fit=cover`.
+- Cabeçalho, rodapé e telas de sincronização respeitam as áreas seguras do aparelho para evitar controles sob o recorte ou a área de gestos.
+- Como a pasta `android/` é gerada pelo workflow, a personalização fullscreen é reaplicada automaticamente por `scripts/apply-android-fullscreen.mjs` em cada build.
+
+Detalhes da implementação: [Tela inteira Beta 2.79](docs/TELA_INTEIRA_BETA_2_79.md).
 
 ## Beta 2.78 — validação, APK e estabilidade
 

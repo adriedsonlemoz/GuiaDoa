@@ -60,7 +60,9 @@ export default function LanguageChooser({ onBack, onDone, setup = false }) {
         position: 'relative', overflow: 'hidden',
         background: 'linear-gradient(150deg,#213F3C 0%,#2F5652 52%,#3C6863 100%)',
         borderBottom: '1px solid rgba(200,168,74,.55)',
-        padding: setup ? '38px 18px 34px' : '18px 18px 28px',
+        padding: setup
+          ? 'calc(38px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 34px calc(18px + env(safe-area-inset-left))'
+          : 'calc(18px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 28px calc(18px + env(safe-area-inset-left))',
       }}>
         <div aria-hidden="true" style={{ position: 'absolute', width: 210, height: 210, right: -90, top: -110, borderRadius: '50%', border: '1px solid rgba(200,168,74,.10)' }} />
         <div aria-hidden="true" style={{ position: 'absolute', width: 140, height: 140, left: -70, bottom: -88, borderRadius: '50%', background: 'radial-gradient(circle,rgba(200,168,74,.11),transparent 66%)' }} />
@@ -96,7 +98,7 @@ export default function LanguageChooser({ onBack, onDone, setup = false }) {
         </div>
       </header>
 
-      <main style={{ flex: 1, width: '100%', maxWidth: 480, margin: '0 auto', padding: '22px 16px 30px' }}>
+      <main style={{ flex: 1, width: '100%', maxWidth: 480, margin: '0 auto', padding: '22px calc(16px + env(safe-area-inset-right)) calc(30px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))' }}>
         <p className="font-nunito" style={{ margin: '0 2px 12px', color: C.TEXT_SECONDARY, fontSize:'.76rem', fontWeight: 800, lineHeight: 1.5 }}>
           {t('language.tap_hint')}
         </p>

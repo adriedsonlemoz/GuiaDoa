@@ -12,7 +12,7 @@ import { DISPLAY_VERSION } from '../version.js';
 const CONNECTION_TIMEOUT_MS = 45000;
 
 const Tela = ({ children }) => (
-  <div style={{ minHeight:'100dvh', display:'grid', placeItems:'center', padding:20, background:C.BG_PRIMARY, overflow:'hidden' }}>
+  <div style={{ minHeight:'100dvh', display:'grid', placeItems:'center', padding:'calc(20px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left))', background:C.BG_PRIMARY, overflow:'hidden' }}>
     <div style={{ width:'100%', maxWidth:420, background:C.BG_CARD, border:`1.5px solid ${C.BORDER}`, borderRadius:16, padding:22, boxShadow:'0 12px 40px rgba(62,47,28,.18)' }}>
       {children}
     </div>

@@ -10,10 +10,10 @@ export default function ProfileDetailsStep({
 }) {
   const { t } = useI18n();
   return (
-    <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', background:C.BG_MAIN }}>
+    <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', background:C.BG_MAIN }}>
       <header style={{
         background:'linear-gradient(155deg,#293F41 0%,#486467 100%)',
-        padding:'28px 18px 24px', borderBottom:`2px solid ${C.BORDER_STRONG}`,
+        padding:'calc(28px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 24px calc(18px + env(safe-area-inset-left))', borderBottom:`2px solid ${C.BORDER_STRONG}`,
       }}>
         <div style={{ maxWidth:480, margin:'0 auto', display:'flex', alignItems:'center', gap:14 }}>
           <div style={{
@@ -28,7 +28,7 @@ export default function ProfileDetailsStep({
         </div>
       </header>
 
-      <main style={{ flex:1, width:'100%', maxWidth:480, margin:'0 auto', padding:'16px 14px 32px' }}>
+      <main style={{ flex:1, width:'100%', maxWidth:480, margin:'0 auto', padding:'16px calc(14px + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))' }}>
         <section style={{
           padding:'10px 12px', borderRadius:10, marginBottom:12, display:'flex', gap:9, alignItems:'flex-start',
           background:'rgba(200,168,74,.07)', border:'1px solid rgba(200,168,74,.3)',

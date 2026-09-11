@@ -103,6 +103,7 @@ jobs:
           npx --no-install cap sync android
           node scripts/apply-android-name.mjs
           node scripts/apply-android-icon.mjs
+          node scripts/apply-android-fullscreen.mjs
           node scripts/android-build-config.mjs apply
           chmod +x android/gradlew
 

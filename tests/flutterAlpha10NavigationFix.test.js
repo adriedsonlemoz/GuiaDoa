@@ -9,9 +9,9 @@ test('quick compare passes ProfileStore required by TroopsPage', () => {
   assert.match(home, /TroopsPage\([\s\S]*?controller: widget\.gameData,[\s\S]*?profileStore: widget\.profileStore,[\s\S]*?startCompareMode: true/);
 });
 
-test('Flutter alpha.10 release metadata is synchronized', () => {
-  assert.equal(release.version, '1.0.0-beta.2.87');
-  assert.equal(release.versionCode, 100087);
-  assert.equal(release.channel, 'alpha.10');
-  assert.equal(release.apkName, 'GuiaDOA-FLUTTER-beta.2.87-alpha.10.apk');
+test('Flutter alpha.11 release metadata is synchronized', () => {
+  assert.equal(release.version, '1.0.0-beta.2.88');
+  assert.equal(release.versionCode, 100088);
+  assert.equal(release.channel, 'alpha.11');
+  assert.equal(release.apkName, 'GuiaDOA-FLUTTER-beta.2.88-alpha.11.apk');
 });

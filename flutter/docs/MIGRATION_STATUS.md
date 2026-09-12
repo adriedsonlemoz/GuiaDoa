@@ -1,62 +1,22 @@
-# Migração React/Capacitor → Flutter — alpha.3
+# Estado da migração Flutter — alpha.11
 
-Base analisada: **Guia DOA 1.0.0-beta.2.80**.
+Base atual: **Guia Doa 1.0.0-beta.2.88 / Flutter alpha.11 / versionCode 100088**.
 
+## Arquitetura
 
-## Correções da alpha.3
+- Flutter é a aplicação principal para Android, Web e iOS.
+- Render continua servindo a API Express.
+- MongoDB continua acessível apenas pelo backend.
+- React/Capacitor permanece no repositório como referência funcional e workflow legado/manual durante a validação da paridade.
 
-- corrigido `flutter analyze`: `Container` não aceita o parâmetro `minHeight`; agora usa `constraints: BoxConstraints(minHeight: 60)`;
-- removidos avisos `prefer_const_constructors` da área de versão na Home;
-- versão Flutter sincronizada em **1.0.0-beta.2.80+100080**.
+## Cobertura funcional
 
-## Decisões preservadas
+Primeira passagem de paridade concluída para os módulos públicos: Home, Torneios e calculadoras, Tropas e comparação, Cálculos de marcha, Aprimoramento, Dragões e Tracker, Edifícios, Itens, Pesquisas, Ilhas, Níveis, Campanha, Eventos, Dicas, Reinos, Assistente, Backup, Extras, Construtor de Texto, Favoritos, Sobre, Apoio, Perfil, Idioma e Configurações.
 
-1. **MongoDB não será acessado diretamente pelo aplicativo.** Flutter usa a mesma API Express publicada no Render.
-2. **Backend/Admin continuam no projeto atual.** A migração inicial troca somente o cliente público.
-3. **Web não será abandonada.** O mesmo código Flutter será compilado para Android, Web e iOS.
-4. **Migração progressiva.** O frontend React permanece funcional até cada tela Flutter ter equivalência suficiente.
-5. **Identidade visual preservada.** A alpha começa com pergaminho + verde-petróleo + dourado; a imagem `reference-home-premium.png` fica apenas como direção visual aprovada, não como obrigação de redesenhar funções.
+Algumas subrotas antigas foram consolidadas em módulos Flutter únicos para evitar duplicação de tela. O conteúdo permanece acessível pelos registros e detalhes da API.
 
-## Já iniciado
+## Identidade
 
-- bootstrap multiplataforma;
-- tema e shell responsivo;
-- API client;
-- cache simples do catálogo;
-- perfil/onboarding;
-- Home;
-- catálogos públicos conectados;
-- fullscreen/edge-to-edge;
-- assets atuais copiados;
-- testes básicos do parser da API.
-
-## Concluído nesta alpha
-
-- **Tropas e Comparador**: lista, busca, filtros, ordenação, detalhes, treinamento e comparação rápida de duas unidades.
-
-## Próximas migrações funcionais
-
-- Dragões, alimentação, evolução e tracker;
-- Edifícios normais/Gruta/Basílica;
-- Pesquisas;
-- catálogo e detalhes de Itens;
-- Campanha (Grodz/Zyrvorthian);
-- Ilhas e planejador;
-- Torneios e calculadoras;
-- Eventos/Reinos com todas as regras atuais;
-- Dicas com categorias e conteúdo formatado;
-- Assistente;
-- backup/restauração dos dados locais;
-- termos/doação e demais modais de primeiro acesso;
-- i18n completa PT-BR/EN-US, reaproveitando todas as strings atuais;
-- substituição do cache transitório por armazenamento local mais robusto caso o tamanho real do catálogo ultrapasse limites seguros no Web.
-
-## O que não foi alterado
-
-- API Express;
-- models/coleções MongoDB;
-- painel Admin;
-- migrações de conteúdo/seeds;
-- frontend React/Capacitor de produção.
-
-Isso permite validar Flutter sem interromper o aplicativo existente.
+- Nome instalado: **Guia Doa**.
+- O sufixo Flutter fica apenas na identificação técnica da build e nome do APK durante a fase alpha.
+- Android usa adaptive icon + fallback circular, corrigindo o launcher quadrado.

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'core/network/api_client.dart';
+import 'core/storage/feature_store.dart';
 import 'core/storage/profile_store.dart';
 import 'features/catalog/data/game_data_repository.dart';
 import 'features/catalog/presentation/game_data_controller.dart';
@@ -28,10 +29,11 @@ Future<void> main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final profileStore = ProfileStore(prefs);
+  final featureStore = FeatureStore(prefs);
   final api = ApiClient();
   final gameData = GameDataController(GameDataRepository(api), prefs);
 
   await gameData.restoreCache();
-  runApp(GuiaDoaApp(gameData: gameData, profileStore: profileStore));
+  runApp(GuiaDoaApp(gameData: gameData, profileStore: profileStore, featureStore: featureStore));
   unawaited(gameData.refresh());
 }

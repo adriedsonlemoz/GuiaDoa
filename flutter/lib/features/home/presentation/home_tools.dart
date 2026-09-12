@@ -15,7 +15,7 @@ class HomeTool {
   final String? catalogKey;
   final String? assetPath;
 
-  bool get migrated => catalogKey != null || keyName == 'tropas';
+  bool get migrated => true;
 }
 
 const List<HomeTool> homeTools = <HomeTool>[

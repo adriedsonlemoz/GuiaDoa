@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/i18n/app_strings.dart';
+import '../../../core/storage/feature_store.dart';
 import '../../../core/storage/profile_store.dart';
 import '../../../core/theme/guia_theme.dart';
-import '../../catalog/presentation/catalog_list_page.dart';
 import '../../catalog/presentation/game_data_controller.dart';
 import '../../profile/presentation/profile_page.dart';
 import '../../settings/presentation/settings_page.dart';
+import '../../modules/presentation/module_pages.dart';
 import '../../troops/presentation/troops_page.dart';
 import 'home_tools.dart';
 
@@ -16,10 +17,12 @@ class HomePage extends StatefulWidget {
     super.key,
     required this.gameData,
     required this.profileStore,
+    required this.featureStore,
   });
 
   final GameDataController gameData;
   final ProfileStore profileStore;
+  final FeatureStore featureStore;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -105,8 +108,8 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                               ),
-                              onCalculator: () => _showMigrating(strings),
-                              onBackup: () => _showMigrating(strings),
+                              onCalculator: () => _push(MarchCalculatorPage(controller: widget.gameData, profileStore: widget.profileStore)),
+                              onBackup: () => _push(BackupPage(profileStore: widget.profileStore, featureStore: widget.featureStore)),
                             ),
                             const SizedBox(height: 18),
                             _SectionHeader(
@@ -117,7 +120,7 @@ class _HomePageState extends State<HomePage> {
                             _Highlights(
                               strings: strings,
                               onTournament: () => _openTool(_toolByKey('torneios'), strings),
-                              onTroops: () => _openTool(_toolByKey('tropas'), strings),
+                              onTroops: () => _push(TroopUpgradePage(profileStore: widget.profileStore)),
                             ),
                             const SizedBox(height: 18),
                             _SyncStrip(gameData: widget.gameData, strings: strings),
@@ -146,15 +149,19 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: _PremiumBottomBar(
         strings: strings,
         onHome: () {},
-        onGuides: () => _showMigrating(strings),
-        onTracker: () => _showMigrating(strings),
-        onFavorites: () => _showMigrating(strings),
-        onMore: _openSettings,
+        onGuides: () => _push(GuidesPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore)),
+        onTracker: () => _push(TrackerHubPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore)),
+        onFavorites: () => _push(FavoritesPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore)),
+        onMore: () => _push(MorePage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore)),
       ),
     );
   }
 
   HomeTool _toolByKey(String key) => homeTools.firstWhere((tool) => tool.keyName == key);
+
+  void _push(Widget page) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  }
 
   void _openSettings() {
     Navigator.of(context).push(
@@ -172,33 +179,23 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showMigrating(AppStrings strings) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('home.migrating'))));
-  }
-
   void _openTool(HomeTool tool, AppStrings strings) {
-    if (tool.keyName == 'tropas') {
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => TroopsPage(controller: widget.gameData, profileStore: widget.profileStore),
-        ),
-      );
-      return;
-    }
-    if (tool.catalogKey == null) {
-      _showMigrating(strings);
-      return;
-    }
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => CatalogListPage(
-          sectionKey: tool.catalogKey!,
-          title: strings.t(tool.labelKey),
-          controller: widget.gameData,
-          profileStore: widget.profileStore,
-        ),
-      ),
-    );
+    final Widget page = switch (tool.keyName) {
+      'torneios' => TournamentsPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore),
+      'tropas' => TroopsPage(controller: widget.gameData, profileStore: widget.profileStore),
+      'dragoes' => DragonsPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore),
+      'edificios' => BuildingsPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore),
+      'itens' => ItemsPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore),
+      'pesquisas' => ResearchPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore),
+      'ilhas' => IslandsPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore),
+      'dicas' => GuidesPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore),
+      'campanha' => CampaignPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore),
+      'niveis' => LevelsPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore),
+      'eventos' => EventsPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore),
+      'extras' => ExtrasPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore),
+      _ => CatalogModulePage(title: strings.t(tool.labelKey), sectionKey: tool.catalogKey ?? tool.keyName, controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore),
+    };
+    _push(page);
   }
 }
 

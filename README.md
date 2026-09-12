@@ -273,6 +273,6 @@ npm run test:browser
 
 ---
 
-## 🦋 Migração Flutter (alpha.10)
+## 🦋 Migração Flutter (alpha.11)
 
-A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.10**, versão **1.0.0-beta.2.87**, preparada para **Android + Web + iOS**. Esta etapa fixa a nova identidade visual baseada no mockup aprovado e corrige o fluxo de idioma no primeiro acesso e em Configurações. O frontend React/Capacitor permanece apenas como legado manual durante a migração; Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [Flutter alpha.10](docs/FLUTTER_MIGRATION_ALPHA10.md).
+A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.11**, versão **1.0.0-beta.2.88**, preparada para **Android + Web + iOS**. Esta etapa fixa a nova identidade visual baseada no mockup aprovado e corrige o fluxo de idioma no primeiro acesso e em Configurações. O frontend React/Capacitor permanece apenas como legado manual durante a migração; Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [Flutter alpha.11](docs/FLUTTER_MIGRATION_ALPHA11.md).

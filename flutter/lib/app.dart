@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/config/app_config.dart';
+import 'core/storage/feature_store.dart';
 import 'core/storage/profile_store.dart';
 import 'core/theme/guia_theme.dart';
 import 'features/catalog/presentation/game_data_controller.dart';
@@ -13,10 +14,12 @@ class GuiaDoaApp extends StatelessWidget {
     super.key,
     required this.gameData,
     required this.profileStore,
+    required this.featureStore,
   });
 
   final GameDataController gameData;
   final ProfileStore profileStore;
+  final FeatureStore featureStore;
 
   Locale _localeFromTag(String tag) {
     final parts = tag.split('-');
@@ -41,7 +44,7 @@ class GuiaDoaApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           home: profileStore.hasProfile
-              ? HomePage(gameData: gameData, profileStore: profileStore)
+              ? HomePage(gameData: gameData, profileStore: profileStore, featureStore: featureStore)
               : OnboardingPage(profileStore: profileStore, gameData: gameData),
         ),
       );

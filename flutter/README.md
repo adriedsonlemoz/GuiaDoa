@@ -1,6 +1,6 @@
-# Guia DOA — Flutter migration alpha.10
+# Guia Doa — Flutter migration alpha.11
 
-Esta pasta é o novo cliente multiplataforma do **Guia DOA**. O frontend React/Capacitor continua no repositório enquanto a migração avança; o backend Express + MongoDB permanece a fonte de verdade.
+Esta pasta é o novo cliente multiplataforma do **Guia Doa**. O frontend React/Capacitor continua no repositório enquanto a migração avança; o backend Express + MongoDB permanece a fonte de verdade.
 
 ## Alvos
 
@@ -71,3 +71,7 @@ Consulte `docs/MIGRATION_STATUS.md` para o mapa completo do que ainda precisa se
 ## Android release networking
 
 The generated Android platform is patched by `tool/bootstrap_platforms.sh` / `.ps1` to keep `android.permission.INTERNET` in the **main** manifest, so release APKs can reach the Render API. The workflow passes the API endpoint with `--dart-define=API_URL=...`, preferring `FLUTTER_API_URL`, then the existing `VITE_API_URL` secret.
+
+## Alpha.11 — fechamento da primeira passagem funcional
+
+A alpha.11 restaura o nome público **Guia Doa**, corrige o launcher Android com ícone adaptativo e adiciona rotas Flutter funcionais para os módulos públicos restantes da versão React/Capacitor. Consulte [`../docs/FLUTTER_MIGRATION_ALPHA11.md`](../docs/FLUTTER_MIGRATION_ALPHA11.md) para a matriz de equivalência.

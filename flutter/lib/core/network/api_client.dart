@@ -34,7 +34,7 @@ class ApiClient {
     } on TimeoutException {
       throw const ApiException('O servidor demorou para responder. Tente novamente.');
     } on http.ClientException {
-      throw const ApiException('Não foi possível conectar ao servidor do Guia DOA. Verifique sua internet e tente novamente.');
+      throw const ApiException('Não foi possível conectar ao servidor do Guia Doa. Verifique sua internet e tente novamente.');
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -44,6 +44,44 @@ class ApiClient {
       );
     }
 
+    try {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } on FormatException {
+      throw const ApiException('A API retornou uma resposta JSON inválida.');
+    }
+  }
+
+  Future<dynamic> postJson(
+    String path,
+    Map<String, dynamic> body, {
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    late final http.Response response;
+    try {
+      response = await _client
+          .post(
+            uri(path),
+            headers: const {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(timeout);
+    } on TimeoutException {
+      throw const ApiException('O servidor demorou para responder. Tente novamente.');
+    } on http.ClientException {
+      throw const ApiException('Não foi possível conectar ao servidor do Guia Doa. Verifique sua internet e tente novamente.');
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      String message = 'A API respondeu HTTP ${response.statusCode}.';
+      try {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded is Map<Object?, Object?> && decoded['erro'] != null) message = decoded['erro'].toString();
+      } catch (_) {}
+      throw ApiException(message, statusCode: response.statusCode);
+    }
     try {
       return jsonDecode(utf8.decode(response.bodyBytes));
     } on FormatException {

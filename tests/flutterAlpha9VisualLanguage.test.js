@@ -44,19 +44,19 @@ test('language can be selected before profile creation and changed later in Sett
   assert.match(store, /_localeKey = 'doa_locale_flutter'/);
 });
 
-test('alpha.10 release metadata is synchronized', () => {
+test('alpha.11 release metadata is synchronized', () => {
   const release = JSON.parse(read('flutter/release.json'));
   const android = JSON.parse(read('mobile/android-version.json'));
   const packageJson = JSON.parse(read('package.json'));
   const pubspec = read('flutter/pubspec.yaml');
   const config = read('flutter/lib/core/config/app_config.dart');
 
-  assert.equal(packageJson.version, '1.0.0-beta.2.87');
-  assert.equal(android.versionCode, 100087);
+  assert.equal(packageJson.version, '1.0.0-beta.2.88');
+  assert.equal(android.versionCode, 100088);
   assert.equal(release.version, packageJson.version);
   assert.equal(release.versionCode, android.versionCode);
-  assert.equal(release.channel, 'alpha.10');
-  assert.equal(release.apkName, 'GuiaDOA-FLUTTER-beta.2.87-alpha.10.apk');
-  assert.match(pubspec, /version: 1\.0\.0-beta\.2\.87\+100087/);
-  assert.match(config, /Flutter alpha\.10/);
+  assert.equal(release.channel, 'alpha.11');
+  assert.equal(release.apkName, 'GuiaDOA-FLUTTER-beta.2.88-alpha.11.apk');
+  assert.match(pubspec, /version: 1\.0\.0-beta\.2\.88\+100088/);
+  assert.match(config, /Flutter alpha\.11/);
 });

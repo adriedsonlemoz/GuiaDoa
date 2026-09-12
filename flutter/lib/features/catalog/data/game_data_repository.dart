@@ -23,6 +23,7 @@ class GameDataRepository {
     CatalogEndpoint('itens', '/api/itens?limite=500', responseKey: 'itens'),
     CatalogEndpoint('eventos', '/api/eventos', responseKey: 'eventos'),
     CatalogEndpoint('dicas', '/api/dicas'),
+    CatalogEndpoint('campanha', '/api/campanha', responseKey: 'locais'),
   ];
 
   Future<Map<String, List<Map<String, dynamic>>>> fetchCatalog() async {

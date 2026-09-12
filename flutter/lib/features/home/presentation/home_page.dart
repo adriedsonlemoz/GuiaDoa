@@ -310,7 +310,9 @@ class _PrimaryToolGrid extends StatelessWidget {
       final effectiveWidth = constraints.maxWidth / scale;
       final columns = effectiveWidth >= 700 ? 4 : effectiveWidth >= 315 ? 3 : 2;
       final width = (constraints.maxWidth - (columns - 1) * 9) / columns;
-      final cardHeight = scale > 1.35 ? 156.0 : 126.0;
+      final cardHeight = scale > 1.35
+          ? (effectiveWidth < 220 ? 172.0 : 156.0)
+          : 126.0;
       return Wrap(spacing: 9, runSpacing: 9, children: tools.map((tool) => SizedBox(key: ValueKey('home-tool-${tool.keyName}'), width: width, height: cardHeight,
         child: _ToolCard(tool: tool, strings: strings, onTap: () => onOpen(tool)))).toList());
     });
@@ -514,40 +516,44 @@ class _PremiumBottomBar extends StatelessWidget {
           border: Border(top: BorderSide(color: GuiaColors.premiumGold, width: 1)),
           boxShadow: <BoxShadow>[BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(0, -2))],
         ),
-        child: BottomNavigationBar(
-          currentIndex: 0,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: GuiaColors.premiumBackground2,
-          selectedItemColor: GuiaColors.premiumGoldLight,
-          unselectedItemColor: GuiaColors.premiumMuted,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
-          onTap: (index) {
-            switch (index) {
-              case 0:
-                onHome();
-                return;
-              case 1:
-                onGuides();
-                return;
-              case 2:
-                onTracker();
-                return;
-              case 3:
-                onFavorites();
-                return;
-              case 4:
-                onMore();
-                return;
-            }
-          },
-          items: <BottomNavigationBarItem>[
-            BottomNavigationBarItem(icon: const GuiaSymbol('inicio', color: GuiaColors.premiumMuted), activeIcon: const GuiaSymbol('inicio', filled: true), label: strings.t('nav.home')),
-            BottomNavigationBarItem(icon: const GuiaSymbol('guias', color: GuiaColors.premiumMuted), label: strings.t('nav.guides')),
-            BottomNavigationBarItem(icon: const GuiaSymbol('tracker', color: GuiaColors.premiumMuted), label: strings.t('nav.tracker')),
-            BottomNavigationBarItem(icon: const GuiaSymbol('favoritos', color: GuiaColors.premiumMuted), label: strings.t('nav.favorites')),
-            BottomNavigationBarItem(icon: const GuiaSymbol('mais', color: GuiaColors.premiumMuted), label: strings.t('nav.more')),
-          ],
+        child: MediaQuery.withClampedTextScaling(
+          maxScaleFactor: 1.5,
+          child: BottomNavigationBar(
+            key: const ValueKey('home-bottom-navigation'),
+            currentIndex: 0,
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: GuiaColors.premiumBackground2,
+            selectedItemColor: GuiaColors.premiumGoldLight,
+            unselectedItemColor: GuiaColors.premiumMuted,
+            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+            onTap: (index) {
+              switch (index) {
+                case 0:
+                  onHome();
+                  return;
+                case 1:
+                  onGuides();
+                  return;
+                case 2:
+                  onTracker();
+                  return;
+                case 3:
+                  onFavorites();
+                  return;
+                case 4:
+                  onMore();
+                  return;
+              }
+            },
+            items: <BottomNavigationBarItem>[
+              BottomNavigationBarItem(icon: const GuiaSymbol('inicio', color: GuiaColors.premiumMuted), activeIcon: const GuiaSymbol('inicio', filled: true), label: strings.t('nav.home')),
+              BottomNavigationBarItem(icon: const GuiaSymbol('guias', color: GuiaColors.premiumMuted), label: strings.t('nav.guides')),
+              BottomNavigationBarItem(icon: const GuiaSymbol('tracker', color: GuiaColors.premiumMuted), label: strings.t('nav.tracker')),
+              BottomNavigationBarItem(icon: const GuiaSymbol('favoritos', color: GuiaColors.premiumMuted), label: strings.t('nav.favorites')),
+              BottomNavigationBarItem(icon: const GuiaSymbol('mais', color: GuiaColors.premiumMuted), label: strings.t('nav.more')),
+            ],
+          ),
         ),
       );
 }

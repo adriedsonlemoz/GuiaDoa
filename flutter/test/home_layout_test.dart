@@ -29,6 +29,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Guia Doa'), findsOneWidget);
         expect(find.text('tool.torneios'), findsNothing);
+        expect(find.byKey(const ValueKey('home-bottom-navigation')), findsOneWidget);
         expect(tester.takeException(), isNull);
         if (scale == 1.0) {
           final tournament = tester.getTopLeft(find.byKey(const ValueKey('home-tool-torneios')));

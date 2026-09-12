@@ -1,7 +1,7 @@
 name: guia_doa
 description: Cliente Flutter multiplataforma do Guia Doa.
 publish_to: none
-version: 1.0.0-beta.2.91+100091
+version: 1.0.0-beta.2.92+100092
 
 environment:
   sdk: '>=3.5.0 <4.0.0'

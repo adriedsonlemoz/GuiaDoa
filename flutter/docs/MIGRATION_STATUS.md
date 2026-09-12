@@ -1,8 +1,8 @@
-# Estado da migração Flutter — alpha.14
+# Estado da migração Flutter — alpha.15
 
-Home compacta: [detalhes desta entrega](../../docs/FLUTTER_ALPHA14_HOME_COMPACTA.md).
+Correção responsiva: [detalhes desta entrega](../../docs/FLUTTER_ALPHA15_LAYOUT_FIX.md).
 
-Base atual: **Guia Doa 1.0.0-beta.2.91 / Flutter alpha.14 / versionCode 100091**.
+Base atual: **Guia Doa 1.0.0-beta.2.92 / Flutter alpha.15 / versionCode 100092**.
 
 ## Arquitetura
 

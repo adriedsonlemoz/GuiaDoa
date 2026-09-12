@@ -1,5 +1,5 @@
-> **Versão atual: Guia Doa 1.0.0-beta.2.91 / Flutter alpha.14 / versionCode 100091.**
-> Ajuste de densidade visual e redução do pacote: [relatório e validação](docs/FLUTTER_ALPHA14_HOME_COMPACTA.md).
+> **Versão atual: Guia Doa 1.0.0-beta.2.92 / Flutter alpha.15 / versionCode 100092.**
+> Correção do teste responsivo do workflow: [relatório e validação](docs/FLUTTER_ALPHA15_LAYOUT_FIX.md).
 > O APK principal continua vindo do workflow Flutter.
 
 # GUIA DOA
@@ -277,6 +277,6 @@ npm run test:browser
 
 ---
 
-## 🦋 Migração Flutter (alpha.14)
+## 🦋 Migração Flutter (alpha.15)
 
-A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.14**, versão **1.0.0-beta.2.91**, preparada para **Android + Web + iOS**. Esta etapa aproxima a densidade da Home ao mockup, simplifica atalhos e destaques e reduz os arquivos visuais distribuídos. O frontend React/Capacitor permanece apenas como legado manual durante a migração; Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [relatório alpha.14](docs/FLUTTER_ALPHA14_HOME_COMPACTA.md).
+A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.15**, versão **1.0.0-beta.2.92**, preparada para **Android + Web + iOS**. Esta etapa preserva a Home compacta da alpha.14 e corrige a navegação inferior em telas estreitas com texto ampliado. O frontend React/Capacitor permanece apenas como legado manual durante a migração; Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [relatório alpha.15](docs/FLUTTER_ALPHA15_LAYOUT_FIX.md).

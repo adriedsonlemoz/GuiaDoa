@@ -1,3 +1,10 @@
+## 1.0.0-beta.2.92 — Flutter alpha.15 (2026-09-12)
+
+- Corrigido o overflow vertical de 1 px da Home em largura de 360 px com texto ampliado a 200%.
+- Cards ganham altura adicional apenas na combinação de tela estreita e texto ampliado; a escala dos rótulos da barra inferior fica limitada a 150%.
+- Adicionada identificação estável da barra inferior ao teste responsivo.
+- Metadados sincronizados: beta.2.92 / alpha.15 / 100092.
+
 ## 1.0.0-beta.2.91 — Flutter alpha.14 (2026-09-12)
 
 - Cards principais reorganizados em três colunas no celular, com altura, arte e tipografia mais compactas.

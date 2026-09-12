@@ -45,3 +45,14 @@
 - Validação e limitações: [relatório da entrega](docs/FLUTTER_ALPHA13_VISUAL_UTC.md).
 
 # Changelog
+## 1.0.0-beta.2.95 — Flutter alpha.18 (2026-09-12)
+
+- Home restaurada para quatro colunas no celular, com fallback acessível para texto ampliado.
+- Níveis passou a ler `poderNecessario`, calcular nível atual, próxima meta e poder restante sem exibir “Registro 0”.
+- Comparação de tropas recebeu as traduções ausentes de todos os atributos.
+- Detalhes genéricos deixaram de expor slug, ordem, mapas e JSON técnico; Guias agora exibem conteúdo legível.
+- Pesquisas recuperou planejamento persistente de nível atual/meta e tempos por nível.
+- Edifícios recuperou ficha, evolução por nível e regras/bônus estruturados.
+- Ilhas deixou a grade mock de 12 slots e passou a planejar por ilha, quantidade, nível, limite e resumo calculado.
+- Texto Colorido e Bandeiras voltaram ao formato de código aceito pelo jogo, com 32 bandeiras e confirmação de cópia.
+- Metadados sincronizados: beta.2.95 / alpha.18 / 100095.

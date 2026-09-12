@@ -1,6 +1,5 @@
 import 'dart:async';
 import '../../../core/domain/realm_time.dart';
-import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -175,6 +174,16 @@ Widget _recordImage(Map<String, dynamic> item, {double size = 58, BoxFit fit = B
       child: const Icon(Icons.auto_awesome, color: GuiaColors.premiumGoldLight),
     );
   }
+  // Vários catálogos usam um emoji como ícone. Ele é conteúdo visual, não URL.
+  if (!path.contains('/') && !path.contains('.') && !path.startsWith('http')) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: GuiaColors.premiumEmerald.withValues(alpha: .25), borderRadius: BorderRadius.circular(10)),
+      child: Text(path, style: TextStyle(fontSize: size * .48)),
+    );
+  }
   if (path.startsWith('/assets/')) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
@@ -204,8 +213,50 @@ Widget _networkImage(String path, double size, BoxFit fit) {
   );
 }
 
-Future<void> _showRecordSheet(BuildContext context, Map<String, dynamic> record, String locale, {String? title}) async {
-  final visible = record.entries.where((entry) => !const <String>{'_id', '__v', 'i18n'}.contains(entry.key)).toList(growable: false);
+String _friendlyField(String key, String locale) {
+  const pt = <String, String>{
+    'categoria': 'Categoria', 'tipo': 'Tipo', 'tag': 'Categoria', 'nivelMax': 'Nível máximo',
+    'leituraMin': 'Tempo de leitura', 'atualizadoEm': 'Atualizado em', 'status': 'Status',
+    'fuso': 'Fuso horário', 'aberturaEm': 'Abertura', 'descricao': 'Descrição', 'resumo': 'Resumo',
+    'tempo': 'Tempo', 'desc': 'Efeito', 'populacao': 'População', 'producaoHora': 'Produção/hora',
+    'capacidadeMax': 'Capacidade máxima', 'maxTropas': 'Máximo de tropas', 'aumentoPopulacao': 'Aumento de população',
+    'territorios': 'Territórios', 'reforcos': 'Reforços', 'areas': 'Áreas', 'marchas': 'Marchas',
+    'tropasPorMarcha': 'Tropas por marcha', 'nivelMaxPedra': 'Pedra máxima', 'ranhuras': 'Ranhuras',
+    'bonusOrbitasPct': 'Bônus de órbitas', 'exploracaoHoras': 'Duração da exploração',
+    'ajudasComRecompensa': 'Ajudas com recompensa', 'orbitasPorPedraNivel1': 'Órbitas por pedra Nv. 1',
+    'bonusPorNivelPct': 'Bônus por nível', 'requerAlianca': 'Requer aliança', 'requerBaseAlianca': 'Requer base da aliança',
+  };
+  const en = <String, String>{
+    'categoria': 'Category', 'tipo': 'Type', 'tag': 'Category', 'nivelMax': 'Maximum level',
+    'leituraMin': 'Reading time', 'atualizadoEm': 'Updated at', 'status': 'Status',
+    'fuso': 'Time zone', 'aberturaEm': 'Opening', 'descricao': 'Description', 'resumo': 'Summary',
+    'tempo': 'Time', 'desc': 'Effect', 'populacao': 'Population', 'producaoHora': 'Production/hour',
+    'capacidadeMax': 'Maximum capacity', 'maxTropas': 'Maximum troops', 'aumentoPopulacao': 'Population increase',
+    'territorios': 'Territories', 'reforcos': 'Reinforcements', 'areas': 'Areas', 'marchas': 'Marches',
+    'tropasPorMarcha': 'Troops per march', 'nivelMaxPedra': 'Maximum stone', 'ranhuras': 'Slots',
+    'bonusOrbitasPct': 'Orb bonus', 'exploracaoHoras': 'Exploration duration',
+    'ajudasComRecompensa': 'Rewarded helps', 'orbitasPorPedraNivel1': 'Orbs per Lv. 1 stone',
+    'bonusPorNivelPct': 'Bonus per level', 'requerAlianca': 'Requires alliance', 'requerBaseAlianca': 'Requires alliance base',
+  };
+  return (locale.toLowerCase().startsWith('en') ? en : pt)[key] ?? key;
+}
+
+String _humanValue(String key, dynamic value, String locale) {
+  if (key == 'leituraMin') return locale.toLowerCase().startsWith('en') ? '$value min read' : '$value min de leitura';
+  if (value is bool) return value ? (locale.toLowerCase().startsWith('en') ? 'Yes' : 'Sim') : (locale.toLowerCase().startsWith('en') ? 'No' : 'Não');
+  return value?.toString() ?? '—';
+}
+
+Future<void> _showRecordSheet(BuildContext context, Map<String, dynamic> record, String locale, {String? title, String? sectionKey}) async {
+  const hidden = <String>{
+    '_id', '__v', 'i18n', 'slug', 'nome', 'name', 'titulo', 'title', 'icone', 'icon', 'imagem', 'image',
+    'ordem', 'grupo', 'tipoModulo', 'relacionados', 'destaque', 'niveis', 'colunas', 'dadosEspeciais', 'conteudo', 'imagens',
+  };
+  final visible = record.entries.where((entry) => !hidden.contains(entry.key) && entry.value is! Map && entry.value is! List).toList(growable: false);
+  final description = localizedValue(record, record.containsKey('resumo') ? 'resumo' : 'descricao', locale).trim();
+  final content = localizedValue(record, 'conteudo', locale).trim();
+  final levels = record['niveis'] is List<Object?> ? (record['niveis'] as List<Object?>).whereType<Map<Object?, Object?>>().toList(growable: false) : const <Map<Object?, Object?>>[];
+  final special = record['dadosEspeciais'] is Map<Object?, Object?> ? record['dadosEspeciais'] as Map<Object?, Object?> : const <Object?, Object?>{};
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -222,23 +273,56 @@ Future<void> _showRecordSheet(BuildContext context, Map<String, dynamic> record,
               Text(title ?? recordTitle(record, locale), style: const TextStyle(color: GuiaColors.premiumGoldLight, fontWeight: FontWeight.w900, fontSize: 20)),
               const SizedBox(height: 10),
               Expanded(
-                child: ListView.separated(
-                  itemCount: visible.length,
-                  separatorBuilder: (_, __) => const Divider(color: Color(0x3343B491)),
-                  itemBuilder: (context, index) {
-                    final entry = visible[index];
-                    final raw = entry.value;
-                    final value = raw is Map<Object?, Object?> || raw is List<Object?> ? const JsonEncoder.withIndent('  ').convert(raw) : raw?.toString() ?? '—';
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(entry.key, style: const TextStyle(color: GuiaColors.premiumGoldLight, fontWeight: FontWeight.w800, fontSize: 11)),
-                        const SizedBox(height: 3),
-                        SelectableText(value, style: const TextStyle(color: GuiaColors.premiumText, fontSize: 12.5, height: 1.35)),
-                      ],
-                    );
-                  },
-                ),
+                child: ListView(children: <Widget>[
+                  if (_imagePath(record).isNotEmpty) ...<Widget>[
+                    Center(child: _recordImage(record, size: 112, fit: BoxFit.contain)),
+                    const SizedBox(height: 12),
+                  ],
+                  if (description.isNotEmpty) ...<Widget>[
+                    SelectableText(description, style: const TextStyle(color: GuiaColors.premiumText, fontSize: 14, height: 1.5)),
+                    const SizedBox(height: 14),
+                  ],
+                  if (visible.isNotEmpty)
+                    PremiumPanel(child: Column(children: visible.map((entry) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                        Expanded(child: Text(_friendlyField(entry.key, locale), style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 12))),
+                        const SizedBox(width: 12),
+                        Flexible(child: Text(_humanValue(entry.key, entry.value, locale), textAlign: TextAlign.right, style: const TextStyle(color: GuiaColors.premiumText, fontWeight: FontWeight.w800, fontSize: 12.5))),
+                      ]),
+                    )).toList(growable: false))),
+                  if (content.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 14),
+                    _sectionTitle(locale.toLowerCase().startsWith('en') ? 'Guide' : 'Guia', icon: Icons.menu_book_outlined),
+                    SelectableText(content, style: const TextStyle(color: GuiaColors.premiumText, fontSize: 13.5, height: 1.55)),
+                  ],
+                  if (levels.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 14),
+                    _sectionTitle(locale.toLowerCase().startsWith('en') ? 'Levels' : 'Níveis', icon: Icons.stacked_bar_chart),
+                    ...levels.map((raw) {
+                      final level = Map<String, dynamic>.from(raw);
+                      final details = level.entries.where((entry) => entry.key != 'nivel' && entry.value != null && entry.value.toString().trim().isNotEmpty).toList();
+                      return Padding(padding: const EdgeInsets.only(bottom: 7), child: PremiumPanel(padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9), child: Row(children: <Widget>[
+                        Text('${locale.toLowerCase().startsWith('en') ? 'Lv.' : 'Nv.'} ${level['nivel'] ?? '—'}', style: const TextStyle(color: GuiaColors.premiumGoldLight, fontWeight: FontWeight.w900)),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(details.isEmpty ? '—' : details.map((entry) => '${_friendlyField(entry.key, locale)}: ${_humanValue(entry.key, entry.value, locale)}').join(' · '), style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 11.5))),
+                      ])));
+                    }),
+                  ],
+                  if (special.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 14),
+                    _sectionTitle(locale.toLowerCase().startsWith('en') ? 'Rules and bonuses' : 'Regras e bônus', icon: Icons.auto_awesome),
+                    PremiumPanel(child: Column(children: special.entries.where((entry) => entry.value is! Map && entry.value is! List).map((entry) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Row(children: <Widget>[
+                        Expanded(child: Text(_friendlyField(entry.key.toString(), locale), style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 11.5))),
+                        const SizedBox(width: 10),
+                        Flexible(child: Text(_humanValue(entry.key.toString(), entry.value, locale), textAlign: TextAlign.right, style: const TextStyle(color: GuiaColors.premiumText, fontWeight: FontWeight.w800, fontSize: 11.5))),
+                      ]),
+                    )).toList(growable: false))),
+                  ],
+                  const SizedBox(height: 18),
+                ]),
               ),
             ],
           ),
@@ -282,6 +366,7 @@ class CatalogModulePage extends StatefulWidget {
     this.intro,
     this.icon = '📚',
     this.filter,
+    this.onOpen,
   });
 
   final String title;
@@ -292,6 +377,7 @@ class CatalogModulePage extends StatefulWidget {
   final String? intro;
   final String icon;
   final bool Function(Map<String, dynamic>)? filter;
+  final void Function(BuildContext, Map<String, dynamic>)? onOpen;
 
   @override
   State<CatalogModulePage> createState() => _CatalogModulePageState();
@@ -338,7 +424,13 @@ class _CatalogModulePageState extends State<CatalogModulePage> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: PremiumPanel(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-                        onTap: () => _showRecordSheet(context, item, widget.profileStore.locale),
+                        onTap: () {
+                          if (widget.onOpen != null) {
+                            widget.onOpen!(context, item);
+                          } else {
+                            _showRecordSheet(context, item, widget.profileStore.locale, sectionKey: widget.sectionKey);
+                          }
+                        },
                         child: Row(
                           children: <Widget>[
                             _recordImage(item, size: 55),
@@ -1471,7 +1563,44 @@ class BuildingsPage extends StatelessWidget {
         featureStore: featureStore,
         icon: '🏰',
         intro: _ui(profileStore, 'Consulte construções normais, especiais, Gruta, Basílica e Pedras Espirituais.', 'Browse normal and special buildings, Cave, Basilica and Spirit Stones.'),
+        onOpen: (context, building) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => _BuildingDetailPage(building: building, profileStore: profileStore))),
       );
+}
+
+class _BuildingDetailPage extends StatelessWidget {
+  const _BuildingDetailPage({required this.building, required this.profileStore});
+  final Map<String, dynamic> building;
+  final ProfileStore profileStore;
+
+  @override Widget build(BuildContext context) {
+    final locale = profileStore.locale;
+    final levels = building['niveis'] is List<Object?> ? (building['niveis'] as List<Object?>).whereType<Map<Object?, Object?>>().map((row) => Map<String,dynamic>.from(row)).toList() : <Map<String,dynamic>>[];
+    final declared = building['colunas'] is List<Object?> ? (building['colunas'] as List<Object?>).whereType<Map<Object?, Object?>>().map((row) => Map<String,dynamic>.from(row)).toList() : <Map<String,dynamic>>[];
+    final columns = declared.isNotEmpty ? declared : (levels.isEmpty ? <Map<String,dynamic>>[] : levels.first.keys.where((key) => key != 'nivel').map((key) => <String,dynamic>{'key':key,'label':_friendlyField(key,locale)}).toList());
+    return ModuleScaffold(title: recordTitle(building, locale), subtitle: localizedValue(building,'tag',locale), child: ListView(padding: const EdgeInsets.fromLTRB(12,12,12,30), children:<Widget>[
+      PremiumPanel(child: Row(crossAxisAlignment:CrossAxisAlignment.start,children:<Widget>[
+        _recordImage(building,size:82,fit:BoxFit.contain),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:<Widget>[
+          Text(recordTitle(building,locale),style:const TextStyle(color:GuiaColors.premiumGoldLight,fontSize:20,fontWeight:FontWeight.w900)),
+          const SizedBox(height:5),Text(localizedValue(building,'descricao',locale),style:const TextStyle(color:GuiaColors.premiumText,height:1.45)),
+        ])),
+      ])),
+      const SizedBox(height:12),
+      if(levels.isNotEmpty)...<Widget>[
+        _sectionTitle(_ui(profileStore,'Evolução por nível','Level progression'),icon:Icons.table_chart_outlined),
+        SingleChildScrollView(scrollDirection:Axis.horizontal,child:DataTable(
+          headingRowColor:WidgetStatePropertyAll(GuiaColors.premiumPanel),dataRowColor:const WidgetStatePropertyAll(Color(0xFF0A493B)),
+          columns:<DataColumn>[DataColumn(label:Text(_ui(profileStore,'Nível','Level'))),...columns.map((column)=>DataColumn(label:Text((column['label']??_friendlyField(column['key'].toString(),locale)).toString())))],
+          rows:levels.map((row)=>DataRow(cells:<DataCell>[DataCell(Text('${row['nivel']??'—'}')),...columns.map((column)=>DataCell(Text(_humanValue(column['key'].toString(),row[column['key']],locale))))])).toList(growable:false),
+        )),
+      ],
+      if(building['dadosEspeciais'] is Map<Object?,Object?>)...<Widget>[
+        const SizedBox(height:12),_sectionTitle(_ui(profileStore,'Regras e bônus','Rules and bonuses'),icon:Icons.auto_awesome),
+        PremiumPanel(child:Column(children:(building['dadosEspeciais'] as Map<Object?,Object?>).entries.where((entry)=>entry.value is! Map&&entry.value is! List).map((entry)=>Padding(padding:const EdgeInsets.symmetric(vertical:6),child:Row(children:<Widget>[
+          Expanded(child:Text(_friendlyField(entry.key.toString(),locale),style:const TextStyle(color:GuiaColors.premiumMuted))),const SizedBox(width:12),Flexible(child:Text(_humanValue(entry.key.toString(),entry.value,locale),textAlign:TextAlign.right,style:const TextStyle(color:GuiaColors.premiumText,fontWeight:FontWeight.w800))),
+        ]))).toList(growable:false))),
+      ],
+    ]));
+  }
 }
 
 class ItemsPage extends StatefulWidget {
@@ -1543,7 +1672,36 @@ class ResearchPage extends StatelessWidget {
   @override Widget build(BuildContext context) => CatalogModulePage(
     title: _ui(profileStore, 'Pesquisas', 'Research'), sectionKey: 'pesquisas', controller: controller, profileStore: profileStore, featureStore: featureStore,
     icon: '🔬', intro: _ui(profileStore, 'Tecnologias, níveis, requisitos e bônus de cada pesquisa.', 'Technologies, levels, requirements and bonuses for each research.'),
+    onOpen: (context, research) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => _ResearchDetailPage(research: research, profileStore: profileStore, featureStore: featureStore))),
   );
+}
+
+class _ResearchDetailPage extends StatefulWidget {
+  const _ResearchDetailPage({required this.research,required this.profileStore,required this.featureStore});
+  final Map<String,dynamic> research; final ProfileStore profileStore; final FeatureStore featureStore;
+  @override State<_ResearchDetailPage> createState()=>_ResearchDetailPageState();
+}
+class _ResearchDetailPageState extends State<_ResearchDetailPage>{
+  late int _current; late int _target;
+  String get _slug=>(widget.research['slug']??widget.research['id']??'research').toString();
+  int get _max=>math.max(1,intValue(widget.research['nivelMax']??1));
+  @override void initState(){super.initState();final saved=widget.featureStore.readMap('research_progress_$_slug');_current=math.min(_max,intValue(saved['current']));_target=math.max(_current,math.min(_max,intValue(saved['target'])));}
+  Future<void> _save() async {await widget.featureStore.writeMap('research_progress_$_slug',<String,dynamic>{'current':_current,'target':_target});if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(_ui(widget.profileStore,'Planejamento salvo.','Plan saved.'))));}
+  @override Widget build(BuildContext context){
+    final locale=widget.profileStore.locale;
+    final levels=widget.research['niveis'] is List<Object?>?(widget.research['niveis'] as List<Object?>).whereType<Map<Object?,Object?>>().map((e)=>Map<String,dynamic>.from(e)).toList():<Map<String,dynamic>>[];
+    final selected=levels.where((row){final n=intValue(row['nivel']);return n>_current&&n<=_target;}).toList();
+    final known=selected.where((row)=>(row['tempo']??'').toString().trim().isNotEmpty).length;
+    return ModuleScaffold(title:recordTitle(widget.research,locale),subtitle:(widget.research['categoria']??'').toString(),actions:<Widget>[IconButton(onPressed:_save,icon:const Icon(Icons.save_outlined))],child:ListView(padding:const EdgeInsets.fromLTRB(12,12,12,30),children:<Widget>[
+      PremiumPanel(child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:<Widget>[_recordImage(widget.research,size:76),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:<Widget>[
+        Text(recordTitle(widget.research,locale),style:const TextStyle(color:GuiaColors.premiumGoldLight,fontSize:19,fontWeight:FontWeight.w900)),const SizedBox(height:5),Text(localizedValue(widget.research,'descricao',locale),style:const TextStyle(color:GuiaColors.premiumText,height:1.4)),
+      ]))])),const SizedBox(height:12),_sectionTitle(_ui(widget.profileStore,'Planejamento','Planning'),icon:Icons.route_outlined),PremiumPanel(child:Column(children:<Widget>[
+        Row(children:<Widget>[Expanded(child:DropdownButtonFormField<int>(initialValue:_current,decoration:InputDecoration(labelText:_ui(widget.profileStore,'Meu nível','My level')),items:List.generate(_max+1,(i)=>DropdownMenuItem(value:i,child:Text(i==0?'—':'${_ui(widget.profileStore,'Nv.','Lv.')} $i'))),onChanged:(v)=>setState((){_current=v??0;if(_target<_current)_target=_current;}))),const SizedBox(width:10),Expanded(child:DropdownButtonFormField<int>(initialValue:_target,decoration:InputDecoration(labelText:_ui(widget.profileStore,'Meta','Target')),items:List.generate(_max-_current+1,(i){final n=_current+i;return DropdownMenuItem(value:n,child:Text(n==0?'—':'${_ui(widget.profileStore,'Nv.','Lv.')} $n'));}),onChanged:(v)=>setState(()=>_target=v??_current)))]),
+        const SizedBox(height:10),Text(_ui(widget.profileStore,'$known de ${selected.length} níveis possuem tempo cadastrado.','$known of ${selected.length} levels have registered time.'),style:const TextStyle(color:GuiaColors.premiumMuted)),
+      ])),const SizedBox(height:12),_sectionTitle(_ui(widget.profileStore,'Tempos por nível','Times by level'),icon:Icons.schedule),
+      ...levels.map((row)=>Padding(padding:const EdgeInsets.only(bottom:7),child:PremiumPanel(padding:const EdgeInsets.symmetric(horizontal:12,vertical:10),child:Row(children:<Widget>[Text('${_ui(widget.profileStore,'Nv.','Lv.')} ${row['nivel']??'—'}',style:const TextStyle(color:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900)),const Spacer(),Text((row['tempo']??'—').toString().trim().isEmpty?'—':row['tempo'].toString(),style:const TextStyle(color:GuiaColors.premiumText))])))),
+    ]));
+  }
 }
 
 class GuidesPage extends StatelessWidget {
@@ -1645,6 +1803,7 @@ class LevelsPage extends StatefulWidget {
 
 class _LevelsPageState extends State<LevelsPage> {
   final TextEditingController _power = TextEditingController();
+  bool _showAll = false;
   @override void initState() { super.initState(); final saved = widget.featureStore.readMap('levels_progress'); _power.text = saved['power']?.toString() ?? ''; }
   @override void dispose() { _power.dispose(); super.dispose(); }
   Future<void> _save() async { await widget.featureStore.writeMap('levels_progress', <String,dynamic>{'power': int.tryParse(_power.text) ?? 0, 'updatedAt': DateTime.now().toIso8601String()}); if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_ui(widget.profileStore,'Progresso salvo.','Progress saved.')))); }
@@ -1652,21 +1811,33 @@ class _LevelsPageState extends State<LevelsPage> {
     final levels = widget.controller.section('niveis');
     final currentPower = int.tryParse(_power.text.replaceAll(RegExp(r'\D'), '')) ?? 0;
     Map<String,dynamic>? next;
-    for (final row in levels) { final need = intValue(row['poder'] ?? row['power'] ?? row['requisito']); if (need > currentPower && (next == null || need < intValue(next['poder'] ?? next['power'] ?? next['requisito']))) next = row; }
+    int requiredPower(Map<String, dynamic> row) => intValue(row['poderNecessario'] ?? row['poder'] ?? row['power'] ?? row['requisito'] ?? row['xp']);
+    final sorted = [...levels]..sort((a, b) => intValue(a['nivel'] ?? a['level']).compareTo(intValue(b['nivel'] ?? b['level'])));
+    for (final row in sorted) { final need = requiredPower(row); if (need > currentPower && (next == null || need < requiredPower(next))) next = row; }
+    var currentLevel = 0;
+    for (final row in sorted) { final need = requiredPower(row); if (need > 0 && need <= currentPower) currentLevel = math.max(currentLevel, intValue(row['nivel'] ?? row['level'])); }
+    final shownLevels = _showAll || currentPower <= 0
+        ? (_showAll ? sorted : sorted.take(8).toList(growable: false))
+        : sorted.where((row) { final level = intValue(row['nivel'] ?? row['level']); return level >= math.max(1, currentLevel - 2) && level <= currentLevel + 5; }).toList(growable: false);
     return ModuleScaffold(title: _ui(widget.profileStore,'Níveis','Levels'), subtitle: _ui(widget.profileStore,'Progresso local + tabela oficial','Local progress + official table'), actions: <Widget>[IconButton(onPressed: _save, icon: const Icon(Icons.save_outlined))], child: ListView(padding: const EdgeInsets.fromLTRB(12,12,12,30), children: <Widget>[
       ModuleIntro(icon: '📈', title: _ui(widget.profileStore,'Progresso de Nível','Level Progress'), text: _ui(widget.profileStore,'Informe seu poder para localizar a próxima meta e consulte a tabela completa.','Enter your power to locate the next target and browse the full table.')),
       const SizedBox(height: 12), PremiumPanel(child: TextField(controller: _power, keyboardType: TextInputType.number, onChanged: (_) => setState(() {}), style: const TextStyle(color: GuiaColors.premiumText), decoration: InputDecoration(labelText: _ui(widget.profileStore,'Seu poder atual','Current power'), labelStyle: const TextStyle(color: GuiaColors.premiumMuted)))),
       if (next != null) ...<Widget>[const SizedBox(height: 10), PremiumPanel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
         Text(_ui(widget.profileStore,'Próxima meta','Next target'), style: const TextStyle(color: GuiaColors.premiumGoldLight, fontWeight: FontWeight.w900)),
-        const SizedBox(height: 5), Text(recordTitle(next, widget.profileStore.locale), style: const TextStyle(color: GuiaColors.premiumText, fontSize: 18, fontWeight: FontWeight.w900)),
-        Text('${_ui(widget.profileStore,'Poder','Power')}: ${formatCompactNumber(intValue(next['poder'] ?? next['power'] ?? next['requisito']))}', style: const TextStyle(color: GuiaColors.premiumMuted)),
+        const SizedBox(height: 5), Text('${_ui(widget.profileStore,'Nível','Level')} ${next['nivel'] ?? next['level'] ?? '—'}', style: const TextStyle(color: GuiaColors.premiumText, fontSize: 18, fontWeight: FontWeight.w900)),
+        Text('${_ui(widget.profileStore,'Poder necessário','Required power')}: ${formatCompactNumber(requiredPower(next))}', style: const TextStyle(color: GuiaColors.premiumMuted)),
+        Text('${_ui(widget.profileStore,'Faltam','Remaining')}: ${formatCompactNumber(math.max(0, requiredPower(next) - currentPower))}', style: const TextStyle(color: GuiaColors.premiumGoldLight, fontWeight: FontWeight.w800)),
       ]))],
-      const SizedBox(height: 12), _sectionTitle(_ui(widget.profileStore,'Tabela de níveis','Level table'), icon: Icons.table_rows_outlined),
-      ...levels.map((row) => Padding(padding: const EdgeInsets.only(bottom: 7), child: PremiumPanel(onTap: () => _showRecordSheet(context,row,widget.profileStore.locale), child: Row(children:<Widget>[
-        SizedBox(width:50, child: Text('${row['nivel'] ?? row['level'] ?? '—'}', textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.premiumGoldLight,fontSize:18,fontWeight:FontWeight.w900))),
-        const SizedBox(width:8), Expanded(child: Text(recordTitle(row,widget.profileStore.locale), style: const TextStyle(color: GuiaColors.premiumText,fontWeight:FontWeight.w800))),
-        Text(formatCompactNumber(intValue(row['poder'] ?? row['power'] ?? row['requisito'])), style: const TextStyle(color: GuiaColors.premiumMuted)),
-      ])))),
+      const SizedBox(height: 12), Row(children: <Widget>[
+        Expanded(child: _sectionTitle(_ui(widget.profileStore,'Tabela de níveis','Level table'), icon: Icons.table_rows_outlined)),
+        TextButton(onPressed: () => setState(() => _showAll = !_showAll), child: Text(_ui(widget.profileStore, _showAll ? 'Perto de mim' : 'Ver todos', _showAll ? 'Near me' : 'Show all'))),
+      ]),
+      ...shownLevels.map((row) { final level = intValue(row['nivel'] ?? row['level']); final power = requiredPower(row); final reached = currentPower > 0 && power > 0 && power <= currentPower; return Padding(padding: const EdgeInsets.only(bottom: 7), child: PremiumPanel(child: Row(children:<Widget>[
+        SizedBox(width:58, child: Text('${_ui(widget.profileStore,'Nv.','Lv.')} $level', textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.premiumGoldLight,fontSize:16,fontWeight:FontWeight.w900))),
+        const SizedBox(width:8), Expanded(child: Text(power > 0 ? '${_ui(widget.profileStore,'Poder necessário','Required power')}: ${formatCompactNumber(power)}' : _ui(widget.profileStore,'Poder não cadastrado','Power not registered'), style: const TextStyle(color: GuiaColors.premiumText,fontWeight:FontWeight.w800))),
+        Icon(reached ? Icons.check_circle : Icons.radio_button_unchecked, color: reached ? Colors.greenAccent.shade400 : GuiaColors.premiumMuted, size: 20),
+      ]))),
+      }).toList(),
     ]));
   }
 }
@@ -1680,18 +1851,50 @@ class IslandsPage extends StatefulWidget {
 }
 
 class _IslandsPageState extends State<IslandsPage> {
-  final List<String> _slots = List<String>.filled(12, '');
-  @override void initState() { super.initState(); final saved=widget.featureStore.readList('island_planner_slots'); for (var i=0;i<math.min(saved.length,_slots.length);i++) _slots[i]=saved[i].toString(); }
-  Future<void> _save() => widget.featureStore.writeList('island_planner_slots', _slots);
+  static const _islands=<String>['PRINC','ÁGUA','FOGO','BELLA','TERRA'];
+  static const _icons=<String,String>{'PRINC':'🏰','ÁGUA':'💧','FOGO':'🔥','BELLA':'🌿','TERRA':'⛰️'};
+  final Map<String,Map<String,Map<String,int>>> _plan=<String,Map<String,Map<String,int>>>{};
+  String _island='PRINC';
+  String _query='';
+  @override void initState(){
+    super.initState();
+    final saved=widget.featureStore.readMap('island_planner_v2');
+    for(final island in _islands){
+      final raw=saved[island];
+      final rows=<String,Map<String,int>>{};
+      if(raw is Map<Object?,Object?>){for(final entry in raw.entries){if(entry.value is Map<Object?,Object?>){final value=entry.value as Map<Object?,Object?>;rows[entry.key.toString()]=<String,int>{'qty':intValue(value['qty']),'level':math.max(1,intValue(value['level']))};}}}
+      _plan[island]=rows;
+    }
+  }
+  int get _limit=>_island=='PRINC'?25:_island=='ÁGUA'?4:6;
+  int get _used=>_plan[_island]!.values.fold(0,(sum,row)=>sum+(row['qty']??0));
+  Future<void> _save() => widget.featureStore.writeMap('island_planner_v2',_plan);
+  List<Map<String,dynamic>> _levels(Map<String,dynamic> building)=>building['niveis'] is List<Object?>?(building['niveis'] as List<Object?>).whereType<Map<Object?,Object?>>().map((e)=>Map<String,dynamic>.from(e)).toList():<Map<String,dynamic>>[];
+  void _adjust(String slug,int delta){setState((){final row=_plan[_island]!.putIfAbsent(slug,()=> <String,int>{'qty':0,'level':1});if(delta>0&&_used>=_limit)return;row['qty']=math.max(0,(row['qty']??0)+delta);});}
+  void _level(String slug,int level){setState(()=>_plan[_island]!.putIfAbsent(slug,()=> <String,int>{'qty':0,'level':1})['level']=level);}
   @override Widget build(BuildContext context) {
     final buildings = widget.controller.section('edificios');
+    final q=_query.trim().toLowerCase();
+    final visible=buildings.where((building){final name=recordTitle(building,widget.profileStore.locale).toLowerCase();final row=_plan[_island]![building['slug']?.toString()??''];return q.isEmpty?(row?['qty']??0)>0||<String>['Casa','FonteDaCura','Guarnicao','Fortaleza','Fazenda','Mina','Pedra','Serraria'].contains(building['slug']):name.contains(q);}).toList();
+    if(q.isEmpty&&visible.isEmpty)visible.addAll(buildings.take(8));
+    num population=0,healing=0,production=0,workers=0;
+    for(final building in buildings){final slug=(building['slug']??'').toString();final planned=_plan[_island]![slug];if(planned==null||(planned['qty']??0)<=0)continue;final levels=_levels(building);final matches=levels.where((level)=>intValue(level['nivel'])==(planned['level']??1));final row=matches.isNotEmpty?matches.first:(levels.isEmpty?<String,dynamic>{}:levels.first);final qty=planned['qty']??0;population+=qty*numberValue(row['popAumento']);healing+=qty*numberValue(row['maxTropas']);production+=qty*numberValue(row['prodHora']);workers+=qty*numberValue(row['pop']);}
     return ModuleScaffold(title:_ui(widget.profileStore,'Ilhas','Islands'), subtitle:_ui(widget.profileStore,'Planejador local','Local planner'), actions:<Widget>[IconButton(onPressed:(){_save(); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(_ui(widget.profileStore,'Ilha salva.','Island saved.'))));},icon:const Icon(Icons.save_outlined))], child: ListView(padding:const EdgeInsets.fromLTRB(12,12,12,30),children:<Widget>[
-      ModuleIntro(icon:'🏝️',title:_ui(widget.profileStore,'Planejador de Ilha','Island Planner'),text:_ui(widget.profileStore,'Monte uma distribuição rápida de edifícios. O plano fica salvo neste aparelho.','Build a quick building layout. The plan stays saved on this device.')),
-      const SizedBox(height:12), GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:3,crossAxisSpacing:7,mainAxisSpacing:7,childAspectRatio:.95),itemCount:_slots.length,itemBuilder:(context,index){ final selected=_slots[index]; return PremiumPanel(padding:const EdgeInsets.all(7),child:Column(children:<Widget>[
-        Text('#${index+1}',style:const TextStyle(color:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900,fontSize:10)),
-        const SizedBox(height:4), Expanded(child:DropdownButtonHideUnderline(child:DropdownButton<String>(isExpanded:true,value:selected.isEmpty?null:selected,hint:Text(_ui(widget.profileStore,'Vazio','Empty'),style:const TextStyle(color:GuiaColors.premiumMuted,fontSize:10)),dropdownColor:GuiaColors.premiumPanel,style:const TextStyle(color:GuiaColors.premiumText,fontSize:10),items:buildings.map((b){final id=(b['slug']??b['id']??recordTitle(b,widget.profileStore.locale)).toString();return DropdownMenuItem<String>(value:id,child:Text(recordTitle(b,widget.profileStore.locale),overflow:TextOverflow.ellipsis));}).toList(growable:false),onChanged:(v)=>setState(()=>_slots[index]=v??'')))),
-        IconButton(iconSize:17,onPressed:selected.isEmpty?null:()=>setState(()=>_slots[index]=''),icon:const Icon(Icons.close,color:GuiaColors.premiumMuted)),
-      ]));}),
+      ModuleIntro(icon:'🏝️',title:_ui(widget.profileStore,'Gestão de Ilhas e Recursos','Island and Resource Management'),text:_ui(widget.profileStore,'Planeje construções por ilha, respeite os limites e acompanhe os efeitos do nível escolhido.','Plan buildings per island, respect limits and track effects for the selected level.')),
+      const SizedBox(height:10),SizedBox(height:42,child:ListView(scrollDirection:Axis.horizontal,children:_islands.map((island)=>Padding(padding:const EdgeInsets.only(right:6),child:ChoiceChip(label:Text('${_icons[island]} $island'),selected:_island==island,onSelected:(_)=>setState(()=>_island=island)))).toList(growable:false))),
+      PremiumPanel(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:<Widget>[
+        Row(children:<Widget>[Text('${_icons[_island]} ${_ui(widget.profileStore,'Planejamento','Plan')} $_island',style:const TextStyle(color:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900)),const Spacer(),Text('$_used / $_limit',style:TextStyle(color:_used>=_limit?Colors.orangeAccent:GuiaColors.premiumText,fontWeight:FontWeight.w900))]),
+        const SizedBox(height:7),LinearProgressIndicator(value:(_used/_limit).clamp(0.0,1.0).toDouble(),color:GuiaColors.premiumGoldLight,backgroundColor:GuiaColors.premiumBackground2),
+        const SizedBox(height:10),Wrap(spacing:12,runSpacing:6,children:<Widget>[
+          Text('👥 ${formatCompactNumber(population)}',style:const TextStyle(color:GuiaColors.premiumText)),Text('💧 ${formatCompactNumber(healing)}',style:const TextStyle(color:GuiaColors.premiumText)),Text('🌾 ${formatCompactNumber(production)}/h',style:const TextStyle(color:GuiaColors.premiumText)),Text('🛠 ${formatCompactNumber(workers)}',style:const TextStyle(color:GuiaColors.premiumText)),
+        ]),
+      ])),const SizedBox(height:10),PremiumSearchField(hint:_ui(widget.profileStore,'Adicionar ou buscar edifício...','Add or search building...'),onChanged:(value)=>setState(()=>_query=value)),const SizedBox(height:10),
+      ...visible.map((building){final slug=(building['slug']??recordTitle(building,widget.profileStore.locale)).toString();final planned=_plan[_island]!.putIfAbsent(slug,()=> <String,int>{'qty':0,'level':1});final levels=_levels(building);final available=levels.map((row)=>intValue(row['nivel'])).where((level)=>level>0).toSet().toList()..sort();return Padding(padding:const EdgeInsets.only(bottom:8),child:PremiumPanel(child:Row(children:<Widget>[
+        _recordImage(building,size:48),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:<Widget>[Text(recordTitle(building,widget.profileStore.locale),style:const TextStyle(color:GuiaColors.premiumText,fontWeight:FontWeight.w900)),if(available.isNotEmpty)DropdownButtonHideUnderline(child:DropdownButton<int>(value:available.contains(planned['level'])?planned['level']:available.first,dropdownColor:GuiaColors.premiumPanel,style:const TextStyle(color:GuiaColors.premiumGoldLight,fontSize:11),items:available.map((level)=>DropdownMenuItem(value:level,child:Text('${_ui(widget.profileStore,'Nv.','Lv.')} $level'))).toList(),onChanged:(value){if(value!=null)_level(slug,value);}))])),
+        IconButton(onPressed:(planned['qty']??0)>0?()=>_adjust(slug,-1):null,icon:const Icon(Icons.remove_circle_outline)),Text('${planned['qty']??0}',style:const TextStyle(color:GuiaColors.premiumGoldLight,fontSize:17,fontWeight:FontWeight.w900)),IconButton(onPressed:_used<_limit?()=>_adjust(slug,1):null,icon:const Icon(Icons.add_circle_outline)),
+      ])));
+      }),
+      if(visible.isEmpty)PremiumPanel(child:Text(_ui(widget.profileStore,'Nenhum edifício encontrado.','No building found.'),style:const TextStyle(color:GuiaColors.premiumMuted))),
       const SizedBox(height:12), FilledButton.icon(onPressed:_save,icon:const Icon(Icons.save),label:Text(_ui(widget.profileStore,'Salvar planejamento','Save plan'))),
     ]));
   }
@@ -1766,8 +1969,9 @@ class _ColorTextPageState extends State<ColorTextPage>{
     return ((r<<16)|(g<<8)|bl).toRadixString(16).padLeft(6,'0').toUpperCase();
   }
   String get _code {
-    final text=_text.text; if(!_gradient||text.length<2)return '[#$_color]$text[-]';
-    final out=StringBuffer(); for(var i=0;i<text.length;i++){final c=_mix(_color,_color2,i/(text.length-1));out.write('[#$c]${text[i]}[-]');} return out.toString();
+    final text=_text.text; if(text.isEmpty)return '';
+    if(!_gradient||text.length<2)return '[$_color]$text';
+    final out=StringBuffer(); for(var i=0;i<text.length;i++){final c=_mix(_color,_color2,i/(text.length-1));out.write('[$c]${text[i]}');} return out.toString();
   }
   @override Widget build(BuildContext context)=>ModuleScaffold(title:_ui(widget.profileStore,'Texto Colorido','Colored Text'),subtitle:_ui(widget.profileStore,'Cor única ou gradiente','Single color or gradient'),child:ListView(padding:const EdgeInsets.all(12),children:<Widget>[
     ModuleIntro(icon:'🎨',title:_ui(widget.profileStore,'Construtor de texto','Text Builder'),text:_ui(widget.profileStore,'Crie texto em cor única ou gradiente e copie o código pronto para o jogo.','Create single-color or gradient text and copy the ready game code.')),
@@ -1776,8 +1980,8 @@ class _ColorTextPageState extends State<ColorTextPage>{
       const SizedBox(height:8),SwitchListTile(contentPadding:EdgeInsets.zero,value:_gradient,onChanged:(v)=>setState(()=>_gradient=v),title:Text(_ui(widget.profileStore,'Usar gradiente','Use gradient'),style:const TextStyle(color:GuiaColors.premiumText,fontWeight:FontWeight.w800))),
       DropdownButtonFormField<String>(initialValue:_color,dropdownColor:GuiaColors.premiumPanel,items:_colors,onChanged:(v)=>setState(()=>_color=v??_color),decoration:InputDecoration(labelText:_ui(widget.profileStore,'Cor inicial','Start color'))),
       if(_gradient)...<Widget>[const SizedBox(height:8),DropdownButtonFormField<String>(initialValue:_color2,dropdownColor:GuiaColors.premiumPanel,items:_colors,onChanged:(v)=>setState(()=>_color2=v??_color2),decoration:InputDecoration(labelText:_ui(widget.profileStore,'Cor final','End color')))],
-      const SizedBox(height:12),SelectableText(_code,style:const TextStyle(color:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900,fontFamily:'monospace')),
-      const SizedBox(height:8),FilledButton.icon(onPressed:_text.text.isEmpty?null:()=>Clipboard.setData(ClipboardData(text:_code)),icon:const Icon(Icons.copy),label:Text(_ui(widget.profileStore,'Copiar código','Copy code'))),
+      const SizedBox(height:12),Container(minHeight:52,padding:const EdgeInsets.all(10),decoration:BoxDecoration(color:GuiaColors.premiumBackground2,borderRadius:BorderRadius.circular(9),border:Border.all(color:GuiaColors.premiumGold.withValues(alpha:.45))),child:SelectableText(_code.isEmpty?_ui(widget.profileStore,'O código aparecerá aqui.','The code will appear here.'):_code,style:TextStyle(color:_code.isEmpty?GuiaColors.premiumMuted:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900,fontFamily:'monospace'))),
+      const SizedBox(height:8),FilledButton.icon(style:FilledButton.styleFrom(disabledBackgroundColor:GuiaColors.premiumPanel,disabledForegroundColor:GuiaColors.premiumMuted),onPressed:_text.text.isEmpty?null:(){Clipboard.setData(ClipboardData(text:_code));ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(_ui(widget.profileStore,'Código copiado.','Code copied.'))));},icon:const Icon(Icons.copy),label:Text(_ui(widget.profileStore,_text.text.isEmpty?'Digite um texto para copiar':'Copiar código',_text.text.isEmpty?'Enter text to copy':'Copy code'))),
     ])),
   ]));
 }
@@ -1838,10 +2042,31 @@ class FlagsPage extends StatefulWidget {
 }
 class _FlagsPageState extends State<FlagsPage>{
   String _query='';
-  static const Map<String,String> _flags=<String,String>{'Brasil':'🇧🇷','Portugal':'🇵🇹','Estados Unidos':'🇺🇸','Canadá':'🇨🇦','México':'🇲🇽','Argentina':'🇦🇷','Chile':'🇨🇱','Colômbia':'🇨🇴','França':'🇫🇷','Itália':'🇮🇹','Espanha':'🇪🇸','Alemanha':'🇩🇪','Reino Unido':'🇬🇧','Japão':'🇯🇵','Coreia do Sul':'🇰🇷','China':'🇨🇳','Austrália':'🇦🇺','Turquia':'🇹🇷'};
-  @override Widget build(BuildContext context){final q=_query.toLowerCase();final list=_flags.entries.where((e)=>q.isEmpty||e.key.toLowerCase().contains(q)).toList();return ModuleScaffold(title:_ui(widget.profileStore,'Bandeiras','Flags'),child:ListView(padding:const EdgeInsets.all(12),children:<Widget>[
+  static const List<({String name,String emoji,List<String> colors})> _flags=<({String name,String emoji,List<String> colors})>[
+    (name:'Brasil',emoji:'🇧🇷',colors:['009C3B','FFDF00','002776']), (name:'Portugal',emoji:'🇵🇹',colors:['046A38','DA291C']),
+    (name:'Estados Unidos',emoji:'🇺🇸',colors:['B22234','FFFFFF','3C3B6E']), (name:'Argentina',emoji:'🇦🇷',colors:['74ACDF','FFFFFF','74ACDF']),
+    (name:'Chile',emoji:'🇨🇱',colors:['0039A6','FFFFFF','D52B1E']), (name:'Espanha',emoji:'🇪🇸',colors:['AA151B','F1BF00','AA151B']),
+    (name:'Reino Unido',emoji:'🇬🇧',colors:['012169','FFFFFF','C8102E']),
+    (name:'França',emoji:'🇫🇷',colors:['0055A4','FFFFFF','EF4135']), (name:'Itália',emoji:'🇮🇹',colors:['009246','F1F2F1','CE2B37']),
+    (name:'Alemanha',emoji:'🇩🇪',colors:['000000','DD0000','FFCE00']), (name:'Bélgica',emoji:'🇧🇪',colors:['000000','FFD90C','EF3340']),
+    (name:'Irlanda',emoji:'🇮🇪',colors:['169B62','FFFFFF','FF883E']), (name:'Países Baixos',emoji:'🇳🇱',colors:['AE1C28','FFFFFF','21468B']),
+    (name:'Luxemburgo',emoji:'🇱🇺',colors:['ED2939','FFFFFF','00A1DE']), (name:'Romênia',emoji:'🇷🇴',colors:['002B7F','FCD116','CE1126']),
+    (name:'Andorra',emoji:'🇦🇩',colors:['0018A8','FEDD00','D50032']), (name:'Moldávia',emoji:'🇲🇩',colors:['003DA5','FFD200','CC092F']),
+    (name:'México',emoji:'🇲🇽',colors:['006847','FFFFFF','CE1126']), (name:'Colômbia',emoji:'🇨🇴',colors:['FCD116','003087','CE1126']),
+    (name:'Venezuela',emoji:'🇻🇪',colors:['FFCC00','203484','CF142B']), (name:'Peru',emoji:'🇵🇪',colors:['D91023','FFFFFF','D91023']),
+    (name:'Canadá',emoji:'🇨🇦',colors:['FF0000','FFFFFF','FF0000']), (name:'El Salvador',emoji:'🇸🇻',colors:['0047AB','FFFFFF','0047AB']),
+    (name:'Guiné',emoji:'🇬🇳',colors:['CE1126','FCD116','009460']), (name:'Mali',emoji:'🇲🇱',colors:['14B53A','FCD116','CE1126']),
+    (name:'Senegal',emoji:'🇸🇳',colors:['00853F','FDEF42','E31B1D']), (name:'Camarões',emoji:'🇨🇲',colors:['007A5E','CE1126','FCD116']),
+    (name:'Costa do Marfim',emoji:'🇨🇮',colors:['F77F00','FFFFFF','009E60']), (name:'Guiné-Bissau',emoji:'🇬🇼',colors:['CE1126','FCD116','009E49']),
+    (name:'Chade',emoji:'🇹🇩',colors:['002664','FECB00','C60C30']), (name:'Emirados Árabes',emoji:'🇦🇪',colors:['00732F','FFFFFF','FF0000']),
+    (name:'Iêmen',emoji:'🇾🇪',colors:['CE1126','FFFFFF','000000']),
+  ];
+  String _code(({String name,String emoji,List<String> colors}) flag)=>flag.colors.map((color)=>'[$color]█').join();
+  @override Widget build(BuildContext context){final q=_query.toLowerCase();final list=_flags.where((flag)=>q.isEmpty||flag.name.toLowerCase().contains(q)).toList();return ModuleScaffold(title:_ui(widget.profileStore,'Bandeiras','Flags'),child:ListView(padding:const EdgeInsets.all(12),children:<Widget>[
     PremiumSearchField(hint:_ui(widget.profileStore,'Buscar país...','Search country...'),onChanged:(v)=>setState(()=>_query=v)),const SizedBox(height:12),
-    ...list.map((e)=>Padding(padding:const EdgeInsets.only(bottom:7),child:PremiumPanel(onTap:()=>Clipboard.setData(ClipboardData(text:e.value)),child:Row(children:<Widget>[Text(e.value,style:const TextStyle(fontSize:30)),const SizedBox(width:12),Expanded(child:Text(e.key,style:const TextStyle(color:GuiaColors.premiumText,fontWeight:FontWeight.w800))),const Icon(Icons.copy,color:GuiaColors.premiumGoldLight)])))),
+    ...list.map((flag)=>Padding(padding:const EdgeInsets.only(bottom:7),child:PremiumPanel(onTap:(){Clipboard.setData(ClipboardData(text:_code(flag)));ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(_ui(widget.profileStore,'Código da bandeira copiado.','Flag code copied.'))));},child:Row(children:<Widget>[
+      ClipRRect(borderRadius:BorderRadius.circular(4),child:SizedBox(width:42,height:28,child:Row(children:flag.colors.map((color)=>Expanded(child:ColoredBox(color:Color(int.parse('FF$color',radix:16))))).toList(growable:false)))),
+      const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:<Widget>[Text('${flag.emoji} ${flag.name}',style:const TextStyle(color:GuiaColors.premiumText,fontWeight:FontWeight.w800)),const SizedBox(height:2),Text(_code(flag),maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(color:GuiaColors.premiumMuted,fontFamily:'monospace',fontSize:10))])),const Icon(Icons.copy,color:GuiaColors.premiumGoldLight)])))),
   ]));}
 }
 

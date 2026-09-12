@@ -33,16 +33,14 @@ test('Flutter alpha.11 usa nome público Guia Doa e launcher Android adaptativo'
   assert.ok(existsSync(new URL('../flutter/tool/android_adaptive_icon/ic_launcher_foreground.png', import.meta.url)));
 });
 
-test('alpha.11 sincroniza versão principal', () => {
+test('Flutter sincroniza versão principal', () => {
   const release = JSON.parse(read('flutter/release.json'));
   const pkg = JSON.parse(read('package.json'));
   const android = JSON.parse(read('mobile/android-version.json'));
   const pubspec = read('flutter/pubspec.yaml');
-  assert.equal(pkg.version, '1.0.0-beta.2.88');
   assert.equal(release.version, pkg.version);
-  assert.equal(release.versionCode, 100088);
-  assert.equal(android.versionCode, 100088);
-  assert.equal(release.channel, 'alpha.11');
-  assert.equal(release.apkName, 'GuiaDOA-FLUTTER-beta.2.88-alpha.11.apk');
-  assert.match(pubspec, /version: 1\.0\.0-beta\.2\.88\+100088/);
+  assert.equal(release.versionCode, android.versionCode);
+  assert.match(release.channel, /^alpha\.\d+$/);
+  assert.equal(release.apkName, `GuiaDOA-FLUTTER-${release.version.replace('1.0.0-', '')}-${release.channel}.apk`);
+  assert.ok(pubspec.includes(`version: ${pkg.version}+${android.versionCode}`));
 });

@@ -1,4 +1,4 @@
-> **Versão atual: Guia Doa 1.0.0-beta.2.94 / Flutter alpha.17 / versionCode 100094.**
+> **Versão atual: Guia Doa 1.0.0-beta.2.95 / Flutter alpha.18 / versionCode 100095.**
 > Correção definitiva de escala da Home: [relatório e validação](docs/FLUTTER_ALPHA17_HOME_SCALE.md).
 > O APK principal continua vindo do workflow Flutter.
 
@@ -277,6 +277,6 @@ npm run test:browser
 
 ---
 
-## 🦋 Migração Flutter (alpha.17)
+## 🦋 Migração Flutter (alpha.18)
 
-A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.17**, versão **1.0.0-beta.2.94**, preparada para **Android + Web + iOS**. Esta etapa preserva a identidade forte do GitHub Manager e limita a escala somente na Home compacta para encerrar o overflow detectado pelo workflow 15. O frontend React/Capacitor permanece apenas como legado manual durante a migração; Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [relatório alpha.17](docs/FLUTTER_ALPHA17_HOME_SCALE.md).
+A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.18**, versão **1.0.0-beta.2.95**, preparada para **Android + Web + iOS**. Esta etapa recupera a grade de quatro colunas e restaura telas estruturadas de Níveis, Pesquisas, Edifícios, Ilhas, Guias, comparação e construtor de texto a partir do projeto React de referência. Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [relatório alpha.18](docs/FLUTTER_ALPHA18_PARIDADE.md).

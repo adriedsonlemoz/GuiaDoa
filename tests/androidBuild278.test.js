@@ -49,7 +49,9 @@ test('application and API locks agree with the native release metadata', () => {
     assert.equal(read(file).version, version);
     assert.equal(read(file).packages[''].version, version);
   }
-  assert.equal(read('mobile/android-version.json').versionCode, 100088);
+  const nativeCode = read('mobile/android-version.json').versionCode;
+  const flutterRelease = read('flutter/release.json');
+  assert.equal(nativeCode, flutterRelease.versionCode);
 });
 
 test('Capacitor workflow is legacy/manual while Flutter is the primary automatic APK', () => {

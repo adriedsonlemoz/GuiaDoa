@@ -40,6 +40,16 @@ for lang, source in [('pt', pt), ('en', en)]:
     assert not missing, (lang, 'missing', missing)
     for key in ['torneios', 'tropas', 'dragoes', 'edificios', 'itens', 'pesquisas', 'ilhas', 'dicas', 'campanha', 'niveis', 'eventos', 'extras']:
         assert f'tool.{key}' in keys and f'tool.{key}.sub' in keys, key
+    for key in ['troops.stat.life', 'troops.stat.defense', 'troops.stat.melee', 'troops.stat.ranged', 'troops.stat.range', 'troops.stat.speed', 'troops.stat.load']:
+        assert key in keys, (lang, key)
+modules = (flutter / 'lib/features/modules/presentation/module_pages.dart').read_text()
+home = (flutter / 'lib/features/home/presentation/home_page.dart').read_text()
+assert "effectiveWidth >= 300 ? 4 : 2" in home
+assert "row['poderNecessario']" in modules
+assert 'JsonEncoder' not in modules
+assert "'island_planner_v2'" in modules
+assert "'research_progress_$_slug'" in modules
+assert "'[$_color]$text'" in modules
 for p in (flutter / 'lib').rglob('*.dart'):
     for asset in re.findall(r"(?:Image\.asset|AssetImage)\('([^'$]+)'", p.read_text()):
         assert (flutter / asset).is_file(), (p, asset)

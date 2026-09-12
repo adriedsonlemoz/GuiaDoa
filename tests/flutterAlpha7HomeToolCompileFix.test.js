@@ -12,6 +12,6 @@ test('Flutter alpha.7 Home uses the fields declared by HomeTool', () => {
   assert.match(model, /final String subtitleKey;/);
   assert.doesNotMatch(home, /tool\.icon\b/);
   assert.doesNotMatch(home, /tool\.subtitle\b/);
-  assert.match(home, /Text\(tool\.emoji/);
+  assert.match(home, /assets\/ui\/\$\{tool\.keyName\}\.png/);
   assert.match(home, /strings\.t\(tool\.subtitleKey\)/);
 });

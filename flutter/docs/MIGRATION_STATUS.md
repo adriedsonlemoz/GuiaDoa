@@ -1,8 +1,8 @@
-# Estado da migração Flutter — alpha.17
+# Estado da migração Flutter — alpha.18
 
-Escala responsiva da Home: [detalhes desta entrega](../../docs/FLUTTER_ALPHA17_HOME_SCALE.md).
+Paridade visual e funcional: [detalhes desta entrega](../../docs/FLUTTER_ALPHA18_PARIDADE.md).
 
-Base atual: **Guia Doa 1.0.0-beta.2.94 / Flutter alpha.17 / versionCode 100094**.
+Base atual: **Guia Doa 1.0.0-beta.2.95 / Flutter alpha.18 / versionCode 100095**.
 
 ## Arquitetura
 

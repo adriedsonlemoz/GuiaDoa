@@ -313,11 +313,16 @@ class _PrimaryToolGrid extends StatelessWidget {
     return LayoutBuilder(builder: (context, constraints) {
       final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
       final effectiveWidth = constraints.maxWidth / scale;
-      final columns = effectiveWidth >= 700 ? 4 : effectiveWidth >= 315 ? 3 : 2;
+      // A grade original do Guia Doa usa quatro atalhos por linha no celular.
+      // Só reduzimos a quantidade quando a ampliação de texto realmente tornaria
+      // os cartões ilegíveis, preservando acessibilidade sem mudar o layout-base.
+      final columns = scale > 1.35
+          ? (effectiveWidth >= 315 ? 3 : 2)
+          : (effectiveWidth >= 300 ? 4 : 2);
       final width = (constraints.maxWidth - (columns - 1) * 9) / columns;
       final cardHeight = scale > 1.35
           ? (effectiveWidth < 220 ? 172.0 : 156.0)
-          : 126.0;
+          : 112.0;
       return Wrap(spacing: 9, runSpacing: 9, children: tools.map((tool) => SizedBox(key: ValueKey('home-tool-${tool.keyName}'), width: width, height: cardHeight,
         child: _ToolCard(tool: tool, strings: strings, onTap: () => onOpen(tool)))).toList());
     });
@@ -329,13 +334,13 @@ class _ToolCard extends StatelessWidget {
   final AppStrings strings;
   final VoidCallback onTap;
   @override Widget build(BuildContext context) => OrnamentFrame(onTap: onTap, child: Padding(
-    padding: const EdgeInsets.fromLTRB(5, 7, 5, 7), child: Column(children: [
+    padding: const EdgeInsets.fromLTRB(4, 6, 4, 6), child: Column(children: [
       Expanded(child: Image.asset('assets/ui/${tool.keyName}.png', fit: BoxFit.contain, excludeFromSemantics: true,
         cacheWidth: 192, filterQuality: FilterQuality.medium)),
       const SizedBox(height: 3), Text(strings.t(tool.labelKey), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
-        style: const TextStyle(fontFamily: 'GuiaSerif', color: GuiaColors.premiumText, fontSize: 13.5, fontWeight: FontWeight.bold)),
+        style: const TextStyle(fontFamily: 'GuiaSerif', color: GuiaColors.premiumText, fontSize: 11.5, fontWeight: FontWeight.bold)),
       const SizedBox(height: 2), Text(strings.t(tool.subtitleKey), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
-        style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 9.5, height: 1.12)),
+        style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 8.2, height: 1.08)),
     ])));
 }
 

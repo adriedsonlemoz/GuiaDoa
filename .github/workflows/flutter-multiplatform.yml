@@ -8,6 +8,7 @@ on:
       - 'flutter/**'
       - 'mobile/android-version.json'
       - 'package.json'
+      - 'github-manager.json'
       - '.github/workflows/flutter-multiplatform.yml'
 
 permissions:
@@ -78,7 +79,7 @@ jobs:
           APP_VERSION: ${{ steps.meta.outputs.app_version }}
         run: |
           if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "Guia Doa $APP_VERSION - Flutter" --notes "Build principal Flutter para Android. Web e iOS são validados no mesmo workflow."
+            gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "Guia Doa v$APP_VERSION" --notes "Build principal Flutter para Android. Web e iOS são validados no mesmo workflow."
           fi
           gh release upload "$TAG" "release-apk/$APK_NAME" --clobber
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -Fx "$APK_NAME"

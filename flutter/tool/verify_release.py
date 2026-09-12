@@ -13,6 +13,12 @@ version, code = re.search(r'^version:\s*([^+]+)\+(\d+)', (flutter / 'pubspec.yam
 assert release['version'] == version
 assert release['versionCode'] == int(code)
 assert json.loads((root / 'mobile/android-version.json').read_text())['versionCode'] == int(code)
+manager = json.loads((root / 'github-manager.json').read_text())
+assert manager['projectName'] == manager['displayName'] == 'Guia Doa'
+assert manager['versionName'] == version
+assert manager['versionCode'] == int(code)
+assert manager['applicationId'] == manager['namespace'] == 'com.guiadoa.app'
+assert manager['language'] == 'Dart' and manager['type'] == 'Flutter'
 for file in ['package.json', 'package-lock.json', 'api/package.json', 'api/package-lock.json']:
     assert json.loads((root / file).read_text())['version'] == version, file
 config = (flutter / 'lib/core/config/app_config.dart').read_text()

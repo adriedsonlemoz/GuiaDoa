@@ -1,5 +1,5 @@
-> **Versão atual: Guia Doa 1.0.0-beta.2.92 / Flutter alpha.15 / versionCode 100092.**
-> Correção do teste responsivo do workflow: [relatório e validação](docs/FLUTTER_ALPHA15_LAYOUT_FIX.md).
+> **Versão atual: Guia Doa 1.0.0-beta.2.93 / Flutter alpha.16 / versionCode 100093.**
+> Identidade do GitHub Manager e correção estrutural da Home: [relatório e validação](docs/FLUTTER_ALPHA16_MANAGER_LAYOUT.md).
 > O APK principal continua vindo do workflow Flutter.
 
 # GUIA DOA
@@ -277,6 +277,6 @@ npm run test:browser
 
 ---
 
-## 🦋 Migração Flutter (alpha.15)
+## 🦋 Migração Flutter (alpha.16)
 
-A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.15**, versão **1.0.0-beta.2.92**, preparada para **Android + Web + iOS**. Esta etapa preserva a Home compacta da alpha.14 e corrige a navegação inferior em telas estreitas com texto ampliado. O frontend React/Capacitor permanece apenas como legado manual durante a migração; Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [relatório alpha.15](docs/FLUTTER_ALPHA15_LAYOUT_FIX.md).
+A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.16**, versão **1.0.0-beta.2.93**, preparada para **Android + Web + iOS**. Esta etapa adiciona identidade forte para o GitHub Manager e substitui a navegação inferior rígida por uma composição responsiva. O frontend React/Capacitor permanece apenas como legado manual durante a migração; Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [relatório alpha.16](docs/FLUTTER_ALPHA16_MANAGER_LAYOUT.md).

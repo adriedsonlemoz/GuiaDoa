@@ -1,5 +1,5 @@
 class AppConfig {
-  static const String flutterChannel = 'Flutter alpha.15';
+  static const String flutterChannel = 'Flutter alpha.16';
   static const String apkFlavor = 'FLUTTER';
   static const String canonicalApiUrl = 'https://guiadoa-agrq.onrender.com';
 
@@ -9,5 +9,5 @@ class AppConfig {
   );
 
   static const String appName = 'Guia Doa';
-  static const String displayVersion = '1.0.0-beta.2.92 · Flutter alpha.15';
+  static const String displayVersion = '1.0.0-beta.2.93 · Flutter alpha.16';
 }

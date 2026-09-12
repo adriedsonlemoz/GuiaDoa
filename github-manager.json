@@ -1,0 +1,10 @@
+{
+  "projectName": "Guia Doa",
+  "displayName": "Guia Doa",
+  "versionName": "1.0.0-beta.2.93",
+  "versionCode": 100093,
+  "applicationId": "com.guiadoa.app",
+  "namespace": "com.guiadoa.app",
+  "language": "Dart",
+  "type": "Flutter"
+}

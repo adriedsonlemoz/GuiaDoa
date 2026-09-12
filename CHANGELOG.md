@@ -1,3 +1,12 @@
+## 1.0.0-beta.2.93 — Flutter alpha.16 (2026-09-12)
+
+- Adicionado `github-manager.json` na raiz com nome, versão, versionCode, applicationId, namespace, linguagem e tipo sincronizados.
+- Título das novas Releases Flutter padronizado como `Guia Doa v<versão>`.
+- Navegação inferior padrão foi substituída por uma barra própria de cinco itens, removendo a limitação estrutural de altura em 360 px com texto a 200%.
+- Rótulos da barra usam uma linha com ajuste automático, mantendo os mesmos ícones, destinos e destaque da Home.
+- Teste legado do GitHub Manager deixou de exigir a alpha.11 e agora valida dinamicamente a versão atual.
+- Metadados sincronizados: beta.2.93 / alpha.16 / 100093.
+
 ## 1.0.0-beta.2.92 — Flutter alpha.15 (2026-09-12)
 
 - Corrigido o overflow vertical de 1 px da Home em largura de 360 px com texto ampliado a 200%.

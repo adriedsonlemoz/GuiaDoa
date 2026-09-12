@@ -4,13 +4,25 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'));
 
-test('Flutter alpha.9 preserves GitHub Manager compatibility metadata', () => {
+test('Flutter preserves synchronized GitHub Manager identity', () => {
   assert.equal(existsSync('docs/FLUTTER_MIGRATION_ALPHA4.md'), true);
   assert.equal(existsSync('flutter/release.json'), true);
+  assert.equal(existsSync('github-manager.json'), true);
   const release = readJson('flutter/release.json');
-  assert.equal(release.version, '1.0.0-beta.2.88');
-  assert.equal(release.versionCode, 100088);
-  assert.equal(release.channel, 'alpha.11');
+  const manager = readJson('github-manager.json');
+  const rootPackage = readJson('package.json');
+  const android = readJson('mobile/android-version.json');
+  assert.equal(release.version, rootPackage.version);
+  assert.equal(release.versionCode, android.versionCode);
+  assert.equal(manager.projectName, 'Guia Doa');
+  assert.equal(manager.displayName, 'Guia Doa');
+  assert.equal(manager.versionName, release.version);
+  assert.equal(manager.versionCode, release.versionCode);
+  assert.equal(manager.applicationId, 'com.guiadoa.app');
+  assert.equal(manager.namespace, manager.applicationId);
+  assert.equal(manager.language, 'Dart');
+  assert.equal(manager.type, 'Flutter');
   assert.equal(release.family, 'FLUTTER');
-  assert.equal(release.apkName, 'GuiaDOA-FLUTTER-beta.2.88-alpha.11.apk');
+  assert.match(release.channel, /^alpha\.\d+$/);
+  assert.equal(release.apkName, `GuiaDOA-FLUTTER-${release.version.replace('1.0.0-', '')}-${release.channel}.apk`);
 });

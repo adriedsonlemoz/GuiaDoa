@@ -510,50 +510,57 @@ class _PremiumBottomBar extends StatelessWidget {
   final VoidCallback onFavorites;
   final VoidCallback onMore;
 
-  @override
-  Widget build(BuildContext context) => Container(
+  @override Widget build(BuildContext context) {
+    final items = <({String icon, String label, VoidCallback onTap})>[
+      (icon: 'inicio', label: strings.t('nav.home'), onTap: onHome),
+      (icon: 'guias', label: strings.t('nav.guides'), onTap: onGuides),
+      (icon: 'tracker', label: strings.t('nav.tracker'), onTap: onTracker),
+      (icon: 'favoritos', label: strings.t('nav.favorites'), onTap: onFavorites),
+      (icon: 'mais', label: strings.t('nav.more'), onTap: onMore),
+    ];
+    return Container(
+        key: const ValueKey('home-bottom-navigation'),
+        height: 66,
         decoration: const BoxDecoration(
+          color: GuiaColors.premiumBackground2,
           border: Border(top: BorderSide(color: GuiaColors.premiumGold, width: 1)),
           boxShadow: <BoxShadow>[BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(0, -2))],
         ),
         child: MediaQuery.withClampedTextScaling(
-          maxScaleFactor: 1.5,
-          child: BottomNavigationBar(
-            key: const ValueKey('home-bottom-navigation'),
-            currentIndex: 0,
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: GuiaColors.premiumBackground2,
-            selectedItemColor: GuiaColors.premiumGoldLight,
-            unselectedItemColor: GuiaColors.premiumMuted,
-            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
-            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
-            onTap: (index) {
-              switch (index) {
-                case 0:
-                  onHome();
-                  return;
-                case 1:
-                  onGuides();
-                  return;
-                case 2:
-                  onTracker();
-                  return;
-                case 3:
-                  onFavorites();
-                  return;
-                case 4:
-                  onMore();
-                  return;
-              }
-            },
-            items: <BottomNavigationBarItem>[
-              BottomNavigationBarItem(icon: const GuiaSymbol('inicio', color: GuiaColors.premiumMuted), activeIcon: const GuiaSymbol('inicio', filled: true), label: strings.t('nav.home')),
-              BottomNavigationBarItem(icon: const GuiaSymbol('guias', color: GuiaColors.premiumMuted), label: strings.t('nav.guides')),
-              BottomNavigationBarItem(icon: const GuiaSymbol('tracker', color: GuiaColors.premiumMuted), label: strings.t('nav.tracker')),
-              BottomNavigationBarItem(icon: const GuiaSymbol('favoritos', color: GuiaColors.premiumMuted), label: strings.t('nav.favorites')),
-              BottomNavigationBarItem(icon: const GuiaSymbol('mais', color: GuiaColors.premiumMuted), label: strings.t('nav.more')),
-            ],
+          maxScaleFactor: 1.35,
+          child: Row(
+            children: List<Widget>.generate(items.length, (index) {
+              final item = items[index];
+              return Expanded(child: Semantics(
+                button: true,
+                selected: index == 0,
+                label: item.label,
+                child: InkWell(
+                  onTap: item.onTap,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 6),
+                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                      GuiaSymbol(item.icon, size: 25, filled: index == 0,
+                        color: index == 0 ? GuiaColors.premiumGoldLight : GuiaColors.premiumMuted),
+                      const SizedBox(height: 4),
+                      SizedBox(
+                        height: 18,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(item.label, maxLines: 1, style: TextStyle(
+                            color: index == 0 ? GuiaColors.premiumGoldLight : GuiaColors.premiumMuted,
+                            fontSize: 12,
+                            fontWeight: index == 0 ? FontWeight.w900 : FontWeight.w700,
+                          )),
+                        ),
+                      ),
+                    ]),
+                  ),
+                ),
+              ));
+            }),
           ),
         ),
       );
+  }
 }

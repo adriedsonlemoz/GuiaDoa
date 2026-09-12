@@ -1,8 +1,8 @@
-# Estado da migração Flutter — alpha.15
+# Estado da migração Flutter — alpha.16
 
-Correção responsiva: [detalhes desta entrega](../../docs/FLUTTER_ALPHA15_LAYOUT_FIX.md).
+Identidade e correção estrutural: [detalhes desta entrega](../../docs/FLUTTER_ALPHA16_MANAGER_LAYOUT.md).
 
-Base atual: **Guia Doa 1.0.0-beta.2.92 / Flutter alpha.15 / versionCode 100092**.
+Base atual: **Guia Doa 1.0.0-beta.2.93 / Flutter alpha.16 / versionCode 100093**.
 
 ## Arquitetura
 

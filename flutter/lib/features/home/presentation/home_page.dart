@@ -54,9 +54,12 @@ class _HomePageState extends State<HomePage> {
     final strings = AppStrings(widget.profileStore.locale);
     final profile = widget.profileStore.profile!;
 
-    return Scaffold(
-      backgroundColor: GuiaColors.premiumBackground,
-      body: SafeArea(
+    final compactHome = MediaQuery.sizeOf(context).width < 400;
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: compactHome ? 1.5 : double.infinity,
+      child: Scaffold(
+        backgroundColor: GuiaColors.premiumBackground,
+        body: SafeArea(
         child: AnimatedBuilder(
           animation: Listenable.merge([widget.gameData, widget.profileStore, widget.featureStore]),
           builder: (context, _) {
@@ -74,6 +77,7 @@ class _HomePageState extends State<HomePage> {
               color: GuiaColors.premiumEmerald,
               onRefresh: widget.gameData.refresh,
               child: ListView(
+                key: const ValueKey('home-scroll'),
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.zero,
                 children: <Widget>[
@@ -146,13 +150,14 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
-      bottomNavigationBar: _PremiumBottomBar(
-        strings: strings,
-        onHome: () {},
-        onGuides: () => _push(GuidesPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore)),
-        onTracker: () => _push(TrackerHubPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore)),
-        onFavorites: () => _push(FavoritesPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore)),
-        onMore: () => _push(MorePage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore)),
+        bottomNavigationBar: _PremiumBottomBar(
+          strings: strings,
+          onHome: () {},
+          onGuides: () => _push(GuidesPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore)),
+          onTracker: () => _push(TrackerHubPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore)),
+          onFavorites: () => _push(FavoritesPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore)),
+          onMore: () => _push(MorePage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore)),
+        ),
       ),
     );
   }

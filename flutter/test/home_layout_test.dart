@@ -30,6 +30,9 @@ void main() {
         expect(find.text('Guia Doa'), findsOneWidget);
         expect(find.text('tool.torneios'), findsNothing);
         expect(find.byKey(const ValueKey('home-bottom-navigation')), findsOneWidget);
+        final homeContext = tester.element(find.byKey(const ValueKey('home-scroll')));
+        final homeScale = MediaQuery.textScalerOf(homeContext).scale(14) / 14;
+        expect(homeScale, closeTo(width < 400 ? scale.clamp(1.0, 1.5) : scale, .01));
         expect(tester.takeException(), isNull);
         if (scale == 1.0) {
           final tournament = tester.getTopLeft(find.byKey(const ValueKey('home-tool-torneios')));

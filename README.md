@@ -1,5 +1,5 @@
-> **Versão atual: Guia Doa 1.0.0-beta.2.93 / Flutter alpha.16 / versionCode 100093.**
-> Identidade do GitHub Manager e correção estrutural da Home: [relatório e validação](docs/FLUTTER_ALPHA16_MANAGER_LAYOUT.md).
+> **Versão atual: Guia Doa 1.0.0-beta.2.94 / Flutter alpha.17 / versionCode 100094.**
+> Correção definitiva de escala da Home: [relatório e validação](docs/FLUTTER_ALPHA17_HOME_SCALE.md).
 > O APK principal continua vindo do workflow Flutter.
 
 # GUIA DOA
@@ -277,6 +277,6 @@ npm run test:browser
 
 ---
 
-## 🦋 Migração Flutter (alpha.16)
+## 🦋 Migração Flutter (alpha.17)
 
-A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.16**, versão **1.0.0-beta.2.93**, preparada para **Android + Web + iOS**. Esta etapa adiciona identidade forte para o GitHub Manager e substitui a navegação inferior rígida por uma composição responsiva. O frontend React/Capacitor permanece apenas como legado manual durante a migração; Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [relatório alpha.16](docs/FLUTTER_ALPHA16_MANAGER_LAYOUT.md).
+A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.17**, versão **1.0.0-beta.2.94**, preparada para **Android + Web + iOS**. Esta etapa preserva a identidade forte do GitHub Manager e limita a escala somente na Home compacta para encerrar o overflow detectado pelo workflow 15. O frontend React/Capacitor permanece apenas como legado manual durante a migração; Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [relatório alpha.17](docs/FLUTTER_ALPHA17_HOME_SCALE.md).

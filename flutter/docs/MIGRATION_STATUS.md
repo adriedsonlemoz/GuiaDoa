@@ -1,8 +1,8 @@
-# Estado da migração Flutter — alpha.16
+# Estado da migração Flutter — alpha.17
 
-Identidade e correção estrutural: [detalhes desta entrega](../../docs/FLUTTER_ALPHA16_MANAGER_LAYOUT.md).
+Escala responsiva da Home: [detalhes desta entrega](../../docs/FLUTTER_ALPHA17_HOME_SCALE.md).
 
-Base atual: **Guia Doa 1.0.0-beta.2.93 / Flutter alpha.16 / versionCode 100093**.
+Base atual: **Guia Doa 1.0.0-beta.2.94 / Flutter alpha.17 / versionCode 100094**.
 
 ## Arquitetura
 

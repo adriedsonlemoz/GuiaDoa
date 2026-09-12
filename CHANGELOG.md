@@ -1,3 +1,12 @@
+## 1.0.0-beta.2.94 — Flutter alpha.17 (2026-09-12)
+
+- Workflow 15 confirmou que o overflow de 1 px não estava restrito à navegação inferior.
+- Em larguras abaixo de 400 px, a Home inteira agora limita a escala de texto a 150%, eliminando overflows internos em acessibilidade a 200%.
+- Telas a partir de 400 px e todas as páginas abertas pela Home preservam a escala configurada no aparelho.
+- Teste responsivo agora verifica explicitamente a escala efetiva dentro da Home.
+- Identidade do GitHub Manager permanece sincronizada.
+- Metadados sincronizados: beta.2.94 / alpha.17 / 100094.
+
 ## 1.0.0-beta.2.93 — Flutter alpha.16 (2026-09-12)
 
 - Adicionado `github-manager.json` na raiz com nome, versão, versionCode, applicationId, namespace, linguagem e tipo sincronizados.

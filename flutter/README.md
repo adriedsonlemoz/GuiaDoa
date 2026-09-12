@@ -1,6 +1,6 @@
-# Guia Doa — Flutter alpha.16
+# Guia Doa — Flutter alpha.17
 
-Versão atual: **1.0.0-beta.2.93+100093**. [Mudanças e validação](../docs/FLUTTER_ALPHA16_MANAGER_LAYOUT.md).
+Versão atual: **1.0.0-beta.2.94+100094**. [Mudanças e validação](../docs/FLUTTER_ALPHA17_HOME_SCALE.md).
 
 
 Esta pasta é o novo cliente multiplataforma do **Guia Doa**. O frontend React/Capacitor continua no repositório enquanto a migração avança; o backend Express + MongoDB permanece a fonte de verdade.

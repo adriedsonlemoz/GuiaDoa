@@ -17,7 +17,7 @@ test('Flutter and repository release metadata stay synchronized', () => {
   const pubspec = read('flutter/pubspec.yaml');
   const config = read('flutter/lib/core/config/app_config.dart');
   assert.equal(apiPackage.version, rootPackage.version);
-  assert.equal(androidVersion.versionCode, 100084);
+  assert.equal(androidVersion.versionCode, 100085);
   assert.ok(pubspec.includes(`version: ${rootPackage.version}+${androidVersion.versionCode}`));
   const release = JSON.parse(read('flutter/release.json'));
   assert.equal(release.version, rootPackage.version);

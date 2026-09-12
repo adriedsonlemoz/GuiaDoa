@@ -31,7 +31,7 @@ jobs:
           cache: true
       - name: Bootstrap platforms
         working-directory: flutter
-        run: ./tool/bootstrap_platforms.sh
+        run: bash ./tool/bootstrap_platforms.sh
       - name: Validate Android internet permission
         working-directory: flutter
         run: grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml
@@ -90,7 +90,7 @@ jobs:
           cache: true
       - name: Bootstrap platforms
         working-directory: flutter
-        run: ./tool/bootstrap_platforms.sh
+        run: bash ./tool/bootstrap_platforms.sh
       - name: Analyze
         working-directory: flutter
         run: flutter analyze

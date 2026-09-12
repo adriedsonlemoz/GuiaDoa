@@ -100,7 +100,8 @@ class _HomePageState extends State<HomePage> {
                                 MaterialPageRoute<void>(
                                   builder: (_) => TroopsPage(
                                     controller: widget.gameData,
-                                                    startCompareMode: true,
+                                    profileStore: widget.profileStore,
+                                    startCompareMode: true,
                                   ),
                                 ),
                               ),
@@ -121,7 +122,7 @@ class _HomePageState extends State<HomePage> {
                             const SizedBox(height: 18),
                             _SyncStrip(gameData: widget.gameData, strings: strings),
                             const SizedBox(height: 14),
-                            Text(
+                            const Text(
                               '${AppConfig.apkFlavor} · ${AppConfig.displayVersion}',
                               textAlign: TextAlign.center,
                               style: const TextStyle(

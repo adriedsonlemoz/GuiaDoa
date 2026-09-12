@@ -112,14 +112,14 @@ class _SettingsPageState extends State<SettingsPage> {
                     icon: Icons.info_outline,
                     title: strings.t('settings.about'),
                     subtitle: strings.t('settings.about.subtitle'),
-                    child: Column(
+                    child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         _InfoLine(label: 'Build', value: AppConfig.displayVersion),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         _InfoLine(label: 'Family', value: AppConfig.apkFlavor),
-                        const SizedBox(height: 6),
-                        const _InfoLine(label: 'Targets', value: 'Android · Web · iOS'),
+                        SizedBox(height: 6),
+                        _InfoLine(label: 'Targets', value: 'Android · Web · iOS'),
                       ],
                     ),
                   ),

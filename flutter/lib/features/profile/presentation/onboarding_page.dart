@@ -231,7 +231,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           ),
                         ),
                         const SizedBox(height: 14),
-                        Text(
+                        const Text(
                           '${AppConfig.apkFlavor} · ${AppConfig.displayVersion}',
                           textAlign: TextAlign.center,
                           style: const TextStyle(

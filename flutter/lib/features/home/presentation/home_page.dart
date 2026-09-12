@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../../../core/config/app_config.dart';
 import '../../../core/widgets/ornament_frame.dart';
 import '../../../core/widgets/guia_symbol.dart';
 import '../../../core/domain/realm_time.dart';
@@ -135,19 +134,7 @@ class _HomePageState extends State<HomePage> {
                               onTournament: () => _openTool(_toolByKey('torneios'), strings),
                               onTroops: () => _push(TroopUpgradePage(profileStore: widget.profileStore)),
                             ),
-                            const SizedBox(height: 18),
-                            _SyncStrip(gameData: widget.gameData, strings: strings),
-                            const SizedBox(height: 14),
-                            const Text(
-                              '${AppConfig.apkFlavor} · ${AppConfig.displayVersion}',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: GuiaColors.premiumMuted,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
-                                letterSpacing: .45,
-                              ),
-                            ),
+                            const SizedBox(height: 4),
                           ],
                         ),
                       ),
@@ -286,7 +273,7 @@ class _SummaryPanel extends StatelessWidget {
         detail: current == null ? '' : current.remaining(DateTime.now()), onTap: onEvents)),
       const _SummaryDivider(),
       Expanded(child: _SummaryItem(icon: Icons.star_outline, label: strings.t('nav.favorites'), value: '${featureStore.favorites.length}',
-        detail: strings.t('home.summary.saved'), onTap: onFavorites)),
+        onTap: onFavorites)),
       const _SummaryDivider(),
       Expanded(child: _SummaryItem(icon: Icons.calendar_month_outlined, label: strings.t('home.summary.updated'), value: _updatedText(),
         detail: gameData.fromCache ? strings.t('home.summary.cached') : '', onTap: gameData.loading ? null : gameData.refresh)),
@@ -320,9 +307,11 @@ class _PrimaryToolGrid extends StatelessWidget {
       textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.premiumMuted)));
     return LayoutBuilder(builder: (context, constraints) {
       final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
-      final columns = constraints.maxWidth / scale >= 560 ? 4 : 2;
+      final effectiveWidth = constraints.maxWidth / scale;
+      final columns = effectiveWidth >= 700 ? 4 : effectiveWidth >= 315 ? 3 : 2;
       final width = (constraints.maxWidth - (columns - 1) * 9) / columns;
-      return Wrap(spacing: 9, runSpacing: 9, children: tools.map((tool) => SizedBox(width: width,
+      final cardHeight = scale > 1.35 ? 156.0 : 126.0;
+      return Wrap(spacing: 9, runSpacing: 9, children: tools.map((tool) => SizedBox(key: ValueKey('home-tool-${tool.keyName}'), width: width, height: cardHeight,
         child: _ToolCard(tool: tool, strings: strings, onTap: () => onOpen(tool)))).toList());
     });
   }
@@ -333,13 +322,13 @@ class _ToolCard extends StatelessWidget {
   final AppStrings strings;
   final VoidCallback onTap;
   @override Widget build(BuildContext context) => OrnamentFrame(onTap: onTap, child: Padding(
-    padding: const EdgeInsets.fromLTRB(6, 7, 6, 9), child: Column(children: [
-      Image.asset('assets/ui/${tool.keyName}.png', height: 76, fit: BoxFit.contain, excludeFromSemantics: true,
-        cacheWidth: 256, filterQuality: FilterQuality.medium),
-      const SizedBox(height: 5), Text(strings.t(tool.labelKey), textAlign: TextAlign.center,
-        style: const TextStyle(fontFamily: 'GuiaSerif', color: GuiaColors.premiumText, fontSize: 16, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 3), Text(strings.t(tool.subtitleKey), textAlign: TextAlign.center,
-        style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 12, height: 1.2)),
+    padding: const EdgeInsets.fromLTRB(5, 7, 5, 7), child: Column(children: [
+      Expanded(child: Image.asset('assets/ui/${tool.keyName}.png', fit: BoxFit.contain, excludeFromSemantics: true,
+        cacheWidth: 192, filterQuality: FilterQuality.medium)),
+      const SizedBox(height: 3), Text(strings.t(tool.labelKey), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+        style: const TextStyle(fontFamily: 'GuiaSerif', color: GuiaColors.premiumText, fontSize: 13.5, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 2), Text(strings.t(tool.subtitleKey), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+        style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 9.5, height: 1.12)),
     ])));
 }
 
@@ -381,16 +370,22 @@ class _QuickActions extends StatelessWidget {
     final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
     final columns = constraints.maxWidth / scale >= 330 ? 3 : 1;
     final width = (constraints.maxWidth - (columns - 1) * 8) / columns;
+    final height = scale > 1.35 ? 144.0 : 108.0;
     final items = [
-      ('comparar', 'home.quick.compare', 'home.quick.compare.sub', onCompare),
-      ('calculadora', 'home.quick.calculator', 'home.quick.calculator.sub', onCalculator),
-      ('backup', 'home.quick.backup', 'home.quick.backup.sub', onBackup),
+      (symbol: 'comparar', label: 'home.quick.compare', subtitle: null, action: onCompare),
+      (symbol: 'calculadora', label: 'home.quick.calculator', subtitle: null, action: onCalculator),
+      (symbol: 'backup', label: 'home.quick.backup', subtitle: 'home.quick.backup.sub', action: onBackup),
     ];
-    return Wrap(spacing: 8, runSpacing: 8, children: items.map((item) => SizedBox(width: width, child: OrnamentFrame(onTap: item.$4,
-      child: Padding(padding: const EdgeInsets.all(8), child: Column(children: [
-        GuiaSymbol(item.$1, size: 30), const SizedBox(height: 7),
-        Text(strings.t(item.$2), textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.premiumText, fontSize: 12, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4), Text(strings.t(item.$3), textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 11)),
+    return Wrap(spacing: 8, runSpacing: 8, children: items.map((item) => SizedBox(width: width, height: height, child: OrnamentFrame(onTap: item.action,
+      child: Padding(padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 9), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        GuiaSymbol(item.symbol, size: 28), const SizedBox(height: 7),
+        Text(strings.t(item.label), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+          style: const TextStyle(color: GuiaColors.premiumText, fontSize: 11.5, fontWeight: FontWeight.bold)),
+        if (item.subtitle != null) ...[
+          const SizedBox(height: 3),
+          Text(strings.t(item.subtitle!), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+            style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 10, height: 1.15)),
+        ],
       ]))))).toList());
   });
 }
@@ -406,14 +401,14 @@ class _Highlights extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
           final first = _HighlightCard(
-            icon: Icons.emoji_events_outlined,
+            assetPath: 'assets/ui/torneios.png',
             badge: strings.t('home.badge.guide'),
             title: strings.t('home.highlight.power'),
             subtitle: strings.t('home.highlight.power.sub'),
             onTap: onTournament,
           );
           final second = _HighlightCard(
-            icon: Icons.military_tech_outlined,
+            symbolName: 'calculadora',
             badge: strings.t('home.badge.guide'),
             title: strings.t('home.highlight.troops'),
             subtitle: strings.t('home.highlight.troops.sub'),
@@ -428,9 +423,10 @@ class _Highlights extends StatelessWidget {
 }
 
 class _HighlightCard extends StatelessWidget {
-  const _HighlightCard({required this.icon, required this.badge, required this.title, required this.subtitle, required this.onTap});
+  const _HighlightCard({this.assetPath, this.symbolName, required this.badge, required this.title, required this.subtitle, required this.onTap});
 
-  final IconData icon;
+  final String? assetPath;
+  final String? symbolName;
   final String badge;
   final String title;
   final String subtitle;
@@ -456,9 +452,11 @@ class _HighlightCard extends StatelessWidget {
             child: Stack(
               children: <Widget>[
                 Positioned(
-                  right: 12,
-                  top: 18,
-                  child: Image.asset(icon == Icons.emoji_events_outlined ? 'assets/ui/torneios.png' : 'assets/ui/tropas.png', width: 86, height: 86, fit: BoxFit.contain, excludeFromSemantics: true),
+                  right: 11,
+                  top: 9,
+                  child: assetPath != null
+                      ? Image.asset(assetPath!, width: 72, height: 72, fit: BoxFit.contain, excludeFromSemantics: true)
+                      : GuiaSymbol(symbolName!, size: 56),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(13),
@@ -474,12 +472,12 @@ class _HighlightCard extends StatelessWidget {
                         ),
                         child: Text(badge, style: const TextStyle(color: GuiaColors.premiumGoldLight, fontSize: 9, fontWeight: FontWeight.w900)),
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 43),
                       Text(title, style: const TextStyle(color: GuiaColors.premiumGoldLight, fontWeight: FontWeight.w900, fontSize: 16)),
                       const SizedBox(height: 3),
                       Row(
                         children: <Widget>[
-                          Expanded(child: Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: GuiaColors.premiumText, fontSize: 12, height: 1.25))),
+                          Expanded(child: Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: GuiaColors.premiumText, fontSize: 11.5, height: 1.22))),
                           const GuiaSymbol('avancar', size: 18),
                         ],
                       ),
@@ -491,48 +489,6 @@ class _HighlightCard extends StatelessWidget {
           ),
         ),
       );
-}
-
-class _SyncStrip extends StatelessWidget {
-  const _SyncStrip({required this.gameData, required this.strings});
-
-  final GameDataController gameData;
-  final AppStrings strings;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = gameData.loading
-        ? strings.t('home.sync.loading')
-        : gameData.error != null
-            ? strings.t('catalog.offline')
-            : gameData.fromCache
-                ? strings.t('catalog.offline')
-                : strings.t('catalog.online');
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-      decoration: BoxDecoration(
-        color: GuiaColors.premiumPanel.withValues(alpha: .72),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: GuiaColors.premiumGold.withValues(alpha: .38)),
-      ),
-      child: Row(
-        children: <Widget>[
-          if (gameData.loading)
-            const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: GuiaColors.premiumGoldLight))
-          else
-            Icon(gameData.error == null ? Icons.cloud_done_outlined : Icons.cloud_off_outlined, size: 18, color: GuiaColors.premiumGoldLight),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 11))),
-          IconButton(
-            onPressed: gameData.loading ? null : gameData.refresh,
-            tooltip: strings.t('home.sync'),
-            visualDensity: VisualDensity.compact,
-            icon: const GuiaSymbol('atualizar'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _PremiumBottomBar extends StatelessWidget {

@@ -42,7 +42,12 @@ for name in ['torneios','tropas','dragoes','edificios','itens','pesquisas','ilha
     data = p.read_bytes()
     assert data[:8] == b'\x89PNG\r\n\x1a\n', p
     width, height = struct.unpack('>II', data[16:24])
-    assert min(width, height) >= 512, p
+    if name == 'hero':
+        assert width >= 1200 and height >= 400, p
+    elif name == 'crest':
+        assert min(width, height) >= 512, p
+    else:
+        assert min(width, height) >= 320, p
     if name != 'hero': assert data[25] == 6, f'{name}: expected RGBA PNG'
 for density, size in [('mdpi',48),('hdpi',72),('xhdpi',96),('xxhdpi',144),('xxxhdpi',192)]:
     for name in ['ic_launcher','ic_launcher_round']:

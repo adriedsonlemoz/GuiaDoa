@@ -1,8 +1,8 @@
-# Estado da migração Flutter — alpha.13
+# Estado da migração Flutter — alpha.14
 
-Revisão visual e UTC: [detalhes desta entrega](../../docs/FLUTTER_ALPHA13_VISUAL_UTC.md).
+Home compacta: [detalhes desta entrega](../../docs/FLUTTER_ALPHA14_HOME_COMPACTA.md).
 
-Base atual: **Guia Doa 1.0.0-beta.2.90 / Flutter alpha.13 / versionCode 100090**.
+Base atual: **Guia Doa 1.0.0-beta.2.91 / Flutter alpha.14 / versionCode 100091**.
 
 ## Arquitetura
 

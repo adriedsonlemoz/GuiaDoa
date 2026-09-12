@@ -30,6 +30,15 @@ void main() {
         expect(find.text('Guia Doa'), findsOneWidget);
         expect(find.text('tool.torneios'), findsNothing);
         expect(tester.takeException(), isNull);
+        if (scale == 1.0) {
+          final tournament = tester.getTopLeft(find.byKey(const ValueKey('home-tool-torneios')));
+          final troops = tester.getTopLeft(find.byKey(const ValueKey('home-tool-tropas')));
+          final dragons = tester.getTopLeft(find.byKey(const ValueKey('home-tool-dragoes')));
+          expect(tournament.dy, troops.dy);
+          expect(troops.dy, dragons.dy);
+          expect(tournament.dx, lessThan(troops.dx));
+          expect(troops.dx, lessThan(dragons.dx));
+        }
         await tester.drag(find.byType(ListView).first, const Offset(0,-600));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);

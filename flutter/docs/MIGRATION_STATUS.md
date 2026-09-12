@@ -1,6 +1,13 @@
-# Migração React/Capacitor → Flutter — alpha.2
+# Migração React/Capacitor → Flutter — alpha.3
 
-Base analisada: **Guia DOA 1.0.0-beta.2.79**.
+Base analisada: **Guia DOA 1.0.0-beta.2.80**.
+
+
+## Correções da alpha.3
+
+- corrigido `flutter analyze`: `Container` não aceita o parâmetro `minHeight`; agora usa `constraints: BoxConstraints(minHeight: 60)`;
+- removidos avisos `prefer_const_constructors` da área de versão na Home;
+- versão Flutter sincronizada em **1.0.0-beta.2.80+100080**.
 
 ## Decisões preservadas
 

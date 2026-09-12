@@ -1,4 +1,4 @@
-# Guia DOA — Flutter migration alpha.2
+# Guia DOA — Flutter migration alpha.3
 
 Esta pasta é o novo cliente multiplataforma do **Guia DOA**. O frontend React/Capacitor continua no repositório enquanto a migração avança; o backend Express + MongoDB permanece a fonte de verdade.
 

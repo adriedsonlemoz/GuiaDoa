@@ -93,13 +93,13 @@ class HomePage extends StatelessWidget {
                         },
                       ),
                     ),
-                    SliverToBoxAdapter(
+                    const SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+                        padding: EdgeInsets.fromLTRB(12, 0, 12, 20),
                         child: Center(
                           child: Text(
                             'GUIA DOA · ${AppConfig.displayVersion}',
-                            style: const TextStyle(color: GuiaColors.muted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: .8),
+                            style: TextStyle(color: GuiaColors.muted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: .8),
                           ),
                         ),
                       ),
@@ -147,7 +147,7 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        minHeight: 60,
+        constraints: const BoxConstraints(minHeight: 60),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: const BoxDecoration(
           gradient: LinearGradient(colors: <Color>[GuiaColors.green2, GuiaColors.greenDark]),

@@ -4,7 +4,7 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 
 ## Versão
 
-**1.0.0-beta.2.79** | Android `versionCode`: **100079**
+**1.0.0-beta.2.80** | Android `versionCode`: **100080**
 
 ## Principais módulos
 
@@ -275,4 +275,4 @@ npm run test:browser
 
 ## 🦋 Migração Flutter (alpha.2)
 
-A partir da base **1.0.0-beta.2.79**, existe uma migração paralela em [`flutter/`](flutter/README.md), preparada para **Android + Web + iOS**. O frontend React/Capacitor continua preservado durante a migração e o Flutter consome a mesma API/MongoDB existente, sem credenciais do banco no cliente. Na alpha.2, o módulo **Tropas** ganhou tela Flutter própria com filtros, detalhe, treinamento e comparador. Detalhes: [Flutter alpha.2 — Tropas](docs/FLUTTER_MIGRATION_ALPHA2.md).
+A migração paralela em [`flutter/`](flutter/README.md) está na **Flutter alpha.3**, versão **1.0.0-beta.2.80**, preparada para **Android + Web + iOS**. O frontend React/Capacitor continua preservado durante a migração e o Flutter consome a mesma API/MongoDB existente, sem credenciais do banco no cliente. A alpha.2 introduziu o módulo **Tropas**; a alpha.3 corrige o build/análise multiplataforma. Detalhes: [Flutter alpha.3](docs/FLUTTER_MIGRATION_ALPHA3.md).

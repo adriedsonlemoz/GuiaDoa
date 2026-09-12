@@ -1,10 +1,10 @@
-# Guia DOA — Flutter migration alpha.3
+# Guia DOA — Flutter principal alpha.4
 
-Esta pasta é o novo cliente multiplataforma do **Guia DOA**. O frontend React/Capacitor continua no repositório enquanto a migração avança; o backend Express + MongoDB permanece a fonte de verdade.
+Esta pasta é o cliente multiplataforma **principal** do Guia DOA para as novas builds Android/Web/iOS. O frontend React/Capacitor permanece no repositório apenas como legado temporário; o backend Express + MongoDB continua sendo a fonte de verdade.
 
 ## Alvos
 
-- Android: Flutter nativo, identificador preservado como `com.guiadoa.app` quando as plataformas são geradas pelo script.
+- Android: Flutter nativo e build principal. Durante a alpha, o nome instalado é **Guia DOA Flutter** para identificação imediata; o identificador continua `com.guiadoa.app`.
 - Web: Flutter Web consumindo a mesma API. Em desenvolvimento use a porta 5173 para aproveitar o CORS já existente.
 - iOS: projeto gerado pelo mesmo bootstrap, com o mesmo backend/API e sem dependências específicas do Android no código de domínio.
 
@@ -51,7 +51,7 @@ Para usar outra API:
 flutter run -d chrome --web-port 5173 --dart-define=API_URL=http://localhost:3001
 ```
 
-## O que já está nesta alpha
+## O que já está nesta alpha.4
 
 - tema Flutter baseado na identidade atual do Guia DOA;
 - tela cheia/imersiva no Android e edge-to-edge nas demais plataformas móveis;
@@ -67,3 +67,11 @@ flutter run -d chrome --web-port 5173 --dart-define=API_URL=http://localhost:300
 - preparação reproduzível de Android + Web + iOS.
 
 Consulte `docs/MIGRATION_STATUS.md` para o mapa completo do que ainda precisa ser portado tela por tela.
+
+
+## Identificação da build principal
+
+- APK: `GuiaDOA-FLUTTER-beta.2.81-alpha.4.apk`
+- Nome instalado: `Guia DOA Flutter`
+- Selo interno: `FLUTTER α4`
+- React/Capacitor: workflow manual `LEGADO - React Capacitor APK`

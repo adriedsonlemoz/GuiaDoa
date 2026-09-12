@@ -21,7 +21,7 @@ class GuiaDoaApp extends StatelessWidget {
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: Listenable.merge(<Listenable>[gameData, profileStore]),
         builder: (context, _) => MaterialApp(
-          title: AppConfig.appName,
+          title: AppConfig.installedName,
           debugShowCheckedModeBanner: false,
           theme: buildGuiaTheme(),
           home: profileStore.hasProfile

@@ -49,20 +49,17 @@ test('application and API locks agree with the native release metadata', () => {
     assert.equal(read(file).version, version);
     assert.equal(read(file).packages[''].version, version);
   }
-  assert.equal(read('mobile/android-version.json').versionCode, 100080);
+  assert.equal(read('mobile/android-version.json').versionCode, 100081);
 });
 
-test('workflow validates before publishing exactly one signed APK and no artifact archive', () => {
+test('legacy React/Capacitor APK workflow is manual-only and unmistakably legacy', () => {
   const flow = readFileSync(new URL('../.github/workflows/build-apk.yml', import.meta.url), 'utf8');
-  assert.doesNotMatch(flow, /upload-artifact|head -1|pull_request_target/);
-  for (const step of ['npm test', 'npm run check', 'npm run test:browser', 'npm run build']) {
-    assert.ok(flow.indexOf(step) < flow.indexOf('gh release upload'));
-  }
+  assert.match(flow, /^name: LEGADO - React Capacitor APK/m);
+  assert.match(flow, /workflow_dispatch:/);
+  assert.doesNotMatch(flow, /^\s*push:/m);
+  assert.doesNotMatch(flow, /^\s*pull_request:/m);
+  assert.doesNotMatch(flow, /upload-artifact/);
+  assert.match(flow, /GuiaDOA-LEGADO-CAPACITOR\.apk/);
   assert.match(flow, /apksigner.*sign --ks/);
   assert.match(flow, /apksigner.*verify --verbose/);
-  assert.match(flow, /KEYSTORE_BASE64/);
-  assert.match(flow, /assets\.length, 1/);
-  assert.match(flow, /assets\[0\]\.name, 'GuiaDOA\.apk'/);
-  assert.match(flow, /github\.event_name != 'pull_request'/);
-  assert.match(flow, /--target "\$GITHUB_SHA"/);
 });

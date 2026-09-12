@@ -1,13 +1,15 @@
-# Migração React/Capacitor → Flutter — alpha.3
+# Migração React/Capacitor → Flutter — alpha.4
 
-Base analisada: **Guia DOA 1.0.0-beta.2.80**.
+Base analisada: **Guia DOA 1.0.0-beta.2.81**.
 
 
-## Correções da alpha.3
+## Mudanças da alpha.4
 
-- corrigido `flutter analyze`: `Container` não aceita o parâmetro `minHeight`; agora usa `constraints: BoxConstraints(minHeight: 60)`;
-- removidos avisos `prefer_const_constructors` da área de versão na Home;
-- versão Flutter sincronizada em **1.0.0-beta.2.80+100080**.
+- Flutter promovido a build Android principal;
+- React/Capacitor movido para workflow legado e manual;
+- APK principal com `FLUTTER` no nome e identificação visual dentro do app;
+- Home aproximada da estrutura atual, incluindo perfil/reino, evento ativo, Arsenal e Conselheiro;
+- versão Flutter sincronizada em **1.0.0-beta.2.81+100081**.
 
 ## Decisões preservadas
 

@@ -49,17 +49,15 @@ test('application and API locks agree with the native release metadata', () => {
     assert.equal(read(file).version, version);
     assert.equal(read(file).packages[''].version, version);
   }
-  assert.equal(read('mobile/android-version.json').versionCode, 100081);
+  assert.equal(read('mobile/android-version.json').versionCode, 100083);
 });
 
-test('legacy React/Capacitor APK workflow is manual-only and unmistakably legacy', () => {
-  const flow = readFileSync(new URL('../.github/workflows/build-apk.yml', import.meta.url), 'utf8');
-  assert.match(flow, /^name: LEGADO - React Capacitor APK/m);
-  assert.match(flow, /workflow_dispatch:/);
-  assert.doesNotMatch(flow, /^\s*push:/m);
-  assert.doesNotMatch(flow, /^\s*pull_request:/m);
-  assert.doesNotMatch(flow, /upload-artifact/);
-  assert.match(flow, /GuiaDOA-LEGADO-CAPACITOR\.apk/);
-  assert.match(flow, /apksigner.*sign --ks/);
-  assert.match(flow, /apksigner.*verify --verbose/);
+test('Capacitor workflow is legacy/manual while Flutter is the primary automatic APK', () => {
+  const legacy = readFileSync(new URL('../.github/workflows/build-apk.yml', import.meta.url), 'utf8');
+  const flutter = readFileSync(new URL('../.github/workflows/flutter-multiplatform.yml', import.meta.url), 'utf8');
+  assert.match(legacy, /name:\s*LEGADO - React Capacitor APK/);
+  assert.ok(!/^\s*push:/m.test(legacy));
+  assert.match(flutter, /branches:\s*\[main, master\]/);
+  assert.match(flutter, /gh release upload/);
+  assert.match(flutter, /GuiaDOA-FLUTTER-/);
 });

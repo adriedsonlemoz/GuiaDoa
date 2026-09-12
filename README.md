@@ -4,7 +4,7 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 
 ## Versão
 
-**1.0.0-beta.2.81** | Android `versionCode`: **100081**
+**1.0.0-beta.2.80** | Android `versionCode`: **100080**
 
 ## Principais módulos
 
@@ -273,12 +273,6 @@ npm run test:browser
 
 ---
 
----
+## 🦋 Migração Flutter (alpha.2)
 
-## 🦋 Migração Flutter — build principal (alpha.4)
-
-A migração em [`flutter/`](flutter/README.md) está na **Flutter alpha.4**, versão **1.0.0-beta.2.81**. A partir desta etapa, o **APK principal é gerado pelo Flutter**; o workflow React/Capacitor ficou somente manual e explicitamente marcado como legado.
-
-O APK novo sai como **`GuiaDOA-FLUTTER-beta.2.81-alpha.4.apk`**, o app instalado aparece como **Guia DOA Flutter** durante a alpha e a própria interface exibe o selo **FLUTTER α4**. Android, Flutter Web e preparação iOS continuam usando a mesma API no Render/MongoDB.
-
-Detalhes: [Flutter alpha.4](docs/FLUTTER_MIGRATION_ALPHA4.md).
+A migração paralela em [`flutter/`](flutter/README.md) está na **Flutter alpha.3**, versão **1.0.0-beta.2.80**, preparada para **Android + Web + iOS**. O frontend React/Capacitor continua preservado durante a migração e o Flutter consome a mesma API/MongoDB existente, sem credenciais do banco no cliente. A alpha.2 introduziu o módulo **Tropas**; a alpha.3 corrige o build/análise multiplataforma. Detalhes: [Flutter alpha.3](docs/FLUTTER_MIGRATION_ALPHA3.md).

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -11,7 +12,7 @@ class ApiException implements Exception {
   final int? statusCode;
 
   @override
-  String toString() => 'ApiException($statusCode): $message';
+  String toString() => message;
 }
 
 class ApiClient {
@@ -25,9 +26,16 @@ class ApiClient {
   Uri uri(String path) => Uri.parse('$baseUrl${path.startsWith('/') ? path : '/$path'}');
 
   Future<dynamic> getJson(String path, {Duration timeout = const Duration(seconds: 20)}) async {
-    final response = await _client
-        .get(uri(path), headers: const {'Accept': 'application/json'})
-        .timeout(timeout);
+    late final http.Response response;
+    try {
+      response = await _client
+          .get(uri(path), headers: const {'Accept': 'application/json'})
+          .timeout(timeout);
+    } on TimeoutException {
+      throw const ApiException('O servidor demorou para responder. Tente novamente.');
+    } on http.ClientException {
+      throw const ApiException('Não foi possível conectar ao servidor do Guia DOA. Verifique sua internet e tente novamente.');
+    }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw ApiException(

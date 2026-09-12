@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/config/app_config.dart';
 import '../../../core/i18n/app_strings.dart';
 import '../../../core/storage/profile_store.dart';
 import '../../../core/theme/guia_theme.dart';
@@ -54,19 +53,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         style: TextStyle(fontSize: 29, fontWeight: FontWeight.w900, color: GuiaColors.green),
                       ),
                       Text(strings.t('app.subtitle'), style: const TextStyle(color: GuiaColors.ink2)),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: GuiaColors.green,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: GuiaColors.goldDark),
-                        ),
-                        child: const Text(
-                          'NOVA VERSÃO FLUTTER · ${AppConfig.displayVersion}',
-                          style: TextStyle(color: GuiaColors.gold, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: .45),
-                        ),
-                      ),
                       const SizedBox(height: 22),
                       Card(
                         child: Padding(

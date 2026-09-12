@@ -16,6 +16,20 @@ if ($missing) {
   Remove-Item -Recurse -Force $tmp
 }
 
+
+$manifestPath = "android/app/src/main/AndroidManifest.xml"
+if (Test-Path $manifestPath) {
+  $manifest = Get-Content $manifestPath -Raw
+  if ($manifest -notmatch 'android.permission.INTERNET') {
+    $manifest = $manifest.Replace('<application', '    <uses-permission android:name="android.permission.INTERNET" />' + [Environment]::NewLine + '<application')
+  }
+  $manifest = $manifest.Replace('android:label="app"', 'android:label="Guia DOA Flutter"')
+  Set-Content -Path $manifestPath -Value $manifest -NoNewline
+  if ((Get-Content $manifestPath -Raw) -notmatch 'android.permission.INTERNET') {
+    throw "Permissão INTERNET não foi aplicada ao AndroidManifest.xml"
+  }
+}
+
 if ((Test-Path "ios/Runner/Assets.xcassets") -and (Test-Path "tool/ios_appicon/AppIcon.appiconset")) {
   Remove-Item -Recurse -Force "ios/Runner/Assets.xcassets/AppIcon.appiconset" -ErrorAction SilentlyContinue
   Copy-Item -Recurse "tool/ios_appicon/AppIcon.appiconset" "ios/Runner/Assets.xcassets/AppIcon.appiconset"
@@ -23,31 +37,6 @@ if ((Test-Path "ios/Runner/Assets.xcassets") -and (Test-Path "tool/ios_appicon/A
 if (Test-Path "web/icons") {
   Copy-Item "tool/web_icons/*.png" "web/icons/" -Force
   Copy-Item "assets/img/app-icon.png" "web/favicon.png" -Force
-}
-
-
-# Nome público consistente durante a alpha para não confundir com o app legado.
-if (Test-Path "android/app/src/main/AndroidManifest.xml") {
-  $manifest = Get-Content "android/app/src/main/AndroidManifest.xml" -Raw
-  $manifest = $manifest.Replace('android:label="app"', 'android:label="Guia DOA Flutter"').Replace('android:label="Guia DOA"', 'android:label="Guia DOA Flutter"')
-  Set-Content "android/app/src/main/AndroidManifest.xml" $manifest -NoNewline
-}
-if (Test-Path "ios/Runner/Info.plist") {
-  $plist = Get-Content "ios/Runner/Info.plist" -Raw
-  $plist = $plist.Replace("<key>CFBundleDisplayName</key>`n`t<string>App</string>", "<key>CFBundleDisplayName</key>`n`t<string>Guia DOA Flutter</string>")
-  $plist = $plist.Replace("<key>CFBundleName</key>`n`t<string>app</string>", "<key>CFBundleName</key>`n`t<string>Guia DOA Flutter</string>")
-  Set-Content "ios/Runner/Info.plist" $plist -NoNewline
-}
-if (Test-Path "web/index.html") {
-  $index = Get-Content "web/index.html" -Raw
-  $index = $index.Replace('<title>app</title>', '<title>Guia DOA Flutter</title>').Replace('<title>Guia DOA</title>', '<title>Guia DOA Flutter</title>')
-  Set-Content "web/index.html" $index -NoNewline
-}
-if (Test-Path "web/manifest.json") {
-  $webManifest = Get-Content "web/manifest.json" -Raw
-  $webManifest = $webManifest.Replace('"name": "app"', '"name": "Guia DOA Flutter"').Replace('"short_name": "app"', '"short_name": "Guia DOA Flutter"')
-  $webManifest = $webManifest.Replace('"name": "Guia DOA"', '"name": "Guia DOA Flutter"').Replace('"short_name": "Guia DOA"', '"short_name": "Guia DOA Flutter"')
-  Set-Content "web/manifest.json" $webManifest -NoNewline
 }
 
 flutter pub get

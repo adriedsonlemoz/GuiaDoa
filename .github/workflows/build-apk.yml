@@ -132,7 +132,7 @@ jobs:
         if: env.BUILD_TYPE == 'debug'
         run: |
           mkdir -p release-apk
-          cp android/app/build/outputs/apk/debug/app-debug.apk release-apk/GuiaDOA-LEGADO-CAPACITOR.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk release-apk/GuiaDOA.apk
 
       - name: Assinar APK Release
         if: env.BUILD_TYPE == 'release'
@@ -152,18 +152,18 @@ jobs:
           "$TOOLS/zipalign" -f -p 4 android/app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/guiadoa-aligned.apk"
           "$TOOLS/apksigner" sign --ks "$KEYSTORE_PATH" --ks-key-alias "$KEY_ALIAS" \
             --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEY_PASSWORD \
-            --v4-signing-enabled false --out release-apk/GuiaDOA-LEGADO-CAPACITOR.apk "$RUNNER_TEMP/guiadoa-aligned.apk"
+            --v4-signing-enabled false --out release-apk/GuiaDOA.apk "$RUNNER_TEMP/guiadoa-aligned.apk"
 
       - name: Verificar assinatura e versao do APK final
         env:
           EXPECTED_VERSION: ${{ steps.metadata.outputs.version }}
           EXPECTED_CODE: ${{ steps.metadata.outputs.version_code }}
         run: |
-          test -s release-apk/GuiaDOA-LEGADO-CAPACITOR.apk
+          test -s release-apk/GuiaDOA.apk
           TOOLS="$ANDROID_HOME/build-tools/$ANDROID_BUILD_TOOLS"
-          "$TOOLS/apksigner" verify --verbose release-apk/GuiaDOA-LEGADO-CAPACITOR.apk
-          "$TOOLS/zipalign" -c -p 4 release-apk/GuiaDOA-LEGADO-CAPACITOR.apk
-          export APK_BADGING="$("$TOOLS/aapt" dump badging release-apk/GuiaDOA-LEGADO-CAPACITOR.apk)"
+          "$TOOLS/apksigner" verify --verbose release-apk/GuiaDOA.apk
+          "$TOOLS/zipalign" -c -p 4 release-apk/GuiaDOA.apk
+          export APK_BADGING="$("$TOOLS/aapt" dump badging release-apk/GuiaDOA.apk)"
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
           import { readFileSync } from 'node:fs';
@@ -185,24 +185,24 @@ jobs:
           TAG="v${VERSION}-${BUILD_TYPE}-${GITHUB_RUN_NUMBER}"
           if ! gh release view "$TAG" >/dev/null 2>&1; then
             gh release create "$TAG" --draft --target "$GITHUB_SHA" \
-              --title "LEGADO - Guia DOA $VERSION React/Capacitor ($BUILD_TYPE)" \
-              --notes "APK Android $BUILD_TYPE. Commit: $GITHUB_SHA. Build LEGADA React/Capacitor. Baixe GuiaDOA-LEGADO-CAPACITOR.apk; Source code e o codigo-fonte automatico do GitHub."
+              --title "Guia Doa $VERSION ($BUILD_TYPE)" \
+              --notes "APK Android $BUILD_TYPE. Commit: $GITHUB_SHA. Baixe GuiaDOA.apk; Source code e o codigo-fonte automatico do GitHub."
           fi
-          gh release upload "$TAG" release-apk/GuiaDOA-LEGADO-CAPACITOR.apk --clobber
+          gh release upload "$TAG" release-apk/GuiaDOA.apk --clobber
           gh release view "$TAG" --json assets > "$RUNNER_TEMP/guiadoa-release-assets.json"
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
           import { readFileSync, statSync } from 'node:fs';
           const { assets } = JSON.parse(readFileSync(`${process.env.RUNNER_TEMP}/guiadoa-release-assets.json`));
           assert.equal(assets.length, 1, 'A Release deve conter somente um asset.');
-          assert.equal(assets[0].name, 'GuiaDOA-LEGADO-CAPACITOR.apk');
+          assert.equal(assets[0].name, 'GuiaDOA.apk');
           assert.equal(assets[0].state, 'uploaded');
-          assert.equal(assets[0].size, statSync('release-apk/GuiaDOA-LEGADO-CAPACITOR.apk').size);
+          assert.equal(assets[0].size, statSync('release-apk/GuiaDOA.apk').size);
           NODE
           PRERELEASE=false
           if [[ "$VERSION" == *-* || "$BUILD_TYPE" == debug ]]; then PRERELEASE=true; fi
           gh release edit "$TAG" --draft=false --prerelease="$PRERELEASE" --latest=false
-          printf '## Guia Doa %s\n\n[Baixar GuiaDOA-LEGADO-CAPACITOR.apk](https://github.com/%s/releases/download/%s/GuiaDOA-LEGADO-CAPACITOR.apk)\n' "$VERSION" "$GH_REPO" "$TAG" >> "$GITHUB_STEP_SUMMARY"
+          printf '## Guia Doa %s\n\n[Baixar GuiaDOA.apk](https://github.com/%s/releases/download/%s/GuiaDOA.apk)\n' "$VERSION" "$GH_REPO" "$TAG" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Resumo de validacao sem publicacao
         if: github.event_name == 'pull_request' || (github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master')

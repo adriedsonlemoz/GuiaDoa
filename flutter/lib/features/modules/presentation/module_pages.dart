@@ -1,3 +1,5 @@
+import 'dart:async';
+import '../../../core/domain/realm_time.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 
@@ -67,7 +69,22 @@ class ModuleScaffold extends StatelessWidget {
                 colors: <Color>[GuiaColors.premiumBackground2, GuiaColors.premiumBackground],
               ),
             ),
-            child: child,
+            child: Theme(data: Theme.of(context).copyWith(
+              inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(
+                fillColor: GuiaColors.premiumBackground2,
+                labelStyle: const TextStyle(color: GuiaColors.premiumMuted),
+                hintStyle: const TextStyle(color: GuiaColors.premiumMuted),
+                prefixIconColor: GuiaColors.premiumGoldLight,
+                suffixIconColor: GuiaColors.premiumGoldLight,
+              ),
+              chipTheme: Theme.of(context).chipTheme.copyWith(
+                backgroundColor: GuiaColors.premiumPanel,
+                selectedColor: GuiaColors.premiumEmerald,
+                labelStyle: const TextStyle(color: GuiaColors.premiumText),
+                side: const BorderSide(color: GuiaColors.goldDark),
+              ),
+              textTheme: Theme.of(context).textTheme.apply(bodyColor: GuiaColors.premiumText, displayColor: GuiaColors.premiumText),
+            ), child: child),
           ),
         ),
         floatingActionButton: floatingActionButton,
@@ -1562,15 +1579,60 @@ class EventsPage extends StatelessWidget {
   );
 }
 
-class RealmsPage extends StatelessWidget {
+class RealmsPage extends StatefulWidget {
   const RealmsPage({super.key, required this.controller, required this.profileStore, required this.featureStore});
   final GameDataController controller;
   final ProfileStore profileStore;
   final FeatureStore featureStore;
-  @override Widget build(BuildContext context) => CatalogModulePage(
-    title: _ui(profileStore, 'Reinos', 'Realms'), sectionKey: 'reinos', controller: controller, profileStore: profileStore, featureStore: featureStore,
-    icon: '🌐', intro: _ui(profileStore, 'Consulte reinos, identificadores e informações disponíveis no servidor.', 'Browse realms, identifiers and available server information.'),
-  );
+  @override State<RealmsPage> createState() => _RealmsPageState();
+}
+class _RealmsPageState extends State<RealmsPage> {
+  String _query = '';
+  String? _zone;
+  Timer? _timer;
+  @override void initState() { super.initState(); _timer = Timer.periodic(const Duration(minutes: 1), (_) { if (mounted) setState(() {}); }); }
+  @override void dispose() { _timer?.cancel(); super.dispose(); }
+  @override Widget build(BuildContext context) => AnimatedBuilder(animation: Listenable.merge([widget.controller, widget.profileStore]), builder: (context, _) {
+    final strings = AppStrings(widget.profileStore.locale);
+    final realms = RealmTime.choices(widget.controller.section('reinos'));
+    final zones = realms.map(RealmTime.zone).where((v) => v.isNotEmpty).toSet().toList()
+      ..sort((a,b) => RealmTime.offset(a)!.compareTo(RealmTime.offset(b)!));
+    if (_zone != null && !zones.contains(_zone)) _zone = null;
+    final filtered = realms.where((r) => (_zone == null || RealmTime.zone(r) == _zone)
+      && '${RealmTime.name(r)} ${r['id']} ${RealmTime.zone(r)}'.toLowerCase().contains(_query.toLowerCase())).toList();
+    return ModuleScaffold(title: strings.t('realms.title'), actions: [IconButton(onPressed: widget.controller.loading ? null : widget.controller.refresh,
+      tooltip: strings.t('home.sync'), icon: const Icon(Icons.refresh))], child: RefreshIndicator(onRefresh: widget.controller.refresh, child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(), padding: const EdgeInsets.fromLTRB(12, 12, 12, 30), children: [
+          Text(strings.t('realms.intro'), style: const TextStyle(color: GuiaColors.premiumMuted)), const SizedBox(height: 12),
+          TextField(onChanged: (v) => setState(() => _query = v), decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: strings.t('realms.search'))),
+          const SizedBox(height: 8),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            ChoiceChip(label: Text(strings.t('realms.filter_all')), selected: _zone == null, onSelected: (_) => setState(() => _zone = null)),
+            ...zones.map((zone) => ChoiceChip(label: Text(zone), selected: _zone == zone, onSelected: (_) => setState(() => _zone = zone))),
+          ]),
+          if (widget.controller.sectionLoading('reinos')) const Padding(padding: EdgeInsets.all(12), child: LinearProgressIndicator()),
+          if (widget.controller.sectionError('reinos') != null) Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(
+            _ui(widget.profileStore, realms.isEmpty ? 'Não foi possível carregar os reinos. Toque em atualizar para tentar novamente.' : 'Exibindo reinos salvos. A atualização falhou; tente novamente.',
+              realms.isEmpty ? 'Could not load realms. Tap refresh to try again.' : 'Showing saved realms. Refresh failed; try again.'), style: const TextStyle(color: GuiaColors.premiumGoldLight))),
+          if (filtered.isEmpty && !widget.controller.sectionLoading('reinos') && widget.controller.sectionError('reinos') == null)
+            Padding(padding: const EdgeInsets.all(18), child: Text(strings.t('realms.no_results'), style: const TextStyle(color: GuiaColors.premiumMuted))),
+          ...filtered.map((realm) {
+            final zone = RealmTime.zone(realm);
+            final opening = RealmTime.serverInstant(realm['aberturaEm']);
+            final now = DateTime.now().toUtc();
+            final days = opening == null || opening.isAfter(now) ? null : now.difference(opening).inDays;
+            return Padding(padding: const EdgeInsets.only(top: 9), child: PremiumPanel(onTap: () => _showRecordSheet(context, realm, widget.profileStore.locale), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('${realm['id'] ?? '—'} · ${RealmTime.name(realm)}', style: const TextStyle(color: GuiaColors.premiumText, fontSize: 17, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              Wrap(spacing: 12, runSpacing: 6, children: [
+                Text(zone.isEmpty ? '${strings.t('realms.timezone')}: ${strings.t('realms.not_informed')}' : '$zone · ${RealmTime.clock(zone, now)}', style: const TextStyle(color: GuiaColors.premiumGoldLight, fontWeight: FontWeight.bold)),
+                if ((realm['status'] ?? '').toString().isNotEmpty) Text('${realm['status']}', style: const TextStyle(color: GuiaColors.premiumMuted)),
+              ]),
+              if (days != null) Padding(padding: const EdgeInsets.only(top: 5), child: Text(strings.t('realms.age_days', {'count': days}), style: const TextStyle(color: GuiaColors.premiumMuted))),
+            ])));
+          }),
+        ])));
+  });
 }
 
 class LevelsPage extends StatefulWidget {

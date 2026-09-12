@@ -33,6 +33,9 @@ Future<void> main() async {
   final api = ApiClient();
   final gameData = GameDataController(GameDataRepository(api), prefs);
 
+  gameData.addListener(() {
+    unawaited(profileStore.synchronizeRealm(gameData.section('reinos')));
+  });
   await gameData.restoreCache();
   runApp(GuiaDoaApp(gameData: gameData, profileStore: profileStore, featureStore: featureStore));
   unawaited(gameData.refresh());

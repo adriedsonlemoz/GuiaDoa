@@ -1,6 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/widgets/ornament_frame.dart';
+import '../../../core/widgets/guia_symbol.dart';
+import '../../../core/domain/realm_time.dart';
+import '../../../core/domain/active_event.dart';
 import '../../../core/i18n/app_strings.dart';
 import '../../../core/storage/feature_store.dart';
 import '../../../core/storage/profile_store.dart';
@@ -31,9 +36,16 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
+  Timer? _clockTimer;
+  @override
+  void initState() {
+    super.initState();
+    _clockTimer = Timer.periodic(const Duration(minutes: 1), (_) { if (mounted) setState(() {}); });
+  }
 
   @override
   void dispose() {
+    _clockTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -47,7 +59,7 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: GuiaColors.premiumBackground,
       body: SafeArea(
         child: AnimatedBuilder(
-          animation: widget.gameData,
+          animation: Listenable.merge([widget.gameData, widget.profileStore, widget.featureStore]),
           builder: (context, _) {
             final primaryTools = homeTools
                 .where((tool) => primaryHomeToolKeys.contains(tool.keyName))
@@ -70,6 +82,7 @@ class _HomePageState extends State<HomePage> {
                     strings: strings,
                     name: profile.name,
                     realm: profile.realm,
+                    timezone: profile.timezone,
                     searchController: _searchController,
                     onSearchChanged: (value) => setState(() => _query = value),
                     onSettings: _openSettings,
@@ -83,7 +96,7 @@ class _HomePageState extends State<HomePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: <Widget>[
-                            _SummaryPanel(gameData: widget.gameData, strings: strings),
+                            _SummaryPanel(gameData: widget.gameData, strings: strings, profileStore: widget.profileStore, featureStore: widget.featureStore, onEvents: () => _openTool(_toolByKey('eventos'), strings), onFavorites: () => _push(FavoritesPage(controller: widget.gameData, profileStore: widget.profileStore, featureStore: widget.featureStore))),
                             const SizedBox(height: 16),
                             _PrimaryToolGrid(
                               tools: primaryTools,
@@ -131,7 +144,7 @@ class _HomePageState extends State<HomePage> {
                               style: const TextStyle(
                                 color: GuiaColors.premiumMuted,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 10.5,
+                                fontSize: 12,
                                 letterSpacing: .45,
                               ),
                             ),
@@ -200,364 +213,134 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _HeroHeader extends StatelessWidget {
-  const _HeroHeader({
-    required this.strings,
-    required this.name,
-    required this.realm,
-    required this.searchController,
-    required this.onSearchChanged,
-    required this.onSettings,
-    required this.onProfile,
-  });
-
+  const _HeroHeader({required this.strings, required this.name, required this.realm, required this.timezone,
+    required this.searchController, required this.onSearchChanged, required this.onSettings, required this.onProfile});
   final AppStrings strings;
-  final String name;
-  final String realm;
+  final String name, realm, timezone;
   final TextEditingController searchController;
   final ValueChanged<String> onSearchChanged;
-  final VoidCallback onSettings;
-  final VoidCallback onProfile;
+  final VoidCallback onSettings, onProfile;
 
   @override
   Widget build(BuildContext context) => Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[Color(0xFF0A4A3B), Color(0xFF052A24), GuiaColors.premiumBackground],
-          ),
-          border: Border(bottom: BorderSide(color: GuiaColors.premiumGold, width: 1.1)),
-        ),
-        child: Stack(
-          children: <Widget>[
-            Positioned(
-              right: -34,
-              top: -20,
-              child: Opacity(
-                opacity: .20,
-                child: Image.asset(
-                  'assets/public/assets/dragons/dragao_dourado.webp',
-                  width: 210,
-                  height: 210,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1050),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
-                  child: Column(
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
-                              border: Border.all(color: GuiaColors.premiumGoldLight, width: 1.2),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.asset('assets/img/app-icon.png', width: 58, height: 58, fit: BoxFit.cover),
-                            ),
-                          ),
-                          const SizedBox(width: 11),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                const Text(
-                                  'GUIA DOA',
-                                  style: TextStyle(
-                                    color: GuiaColors.premiumGoldLight,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 24,
-                                    letterSpacing: .8,
-                                  ),
-                                ),
-                                Text(
-                                  strings.t('app.subtitle'),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: GuiaColors.premiumText, fontSize: 11.5, fontWeight: FontWeight.w600),
-                                ),
-                                const SizedBox(height: 3),
-                                GestureDetector(
-                                  onTap: onProfile,
-                                  child: Text(
-                                    '$name · $realm',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 10.5),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: GuiaColors.premiumEmerald.withValues(alpha: .65),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: GuiaColors.premiumGold.withValues(alpha: .72)),
-                            ),
-                            child: Text(
-                              AppConfig.flutterChannel.replaceFirst('Flutter ', 'FLUTTER '),
-                              style: const TextStyle(color: GuiaColors.premiumGoldLight, fontSize: 9.5, fontWeight: FontWeight.w900),
-                            ),
-                          ),
-                          const SizedBox(width: 3),
-                          IconButton(
-                            onPressed: onSettings,
-                            tooltip: strings.t('settings.title'),
-                            icon: const Icon(Icons.settings_outlined, color: GuiaColors.premiumGoldLight),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 13),
-                      TextField(
-                        controller: searchController,
-                        onChanged: onSearchChanged,
-                        style: const TextStyle(color: GuiaColors.premiumText),
-                        cursorColor: GuiaColors.premiumGoldLight,
-                        decoration: InputDecoration(
-                          hintText: strings.t('home.search'),
-                          hintStyle: const TextStyle(color: GuiaColors.premiumMuted),
-                          prefixIcon: const Icon(Icons.search, color: GuiaColors.premiumGoldLight),
-                          suffixIcon: searchController.text.isEmpty
-                              ? null
-                              : IconButton(
-                                  onPressed: () {
-                                    searchController.clear();
-                                    onSearchChanged('');
-                                  },
-                                  icon: const Icon(Icons.close, color: GuiaColors.premiumMuted),
-                                ),
-                          filled: true,
-                          fillColor: GuiaColors.premiumBackground.withValues(alpha: .76),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: const BorderSide(color: GuiaColors.premiumGold, width: 1.2),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: const BorderSide(color: GuiaColors.premiumGoldLight, width: 1.8),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+    decoration: const BoxDecoration(
+      image: DecorationImage(image: AssetImage('assets/ui/hero.png'), fit: BoxFit.cover, alignment: Alignment.centerRight),
+      border: Border(bottom: BorderSide(color: GuiaColors.premiumGold))),
+    child: Container(
+      decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xDD031713), Color(0x66031713)])),
+      child: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1050),
+        child: Padding(padding: const EdgeInsets.fromLTRB(12, 10, 12, 12), child: Column(children: [
+          Row(children: [
+            Image.asset('assets/ui/crest.png', width: 74, height: 92, fit: BoxFit.contain, excludeFromSemantics: true),
+            const SizedBox(width: 8),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Guia Doa', style: TextStyle(fontFamily: 'GuiaSerif', color: GuiaColors.premiumGoldLight,
+                fontSize: 29, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.black, blurRadius: 4, offset: Offset(1, 2))])),
+              Text(strings.t('app.subtitle'), style: const TextStyle(color: GuiaColors.premiumText, fontSize: 12)),
+            ])),
+            IconButton(onPressed: onSettings, tooltip: strings.t('settings.title'),
+              icon: const GuiaSymbol('configuracoes')),
+          ]),
+          InkWell(onTap: onProfile, child: Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Wrap(spacing: 6, runSpacing: 5, crossAxisAlignment: WrapCrossAlignment.center, children: [
+            const Icon(Icons.person_outline, color: GuiaColors.premiumGoldLight, size: 18), const SizedBox(width: 6),
+            Text('$name · $realm', style: const TextStyle(color: GuiaColors.premiumText, fontSize: 12)),
+            const SizedBox(width: 6), Text(timezone.isEmpty ? strings.t('realms.not_informed') : '${RealmTime.clock(timezone, DateTime.now())} · $timezone',
+              style: const TextStyle(color: GuiaColors.premiumGoldLight, fontSize: 11)),
+          ]))),
+          TextField(controller: searchController, onChanged: onSearchChanged,
+            style: const TextStyle(color: GuiaColors.premiumText, fontSize: 14), cursorColor: GuiaColors.premiumGoldLight,
+            decoration: InputDecoration(hintText: strings.t('home.search'), hintStyle: const TextStyle(color: GuiaColors.premiumMuted),
+              prefixIcon: const Padding(padding: EdgeInsets.all(12), child: GuiaSymbol('busca')),
+              suffixIcon: searchController.text.isEmpty ? null : IconButton(tooltip: strings.t('common.clear'),
+                onPressed: () { searchController.clear(); onSearchChanged(''); }, icon: const Icon(Icons.close, color: GuiaColors.premiumMuted)),
+              filled: true, fillColor: const Color(0xDD031713), contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: GuiaColors.premiumGold, width: 1.5)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: GuiaColors.premiumGoldLight, width: 2)))),
+        ]))),
+      ),
+    ),
+  );
 }
 
 class _SummaryPanel extends StatelessWidget {
-  const _SummaryPanel({required this.gameData, required this.strings});
-
+  const _SummaryPanel({required this.gameData, required this.strings, required this.profileStore,
+    required this.featureStore, required this.onEvents, required this.onFavorites});
   final GameDataController gameData;
   final AppStrings strings;
-
+  final ProfileStore profileStore;
+  final FeatureStore featureStore;
+  final VoidCallback onEvents, onFavorites;
   String _updatedText() {
-    final value = gameData.lastUpdated;
+    final value = gameData.lastUpdated?.toLocal();
     if (value == null) return strings.t('home.summary.no_data');
-    final local = value.toLocal();
     String pad(int n) => n.toString().padLeft(2, '0');
-    return '${pad(local.day)}/${pad(local.month)} ${pad(local.hour)}:${pad(local.minute)}';
+    return '${pad(value.day)}/${pad(value.month)} ${pad(value.hour)}:${pad(value.minute)}';
   }
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: <Color>[Color(0xFFE8DDBB), Color(0xFFD4C08B)]),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: GuiaColors.premiumGold, width: 1.2),
-          boxShadow: <BoxShadow>[BoxShadow(color: Colors.black.withValues(alpha: .25), blurRadius: 10, offset: const Offset(0, 4))],
-        ),
-        child: Row(
-          children: <Widget>[
-            Expanded(
-              child: _SummaryItem(
-                icon: Icons.military_tech_outlined,
-                label: strings.t('home.summary.troops'),
-                value: '${gameData.section('tropas').length}',
-              ),
-            ),
-            const _SummaryDivider(),
-            Expanded(
-              child: _SummaryItem(
-                icon: Icons.pets_outlined,
-                label: strings.t('home.summary.dragons'),
-                value: '${gameData.section('dragoes').length}',
-              ),
-            ),
-            const _SummaryDivider(),
-            Expanded(
-              child: _SummaryItem(
-                icon: gameData.fromCache ? Icons.offline_bolt_outlined : Icons.cloud_done_outlined,
-                label: strings.t('home.summary.updated'),
-                value: gameData.fromCache ? strings.t('home.summary.cached') : _updatedText(),
-              ),
-            ),
-          ],
-        ),
-      );
+  @override Widget build(BuildContext context) {
+    final profile = profileStore.profile!;
+    final current = ActiveEvent.forRealm(gameData.section('eventos'), realmId: profile.realmId, realmName: profile.realm, now: DateTime.now());
+    final available = gameData.sectionAvailable('eventos');
+    return OrnamentFrame(parchment: true, child: Padding(padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 3), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Expanded(child: _SummaryItem(icon: Icons.emoji_events_outlined, label: strings.t('home.summary.tournament'),
+        value: current?.title(strings.locale) ?? strings.t(available ? 'home.summary.no_event' : 'home.summary.no_data'),
+        detail: current == null ? '' : current.remaining(DateTime.now()), onTap: onEvents)),
+      const _SummaryDivider(),
+      Expanded(child: _SummaryItem(icon: Icons.star_outline, label: strings.t('nav.favorites'), value: '${featureStore.favorites.length}',
+        detail: strings.t('home.summary.saved'), onTap: onFavorites)),
+      const _SummaryDivider(),
+      Expanded(child: _SummaryItem(icon: Icons.calendar_month_outlined, label: strings.t('home.summary.updated'), value: _updatedText(),
+        detail: gameData.fromCache ? strings.t('home.summary.cached') : '', onTap: gameData.loading ? null : gameData.refresh)),
+    ])));
+  }
 }
-
 class _SummaryItem extends StatelessWidget {
-  const _SummaryItem({required this.icon, required this.label, required this.value});
-
+  const _SummaryItem({required this.icon, required this.label, required this.value, this.detail = '', this.onTap});
   final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) => Column(
-        children: <Widget>[
-          Container(
-            width: 36,
-            height: 36,
-            decoration: const BoxDecoration(color: GuiaColors.greenDark, shape: BoxShape.circle),
-            child: Icon(icon, size: 19, color: GuiaColors.premiumGoldLight),
-          ),
-          const SizedBox(height: 6),
-          Text(label, textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.ink2, fontSize: 9.5, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: GuiaColors.ink, fontSize: 12, fontWeight: FontWeight.w900),
-          ),
-        ],
-      );
+  final String label, value, detail;
+  final VoidCallback? onTap;
+  @override Widget build(BuildContext context) => InkWell(onTap: onTap, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 3), child: Column(children: [
+    Container(width: 32, height: 32, decoration: BoxDecoration(color: GuiaColors.premiumBackground2, shape: BoxShape.circle,
+      border: Border.all(color: GuiaColors.goldDark)), child: Icon(icon, size: 21, color: GuiaColors.premiumGoldLight)),
+    const SizedBox(height: 5), Text(label, textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.ink2, fontSize: 11)),
+    const SizedBox(height: 3), Text(value, textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.ink, fontSize: 12, fontWeight: FontWeight.bold)),
+    if (detail.isNotEmpty) Text(detail, textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.ink2, fontSize: 12)),
+  ])));
 }
-
 class _SummaryDivider extends StatelessWidget {
   const _SummaryDivider();
-
-  @override
-  Widget build(BuildContext context) => Container(width: 1, height: 72, color: GuiaColors.goldDark.withValues(alpha: .45));
+  @override Widget build(BuildContext context) => Container(width: 1, height: 76, color: GuiaColors.goldDark.withValues(alpha: .4));
 }
-
 class _PrimaryToolGrid extends StatelessWidget {
   const _PrimaryToolGrid({required this.tools, required this.strings, required this.onOpen});
-
   final List<HomeTool> tools;
   final AppStrings strings;
   final ValueChanged<HomeTool> onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    if (tools.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: GuiaColors.premiumPanel,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: GuiaColors.premiumGold.withValues(alpha: .45)),
-        ),
-        child: Text(strings.t('catalog.empty'), textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.premiumMuted)),
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 900 ? 4 : constraints.maxWidth >= 600 ? 4 : 2;
-        final aspect = constraints.maxWidth >= 600 ? 1.12 : 1.03;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: tools.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            childAspectRatio: aspect,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-          ),
-          itemBuilder: (context, index) => _ToolCard(tool: tools[index], strings: strings, onTap: () => onOpen(tools[index])),
-        );
-      },
-    );
+  @override Widget build(BuildContext context) {
+    if (tools.isEmpty) return Padding(padding: const EdgeInsets.all(18), child: Text(strings.t('catalog.empty'),
+      textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.premiumMuted)));
+    return LayoutBuilder(builder: (context, constraints) {
+      final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+      final columns = constraints.maxWidth / scale >= 560 ? 4 : 2;
+      final width = (constraints.maxWidth - (columns - 1) * 9) / columns;
+      return Wrap(spacing: 9, runSpacing: 9, children: tools.map((tool) => SizedBox(width: width,
+        child: _ToolCard(tool: tool, strings: strings, onTap: () => onOpen(tool)))).toList());
+    });
   }
 }
-
 class _ToolCard extends StatelessWidget {
   const _ToolCard({required this.tool, required this.strings, required this.onTap});
-
   final HomeTool tool;
   final AppStrings strings;
   final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(15),
-          child: Ink(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: <Color>[GuiaColors.premiumPanel2, GuiaColors.premiumPanel, Color(0xFF052A24)],
-              ),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: tool.migrated ? GuiaColors.premiumGold : GuiaColors.premiumGold.withValues(alpha: .45)),
-              boxShadow: <BoxShadow>[BoxShadow(color: Colors.black.withValues(alpha: .24), blurRadius: 8, offset: const Offset(0, 4))],
-            ),
-            child: Stack(
-              children: <Widget>[
-                if (tool.assetPath != null)
-                  Positioned(
-                    right: -12,
-                    top: -10,
-                    child: Opacity(
-                      opacity: .42,
-                      child: Image.asset(tool.assetPath!, width: 100, height: 100, fit: BoxFit.contain),
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: <Widget>[
-                      Text(tool.emoji, style: const TextStyle(fontSize: 30)),
-                      const Spacer(),
-                      Text(
-                        strings.t(tool.labelKey),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: GuiaColors.premiumGoldLight, fontWeight: FontWeight.w900, fontSize: 15),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        strings.t(tool.subtitleKey),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: GuiaColors.premiumText, fontSize: 10.5, height: 1.2),
-                      ),
-                      if (!tool.migrated) ...<Widget>[
-                        const SizedBox(height: 5),
-                        const Icon(Icons.schedule, size: 14, color: GuiaColors.premiumMuted),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+  @override Widget build(BuildContext context) => OrnamentFrame(onTap: onTap, child: Padding(
+    padding: const EdgeInsets.fromLTRB(6, 7, 6, 9), child: Column(children: [
+      Image.asset('assets/ui/${tool.keyName}.png', height: 76, fit: BoxFit.contain, excludeFromSemantics: true,
+        cacheWidth: 256, filterQuality: FilterQuality.medium),
+      const SizedBox(height: 5), Text(strings.t(tool.labelKey), textAlign: TextAlign.center,
+        style: const TextStyle(fontFamily: 'GuiaSerif', color: GuiaColors.premiumText, fontSize: 16, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 3), Text(strings.t(tool.subtitleKey), textAlign: TextAlign.center,
+        style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 12, height: 1.2)),
+    ])));
 }
 
 class _SectionHeader extends StatelessWidget {
@@ -575,7 +358,7 @@ class _SectionHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(color: GuiaColors.premiumGoldLight, fontWeight: FontWeight.w900, fontSize: 18),
+              style: const TextStyle(color: GuiaColors.premiumGoldLight, fontWeight: FontWeight.bold, fontSize: 18, fontFamily: 'GuiaSerif'),
             ),
           ),
           if (subtitle != null)
@@ -583,7 +366,7 @@ class _SectionHeader extends StatelessWidget {
               child: Text(
                 subtitle!,
                 textAlign: TextAlign.right,
-                style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 10.5),
+                style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 12),
               ),
             ),
         ],
@@ -591,116 +374,25 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _QuickActions extends StatelessWidget {
-  const _QuickActions({
-    required this.strings,
-    required this.onCompare,
-    required this.onCalculator,
-    required this.onBackup,
-  });
-
+  const _QuickActions({required this.strings, required this.onCompare, required this.onCalculator, required this.onBackup});
   final AppStrings strings;
-  final VoidCallback onCompare;
-  final VoidCallback onCalculator;
-  final VoidCallback onBackup;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-        builder: (context, constraints) {
-          final items = <Widget>[
-            _QuickCard(
-              icon: Icons.compare_arrows,
-              title: strings.t('home.quick.compare'),
-              subtitle: strings.t('home.quick.compare.sub'),
-              onTap: onCompare,
-            ),
-            _QuickCard(
-              icon: Icons.calculate_outlined,
-              title: strings.t('home.quick.calculator'),
-              subtitle: strings.t('home.quick.calculator.sub'),
-              onTap: onCalculator,
-            ),
-            _QuickCard(
-              icon: Icons.cloud_upload_outlined,
-              title: strings.t('home.quick.backup'),
-              subtitle: strings.t('home.quick.backup.sub'),
-              onTap: onBackup,
-            ),
-          ];
-
-          if (constraints.maxWidth >= 700) {
-            return Row(
-              children: <Widget>[
-                Expanded(child: items[0]),
-                const SizedBox(width: 9),
-                Expanded(child: items[1]),
-                const SizedBox(width: 9),
-                Expanded(child: items[2]),
-              ],
-            );
-          }
-          return Column(
-            children: <Widget>[
-              items[0],
-              const SizedBox(height: 8),
-              items[1],
-              const SizedBox(height: 8),
-              items[2],
-            ],
-          );
-        },
-      );
-}
-
-class _QuickCard extends StatelessWidget {
-  const _QuickCard({required this.icon, required this.title, required this.subtitle, required this.onTap});
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(13),
-          child: Ink(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              color: GuiaColors.premiumPanel.withValues(alpha: .92),
-              borderRadius: BorderRadius.circular(13),
-              border: Border.all(color: GuiaColors.premiumGold.withValues(alpha: .65)),
-            ),
-            child: Row(
-              children: <Widget>[
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: GuiaColors.premiumEmerald.withValues(alpha: .62),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: GuiaColors.premiumGold.withValues(alpha: .5)),
-                  ),
-                  child: Icon(icon, color: GuiaColors.premiumGoldLight),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(title, style: const TextStyle(color: GuiaColors.premiumText, fontWeight: FontWeight.w900, fontSize: 13)),
-                      const SizedBox(height: 2),
-                      Text(subtitle, style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 10.5)),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right, color: GuiaColors.premiumGoldLight),
-              ],
-            ),
-          ),
-        ),
-      );
+  final VoidCallback onCompare, onCalculator, onBackup;
+  @override Widget build(BuildContext context) => LayoutBuilder(builder: (context, constraints) {
+    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    final columns = constraints.maxWidth / scale >= 330 ? 3 : 1;
+    final width = (constraints.maxWidth - (columns - 1) * 8) / columns;
+    final items = [
+      ('comparar', 'home.quick.compare', 'home.quick.compare.sub', onCompare),
+      ('calculadora', 'home.quick.calculator', 'home.quick.calculator.sub', onCalculator),
+      ('backup', 'home.quick.backup', 'home.quick.backup.sub', onBackup),
+    ];
+    return Wrap(spacing: 8, runSpacing: 8, children: items.map((item) => SizedBox(width: width, child: OrnamentFrame(onTap: item.$4,
+      child: Padding(padding: const EdgeInsets.all(8), child: Column(children: [
+        GuiaSymbol(item.$1, size: 30), const SizedBox(height: 7),
+        Text(strings.t(item.$2), textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.premiumText, fontSize: 12, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4), Text(strings.t(item.$3), textAlign: TextAlign.center, style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 11)),
+      ]))))).toList());
+  });
 }
 
 class _Highlights extends StatelessWidget {
@@ -722,12 +414,12 @@ class _Highlights extends StatelessWidget {
           );
           final second = _HighlightCard(
             icon: Icons.military_tech_outlined,
-            badge: strings.t('home.badge.flutter'),
+            badge: strings.t('home.badge.guide'),
             title: strings.t('home.highlight.troops'),
             subtitle: strings.t('home.highlight.troops.sub'),
             onTap: onTroops,
           );
-          if (constraints.maxWidth >= 700) {
+          if (constraints.maxWidth / (MediaQuery.textScalerOf(context).scale(14) / 14) >= 420) {
             return Row(children: <Widget>[Expanded(child: first), const SizedBox(width: 10), Expanded(child: second)]);
           }
           return Column(children: <Widget>[first, const SizedBox(height: 10), second]);
@@ -751,7 +443,7 @@ class _HighlightCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(15),
           child: Ink(
-            height: 138,
+
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
@@ -766,7 +458,7 @@ class _HighlightCard extends StatelessWidget {
                 Positioned(
                   right: 12,
                   top: 18,
-                  child: Icon(icon, size: 78, color: GuiaColors.premiumGold.withValues(alpha: .16)),
+                  child: Image.asset(icon == Icons.emoji_events_outlined ? 'assets/ui/torneios.png' : 'assets/ui/tropas.png', width: 86, height: 86, fit: BoxFit.contain, excludeFromSemantics: true),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(13),
@@ -782,13 +474,13 @@ class _HighlightCard extends StatelessWidget {
                         ),
                         child: Text(badge, style: const TextStyle(color: GuiaColors.premiumGoldLight, fontSize: 9, fontWeight: FontWeight.w900)),
                       ),
-                      const Spacer(),
+                      const SizedBox(height: 30),
                       Text(title, style: const TextStyle(color: GuiaColors.premiumGoldLight, fontWeight: FontWeight.w900, fontSize: 16)),
                       const SizedBox(height: 3),
                       Row(
                         children: <Widget>[
-                          Expanded(child: Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: GuiaColors.premiumText, fontSize: 10.5, height: 1.25))),
-                          const Icon(Icons.chevron_right, color: GuiaColors.premiumGoldLight),
+                          Expanded(child: Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: GuiaColors.premiumText, fontSize: 12, height: 1.25))),
+                          const GuiaSymbol('avancar', size: 18),
                         ],
                       ),
                     ],
@@ -810,7 +502,7 @@ class _SyncStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = gameData.loading
-        ? strings.t('onboarding.realm_loading')
+        ? strings.t('home.sync.loading')
         : gameData.error != null
             ? strings.t('catalog.offline')
             : gameData.fromCache
@@ -835,7 +527,7 @@ class _SyncStrip extends StatelessWidget {
             onPressed: gameData.loading ? null : gameData.refresh,
             tooltip: strings.t('home.sync'),
             visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.refresh, color: GuiaColors.premiumGoldLight),
+            icon: const GuiaSymbol('atualizar'),
           ),
         ],
       ),
@@ -872,8 +564,8 @@ class _PremiumBottomBar extends StatelessWidget {
           backgroundColor: GuiaColors.premiumBackground2,
           selectedItemColor: GuiaColors.premiumGoldLight,
           unselectedItemColor: GuiaColors.premiumMuted,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 10.5),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 10),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
           onTap: (index) {
             switch (index) {
               case 0:
@@ -894,11 +586,11 @@ class _PremiumBottomBar extends StatelessWidget {
             }
           },
           items: <BottomNavigationBarItem>[
-            BottomNavigationBarItem(icon: const Icon(Icons.home_outlined), activeIcon: const Icon(Icons.home), label: strings.t('nav.home')),
-            BottomNavigationBarItem(icon: const Icon(Icons.menu_book_outlined), label: strings.t('nav.guides')),
-            BottomNavigationBarItem(icon: const Icon(Icons.bar_chart_outlined), label: strings.t('nav.tracker')),
-            BottomNavigationBarItem(icon: const Icon(Icons.star_border), label: strings.t('nav.favorites')),
-            BottomNavigationBarItem(icon: const Icon(Icons.menu), label: strings.t('nav.more')),
+            BottomNavigationBarItem(icon: const GuiaSymbol('inicio', color: GuiaColors.premiumMuted), activeIcon: const GuiaSymbol('inicio', filled: true), label: strings.t('nav.home')),
+            BottomNavigationBarItem(icon: const GuiaSymbol('guias', color: GuiaColors.premiumMuted), label: strings.t('nav.guides')),
+            BottomNavigationBarItem(icon: const GuiaSymbol('tracker', color: GuiaColors.premiumMuted), label: strings.t('nav.tracker')),
+            BottomNavigationBarItem(icon: const GuiaSymbol('favoritos', color: GuiaColors.premiumMuted), label: strings.t('nav.favorites')),
+            BottomNavigationBarItem(icon: const GuiaSymbol('mais', color: GuiaColors.premiumMuted), label: strings.t('nav.more')),
           ],
         ),
       );

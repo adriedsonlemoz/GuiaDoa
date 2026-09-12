@@ -26,15 +26,25 @@ class GameDataRepository {
     CatalogEndpoint('campanha', '/api/campanha', responseKey: 'locais'),
   ];
 
-  Future<Map<String, List<Map<String, dynamic>>>> fetchCatalog() async {
-    await _api.healthCheck();
-    final entries = await Future.wait(
-      endpoints.map((endpoint) async {
-        final json = await _api.getJson(endpoint.path);
-        return MapEntry(endpoint.key, parseList(json, responseKey: endpoint.responseKey));
-      }),
-    );
-    return Map<String, List<Map<String, dynamic>>>.fromEntries(entries);
+  Future<Map<String, List<Map<String, dynamic>>>> fetchCatalog({
+    void Function(String, List<Map<String, dynamic>>)? onLoaded,
+    void Function(String, Object)? onError,
+  }) async {
+    final result = <String, List<Map<String, dynamic>>>{};
+    final errors = <String, Object>{};
+    await Future.wait(endpoints.map((endpoint) async {
+      try {
+        final json = await _api.getJson(endpoint.path, timeout: const Duration(seconds: 45));
+        final rows = parseList(json, responseKey: endpoint.responseKey);
+        result[endpoint.key] = rows;
+        onLoaded?.call(endpoint.key, rows);
+      } catch (error) {
+        errors[endpoint.key] = error;
+        onError?.call(endpoint.key, error);
+      }
+    }));
+    if (result.isEmpty && errors.isNotEmpty) throw errors.values.first;
+    return result;
   }
 
   static List<Map<String, dynamic>> parseList(dynamic json, {String? responseKey}) {
@@ -42,7 +52,7 @@ class GameDataRepository {
     if (responseKey != null && json is Map<String, dynamic>) {
       value = json[responseKey];
     }
-    if (value is! List<Object?>) return const <Map<String, dynamic>>[];
+    if (value is! List<Object?>) throw const FormatException('Resposta de catálogo inválida: lista ausente.');
     return value
         .whereType<Map<Object?, Object?>>()
         .map((item) => Map<String, dynamic>.from(item))

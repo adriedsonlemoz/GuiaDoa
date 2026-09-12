@@ -29,6 +29,9 @@ jobs:
         with:
           channel: stable
           cache: true
+      - name: Verify release metadata and UI assets
+        working-directory: flutter
+        run: python3 tool/verify_release.py
       - name: Bootstrap platforms
         working-directory: flutter
         run: bash ./tool/bootstrap_platforms.sh
@@ -88,6 +91,9 @@ jobs:
         with:
           channel: stable
           cache: true
+      - name: Verify release metadata and UI assets
+        working-directory: flutter
+        run: python3 tool/verify_release.py
       - name: Bootstrap platforms
         working-directory: flutter
         run: bash ./tool/bootstrap_platforms.sh

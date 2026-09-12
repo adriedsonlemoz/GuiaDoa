@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../domain/realm_time.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,8 +10,10 @@ class PlayerProfile {
     required this.realm,
     required this.timezone,
     required this.locale,
+    this.realmId,
   });
 
+  final int? realmId;
   final String name;
   final String realm;
   final String timezone;
@@ -18,12 +21,14 @@ class PlayerProfile {
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'nome': name,
+        if (realmId != null) 'reinoId': realmId,
         'reino': realm,
         'fuso': timezone,
         'locale': locale,
       };
 
   factory PlayerProfile.fromJson(Map<String, dynamic> json) => PlayerProfile(
+        realmId: int.tryParse('${json['reinoId']}'),
         name: (json['nome'] ?? '').toString(),
         realm: (json['reino'] ?? '').toString(),
         timezone: (json['fuso'] ?? '').toString(),
@@ -77,6 +82,7 @@ class ProfileStore extends ChangeNotifier {
       _profile = PlayerProfile(
         name: current.name,
         realm: current.realm,
+        realmId: current.realmId,
         timezone: current.timezone,
         locale: locale,
       );
@@ -84,6 +90,18 @@ class ProfileStore extends ChangeNotifier {
     }
     await _prefs.setString(_localeKey, locale);
     notifyListeners();
+  }
+
+  Future<void> synchronizeRealm(List<Map<String, dynamic>> realms) async {
+    final current = _profile;
+    if (current == null) return;
+    final realm = RealmTime.find(realms, realmId: current.realmId, realmName: current.realm);
+    if (realm == null) return;
+    final zone = RealmTime.zone(realm);
+    final id = RealmTime.id(realm);
+    final name = RealmTime.name(realm);
+    if (current.timezone == zone && current.realmId == id && current.realm == name) return;
+    await save(PlayerProfile(name: current.name, realm: name, realmId: id, timezone: zone, locale: current.locale));
   }
 
   Future<void> clear() async {

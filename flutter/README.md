@@ -1,4 +1,7 @@
-# Guia Doa — Flutter migration alpha.11
+# Guia Doa — Flutter alpha.13
+
+Versão atual: **1.0.0-beta.2.90+100090**. [Mudanças e validação](../docs/FLUTTER_ALPHA13_VISUAL_UTC.md).
+
 
 Esta pasta é o novo cliente multiplataforma do **Guia Doa**. O frontend React/Capacitor continua no repositório enquanto a migração avança; o backend Express + MongoDB permanece a fonte de verdade.
 

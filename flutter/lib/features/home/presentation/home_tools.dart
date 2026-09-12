@@ -19,14 +19,14 @@ class HomeTool {
 }
 
 const List<HomeTool> homeTools = <HomeTool>[
-  HomeTool(keyName: 'torneios', labelKey: 'tool.torneios', emoji: '🏆', subtitleKey: 'tool.torneios.sub'),
+  HomeTool(keyName: 'torneios', assetPath: 'assets/ui/torneios.png', labelKey: 'tool.torneios', emoji: '🏆', subtitleKey: 'tool.torneios.sub'),
   HomeTool(
     keyName: 'tropas',
     labelKey: 'tool.tropas',
     emoji: '⚔️',
     subtitleKey: 'tool.tropas.sub',
     catalogKey: 'tropas',
-    assetPath: 'assets/public/assets/troops/hoplita.webp',
+    assetPath: 'assets/ui/tropas.png',
   ),
   HomeTool(
     keyName: 'dragoes',
@@ -34,7 +34,7 @@ const List<HomeTool> homeTools = <HomeTool>[
     emoji: '🐉',
     subtitleKey: 'tool.dragoes.sub',
     catalogKey: 'dragoes',
-    assetPath: 'assets/public/assets/dragons/dragao_dourado.webp',
+    assetPath: 'assets/ui/dragoes.png',
   ),
   HomeTool(
     keyName: 'edificios',
@@ -42,7 +42,7 @@ const List<HomeTool> homeTools = <HomeTool>[
     emoji: '🏰',
     subtitleKey: 'tool.edificios.sub',
     catalogKey: 'edificios',
-    assetPath: 'assets/public/assets/edificios/especiais/basilica.webp',
+    assetPath: 'assets/ui/edificios.png',
   ),
   HomeTool(
     keyName: 'itens',
@@ -50,11 +50,11 @@ const List<HomeTool> homeTools = <HomeTool>[
     emoji: '🎒',
     subtitleKey: 'tool.itens.sub',
     catalogKey: 'itens',
-    assetPath: 'assets/public/assets/items/catalog/recurso-ouro.webp',
+    assetPath: 'assets/ui/itens.png',
   ),
-  HomeTool(keyName: 'pesquisas', labelKey: 'tool.pesquisas', emoji: '🔬', subtitleKey: 'tool.pesquisas.sub', catalogKey: 'pesquisas'),
-  HomeTool(keyName: 'ilhas', labelKey: 'tool.ilhas', emoji: '🏝️', subtitleKey: 'tool.ilhas.sub'),
-  HomeTool(keyName: 'dicas', labelKey: 'tool.dicas', emoji: '💡', subtitleKey: 'tool.dicas.sub', catalogKey: 'dicas'),
+  HomeTool(keyName: 'pesquisas', assetPath: 'assets/ui/pesquisas.png', labelKey: 'tool.pesquisas', emoji: '🔬', subtitleKey: 'tool.pesquisas.sub', catalogKey: 'pesquisas'),
+  HomeTool(keyName: 'ilhas', assetPath: 'assets/ui/ilhas.png', labelKey: 'tool.ilhas', emoji: '🏝️', subtitleKey: 'tool.ilhas.sub'),
+  HomeTool(keyName: 'dicas', assetPath: 'assets/ui/dicas.png', labelKey: 'tool.dicas', emoji: '💡', subtitleKey: 'tool.dicas.sub', catalogKey: 'dicas'),
   HomeTool(keyName: 'campanha', labelKey: 'tool.campanha', emoji: '🗺️', subtitleKey: 'tool.campanha.sub'),
   HomeTool(keyName: 'niveis', labelKey: 'tool.niveis', emoji: '📈', subtitleKey: 'tool.niveis.sub', catalogKey: 'niveis'),
   HomeTool(keyName: 'eventos', labelKey: 'tool.eventos', emoji: '⚡', subtitleKey: 'tool.eventos.sub', catalogKey: 'eventos'),

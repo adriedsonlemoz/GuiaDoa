@@ -1,7 +1,7 @@
 name: guia_doa
 description: Cliente Flutter multiplataforma do Guia Doa.
 publish_to: none
-version: 1.0.0-beta.2.89+100089
+version: 1.0.0-beta.2.90+100090
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -20,7 +20,14 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: GuiaSerif
+      fonts:
+        - asset: assets/fonts/DejaVuSerif.ttf
+        - asset: assets/fonts/DejaVuSerif-Bold.ttf
+          weight: 700
   assets:
+    - assets/ui/
     - assets/img/app-icon.png
 
     - assets/public/assets/campaign/zyrvorthian/atacantes-vitais.webp

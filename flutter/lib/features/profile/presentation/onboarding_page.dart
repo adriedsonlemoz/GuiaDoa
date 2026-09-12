@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/domain/realm_time.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/i18n/app_strings.dart';
@@ -84,7 +85,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
           child: AnimatedBuilder(
             animation: widget.gameData,
             builder: (context, _) {
-              final realms = widget.gameData.section('reinos');
+              final realms = RealmTime.choices(widget.gameData.section('reinos'));
+              if (_realm != null && !realms.any((r) => RealmTime.selectionKey(r) == _realm)) _realm = null;
               return Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 560),
@@ -149,6 +151,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               const SizedBox(height: 12),
                               if (realms.isNotEmpty)
                                 DropdownButtonFormField<String>(
+                                  key: ValueKey(_realm),
                                   initialValue: _realm,
                                   isExpanded: true,
                                   dropdownColor: GuiaColors.premiumPanel,
@@ -158,7 +161,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   items: realms
                                       .map((realm) {
                                         final name = (realm['nome'] ?? realm['name'] ?? realm['slug'] ?? '').toString();
-                                        return DropdownMenuItem<String>(value: name, child: Text(name));
+                                        final zone = RealmTime.zone(realm);
+                                        return DropdownMenuItem<String>(value: RealmTime.selectionKey(realm), child: Text('#${realm['id'] ?? '—'} · $name · ${zone.isEmpty ? strings.t('realms.not_informed') : zone}', overflow: TextOverflow.ellipsis));
                                       })
                                       .where((item) => item.value != null && item.value!.isNotEmpty)
                                       .toList(growable: false),
@@ -172,7 +176,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   cursorColor: GuiaColors.premiumGoldLight,
                                   decoration: _fieldDecoration(strings.t('onboarding.realm_manual'), icon: Icons.public),
                                 ),
-                              if (realms.isEmpty && widget.gameData.loading) ...<Widget>[
+                              if (realms.isEmpty && widget.gameData.sectionLoading('reinos')) ...<Widget>[
                                 const SizedBox(height: 12),
                                 const LinearProgressIndicator(
                                   color: GuiaColors.premiumGoldLight,
@@ -184,7 +188,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   style: const TextStyle(color: GuiaColors.premiumMuted, fontSize: 12),
                                 ),
                               ],
-                              if (widget.gameData.error != null && realms.isEmpty) ...<Widget>[
+                              if (widget.gameData.sectionError('reinos') != null && realms.isEmpty) ...<Widget>[
                                 const SizedBox(height: 12),
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,17 +268,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
     Map<String, dynamic>? selected;
     for (final candidate in realms) {
-      final candidateName = (candidate['nome'] ?? candidate['name'] ?? candidate['slug'] ?? '').toString();
-      if (candidateName == realmName) {
+      if (RealmTime.selectionKey(candidate) == realmName) {
         selected = candidate;
         break;
       }
     }
 
-    final timezone = (selected?['fuso'] ?? selected?['timezone'] ?? 'UTC').toString();
+    final timezone = RealmTime.zone(selected);
     await widget.profileStore.save(PlayerProfile(
       name: name,
-      realm: realmName,
+      realm: selected == null ? realmName : RealmTime.name(selected),
+      realmId: selected == null ? null : RealmTime.id(selected),
       timezone: timezone,
       locale: _locale,
     ));

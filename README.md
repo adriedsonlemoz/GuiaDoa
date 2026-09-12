@@ -1,3 +1,7 @@
+> **Versão atual: Guia Doa 1.0.0-beta.2.90 / Flutter alpha.13 / versionCode 100090.**
+> Revisão visual, ícones e carregamento de reinos/UTC: [relatório e validação](docs/FLUTTER_ALPHA13_VISUAL_UTC.md).
+> O APK principal continua vindo do workflow Flutter.
+
 # GUIA DOA
 
 Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend React/Vite, API Node/Express, MongoDB e painel administrativo próprio.
@@ -273,6 +277,6 @@ npm run test:browser
 
 ---
 
-## 🦋 Migração Flutter (alpha.11)
+## 🦋 Migração Flutter (alpha.13)
 
-A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.11**, versão **1.0.0-beta.2.88**, preparada para **Android + Web + iOS**. Esta etapa fixa a nova identidade visual baseada no mockup aprovado e corrige o fluxo de idioma no primeiro acesso e em Configurações. O frontend React/Capacitor permanece apenas como legado manual durante a migração; Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [Flutter alpha.11](docs/FLUTTER_MIGRATION_ALPHA11.md).
+A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.13**, versão **1.0.0-beta.2.90**, preparada para **Android + Web + iOS**. Esta etapa fixa a nova identidade visual baseada no mockup aprovado e corrige o fluxo de idioma no primeiro acesso e em Configurações. O frontend React/Capacitor permanece apenas como legado manual durante a migração; Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [Flutter alpha.11](docs/FLUTTER_MIGRATION_ALPHA11.md).

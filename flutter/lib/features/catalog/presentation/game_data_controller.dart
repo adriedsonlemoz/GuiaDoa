@@ -15,6 +15,11 @@ class GameDataController extends ChangeNotifier {
   final SharedPreferences _prefs;
 
   Map<String, List<Map<String, dynamic>>> _sections = <String, List<Map<String, dynamic>>>{};
+  final Map<String, String> _sectionErrors = <String, String>{};
+  final Set<String> _completed = <String>{};
+  String? sectionError(String key) => _sectionErrors[key];
+  bool sectionLoading(String key) => _loading && !_completed.contains(key);
+  bool sectionAvailable(String key) => _sections.containsKey(key);
   bool _loading = false;
   String? _error;
   DateTime? _lastUpdated;
@@ -58,14 +63,27 @@ class GameDataController extends ChangeNotifier {
     if (_loading) return;
     _loading = true;
     _error = null;
+    _sectionErrors.clear();
+    _completed.clear();
     notifyListeners();
     try {
-      final next = await _repository.fetchCatalog();
-      _sections = next;
-      _lastUpdated = DateTime.now().toUtc();
-      _fromCache = false;
-      await _prefs.setString(_cacheKey, jsonEncode(next));
-      await _prefs.setString(_cacheTimeKey, _lastUpdated!.toIso8601String());
+      await _repository.fetchCatalog(
+        onLoaded: (key, rows) {
+          _sections[key] = rows;
+          _completed.add(key);
+          notifyListeners();
+        },
+        onError: (key, error) {
+          _sectionErrors[key] = error.toString();
+          _completed.add(key);
+          notifyListeners();
+        },
+      );
+      _fromCache = _sectionErrors.isNotEmpty;
+      _error = _sectionErrors.isEmpty ? null : _sectionErrors.keys.join(', ');
+      if (_sectionErrors.isEmpty) _lastUpdated = DateTime.now().toUtc();
+      await _prefs.setString(_cacheKey, jsonEncode(_sections));
+      if (_lastUpdated != null) await _prefs.setString(_cacheTimeKey, _lastUpdated!.toIso8601String());
     } catch (error) {
       _error = error.toString();
     } finally {

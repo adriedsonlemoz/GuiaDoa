@@ -23,7 +23,8 @@ test('Flutter alpha.2 possui módulo dedicado de Tropas', () => {
   const domain = read('flutter/lib/features/troops/domain/troop_catalog.dart');
   const strings = read('flutter/lib/core/i18n/app_strings.dart');
 
-  assert.match(home, /TroopsPage\(controller: gameData/);
+  assert.match(home, /TroopsPage\(/);
+  assert.match(home, /controller: widget\.gameData/);
   for (const id of ['melee','ranged','ranged_only','hybrid','speed','tank','supply']) assert.match(domain, new RegExp(`'${id}'`));
   for (const sortId of ['life','defense','speed','load','ranged_attack','melee_attack','range','power','balance']) assert.match(domain, new RegExp(`'${sortId}'`));
   assert.match(troops, /TroopDetailPage/);

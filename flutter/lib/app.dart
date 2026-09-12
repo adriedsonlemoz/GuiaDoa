@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/config/app_config.dart';
 import 'core/storage/profile_store.dart';
@@ -17,6 +18,11 @@ class GuiaDoaApp extends StatelessWidget {
   final GameDataController gameData;
   final ProfileStore profileStore;
 
+  Locale _localeFromTag(String tag) {
+    final parts = tag.split('-');
+    return Locale(parts.first, parts.length > 1 ? parts[1] : null);
+  }
+
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: Listenable.merge(<Listenable>[gameData, profileStore]),
@@ -24,6 +30,16 @@ class GuiaDoaApp extends StatelessWidget {
           title: AppConfig.appName,
           debugShowCheckedModeBanner: false,
           theme: buildGuiaTheme(),
+          locale: _localeFromTag(profileStore.locale),
+          supportedLocales: const <Locale>[
+            Locale('pt', 'BR'),
+            Locale('en', 'US'),
+          ],
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           home: profileStore.hasProfile
               ? HomePage(gameData: gameData, profileStore: profileStore)
               : OnboardingPage(profileStore: profileStore, gameData: gameData),

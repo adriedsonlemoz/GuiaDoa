@@ -1,4 +1,4 @@
-# Guia DOA — Flutter migration alpha.3
+# Guia DOA — Flutter migration alpha.9
 
 Esta pasta é o novo cliente multiplataforma do **Guia DOA**. O frontend React/Capacitor continua no repositório enquanto a migração avança; o backend Express + MongoDB permanece a fonte de verdade.
 
@@ -53,14 +53,14 @@ flutter run -d chrome --web-port 5173 --dart-define=API_URL=http://localhost:300
 
 ## O que já está nesta alpha
 
-- tema Flutter baseado na identidade atual do Guia DOA;
+- Home Flutter refeita com a identidade premium do mockup aprovado: verde esmeralda, dourado, cards escuros e navegação inferior;
 - tela cheia/imersiva no Android e edge-to-edge nas demais plataformas móveis;
-- onboarding inicial com idioma, nome e reino;
-- perfil local multiplataforma;
+- onboarding inicial premium com idioma PT/EN selecionável e persistido imediatamente, nome e reino;
+- perfil local multiplataforma e tela de Configurações com troca de idioma em tempo real;
 - conexão com a API canônica que acessa o MongoDB;
 - carregamento dos catálogos de tropas, níveis, dragões, edifícios, reinos, pesquisas, itens, eventos e dicas;
 - snapshot local simples para abrir com os últimos dados quando a API estiver indisponível;
-- Home responsiva para celular, tablet e navegador;
+- Home responsiva para celular, tablet e navegador, com busca, resumo, atalhos rápidos e destaques;
 - busca e visualização inicial dos catálogos já conectados;
 - módulo **Tropas** migrado para tela própria com filtros, ordenação, detalhes, treinamento e comparador de duas unidades;
 - assets do projeto atual copiados para a árvore Flutter para a migração progressiva;

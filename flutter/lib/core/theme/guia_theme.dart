@@ -13,6 +13,18 @@ class GuiaColors {
   static const Color ink = Color(0xFF2E342F);
   static const Color ink2 = Color(0xFF4F574D);
   static const Color muted = Color(0xFF687064);
+
+  // Identidade Flutter inspirada no mockup aprovado.
+  static const Color premiumBackground = Color(0xFF031713);
+  static const Color premiumBackground2 = Color(0xFF06241E);
+  static const Color premiumPanel = Color(0xFF07362D);
+  static const Color premiumPanel2 = Color(0xFF0A493B);
+  static const Color premiumEmerald = Color(0xFF0B6B50);
+  static const Color premiumEmeraldLight = Color(0xFF15976E);
+  static const Color premiumGold = Color(0xFFD6B65C);
+  static const Color premiumGoldLight = Color(0xFFF1D58A);
+  static const Color premiumText = Color(0xFFFFF6D8);
+  static const Color premiumMuted = Color(0xFFC7D1C8);
 }
 
 ThemeData buildGuiaTheme() {

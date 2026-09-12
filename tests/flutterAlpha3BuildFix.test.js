@@ -4,10 +4,10 @@ import { readFileSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('Flutter alpha.3 keeps Home minimum height through BoxConstraints', () => {
+test('Flutter Home no longer uses the invalid Container minHeight property', () => {
   const home = read('flutter/lib/features/home/presentation/home_page.dart');
   assert.doesNotMatch(home, /Container\(\s*minHeight\s*:/);
-  assert.match(home, /constraints:\s*const BoxConstraints\(minHeight:\s*60\)/);
+  assert.match(home, /class _HeroHeader extends StatelessWidget/);
 });
 
 test('Flutter and repository release metadata stay synchronized', () => {
@@ -17,7 +17,7 @@ test('Flutter and repository release metadata stay synchronized', () => {
   const pubspec = read('flutter/pubspec.yaml');
   const config = read('flutter/lib/core/config/app_config.dart');
   assert.equal(apiPackage.version, rootPackage.version);
-  assert.equal(androidVersion.versionCode, 100085);
+  assert.equal(androidVersion.versionCode, 100086);
   assert.ok(pubspec.includes(`version: ${rootPackage.version}+${androidVersion.versionCode}`));
   const release = JSON.parse(read('flutter/release.json'));
   assert.equal(release.version, rootPackage.version);

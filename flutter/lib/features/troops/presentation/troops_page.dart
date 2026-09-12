@@ -14,10 +14,12 @@ class TroopsPage extends StatefulWidget {
     super.key,
     required this.controller,
     required this.profileStore,
+    this.startCompareMode = false,
   });
 
   final GameDataController controller;
   final ProfileStore profileStore;
+  final bool startCompareMode;
 
   @override
   State<TroopsPage> createState() => _TroopsPageState();
@@ -29,6 +31,12 @@ class _TroopsPageState extends State<TroopsPage> {
   String _sort = 'name';
   bool _compareMode = false;
   final List<Map<String, dynamic>> _compare = <Map<String, dynamic>>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _compareMode = widget.startCompareMode;
+  }
 
   @override
   Widget build(BuildContext context) {

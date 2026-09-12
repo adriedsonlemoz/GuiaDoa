@@ -273,6 +273,6 @@ npm run test:browser
 
 ---
 
-## 🦋 Migração Flutter (alpha.2)
+## 🦋 Migração Flutter (alpha.9)
 
-A migração paralela em [`flutter/`](flutter/README.md) está na **Flutter alpha.3**, versão **1.0.0-beta.2.80**, preparada para **Android + Web + iOS**. O frontend React/Capacitor continua preservado durante a migração e o Flutter consome a mesma API/MongoDB existente, sem credenciais do banco no cliente. A alpha.2 introduziu o módulo **Tropas**; a alpha.3 corrige o build/análise multiplataforma. Detalhes: [Flutter alpha.3](docs/FLUTTER_MIGRATION_ALPHA3.md).
+A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.9**, versão **1.0.0-beta.2.86**, preparada para **Android + Web + iOS**. Esta etapa fixa a nova identidade visual baseada no mockup aprovado e corrige o fluxo de idioma no primeiro acesso e em Configurações. O frontend React/Capacitor permanece apenas como legado manual durante a migração; Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [Flutter alpha.9](docs/FLUTTER_MIGRATION_ALPHA9.md).

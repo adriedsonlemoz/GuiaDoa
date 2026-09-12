@@ -1,0 +1,180 @@
+name: guia_doa
+description: Cliente Flutter multiplataforma do Guia DOA.
+publish_to: none
+version: 1.0.0-beta.2+79
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.0
+  shared_preferences: ^2.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/img/app-icon.png
+
+    - assets/public/assets/campaign/zyrvorthian/atacantes-vitais.webp
+    - assets/public/assets/campaign/zyrvorthian/viajante-do-vazio.webp
+    - assets/public/assets/dragons/dragao_agua.webp
+    - assets/public/assets/dragons/dragao_beladona.webp
+    - assets/public/assets/dragons/dragao_celestial.webp
+    - assets/public/assets/dragons/dragao_dourado.webp
+    - assets/public/assets/dragons/dragao_espinha_negra.webp
+    - assets/public/assets/dragons/dragao_fada.webp
+    - assets/public/assets/dragons/dragao_fogo.webp
+    - assets/public/assets/dragons/dragao_gelo.webp
+    - assets/public/assets/dragons/dragao_paradisiaco.webp
+    - assets/public/assets/dragons/dragao_terra.webp
+    - assets/public/assets/dragons/dragao_tirano.webp
+    - assets/public/assets/dragons/dragao_toxico.webp
+    - assets/public/assets/dragons/dragao_trovao.webp
+    - assets/public/assets/dragons/grande_dragao.webp
+    - assets/public/assets/edificios/especiais/basilica.webp
+    - assets/public/assets/edificios/especiais/gruta.webp
+    - assets/public/assets/edificios/especiais/pedra-alcance.webp
+    - assets/public/assets/edificios/especiais/pedra-alma.webp
+    - assets/public/assets/edificios/especiais/pedra-ataque-distancia.webp
+    - assets/public/assets/edificios/especiais/pedra-ataque.webp
+    - assets/public/assets/edificios/especiais/pedra-defesa.webp
+    - assets/public/assets/edificios/especiais/pedra-velocidade.webp
+    - assets/public/assets/items/anthropus/amuleto-brilho-sol.webp
+    - assets/public/assets/items/anthropus/amuleto-florescer-bosque.webp
+    - assets/public/assets/items/anthropus/amuleto-luz-oceano.webp
+    - assets/public/assets/items/anthropus/amuleto-nevoa-malva.webp
+    - assets/public/assets/items/anthropus/essencia-furia.webp
+    - assets/public/assets/items/anthropus/lembrancas-antigas.webp
+    - assets/public/assets/items/anthropus/obsidiana.webp
+    - assets/public/assets/items/anthropus/pedra-brilho-sol.webp
+    - assets/public/assets/items/anthropus/pedra-faisca-dourada.webp
+    - assets/public/assets/items/anthropus/pedra-florescer-bosque.webp
+    - assets/public/assets/items/anthropus/pedra-luz-oceano.webp
+    - assets/public/assets/items/anthropus/pedra-nevoa-malva.webp
+    - assets/public/assets/items/catalog/aceleracao-1-hora.webp
+    - assets/public/assets/items/catalog/aceleracao-1-minuto.webp
+    - assets/public/assets/items/catalog/aceleracao-15-horas.webp
+    - assets/public/assets/items/catalog/aceleracao-15-minutos.webp
+    - assets/public/assets/items/catalog/aceleracao-2-5-dias.webp
+    - assets/public/assets/items/catalog/aceleracao-2-5-horas.webp
+    - assets/public/assets/items/catalog/aceleracao-24-horas.webp
+    - assets/public/assets/items/catalog/aceleracao-4-dias.webp
+    - assets/public/assets/items/catalog/aceleracao-5-minutos.webp
+    - assets/public/assets/items/catalog/aceleracao-8-horas.webp
+    - assets/public/assets/items/catalog/arca-aniversario-iv-premium.webp
+    - assets/public/assets/items/catalog/arca-aniversario-iv.webp
+    - assets/public/assets/items/catalog/arca-inicio.webp
+    - assets/public/assets/items/catalog/arca-superior-dragao-agua.webp
+    - assets/public/assets/items/catalog/arca-superior-dragao-fogo.webp
+    - assets/public/assets/items/catalog/arca-superior-dragao-terra.webp
+    - assets/public/assets/items/catalog/arca-superior-grande-dragao.webp
+    - assets/public/assets/items/catalog/arca-teleporte-posse.webp
+    - assets/public/assets/items/catalog/bolsa-cronos.webp
+    - assets/public/assets/items/catalog/caixas-nanos.webp
+    - assets/public/assets/items/catalog/essencia-furia.webp
+    - assets/public/assets/items/catalog/gotas-marcha-forcada.webp
+    - assets/public/assets/items/catalog/gotas-recuperacao-forcada.webp
+    - assets/public/assets/items/catalog/latas-nanos.webp
+    - assets/public/assets/items/catalog/obsidiana.webp
+    - assets/public/assets/items/catalog/pasta-finalizacao.webp
+    - assets/public/assets/items/catalog/recurso-comida.webp
+    - assets/public/assets/items/catalog/recurso-madeira.webp
+    - assets/public/assets/items/catalog/recurso-metais.webp
+    - assets/public/assets/items/catalog/recurso-ouro.webp
+    - assets/public/assets/items/catalog/recurso-pedra.webp
+    - assets/public/assets/items/catalog/ticket-campanha-devastar.webp
+    - assets/public/assets/items/defense/paz-do-dragao.webp
+    - assets/public/assets/items/defense/protecao-do-dragao.webp
+    - assets/public/assets/items/defense/teleportador-direcionado.webp
+    - assets/public/assets/items/defense/teleportador-sombrio.webp
+    - assets/public/assets/items/defense/tratado-cessar-fogo.webp
+    - assets/public/assets/items/fields/forest/emblema-dragao-beladona.webp
+    - assets/public/assets/items/fields/forest/emblema-dragao-fada.webp
+    - assets/public/assets/items/fields/forest/emblema-dragao-toxico.webp
+    - assets/public/assets/items/fields/forest/essencia-furia.webp
+    - assets/public/assets/items/fields/hill/brasao-dragao-terra.webp
+    - assets/public/assets/items/fields/hill/emblema-dragao-celestial.webp
+    - assets/public/assets/items/fields/hill/emblema-dragao-dourado.webp
+    - assets/public/assets/items/fields/hill/pedra-faisca-dourada.webp
+    - assets/public/assets/items/fields/hill/pedra-florescer-bosque.webp
+    - assets/public/assets/items/fields/lake/emblema-dragao-agua.webp
+    - assets/public/assets/items/fields/lake/emblema-dragao-gelo.webp
+    - assets/public/assets/items/fields/lake/emblema-dragao-paradisiaco.webp
+    - assets/public/assets/items/fields/lake/nucleo-sombrio.webp
+    - assets/public/assets/items/fields/mountain/emblema-dragao-espinha-negra.webp
+    - assets/public/assets/items/fields/mountain/emblema-dragao-fogo.webp
+    - assets/public/assets/items/fields/mountain/emblema-dragao-tirano.webp
+    - assets/public/assets/items/fields/mountain/obsidiana.webp
+    - assets/public/assets/items/fields/savanna/emblema-dragao-trovao.webp
+    - assets/public/assets/items/fields/savanna/pedaco-carne-bovina.webp
+    - assets/public/assets/items/fields/savanna/pedaco-carne-carneiro.webp
+    - assets/public/assets/items/fields/savanna/pedaco-frango.webp
+    - assets/public/assets/items/fields/savanna/savana-r1.webp
+    - assets/public/assets/items/zyrvorthian/astrax-olho-do-vazio.webp
+    - assets/public/assets/items/zyrvorthian/estilhaco-poeira-estelar-astrax.webp
+    - assets/public/assets/items/zyrvorthian/garra-trovao-aetherion.webp
+    - assets/public/assets/items/zyrvorthian/pena-aetherion.webp
+    - assets/public/assets/troops/abissal.webp
+    - assets/public/assets/troops/alabardeiros.webp
+    - assets/public/assets/troops/amarande.webp
+    - assets/public/assets/troops/andarilhos-da-areia.webp
+    - assets/public/assets/troops/arqueiros.webp
+    - assets/public/assets/troops/arruinador-dimensional.webp
+    - assets/public/assets/troops/assassino-real.webp
+    - assets/public/assets/troops/bigas-de-fogo.webp
+    - assets/public/assets/troops/cacador-de-almas.webp
+    - assets/public/assets/troops/cacadores-de-dragao-barbaro.webp
+    - assets/public/assets/troops/canhoes-eletricos.webp
+    - assets/public/assets/troops/carregadores.webp
+    - assets/public/assets/troops/cavaleiro-dragao.webp
+    - assets/public/assets/troops/cavaleiros-espectrais.webp
+    - assets/public/assets/troops/centauros-infernais.webp
+    - assets/public/assets/troops/condenadores.webp
+    - assets/public/assets/troops/dragao-do-veneno.webp
+    - assets/public/assets/troops/dragoes-de-ataque-rapido.webp
+    - assets/public/assets/troops/dragoes-de-combate.webp
+    - assets/public/assets/troops/dragonetes-da-tempestade.webp
+    - assets/public/assets/troops/entidade-espectral.webp
+    - assets/public/assets/troops/escaravelho-de-guerra.webp
+    - assets/public/assets/troops/escevoforo.webp
+    - assets/public/assets/troops/esmagadores-colossais.webp
+    - assets/public/assets/troops/espelhos-de-fogo.webp
+    - assets/public/assets/troops/espioes.webp
+    - assets/public/assets/troops/fada-da-selva.webp
+    - assets/public/assets/troops/fantasma-do-trovao.webp
+    - assets/public/assets/troops/gatuno-alado.webp
+    - assets/public/assets/troops/gigantes-do-gelo.webp
+    - assets/public/assets/troops/gigantes.webp
+    - assets/public/assets/troops/golem-do-trovao.webp
+    - assets/public/assets/troops/guerreiro-do-magma.webp
+    - assets/public/assets/troops/guerreiro-sagrado.webp
+    - assets/public/assets/troops/hoplita.webp
+    - assets/public/assets/troops/leviata-artico.webp
+    - assets/public/assets/troops/lorde-do-inverno.webp
+    - assets/public/assets/troops/lordes-da-lava.webp
+    - assets/public/assets/troops/magmassauros.webp
+    - assets/public/assets/troops/mago-lagarto.webp
+    - assets/public/assets/troops/medusa.webp
+    - assets/public/assets/troops/megalibgwilia.webp
+    - assets/public/assets/troops/milicianos.webp
+    - assets/public/assets/troops/minotauros.webp
+    - assets/public/assets/troops/ogros-de-granito.webp
+    - assets/public/assets/troops/perseguidor-das-sombras.webp
+    - assets/public/assets/troops/quimera.webp
+    - assets/public/assets/troops/sapo-toxico.webp
+    - assets/public/assets/troops/serpente-vingativa.webp
+    - assets/public/assets/troops/serpentes-arsenicas.webp
+    - assets/public/assets/troops/terror-do-pantano.webp
+    - assets/public/assets/troops/tita-petrificado.webp
+    - assets/public/assets/troops/transportes-blindados.webp
+    - assets/public/img/app-icon.png
+    - assets/public/img/favicon.png
+    - assets/public/img/icons/icon-192.png
+    - assets/public/img/icons/icon-512.png
+    - assets/public/img/icons/icon-maskable-512.png

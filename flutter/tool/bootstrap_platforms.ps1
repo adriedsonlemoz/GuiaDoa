@@ -1,0 +1,29 @@
+$ErrorActionPreference = "Stop"
+Set-Location (Join-Path $PSScriptRoot "..")
+
+if (-not (Get-Command flutter -ErrorAction SilentlyContinue)) {
+  throw "Flutter não encontrado no PATH."
+}
+
+$missing = -not ((Test-Path "android") -and (Test-Path "ios") -and (Test-Path "web"))
+if ($missing) {
+  $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("guiadoa-flutter-" + [guid]::NewGuid().ToString())
+  flutter create --platforms=android,ios,web --org com.guiadoa --project-name app (Join-Path $tmp "app")
+  foreach ($dir in @("android", "ios", "web")) {
+    if (-not (Test-Path $dir)) { Copy-Item -Recurse (Join-Path $tmp "app/$dir") $dir }
+  }
+  if (-not (Test-Path ".metadata")) { Copy-Item (Join-Path $tmp "app/.metadata") ".metadata" }
+  Remove-Item -Recurse -Force $tmp
+}
+
+if ((Test-Path "ios/Runner/Assets.xcassets") -and (Test-Path "tool/ios_appicon/AppIcon.appiconset")) {
+  Remove-Item -Recurse -Force "ios/Runner/Assets.xcassets/AppIcon.appiconset" -ErrorAction SilentlyContinue
+  Copy-Item -Recurse "tool/ios_appicon/AppIcon.appiconset" "ios/Runner/Assets.xcassets/AppIcon.appiconset"
+}
+if (Test-Path "web/icons") {
+  Copy-Item "tool/web_icons/*.png" "web/icons/" -Force
+  Copy-Item "assets/img/app-icon.png" "web/favicon.png" -Force
+}
+
+flutter pub get
+Write-Host "Plataformas Android, iOS e Web prontas."

@@ -270,3 +270,9 @@ npm run test:browser
 - Ocorrências, fases, recompensas e histórico.
 - Regra ausência de ocorrência = não confirmado.
 - Reset global separado do fuso do reino.
+
+---
+
+## 🦋 Migração Flutter (alpha.1)
+
+A partir da base **1.0.0-beta.2.79**, existe uma migração paralela em [`flutter/`](flutter/README.md), preparada para **Android + Web + iOS**. O frontend React/Capacitor continua preservado durante a migração e o Flutter consome a mesma API/MongoDB existente, sem credenciais do banco no cliente.

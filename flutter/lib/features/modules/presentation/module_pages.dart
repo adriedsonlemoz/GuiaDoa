@@ -776,7 +776,7 @@ class _TournamentCalculatorPageState extends State<TournamentCalculatorPage> {
               child: Column(
                 children: <Widget>[
                   DropdownButtonFormField<String>(
-                    value: row.slug.isEmpty ? null : row.slug,
+                    initialValue: row.slug.isEmpty ? null : row.slug,
                     dropdownColor: GuiaColors.premiumPanel,
                     style: const TextStyle(color: GuiaColors.premiumText),
                     decoration: InputDecoration(labelText: strings.t('torneio.matar_tropas.select_troop'), labelStyle: const TextStyle(color: GuiaColors.premiumMuted)),
@@ -803,7 +803,7 @@ class _TournamentCalculatorPageState extends State<TournamentCalculatorPage> {
                         SizedBox(
                           width: 92,
                           child: DropdownButtonFormField<int>(
-                            value: row.bonus,
+                            initialValue: row.bonus,
                             dropdownColor: GuiaColors.premiumPanel,
                             style: const TextStyle(color: GuiaColors.premiumText),
                             items: List<DropdownMenuItem<int>>.generate(5, (i) => DropdownMenuItem<int>(value: i + 1, child: Text('×${i + 1}'))),
@@ -862,7 +862,7 @@ class _TournamentCalculatorPageState extends State<TournamentCalculatorPage> {
 
 class _TroopScoreRow {
   _TroopScoreRow({this.slug = '', TextEditingController? quantity, this.bonus = 1}) : quantity = quantity ?? TextEditingController();
-  String slug;
+  String slug = '';
   final TextEditingController quantity;
   int bonus;
   void dispose() => quantity.dispose();
@@ -926,8 +926,8 @@ class MarchCalculatorPage extends StatefulWidget {
 }
 
 class _MarchRow {
-  _MarchRow({this.slug = '', TextEditingController? quantity}) : quantity = quantity ?? TextEditingController();
-  String slug;
+  _MarchRow({TextEditingController? quantity}) : quantity = quantity ?? TextEditingController();
+  String slug = '';
   final TextEditingController quantity;
   void dispose() => quantity.dispose();
 }
@@ -997,7 +997,7 @@ class _MarchCalculatorPageState extends State<MarchCalculatorPage> {
                     Expanded(
                       flex: 2,
                       child: DropdownButtonFormField<String>(
-                        value: row.slug.isEmpty ? null : row.slug,
+                        initialValue: row.slug.isEmpty ? null : row.slug,
                         dropdownColor: GuiaColors.premiumPanel,
                         style: const TextStyle(color: GuiaColors.premiumText),
                         items: troops.map((item) {
@@ -1712,8 +1712,8 @@ class _ColorTextPageState extends State<ColorTextPage>{
     const SizedBox(height:12),PremiumPanel(child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:<Widget>[
       TextField(controller:_text,onChanged:(_)=>setState((){}),style:const TextStyle(color:GuiaColors.premiumText),decoration:InputDecoration(labelText:_ui(widget.profileStore,'Texto','Text'),labelStyle:const TextStyle(color:GuiaColors.premiumMuted))),
       const SizedBox(height:8),SwitchListTile(contentPadding:EdgeInsets.zero,value:_gradient,onChanged:(v)=>setState(()=>_gradient=v),title:Text(_ui(widget.profileStore,'Usar gradiente','Use gradient'),style:const TextStyle(color:GuiaColors.premiumText,fontWeight:FontWeight.w800))),
-      DropdownButtonFormField<String>(value:_color,dropdownColor:GuiaColors.premiumPanel,items:_colors,onChanged:(v)=>setState(()=>_color=v??_color),decoration:InputDecoration(labelText:_ui(widget.profileStore,'Cor inicial','Start color'))),
-      if(_gradient)...<Widget>[const SizedBox(height:8),DropdownButtonFormField<String>(value:_color2,dropdownColor:GuiaColors.premiumPanel,items:_colors,onChanged:(v)=>setState(()=>_color2=v??_color2),decoration:InputDecoration(labelText:_ui(widget.profileStore,'Cor final','End color')))],
+      DropdownButtonFormField<String>(initialValue:_color,dropdownColor:GuiaColors.premiumPanel,items:_colors,onChanged:(v)=>setState(()=>_color=v??_color),decoration:InputDecoration(labelText:_ui(widget.profileStore,'Cor inicial','Start color'))),
+      if(_gradient)...<Widget>[const SizedBox(height:8),DropdownButtonFormField<String>(initialValue:_color2,dropdownColor:GuiaColors.premiumPanel,items:_colors,onChanged:(v)=>setState(()=>_color2=v??_color2),decoration:InputDecoration(labelText:_ui(widget.profileStore,'Cor final','End color')))],
       const SizedBox(height:12),SelectableText(_code,style:const TextStyle(color:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900,fontFamily:'monospace')),
       const SizedBox(height:8),FilledButton.icon(onPressed:_text.text.isEmpty?null:()=>Clipboard.setData(ClipboardData(text:_code)),icon:const Icon(Icons.copy),label:Text(_ui(widget.profileStore,'Copiar código','Copy code'))),
     ])),

@@ -1,6 +1,6 @@
-# Estado da migração Flutter — alpha.11
+# Estado da migração Flutter — alpha.12
 
-Base atual: **Guia Doa 1.0.0-beta.2.88 / Flutter alpha.11 / versionCode 100088**.
+Base atual: **Guia Doa 1.0.0-beta.2.89 / Flutter alpha.12 / versionCode 100089**.
 
 ## Arquitetura
 

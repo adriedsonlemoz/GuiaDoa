@@ -9,5 +9,5 @@ class AppConfig {
   );
 
   static const String appName = 'Guia Doa';
-  static const String displayVersion = '1.0.0-beta.2.88 · Flutter alpha.11';
+  static const String displayVersion = '1.0.0-beta.2.89 · Flutter alpha.12';
 }

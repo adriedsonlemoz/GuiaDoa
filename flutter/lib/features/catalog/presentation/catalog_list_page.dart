@@ -207,7 +207,7 @@ class _RecordSheet extends StatelessWidget {
                   separatorBuilder: (_, __) => const Divider(height: 16),
                   itemBuilder: (context, index) {
                     final entry = visible[index];
-                    final value = entry.value is Map || entry.value is List
+                    final value = entry.value is Map<Object?, Object?> || entry.value is List<Object?>
                         ? const JsonEncoder.withIndent('  ').convert(entry.value)
                         : entry.value?.toString() ?? '—';
                     return Column(

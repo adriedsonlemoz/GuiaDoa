@@ -7,6 +7,7 @@ import '../../../core/theme/guia_theme.dart';
 import '../../catalog/presentation/catalog_list_page.dart';
 import '../../catalog/presentation/game_data_controller.dart';
 import '../../profile/presentation/profile_page.dart';
+import '../../troops/presentation/troops_page.dart';
 import 'home_tools.dart';
 
 class HomePage extends StatelessWidget {
@@ -114,6 +115,14 @@ class HomePage extends StatelessWidget {
   }
 
   void _openTool(BuildContext context, HomeTool tool, AppStrings strings) {
+    if (tool.keyName == 'tropas') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => TroopsPage(controller: gameData, profileStore: profileStore),
+        ),
+      );
+      return;
+    }
     if (tool.catalogKey == null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.t('home.migrating'))));
       return;

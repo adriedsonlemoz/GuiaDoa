@@ -1,4 +1,4 @@
-# Guia DOA — Flutter migration alpha.1
+# Guia DOA — Flutter migration alpha.2
 
 Esta pasta é o novo cliente multiplataforma do **Guia DOA**. O frontend React/Capacitor continua no repositório enquanto a migração avança; o backend Express + MongoDB permanece a fonte de verdade.
 
@@ -62,6 +62,7 @@ flutter run -d chrome --web-port 5173 --dart-define=API_URL=http://localhost:300
 - snapshot local simples para abrir com os últimos dados quando a API estiver indisponível;
 - Home responsiva para celular, tablet e navegador;
 - busca e visualização inicial dos catálogos já conectados;
+- módulo **Tropas** migrado para tela própria com filtros, ordenação, detalhes, treinamento e comparador de duas unidades;
 - assets do projeto atual copiados para a árvore Flutter para a migração progressiva;
 - preparação reproduzível de Android + Web + iOS.
 

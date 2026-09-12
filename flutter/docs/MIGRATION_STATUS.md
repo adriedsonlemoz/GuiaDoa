@@ -1,4 +1,4 @@
-# Migração React/Capacitor → Flutter — alpha.1
+# Migração React/Capacitor → Flutter — alpha.2
 
 Base analisada: **Guia DOA 1.0.0-beta.2.79**.
 
@@ -23,9 +23,12 @@ Base analisada: **Guia DOA 1.0.0-beta.2.79**.
 - assets atuais copiados;
 - testes básicos do parser da API.
 
+## Concluído nesta alpha
+
+- **Tropas e Comparador**: lista, busca, filtros, ordenação, detalhes, treinamento e comparação rápida de duas unidades.
+
 ## Próximas migrações funcionais
 
-- detalhes específicos de Tropas e Comparador;
 - Dragões, alimentação, evolução e tracker;
 - Edifícios normais/Gruta/Basílica;
 - Pesquisas;

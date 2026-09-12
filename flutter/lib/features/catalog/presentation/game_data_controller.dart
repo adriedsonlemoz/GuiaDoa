@@ -37,9 +37,9 @@ class GameDataController extends ChangeNotifier {
       if (decoded is! Map<String, dynamic>) return;
       final next = <String, List<Map<String, dynamic>>>{};
       for (final entry in decoded.entries) {
-        if (entry.value is List) {
-          next[entry.key] = (entry.value as List)
-              .whereType<Map>()
+        if (entry.value is List<Object?>) {
+          next[entry.key] = (entry.value as List<Object?>)
+              .whereType<Map<Object?, Object?>>()
               .map((item) => Map<String, dynamic>.from(item))
               .toList(growable: false);
         }

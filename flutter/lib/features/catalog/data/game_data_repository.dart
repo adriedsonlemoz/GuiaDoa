@@ -41,9 +41,9 @@ class GameDataRepository {
     if (responseKey != null && json is Map<String, dynamic>) {
       value = json[responseKey];
     }
-    if (value is! List) return const <Map<String, dynamic>>[];
+    if (value is! List<Object?>) return const <Map<String, dynamic>>[];
     return value
-        .whereType<Map>()
+        .whereType<Map<Object?, Object?>>()
         .map((item) => Map<String, dynamic>.from(item))
         .toList(growable: false);
   }

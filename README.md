@@ -1,4 +1,4 @@
-> **Versão atual: Guia Doa 1.0.0-beta.2.95 / Flutter alpha.18 / versionCode 100095.**
+> **Versão atual: Guia Doa 1.0.0-beta.2.96 / Flutter alpha.19 / versionCode 100096.**
 > Correção definitiva de escala da Home: [relatório e validação](docs/FLUTTER_ALPHA17_HOME_SCALE.md).
 > O APK principal continua vindo do workflow Flutter.
 
@@ -277,6 +277,6 @@ npm run test:browser
 
 ---
 
-## 🦋 Migração Flutter (alpha.18)
+## 🦋 Migração Flutter (alpha.19)
 
-A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.18**, versão **1.0.0-beta.2.95**, preparada para **Android + Web + iOS**. Esta etapa recupera a grade de quatro colunas e restaura telas estruturadas de Níveis, Pesquisas, Edifícios, Ilhas, Guias, comparação e construtor de texto a partir do projeto React de referência. Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [relatório alpha.18](docs/FLUTTER_ALPHA18_PARIDADE.md).
+A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.19**, versão **1.0.0-beta.2.96**, preparada para **Android + Web + iOS**. A migração agora compara cada experiência interna com o React de referência: Campanha e Eventos receberam navegação e detalhes próprios, e as lacunas restantes estão inventariadas sem declarar paridade prematuramente. Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [auditoria alpha.19](docs/FLUTTER_ALPHA19_AUDITORIA.md).

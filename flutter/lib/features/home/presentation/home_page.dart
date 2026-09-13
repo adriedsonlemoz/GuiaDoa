@@ -521,6 +521,7 @@ class _PremiumBottomBar extends StatelessWidget {
   final VoidCallback onMore;
 
   @override Widget build(BuildContext context) {
+    final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
     final items = <({String icon, String label, VoidCallback onTap})>[
       (icon: 'inicio', label: strings.t('nav.home'), onTap: onHome),
       (icon: 'guias', label: strings.t('nav.guides'), onTap: onGuides),
@@ -530,7 +531,9 @@ class _PremiumBottomBar extends StatelessWidget {
     ];
     return Container(
         key: const ValueKey('home-bottom-navigation'),
-        height: 66,
+        // O ícone, o rótulo e os espaçamentos ultrapassavam 66 px quando o
+        // sistema estava em 150–200%, produzindo o overflow visto no CI.
+        height: textScale > 1.2 ? 72 : 66,
         decoration: const BoxDecoration(
           color: GuiaColors.premiumBackground2,
           border: Border(top: BorderSide(color: GuiaColors.premiumGold, width: 1)),

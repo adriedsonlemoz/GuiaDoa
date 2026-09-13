@@ -1715,27 +1715,96 @@ class GuidesPage extends StatelessWidget {
   );
 }
 
-class CampaignPage extends StatelessWidget {
+class CampaignPage extends StatefulWidget {
   const CampaignPage({super.key, required this.controller, required this.profileStore, required this.featureStore});
   final GameDataController controller;
   final ProfileStore profileStore;
   final FeatureStore featureStore;
-  @override Widget build(BuildContext context) => CatalogModulePage(
-    title: _ui(profileStore, 'Campanha', 'Campaign'), sectionKey: 'campanha', controller: controller, profileStore: profileStore, featureStore: featureStore,
-    icon: '🗺️', intro: _ui(profileStore, 'Mapa da campanha, locais, inimigos, Grodz e conteúdo Zyrvorthian.', 'Campaign map, locations, enemies, Grodz and Zyrvorthian content.'),
-  );
+  @override State<CampaignPage> createState()=>_CampaignPageState();
 }
 
-class EventsPage extends StatelessWidget {
+class _CampaignPageState extends State<CampaignPage>{
+  String? _category;
+  String? _subtype;
+  static const _categories=<({String id,String icon,String pt,String en})>[
+    (id:'antropos',icon:'☠️',pt:'Antropos',en:'Anthropus'),
+    (id:'campos',icon:'🌲',pt:'Campos',en:'Fields'),
+    (id:'zyrvorthian',icon:'🐲',pt:'Zyrvorthian',en:'Zyrvorthian'),
+    (id:'grodz',icon:'🛡️',pt:'Grodz',en:'Grodz'),
+  ];
+  String _categoryName(String id){final item=_categories.firstWhere((item)=>item.id==id);return _ui(widget.profileStore,item.pt,item.en);}
+  @override Widget build(BuildContext context){
+    final all=widget.controller.section('campanha');
+    final categoryRows=all.where((row)=>_category!=null&&row['categoria']==_category).toList();
+    final subtypes=categoryRows.map((row)=>(row['subtipo']??'').toString()).where((value)=>value.isNotEmpty).toSet().toList()..sort();
+    if(_subtype!=null&&!subtypes.contains(_subtype))_subtype=null;
+    final rows=_subtype==null?categoryRows:categoryRows.where((row)=>row['subtipo']==_subtype).toList();
+    rows.sort((a,b){final level=intValue(a['nivel']).compareTo(intValue(b['nivel']));return level!=0?level:recordTitle(a,widget.profileStore.locale).compareTo(recordTitle(b,widget.profileStore.locale));});
+    return ModuleScaffold(title:_ui(widget.profileStore,'Campanha','Campaign'),subtitle:_category==null?_ui(widget.profileStore,'Escolha uma frente','Choose a front'):_categoryName(_category!),actions:<Widget>[IconButton(onPressed:widget.controller.loading?null:widget.controller.refresh,icon:const Icon(Icons.refresh))],child:RefreshIndicator(onRefresh:widget.controller.refresh,child:ListView(physics:const AlwaysScrollableScrollPhysics(),padding:const EdgeInsets.fromLTRB(12,12,12,30),children:<Widget>[
+      ModuleIntro(icon:'🗺️',title:_ui(widget.profileStore,'Mapa de Campanha','Campaign map'),text:_ui(widget.profileStore,'Consulte inimigos, recursos, recompensas e estratégias confirmadas.','Browse enemies, resources, rewards and confirmed strategies.')),
+      const SizedBox(height:12),
+      if(_category==null)...<Widget>[
+        GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,crossAxisSpacing:9,mainAxisSpacing:9,childAspectRatio:1.18,children:_categories.map((category){final count=all.where((row)=>row['categoria']==category.id).length;return PremiumPanel(onTap:count==0?null:()=>setState(()=>_category=category.id),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:<Widget>[Text(category.icon,style:const TextStyle(fontSize:32)),const SizedBox(height:7),Text(_ui(widget.profileStore,category.pt,category.en),textAlign:TextAlign.center,style:const TextStyle(color:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900,fontSize:16)),const SizedBox(height:4),Text(count==0?_ui(widget.profileStore,'Aguardando dados','Awaiting data'):_ui(widget.profileStore,'$count registros','$count entries'),style:const TextStyle(color:GuiaColors.premiumMuted,fontSize:11))]));}).toList(growable:false)),
+      ]else...<Widget>[
+        Align(alignment:Alignment.centerLeft,child:TextButton.icon(onPressed:()=>setState((){_category=null;_subtype=null;}),icon:const Icon(Icons.arrow_back),label:Text(_ui(widget.profileStore,'Todas as frentes','All fronts')))),
+        if(subtypes.isNotEmpty)...<Widget>[SizedBox(height:42,child:ListView(scrollDirection:Axis.horizontal,children:<Widget>[Padding(padding:const EdgeInsets.only(right:6),child:ChoiceChip(label:Text(_ui(widget.profileStore,'Todos','All')),selected:_subtype==null,onSelected:(_)=>setState(()=>_subtype=null))),...subtypes.map((value)=>Padding(padding:const EdgeInsets.only(right:6),child:ChoiceChip(label:Text(_campaignSubtype(value,widget.profileStore)),selected:_subtype==value,onSelected:(_)=>setState(()=>_subtype=value))))])),const SizedBox(height:8)],
+        if(rows.isEmpty)PremiumPanel(child:Text(_ui(widget.profileStore,'Nenhum registro confirmado nesta frente.','No confirmed entry in this front.'),style:const TextStyle(color:GuiaColors.premiumMuted))),
+        ...rows.map((entry)=>Padding(padding:const EdgeInsets.only(bottom:8),child:_CampaignEntryCard(entry:entry,profileStore:widget.profileStore,onTap:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>_CampaignDetailPage(entry:entry,profileStore:widget.profileStore))))),),
+      ],
+    ])));
+  }
+}
+
+String _campaignSubtype(String value,ProfileStore store){const pt=<String,String>{'savana':'Savana','montanha':'Montanha','morro':'Morro','lago':'Lago','floresta':'Floresta'};const en=<String,String>{'savana':'Savannah','montanha':'Mountain','morro':'Hill','lago':'Lake','floresta':'Forest'};return _ui(store,pt[value]??value,en[value]??value);}
+
+class _CampaignEntryCard extends StatelessWidget{
+  const _CampaignEntryCard({required this.entry,required this.profileStore,required this.onTap});final Map<String,dynamic> entry;final ProfileStore profileStore;final VoidCallback onTap;
+  @override Widget build(BuildContext context){final troops=entry['tropas'] is List<Object?>?(entry['tropas'] as List<Object?>).whereType<Map<Object?,Object?>>().toList():const <Map<Object?,Object?>>[];final resources=entry['recursos'] is List<Object?>?(entry['recursos'] as List<Object?>).whereType<Map<Object?,Object?>>().toList():const <Map<Object?,Object?>>[];final rewards=entry['recompensas'] is List<Object?>?(entry['recompensas'] as List<Object?>).length:0;final total=troops.fold<int>(0,(sum,row)=>sum+intValue(row['quantidade']));return PremiumPanel(onTap:onTap,child:Row(children:<Widget>[Container(width:48,height:48,alignment:Alignment.center,decoration:BoxDecoration(color:GuiaColors.premiumEmerald.withValues(alpha:.28),borderRadius:BorderRadius.circular(10)),child:Text(_campaignIcon(entry),style:const TextStyle(fontSize:25))),const SizedBox(width:10),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:<Widget>[Row(children:<Widget>[Expanded(child:Text(recordTitle(entry,profileStore.locale),style:const TextStyle(color:GuiaColors.premiumText,fontWeight:FontWeight.w900))),if(entry['nivel']!=null)Text('${_ui(profileStore,'Nv.','Lv.')} ${entry['nivel']}',style:const TextStyle(color:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900))]),const SizedBox(height:5),Wrap(spacing:10,runSpacing:4,children:<Widget>[if(total>0)Text('☠ ${formatCompactNumber(total)}',style:const TextStyle(color:GuiaColors.premiumMuted,fontSize:11)),if(resources.isNotEmpty)Text('◆ ${resources.length} ${_ui(profileStore,'recursos','resources')}',style:const TextStyle(color:GuiaColors.premiumMuted,fontSize:11)),if(rewards>0)Text('🎁 $rewards',style:const TextStyle(color:GuiaColors.premiumMuted,fontSize:11)),if(entry['fonte'] is Map<Object?,Object?>&&(entry['fonte'] as Map<Object?,Object?>)['verificado']==true)Text('✓ ${_ui(profileStore,'verificado','verified')}',style:const TextStyle(color:Colors.greenAccent,fontSize:11))])])),const Icon(Icons.chevron_right,color:GuiaColors.premiumGoldLight)]));}
+}
+
+String _campaignIcon(Map<String,dynamic> entry){switch(entry['categoria']){case'antropos':return'☠️';case'campos':return'🌲';case'zyrvorthian':return'🐲';case'grodz':return'🛡️';default:return'◆';}}
+
+class _CampaignDetailPage extends StatelessWidget{
+  const _CampaignDetailPage({required this.entry,required this.profileStore});final Map<String,dynamic> entry;final ProfileStore profileStore;
+  List<Map<String,dynamic>> _maps(String key)=>entry[key] is List<Object?>?(entry[key] as List<Object?>).whereType<Map<Object?,Object?>>().map((row)=>Map<String,dynamic>.from(row)).toList():<Map<String,dynamic>>[];
+  @override Widget build(BuildContext context){final troops=_maps('tropas'),resources=_maps('recursos'),rewards=_maps('recompensas'),guides=_maps('guiasAtaque');final strategy=entry['estrategia'] is Map<Object?,Object?>?Map<String,dynamic>.from(entry['estrategia'] as Map<Object?,Object?>):<String,dynamic>{};return ModuleScaffold(title:recordTitle(entry,profileStore.locale),subtitle:entry['nivel']==null?null:'${_ui(profileStore,'Nível','Level')} ${entry['nivel']}',child:ListView(padding:const EdgeInsets.fromLTRB(12,12,12,30),children:<Widget>[
+    ModuleIntro(icon:_campaignIcon(entry),title:recordTitle(entry,profileStore.locale),text:(strategy['resumo']??entry['descricao']??_ui(profileStore,'Dados confirmados da campanha.','Confirmed campaign data.')).toString()),
+    if(troops.isNotEmpty)...<Widget>[const SizedBox(height:12),_sectionTitle(_ui(profileStore,'Tropas inimigas','Enemy troops'),icon:Icons.groups_outlined),const SizedBox(height:7),PremiumPanel(child:Column(children:troops.map((row)=>_CampaignLine(label:_localizedNested(row,'nome',profileStore.locale),value:formatCompactNumber(row['quantidade']))).toList(growable:false)))],
+    if(resources.isNotEmpty)...<Widget>[const SizedBox(height:12),_sectionTitle(_ui(profileStore,'Recursos','Resources'),icon:Icons.inventory_2_outlined),const SizedBox(height:7),PremiumPanel(child:Column(children:resources.map((row)=>_CampaignLine(label:_friendlyField((row['tipo']??'recurso').toString(),profileStore.locale),value:(row['exibicao']??formatCompactNumber(row['valor'])).toString())).toList(growable:false)))],
+    if(rewards.isNotEmpty)...<Widget>[const SizedBox(height:12),_sectionTitle(_ui(profileStore,'Recompensas','Rewards'),icon:Icons.card_giftcard),const SizedBox(height:7),...rewards.map((row)=>Padding(padding:const EdgeInsets.only(bottom:7),child:PremiumPanel(child:Row(children:<Widget>[_recordImage(row,size:42),const SizedBox(width:9),Expanded(child:Text(_localizedNested(row,'nome',profileStore.locale).isEmpty?(row['codigo']??_ui(profileStore,'Recompensa','Reward')).toString():_localizedNested(row,'nome',profileStore.locale),style:const TextStyle(color:GuiaColors.premiumText,fontWeight:FontWeight.w800))),if(row['quantidade']!=null)Text('×${row['quantidade']}',style:const TextStyle(color:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900))]))))],
+    if(guides.isNotEmpty)...<Widget>[const SizedBox(height:12),_sectionTitle(_ui(profileStore,'Estratégias de ataque','Attack strategies'),icon:Icons.shield_outlined),const SizedBox(height:7),...guides.map((guide)=>Padding(padding:const EdgeInsets.only(bottom:7),child:PremiumPanel(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:<Widget>[Text(_localizedNested(guide,'titulo',profileStore.locale),style:const TextStyle(color:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900)),if(_localizedNested(guide,'resumo',profileStore.locale).isNotEmpty)Padding(padding:const EdgeInsets.only(top:5),child:Text(_localizedNested(guide,'resumo',profileStore.locale),style:const TextStyle(color:GuiaColors.premiumText,height:1.4))),if((guide['tropaPrincipal']??'').toString().isNotEmpty)Padding(padding:const EdgeInsets.only(top:6),child:Text('⚔ ${guide['quantidade']??'—'} · ${guide['tropaPrincipal']}',style:const TextStyle(color:GuiaColors.premiumMuted))),..._stringList(guide['passos']).asMap().entries.map((step)=>Padding(padding:const EdgeInsets.only(top:5),child:Text('${step.key+1}. ${step.value}',style:const TextStyle(color:GuiaColors.premiumText,height:1.35))))]))))],
+  ]));}
+}
+
+class _CampaignLine extends StatelessWidget{const _CampaignLine({required this.label,required this.value});final String label,value;@override Widget build(BuildContext context)=>Padding(padding:const EdgeInsets.symmetric(vertical:6),child:Row(children:<Widget>[Expanded(child:Text(label,style:const TextStyle(color:GuiaColors.premiumText,fontWeight:FontWeight.w700))),Text(value,style:const TextStyle(color:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900))]));}
+
+List<String> _stringList(dynamic value)=>value is List<Object?>?value.map((item)=>item.toString()).where((item)=>item.trim().isNotEmpty).toList(growable:false):const <String>[];
+
+class EventsPage extends StatefulWidget {
   const EventsPage({super.key, required this.controller, required this.profileStore, required this.featureStore});
   final GameDataController controller;
   final ProfileStore profileStore;
   final FeatureStore featureStore;
-  @override Widget build(BuildContext context) => CatalogModulePage(
-    title: _ui(profileStore, 'Eventos', 'Events'), sectionKey: 'eventos', controller: controller, profileStore: profileStore, featureStore: featureStore,
-    icon: '⚡', intro: _ui(profileStore, 'Eventos, ocorrências, regras e recompensas por reino.', 'Events, schedules, rules and rewards by realm.'),
-  );
+  @override State<EventsPage> createState()=>_EventsPageState();
 }
+
+class _EventsPageState extends State<EventsPage>{
+  bool _allRealms=false;String? _expanded;Timer? _timer;
+  @override void initState(){super.initState();_timer=Timer.periodic(const Duration(seconds:30),(_){if(mounted)setState((){});});}
+  @override void dispose(){_timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context){final now=DateTime.now().toUtc(),profile=widget.profileStore.profile;final rows=<({Map<String,dynamic> event,Map<String,dynamic> occurrence,String status,DateTime start,DateTime end})>[];for(final event in widget.controller.section('eventos')){final occurrences=event['ocorrencias'];if(occurrences is! List<Object?>)continue;for(final raw in occurrences.whereType<Map<Object?,Object?>>()){final occurrence=Map<String,dynamic>.from(raw);if(occurrence['confirmado']!=true)continue;final matches=profile?.realmId!=null?'${occurrence['reinoId']}'=='${profile!.realmId}':occurrence['reinoNome']==profile?.realm;if(!_allRealms&&!matches)continue;final start=RealmTime.serverInstant(occurrence['inicioServidor']);final end=RealmTime.serverInstant(occurrence['fimServidor']);if(start==null||end==null)continue;final status=now.isBefore(start)?'next':now.isBefore(end)?'active':'past';rows.add((event:event,occurrence:occurrence,status:status,start:start,end:end));}}rows.sort((a,b){const order=<String,int>{'active':0,'next':1,'past':2};final state=(order[a.status]??9).compareTo(order[b.status]??9);return state!=0?state:a.start.compareTo(b.start);});return ModuleScaffold(title:_ui(widget.profileStore,'Eventos','Events'),subtitle:_allRealms?_ui(widget.profileStore,'Reinos confirmados','Confirmed realms'):(profile?.realm.isNotEmpty==true?profile!.realm:_ui(widget.profileStore,'Sem reino selecionado','No realm selected')),actions:<Widget>[IconButton(onPressed:widget.controller.loading?null:widget.controller.refresh,icon:const Icon(Icons.refresh))],child:RefreshIndicator(onRefresh:widget.controller.refresh,child:ListView(physics:const AlwaysScrollableScrollPhysics(),padding:const EdgeInsets.fromLTRB(12,12,12,30),children:<Widget>[
+    ModuleIntro(icon:'⚡',title:_ui(widget.profileStore,'Agenda por reino','Realm schedule'),text:_ui(widget.profileStore,'Datas do servidor são tratadas como instantes UTC e exibidas no fuso cadastrado da ocorrência.','Server dates are treated as UTC instants and displayed in the occurrence timezone.')),const SizedBox(height:10),
+    SegmentedButton<bool>(segments:<ButtonSegment<bool>>[ButtonSegment(value:false,label:Text(_ui(widget.profileStore,'Meu reino','My realm')),icon:const Icon(Icons.public)),ButtonSegment(value:true,label:Text(_ui(widget.profileStore,'Todos','All')),icon:const Icon(Icons.language))],selected:<bool>{_allRealms},onSelectionChanged:(value)=>setState(()=>_allRealms=value.first)),const SizedBox(height:12),
+    if(rows.isEmpty)PremiumPanel(child:Column(children:<Widget>[const Text('📭',style:TextStyle(fontSize:32)),const SizedBox(height:7),Text(_ui(widget.profileStore,'Nenhum evento confirmado para esta seleção.','No confirmed event for this selection.'),textAlign:TextAlign.center,style:const TextStyle(color:GuiaColors.premiumMuted))])),
+    ...rows.map((row){final key='${row.event['slug']}:${row.occurrence['codigo']??row.occurrence['reinoId']}';final expanded=_expanded==key;final zone=RealmTime.normalize(row.occurrence['fusoReino']);return Padding(padding:const EdgeInsets.only(bottom:9),child:PremiumPanel(onTap:()=>setState(()=>_expanded=expanded?null:key),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:<Widget>[Row(children:<Widget>[Expanded(child:Text(recordTitle(row.event,widget.profileStore.locale),style:const TextStyle(color:GuiaColors.premiumText,fontWeight:FontWeight.w900,fontSize:16))),_EventStatus(status:row.status,store:widget.profileStore)]),const SizedBox(height:5),Text('${row.occurrence['reinoNome']??'—'} · ${zone.isEmpty?'UTC':zone}',style:const TextStyle(color:GuiaColors.premiumGoldLight,fontSize:11,fontWeight:FontWeight.w800)),const SizedBox(height:7),Text('${_eventDate(row.start,zone,widget.profileStore.locale)}  →  ${_eventDate(row.end,zone,widget.profileStore.locale)}',style:const TextStyle(color:GuiaColors.premiumMuted,fontSize:11)),if(row.status!='past')Padding(padding:const EdgeInsets.only(top:6),child:Text('⏳ ${_remaining(row.status=='next'?row.start:row.end,now)}',style:const TextStyle(color:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900))),if(expanded)..._eventDetails(row.event,widget.profileStore)])));}),
+  ])));}
+}
+
+class _EventStatus extends StatelessWidget{const _EventStatus({required this.status,required this.store});final String status;final ProfileStore store;@override Widget build(BuildContext context){final label=switch(status){'active'=>_ui(store,'Em andamento','Active'),'next'=>_ui(store,'Próximo','Upcoming'),_=>_ui(store,'Encerrado','Ended')};final color=status=='active'?Colors.greenAccent:status=='next'?GuiaColors.premiumGoldLight:GuiaColors.premiumMuted;return Container(padding:const EdgeInsets.symmetric(horizontal:7,vertical:3),decoration:BoxDecoration(borderRadius:BorderRadius.circular(999),border:Border.all(color:color)),child:Text(label,style:TextStyle(color:color,fontSize:9,fontWeight:FontWeight.w900)));}}
+
+String _eventDate(DateTime instant,String zone,String locale){final shifted=RealmTime.wallClock(zone.isEmpty?'UTC':zone,instant)??instant;String pad(int value)=>value.toString().padLeft(2,'0');return locale.startsWith('en')?'${pad(shifted.month)}/${pad(shifted.day)}/${shifted.year} ${pad(shifted.hour)}:${pad(shifted.minute)}':'${pad(shifted.day)}/${pad(shifted.month)}/${shifted.year} ${pad(shifted.hour)}:${pad(shifted.minute)}';}
+String _remaining(DateTime target,DateTime now){final minutes=math.max(0,target.difference(now).inMinutes);return minutes>=1440?'${minutes~/1440}d ${(minutes%1440)~/60}h':'${minutes~/60}h ${minutes%60}min';}
+List<Widget> _eventDetails(Map<String,dynamic> event,ProfileStore store){final widgets=<Widget>[const Divider(height:22,color:GuiaColors.goldDark)];final summary=_localizedNested(event,'resumo',store.locale);final description=_localizedNested(event,'descricao',store.locale);if(summary.isNotEmpty)widgets.add(Text(summary,style:const TextStyle(color:GuiaColors.premiumText,height:1.4)));if(description.isNotEmpty&&description!=summary)widgets.add(Padding(padding:const EdgeInsets.only(top:7),child:Text(description,style:const TextStyle(color:GuiaColors.premiumMuted,height:1.4))));for(final section in <({String key,String pt,String en,String icon})>[(key:'fases',pt:'Fases',en:'Phases',icon:'🧭'),(key:'recompensas',pt:'Recompensas',en:'Rewards',icon:'🎁'),(key:'regras',pt:'Regras',en:'Rules',icon:'📜')]){final values=event[section.key];if(values is! List<Object?>||values.isEmpty)continue;widgets.add(Padding(padding:const EdgeInsets.only(top:10,bottom:4),child:Text('${section.icon} ${_ui(store,section.pt,section.en)}',style:const TextStyle(color:GuiaColors.premiumGoldLight,fontWeight:FontWeight.w900))));for(final value in values){if(value is Map<Object?,Object?>){final row=Map<String,dynamic>.from(value);final text=_localizedNested(row,'nome',store.locale).isNotEmpty?_localizedNested(row,'nome',store.locale):(_localizedNested(row,'texto',store.locale).isNotEmpty?_localizedNested(row,'texto',store.locale):(row['titulo']??row['descricao']??'').toString());if(text.isNotEmpty)widgets.add(Padding(padding:const EdgeInsets.only(top:4),child:Text('› $text',style:const TextStyle(color:GuiaColors.premiumText,height:1.35))));}else if(value.toString().trim().isNotEmpty)widgets.add(Padding(padding:const EdgeInsets.only(top:4),child:Text('› $value',style:const TextStyle(color:GuiaColors.premiumText,height:1.35))));}}return widgets;}
 
 class RealmsPage extends StatefulWidget {
   const RealmsPage({super.key, required this.controller, required this.profileStore, required this.featureStore});

@@ -45,11 +45,18 @@ for lang, source in [('pt', pt), ('en', en)]:
 modules = (flutter / 'lib/features/modules/presentation/module_pages.dart').read_text()
 home = (flutter / 'lib/features/home/presentation/home_page.dart').read_text()
 assert "effectiveWidth >= 300 ? 4 : 2" in home
+assert "height: textScale > 1.2 ? 72 : 66" in home
 assert "row['poderNecessario']" in modules
 assert 'JsonEncoder' not in modules
 assert "'island_planner_v2'" in modules
 assert "'research_progress_$_slug'" in modules
 assert "'[$_color]$text'" in modules
+campaign_body = modules[modules.index('class CampaignPage'):modules.index('class EventsPage')]
+events_body = modules[modules.index('class EventsPage'):modules.index('class RealmsPage')]
+assert 'CatalogModulePage(' not in campaign_body
+assert 'CatalogModulePage(' not in events_body
+assert "RealmTime.serverInstant(occurrence['inicioServidor'])" in events_body
+assert "occurrence['confirmado']!=true" in events_body
 for p in (flutter / 'lib').rglob('*.dart'):
     for asset in re.findall(r"(?:Image\.asset|AssetImage)\('([^'$]+)'", p.read_text()):
         assert (flutter / asset).is_file(), (p, asset)

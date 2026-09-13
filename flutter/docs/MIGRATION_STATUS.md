@@ -1,8 +1,8 @@
-# Estado da migração Flutter — alpha.18
+# Estado da migração Flutter — alpha.19
 
-Paridade visual e funcional: [detalhes desta entrega](../../docs/FLUTTER_ALPHA18_PARIDADE.md).
+Paridade visual e funcional: [auditoria desta entrega](../../docs/FLUTTER_ALPHA19_AUDITORIA.md).
 
-Base atual: **Guia Doa 1.0.0-beta.2.95 / Flutter alpha.18 / versionCode 100095**.
+Base atual: **Guia Doa 1.0.0-beta.2.96 / Flutter alpha.19 / versionCode 100096**.
 
 ## Arquitetura
 
@@ -13,9 +13,9 @@ Base atual: **Guia Doa 1.0.0-beta.2.95 / Flutter alpha.18 / versionCode 100095**
 
 ## Cobertura funcional
 
-Primeira passagem de paridade concluída para os módulos públicos: Home, Torneios e calculadoras, Tropas e comparação, Cálculos de marcha, Aprimoramento, Dragões e Tracker, Edifícios, Itens, Pesquisas, Ilhas, Níveis, Campanha, Eventos, Dicas, Reinos, Assistente, Backup, Extras, Construtor de Texto, Favoritos, Sobre, Apoio, Perfil, Idioma e Configurações.
+Primeira passagem de cobertura concluída para os módulos públicos: Home, Torneios e calculadoras, Tropas e comparação, Cálculos de marcha, Aprimoramento, Dragões e Tracker, Edifícios, Itens, Pesquisas, Ilhas, Níveis, Campanha, Eventos, Dicas, Reinos, Assistente, Backup, Extras, Construtor de Texto, Favoritos, Sobre, Apoio, Perfil, Idioma e Configurações.
 
-Algumas subrotas antigas foram consolidadas em módulos Flutter únicos para evitar duplicação de tela. O conteúdo permanece acessível pelos registros e detalhes da API.
+Cobertura não significa paridade completa. Ilhas, Edifícios especiais, Itens, Dicas, Níveis e algumas calculadoras ainda precisam recuperar interações do React; consulte a matriz da auditoria. Campanha e Eventos deixaram de usar a ficha genérica nesta entrega.
 
 ## Identidade
 

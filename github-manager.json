@@ -1,8 +1,8 @@
 {
   "projectName": "Guia Doa",
   "displayName": "Guia Doa",
-  "versionName": "1.0.0-beta.2.95",
-  "versionCode": 100095,
+  "versionName": "1.0.0-beta.2.96",
+  "versionCode": 100096,
   "applicationId": "com.guiadoa.app",
   "namespace": "com.guiadoa.app",
   "language": "Dart",

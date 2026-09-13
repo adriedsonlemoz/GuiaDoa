@@ -1,14 +1,10 @@
-> **Versão atual: Guia Doa 1.0.0-beta.2.96 / Flutter alpha.19 / versionCode 100096.**
-> Correção definitiva de escala da Home: [relatório e validação](docs/FLUTTER_ALPHA17_HOME_SCALE.md).
-> O APK principal continua vindo do workflow Flutter.
-
 # GUIA DOA
 
 Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend React/Vite, API Node/Express, MongoDB e painel administrativo próprio.
 
 ## Versão
 
-**1.0.0-beta.2.80** | Android `versionCode`: **100080**
+**1.0.0-beta.2.79** | Android `versionCode`: **100079**
 
 ## Principais módulos
 
@@ -274,9 +270,3 @@ npm run test:browser
 - Ocorrências, fases, recompensas e histórico.
 - Regra ausência de ocorrência = não confirmado.
 - Reset global separado do fuso do reino.
-
----
-
-## 🦋 Migração Flutter (alpha.19)
-
-A aplicação principal em [`flutter/`](flutter/README.md) está na **Flutter alpha.19**, versão **1.0.0-beta.2.96**, preparada para **Android + Web + iOS**. A migração agora compara cada experiência interna com o React de referência: Campanha e Eventos receberam navegação e detalhes próprios, e as lacunas restantes estão inventariadas sem declarar paridade prematuramente. Render + MongoDB continuam como backend/fonte de verdade. Detalhes: [auditoria alpha.19](docs/FLUTTER_ALPHA19_AUDITORIA.md).

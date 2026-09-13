@@ -1,10 +1,14 @@
-name: LEGADO - React Capacitor APK
+name: Build APK Android
 
 on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
     inputs:
       build_type:
-        description: 'Tipo de build legado'
+        description: 'Tipo de build'
         required: true
         default: debug
         type: choice

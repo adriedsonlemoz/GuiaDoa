@@ -49,17 +49,20 @@ test('application and API locks agree with the native release metadata', () => {
     assert.equal(read(file).version, version);
     assert.equal(read(file).packages[''].version, version);
   }
-  const nativeCode = read('mobile/android-version.json').versionCode;
-  const flutterRelease = read('flutter/release.json');
-  assert.equal(nativeCode, flutterRelease.versionCode);
+  assert.equal(read('mobile/android-version.json').versionCode, 100079);
 });
 
-test('Capacitor workflow is legacy/manual while Flutter is the primary automatic APK', () => {
-  const legacy = readFileSync(new URL('../.github/workflows/build-apk.yml', import.meta.url), 'utf8');
-  const flutter = readFileSync(new URL('../.github/workflows/flutter-multiplatform.yml', import.meta.url), 'utf8');
-  assert.match(legacy, /name:\s*LEGADO - React Capacitor APK/);
-  assert.ok(!/^\s*push:/m.test(legacy));
-  assert.match(flutter, /branches:\s*\[main, master\]/);
-  assert.match(flutter, /gh release upload/);
-  assert.match(flutter, /GuiaDOA-FLUTTER-/);
+test('workflow validates before publishing exactly one signed APK and no artifact archive', () => {
+  const flow = readFileSync(new URL('../.github/workflows/build-apk.yml', import.meta.url), 'utf8');
+  assert.doesNotMatch(flow, /upload-artifact|head -1|pull_request_target/);
+  for (const step of ['npm test', 'npm run check', 'npm run test:browser', 'npm run build']) {
+    assert.ok(flow.indexOf(step) < flow.indexOf('gh release upload'));
+  }
+  assert.match(flow, /apksigner.*sign --ks/);
+  assert.match(flow, /apksigner.*verify --verbose/);
+  assert.match(flow, /KEYSTORE_BASE64/);
+  assert.match(flow, /assets\.length, 1/);
+  assert.match(flow, /assets\[0\]\.name, 'GuiaDOA\.apk'/);
+  assert.match(flow, /github\.event_name != 'pull_request'/);
+  assert.match(flow, /--target "\$GITHUB_SHA"/);
 });

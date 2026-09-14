@@ -11,7 +11,7 @@ import {
   isValidDateParts,
   scoreNicknameCandidate,
 } from '../utils/allianceTracker.js';
-import { buildOcrRegions, detectSnapshotTypeFromOcr, imageDimensions, parseAllianceOcr } from '../services/alliance/ocr.js';
+import { buildOcrRegions, detectSnapshotTypeFromOcr, fuseOcrCandidates, imageDimensions, parseAllianceOcr } from '../services/alliance/ocr.js';
 import { extractAllianceScreenshot } from '../services/alliance/vision.js';
 import { resolveAllianceOcrLocally, weightedNicknameSimilarity } from '../services/alliance/localResolver.js';
 
@@ -412,6 +412,65 @@ test('checkpoint OCR sobrevive à pausa e é removido quando a imagem conclui', 
 });
 
 
+
+test('consenso multipass local confirma linha quando duas leituras independentes concordam', () => {
+  const fused = fuseOcrCandidates({
+    snapshotType:'power', minRows:1, minConfidence:.70, lineMinConfidence:.76,
+    candidates:[
+      { pass:'table-standard', snapshotType:'power', accepted:false, usable:true, rows:[
+        { name:'Daizu', power:1500000, confidence:.73, reviewRequired:true, reviewReasons:['low_ocr_confidence'], ocrBox:{left:20,top:100,width:500,height:24} },
+      ], trustedRows:[], exceptions:[{type:'low_confidence',name:'Daizu'}], warnings:[] },
+      { pass:'table-adaptive', snapshotType:'power', accepted:false, usable:true, rows:[
+        { name:'Daizu', power:1500000, confidence:.74, reviewRequired:true, reviewReasons:['low_ocr_confidence'], ocrBox:{left:22,top:101,width:498,height:24} },
+      ], trustedRows:[], exceptions:[{type:'low_confidence',name:'Daizu'}], warnings:[] },
+    ],
+  });
+  assert.equal(fused.rows.length, 1);
+  assert.equal(fused.rows[0].reviewRequired, false);
+  assert.equal(fused.rows[0].ocrConsensusCount, 2);
+  assert.equal(fused.rows[0].source, 'ocr_consensus');
+  assert.equal(fused.consensusRows, 1);
+  assert.equal(fused.accepted, true);
+});
+
+test('consenso multipass recupera linha que a melhor passagem isolada perdeu', () => {
+  const fused = fuseOcrCandidates({
+    snapshotType:'power', minRows:1, minConfidence:.70, lineMinConfidence:.70,
+    candidates:[
+      { pass:'table-standard', snapshotType:'power', accepted:true, usable:true, qualityScore:.92, rows:[
+        { name:'Daizu', power:1500000, confidence:.96, reviewRequired:false, reviewReasons:[], ocrBox:{left:20,top:100,width:500,height:24} },
+        { name:'Outro', power:900000, confidence:.95, reviewRequired:false, reviewReasons:[], ocrBox:{left:20,top:190,width:500,height:24} },
+      ], trustedRows:[{name:'Daizu'},{name:'Outro'}], exceptions:[], warnings:[] },
+      { pass:'table-adaptive', snapshotType:'power', accepted:true, usable:true, qualityScore:.88, rows:[
+        { name:'Daizu', power:1500000, confidence:.94, reviewRequired:false, reviewReasons:[], ocrBox:{left:20,top:101,width:500,height:24} },
+        { name:'G⊙KU™', power:3117901, confidence:.93, reviewRequired:false, reviewReasons:[], ocrBox:{left:20,top:145,width:500,height:24} },
+      ], trustedRows:[{name:'Daizu'},{name:'G⊙KU™'}], exceptions:[], warnings:[] },
+    ],
+  });
+  assert.deepEqual(fused.rows.map(row => row.name), ['Daizu','G⊙KU™','Outro']);
+  assert.equal(fused.recoveredRows, 1);
+  assert.equal(fused.rows.find(row => row.name === 'G⊙KU™').ocrRecoveredFromAlternatePass, true);
+});
+
+test('consenso multipass nunca decide silenciosamente quando o valor diverge na mesma linha', () => {
+  const fused = fuseOcrCandidates({
+    snapshotType:'power', minRows:1, minConfidence:.70, lineMinConfidence:.70,
+    candidates:[
+      { pass:'table-standard', snapshotType:'power', rows:[
+        { name:'Daizu', power:1500000, confidence:.96, reviewRequired:false, reviewReasons:[], ocrBox:{left:20,top:100,width:500,height:24} },
+      ], trustedRows:[], exceptions:[], warnings:[] },
+      { pass:'table-adaptive', snapshotType:'power', rows:[
+        { name:'Daizu', power:1508000, confidence:.95, reviewRequired:false, reviewReasons:[], ocrBox:{left:20,top:101,width:500,height:24} },
+      ], trustedRows:[], exceptions:[], warnings:[] },
+    ],
+  });
+  assert.equal(fused.rows.length, 1);
+  assert.equal(fused.rows[0].reviewRequired, true);
+  assert.ok(fused.rows[0].reviewReasons.includes('ocr_pass_value_conflict'));
+  assert.equal(fused.passConflicts, 1);
+  assert.equal(fused.accepted, false);
+});
+
 test('resolvedor local corrige nickname com histórico + poder sem chamar IA externa', () => {
   const result = resolveAllianceOcrLocally({
     ocr: {
@@ -433,6 +492,19 @@ test('resolvedor local corrige nickname com histórico + poder sem chamar IA ext
   assert.equal(result.rows.find(row => row.name === 'Daizu').resolverResolved, true);
   assert.equal(result.resolver.autoResolved, 1);
   assert.equal(result.resolver.structuralExceptions, 0);
+});
+
+
+test('resolvedor local não apaga conflito multipass mesmo para membro conhecido', () => {
+  const result = resolveAllianceOcrLocally({
+    ocr:{ snapshotType:'power', usable:true, rows:[
+      { name:'Daizu', power:1500000, confidence:.96, reviewRequired:true, reviewReasons:['ocr_pass_value_conflict'], ocrConsensusCount:1 },
+    ], trustedRows:[], exceptions:[], warnings:[] },
+    knownMembers:[{ currentName:'Daizu', latestPower:1500000 }],
+  });
+  assert.equal(result.rows[0].reviewRequired, true);
+  assert.ok(result.rows[0].reviewReasons.includes('ocr_pass_value_conflict'));
+  assert.equal(result.rows[0].resolverResolved, false);
 });
 
 test('resolvedor local aprende correção confirmada sem transformar confusão em regra global', () => {

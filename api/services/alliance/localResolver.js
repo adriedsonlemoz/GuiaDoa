@@ -143,15 +143,17 @@ export function resolveAllianceOcrLocally({
     const exactKnown = (knownMembers || []).find(member => aliasesOf(member).some(alias => normalizeMemberName(alias) === normalizeMemberName(row.name)));
     if (exactKnown) {
       const evidence = memberEvidence(exactKnown, row, type);
-      // Nome conhecido confirma a identidade, mas não deve mascarar um valor numérico/data
-      // de baixa confiança. Só libera uma linha já duvidosa quando o próprio valor também
-      // é compatível com o histórico disponível.
+      // Nome conhecido confirma a identidade, mas nunca pode apagar um conflito real entre
+      // passagens do OCR. Histórico/consenso servem apenas para superar baixa confiança.
       const valueBacked = evidence.bonus >= 0.05;
-      row.reviewRequired = Boolean(raw.reviewRequired && !valueBacked);
-      row.reviewReasons = row.reviewRequired ? [...new Set([...(raw.reviewReasons || []), 'low_ocr_confidence'])] : [];
-      row.resolverConfidence = row.reviewRequired ? Number(clamp(0.86 + evidence.bonus).toFixed(3)) : 1;
+      const consensusBacked = Number(raw.ocrConsensusCount || 0) >= 2 && Number(raw.confidence || 0) >= 0.72;
+      const reasons = new Set(raw.reviewReasons || []);
+      if (valueBacked || consensusBacked) reasons.delete('low_ocr_confidence');
+      row.reviewReasons = [...reasons];
+      row.reviewRequired = row.reviewReasons.length > 0;
+      row.resolverConfidence = row.reviewRequired ? Number(clamp(0.86 + evidence.bonus + (consensusBacked ? 0.04 : 0)).toFixed(3)) : 1;
       row.resolverResolved = !row.reviewRequired;
-      row.resolverReasons = ['nickname exato no histórico', ...evidence.reasons];
+      row.resolverReasons = ['nickname exato no histórico', ...(consensusBacked ? ['confirmado por múltiplas passagens locais'] : []), ...evidence.reasons];
       row.source = row.resolverResolved ? 'local_resolver' : (raw.source || 'ocr');
       rows.push(row);
       decisions.push({ original: raw.name, final: row.name, confidence: row.resolverConfidence, action: row.resolverResolved ? 'confirmed_known' : 'review', reasons: row.resolverReasons });
@@ -176,7 +178,8 @@ export function resolveAllianceOcrLocally({
     const threshold = best?.learned && Number((corrections || []).find(c => normalizeMemberName(c.observedName) === normalizeMemberName(row.name) && normalizeMemberName(c.confirmedName) === normalizeMemberName(best.name))?.count || 0) >= 2
       ? Math.min(autoScore, 0.93)
       : autoScore;
-    const safeAuto = Boolean(best && best.score >= threshold && margin >= minMargin && ocrConfidence >= 0.58);
+    const hardReviewReasons = (raw.reviewReasons || []).filter(reason => !['low_ocr_confidence','local_resolver_suggestion'].includes(reason));
+    const safeAuto = Boolean(best && best.score >= threshold && margin >= minMargin && ocrConfidence >= 0.58 && hardReviewReasons.length === 0);
 
     if (safeAuto) {
       row.name = best.name;

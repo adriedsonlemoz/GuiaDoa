@@ -238,7 +238,7 @@ function atRenderImport() {
   panel.innerHTML = `
     <div class="at-card">
       <h3>📸 Importar screenshots</h3>
-      <p class="at-muted">Envie uma ou várias telas do mesmo filtro: <strong>Poder</strong>, <strong>Última Conexão</strong> ou <strong>Data de Entrada</strong>. A leitura é <strong>100% local</strong>; quando o OCR não tiver certeza, a dúvida vai para sua revisão.</p>
+      <p class="at-muted">Envie uma ou várias telas do mesmo filtro: <strong>Poder</strong>, <strong>Última Conexão</strong> ou <strong>Data de Entrada</strong>. A leitura é <strong>100% local</strong>; o sistema cruza múltiplas passagens do OCR, histórico e correções confirmadas. Quando ainda houver dúvida, ela vai para sua revisão.</p>
       <label class="at-drop" for="at-files"><span>🖼️</span><strong>Selecionar screenshots</strong><small>JPG, PNG ou WebP · até 10 imagens · 6 MB cada</small></label>
       <input id="at-files" type="file" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="atFilesChanged(this.files)">
       <div id="at-file-list" class="at-file-list">Nenhuma imagem selecionada.</div>
@@ -246,7 +246,7 @@ function atRenderImport() {
         <div class="field"><label>Tipo da captura</label><select id="at-snapshot-type-hint"><option value="auto">Detectar automaticamente</option><option value="power">Poder</option><option value="last_connection">Última conexão</option><option value="joined_at">Data de entrada</option></select><small>Se você souber o filtro aberto no jogo, selecionar aqui pula a detecção do cabeçalho e melhora a leitura.</small></div>
         <div class="field"><label>Data/hora da captura</label><input id="at-captured" type="datetime-local" value="${local}"></div>
       </div>
-      <div class="at-note"><strong>Leitura 100% local:</strong> o Tesseract tenta linha visual, segunda passagem e, quando necessário, separa <strong>nomes</strong> e <strong>valores</strong> em colunas para parear pela posição. O resolvedor próprio usa histórico e correções confirmadas; dúvidas seguem para sua revisão.</div>
+      <div class="at-note"><strong>Leitura 100% local:</strong> o Tesseract faz passagens complementares e o GUIA cruza os resultados por nome, valor e posição visual. Linhas confirmadas por mais de uma passagem ganham consenso local; divergências nunca são escondidas. O resolvedor próprio usa histórico e correções confirmadas apenas como evidência adicional.</div>
       <button id="at-read-btn" class="btn btn-gold" onclick="atExtract(false)" disabled>🔎 Ler screenshots</button>
       <div id="at-scan-story" class="at-scan-story" hidden>
         <div class="at-scan-head">
@@ -338,7 +338,7 @@ function atScanNarrate(event) {
       title: resumed ? `${completed}/${total} imagens já estavam concluídas.` : `Recebi ${event.uploadedTotal || event.imagesCount} screenshot${(event.uploadedTotal || event.imagesCount) === 1 ? '' : 's'}.`,
       text: resumed
         ? `${event.checkpoint?.ocrReady ? 'O OCR da imagem atual também foi recuperado do checkpoint. ' : ''}Vou continuar da próxima etapa sem reler capturas concluídas.`
-        : `${event.duplicatesSkipped ? `${event.duplicatesSkipped} captura(s) repetida(s) foram ignoradas pelo hash. ` : ''}Vou processar ${event.imagesCount} imagem(ns) única(s), uma por vez: ROI, reconstrução de linhas e pareamento local por colunas quando necessário.`,
+        : `${event.duplicatesSkipped ? `${event.duplicatesSkipped} captura(s) repetida(s) foram ignoradas pelo hash. ` : ''}Vou processar ${event.imagesCount} imagem(ns) única(s), uma por vez: ROI, múltiplas passagens locais, consenso entre leituras e pareamento por colunas quando necessário.`,
       progress:realProgress, completed, total,
       line: resumed ? `Lote recuperado: ${completed}/${total} imagens concluídas.` : event.duplicatesSkipped ? `Upload concluído; ${event.duplicatesSkipped} screenshot(s) duplicado(s) descartado(s).` : 'Upload concluído. Iniciando análise local por regiões.',
     });
@@ -425,6 +425,18 @@ function atScanNarrate(event) {
       text:`${Number(event.trustedRows || 0)} linha(s) ficaram seguras e ${Number(event.exceptions || 0)} precisam de revisão.`,
       progress:realProgress, completed, total,
       line:`Pareamento por coordenadas concluído: ${Number(event.rows || 0)} linha(s).`,
+    });
+  }
+  if (event.type === 'vision_progress' && event.stage === 'ocr_consensus') {
+    const consensus = Number(event.consensusRows || 0);
+    const recovered = Number(event.recoveredRows || 0);
+    const conflicts = Number(event.conflicts || 0);
+    return atScanStory({
+      kicker:`Imagem ${current} de ${total} · consenso local`,
+      title:consensus ? `${consensus} linha(s) confirmada(s) por mais de uma passagem.` : 'Cruzando as passagens locais do OCR…',
+      text:`${recovered ? `${recovered} linha(s) foram recuperadas de uma passagem complementar. ` : ''}${conflicts ? `${conflicts} divergência(s) permaneceram marcadas para revisão.` : 'Nenhuma divergência entre as leituras ficou pendente.'}`,
+      progress:realProgress, completed, total,
+      line:`Consenso OCR: ${consensus} confirmada(s) · ${recovered} recuperada(s) · ${conflicts} conflito(s).`,
     });
   }
   if (event.type === 'vision_progress' && event.stage === 'ocr_retry') {
@@ -530,7 +542,7 @@ function atScanNarrate(event) {
       title:`Encontrei ${event.rows} linha${event.rows === 1 ? '' : 's'} nesta captura.`,
       text:event.reviewItems ? `${event.trustedRows || 0} linha(s) foram preservadas e ${event.reviewItems} exceção(ões) seguem marcadas para revisão. Fonte: ${source}.` : event.warnings ? `Também encontrei ${event.warnings} ponto${event.warnings === 1 ? '' : 's'} que merece revisão. Fonte: ${source}.` : done < total ? `Resultado preservado (${source}). Agora sigo para a próxima imagem.` : `Todas as imagens foram lidas. Última fonte: ${source}.`,
       progress:pct, completed:done, total,
-      line:`Imagem ${current} concluída: ${event.rows} membro(s) · ${event.exceptions || 0} exceção(ões) OCR · ${source}.`,
+      line:`Imagem ${current} concluída: ${event.rows} membro(s) · ${event.consensusRows || 0} por consenso · ${event.recoveredRows || 0} recuperada(s) · ${event.exceptions || 0} exceção(ões) · ${source}.`,
     });
   }
   if (event.type === 'merge_start') {
@@ -858,6 +870,8 @@ function atReviewReasonLabel(reason) {
     value_conflict:'Valor divergente entre screenshots',
     invalid_row_value:'Valor inválido para o tipo selecionado',
     local_resolver_suggestion:'Sugestão do resolvedor local',
+    ocr_pass_value_conflict:'Valor divergente entre passagens do OCR',
+    ocr_pass_nickname_conflict:'Nickname divergente entre passagens do OCR',
     snapshot_type_manual:'Tipo da captura requer confirmação',
     image_manual_entry:'Imagem requer entrada manual',
     structural_manual_review:'Trecho não reconstruído pelo OCR',
@@ -936,6 +950,7 @@ function atRenderReview() {
       <div class="at-review-head"><div><h3>Revisar leitura</h3><p class="at-muted">${rows.length} membro(s) únicos em ${r.imagesCount || AT.files.length} imagem(ns). Leitura concluída 100% localmente.</p></div><button class="btn btn-ghost" onclick="atCancelReview()">← Voltar</button></div>
       <div class="at-reader-metrics">
         <div><span>Leitura local</span><strong>${Math.round(localRate)}%</strong><small>${Number(m.localAutoResolved || 0)} correção(ões) local(is)</small></div>
+        <div><span>Consenso OCR</span><strong>${Number(m.ocrConsensusRows || 0)}</strong><small>${Number(m.ocrRecoveredRows || 0)} linha(s) recuperada(s)</small></div>
         <div><span>Revisão manual</span><strong>${Number(m.manualReviewImages || 0)}</strong><small>imagem(ns) com alguma dúvida</small></div>
         <div><span>Exceções</span><strong>${pending}</strong><small>linhas aguardando confirmação</small></div>
         <div><span>Duplicados</span><strong>${Number(m.duplicatesSkipped ?? r.duplicatesSkipped ?? 0)}</strong><small>screenshots não relidos</small></div>

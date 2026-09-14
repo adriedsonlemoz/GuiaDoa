@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { mkdir } from 'node:fs/promises';
-import { SNAPSHOT_TYPES, isValidDateParts } from '../../utils/allianceTracker.js';
+import { SNAPSHOT_TYPES, isValidDateParts, nameSimilarity, normalizeMemberName } from '../../utils/allianceTracker.js';
 
 const require = createRequire(import.meta.url);
 const DEFAULT_MIN_CONFIDENCE = 0.82;
@@ -734,6 +734,201 @@ function chooseBestParse(candidates = []) {
   })[0] || null;
 }
 
+function typedRowValue(row = {}, snapshotType = null) {
+  if (snapshotType === 'power') return row.power == null ? '' : String(row.power);
+  if (snapshotType === 'last_connection') return row.online ? 'online' : String(row.lastConnection || '');
+  if (snapshotType === 'joined_at') return String(row.joinedAt || '');
+  return '';
+}
+
+function rowCenterY(row = {}) {
+  const box = row.ocrBox;
+  if (!box || !Number.isFinite(Number(box.top)) || !Number.isFinite(Number(box.height))) return null;
+  return Number(box.top) + Math.max(1, Number(box.height)) / 2;
+}
+
+function sameVisualRow(a = {}, b = {}) {
+  const ay = rowCenterY(a);
+  const by = rowCenterY(b);
+  if (ay == null || by == null) return false;
+  const ah = Math.max(1, Number(a.ocrBox?.height || 1));
+  const bh = Math.max(1, Number(b.ocrBox?.height || 1));
+  // Passagens sobre a mesma linha costumam variar poucos pixels. Mantemos uma janela
+  // menor que a altura de uma linha para não fundir membros adjacentes por acidente.
+  return Math.abs(ay - by) <= Math.max(5, Math.max(ah, bh) * 0.82);
+}
+
+function consensusConfidence(rows = []) {
+  const confidences = rows.map(row => Math.max(0, Math.min(1, Number(row.confidence) || 0))).sort((a, b) => b - a);
+  if (!confidences.length) return 0;
+  // As passagens são correlacionadas, portanto não usamos probabilidade independente.
+  // O bônus é deliberadamente pequeno: consenso confirma, mas não transforma OCR ruim em certeza.
+  return Math.min(0.995, confidences[0] + Math.min(0.12, Math.max(0, confidences.length - 1) * 0.045));
+}
+
+function occurrenceKey(row = {}, snapshotType = null) {
+  return `${normalizeMemberName(row.name)}|${typedRowValue(row, snapshotType)}`;
+}
+
+function matchFusionGroup(groups, row, snapshotType) {
+  const normalizedName = normalizeMemberName(row.name);
+  const value = typedRowValue(row, snapshotType);
+  let best = null;
+  let bestScore = -1;
+  for (const group of groups) {
+    const representative = group.occurrences[0];
+    const sameName = normalizeMemberName(representative.name) === normalizedName;
+    const sameValue = typedRowValue(representative, snapshotType) === value && value !== '';
+    const visual = sameVisualRow(representative, row);
+    const similarity = nameSimilarity(representative.name, row.name);
+    // Exatidão de nome+valor é suficiente mesmo quando uma passagem não retornou geometria.
+    // Para grafias diferentes, exigimos o mesmo valor E a mesma linha visual.
+    let score = -1;
+    if (sameName && sameValue) score = 4;
+    else if (sameName && visual) score = 3;
+    else if (sameValue && visual && similarity >= 0.45) score = 2 + similarity;
+    else if (sameValue && visual) score = 1.5;
+    if (score > bestScore) { best = group; bestScore = score; }
+  }
+  return bestScore >= 0 ? best : null;
+}
+
+/**
+ * Combina deterministicamente as várias passagens do Tesseract. Nenhuma inferência externa
+ * é feita: uma linha só ganha confiança quando duas ou mais passagens concordam em nome+valor.
+ * Divergências ficam explicitamente marcadas para revisão.
+ */
+export function fuseOcrCandidates({
+  candidates = [],
+  snapshotType = null,
+  minRows = DEFAULT_MIN_ROWS,
+  minConfidence = DEFAULT_MIN_CONFIDENCE,
+  lineMinConfidence = DEFAULT_LINE_CONFIDENCE,
+} = {}) {
+  const valid = candidates.filter(candidate => candidate && Array.isArray(candidate.rows) && candidate.rows.length);
+  const best = chooseBestParse(valid);
+  if (!best || !SNAPSHOT_TYPES.includes(snapshotType || best.snapshotType)) return best || null;
+  const type = SNAPSHOT_TYPES.includes(snapshotType) ? snapshotType : best.snapshotType;
+  const groups = [];
+
+  for (const candidate of valid) {
+    for (const rawRow of candidate.rows || []) {
+      const row = { ...rawRow, ocrPass: candidate.pass || rawRow.ocrPass || 'unknown' };
+      const group = matchFusionGroup(groups, row, type);
+      if (group) group.occurrences.push(row);
+      else groups.push({ occurrences:[row] });
+    }
+  }
+
+  const bestKeys = new Set((best.rows || []).map(row => occurrenceKey(row, type)));
+  let recoveredRows = 0;
+  let consensusRows = 0;
+  let passConflicts = 0;
+
+  const rows = groups.map(group => {
+    const occurrences = group.occurrences;
+    const votes = new Map();
+    for (const row of occurrences) {
+      const key = occurrenceKey(row, type);
+      const vote = votes.get(key) || { key, rows:[], weight:0 };
+      vote.rows.push(row);
+      vote.weight += Math.max(0.05, Number(row.confidence) || 0);
+      votes.set(key, vote);
+    }
+    const rankedVotes = [...votes.values()].sort((a, b) => b.rows.length - a.rows.length || b.weight - a.weight);
+    const winner = rankedVotes[0];
+    const winnerRows = winner?.rows || occurrences;
+    const representative = [...winnerRows].sort((a, b) => {
+      if (Boolean(a.reviewRequired) !== Boolean(b.reviewRequired)) return a.reviewRequired ? 1 : -1;
+      return Number(b.confidence || 0) - Number(a.confidence || 0);
+    })[0] || occurrences[0];
+    const nameAlternatives = [...new Set(occurrences.map(row => String(row.name || '').trim()).filter(Boolean))];
+    const valueAlternatives = [...new Set(occurrences.map(row => typedRowValue(row, type)).filter(Boolean))];
+    const consensusCount = winnerRows.length;
+    const passes = [...new Set(occurrences.map(row => row.ocrPass).filter(Boolean))];
+    const confidence = consensusCount >= 2 ? consensusConfidence(winnerRows) : Math.max(0, Math.min(1, Number(representative.confidence) || 0));
+    const sameNameValueConsensus = consensusCount >= 2;
+    const valueConflict = valueAlternatives.length > 1;
+    const nameConflict = nameAlternatives.length > 1 && !sameNameValueConsensus;
+    const reviewReasons = new Set(representative.reviewReasons || []);
+
+    if (sameNameValueConsensus && confidence >= lineMinConfidence && Number(representative.confidence || 0) >= 0.52) {
+      reviewReasons.delete('low_ocr_confidence');
+    }
+    if (valueConflict) reviewReasons.add('ocr_pass_value_conflict');
+    if (nameConflict) reviewReasons.add('ocr_pass_nickname_conflict');
+    const reviewRequired = valueConflict || nameConflict || reviewReasons.size > 0;
+    if (valueConflict || nameConflict) passConflicts += 1;
+    if (sameNameValueConsensus) consensusRows += 1;
+    if (!bestKeys.has(winner?.key || occurrenceKey(representative, type))) recoveredRows += 1;
+
+    return {
+      ...representative,
+      confidence,
+      reviewRequired,
+      reviewReasons:[...reviewReasons],
+      source: sameNameValueConsensus ? 'ocr_consensus' : (representative.source || 'ocr'),
+      sources:[...new Set([...(representative.sources || [representative.source || 'ocr']), ...(sameNameValueConsensus ? ['ocr_consensus'] : [])])],
+      ocrConsensusCount: consensusCount,
+      ocrPasses: passes,
+      ocrRecoveredFromAlternatePass: !bestKeys.has(winner?.key || occurrenceKey(representative, type)),
+      ...(nameAlternatives.length > 1 ? { nameAlternatives } : {}),
+      ...(valueAlternatives.length > 1 ? { ocrValueAlternatives:valueAlternatives } : {}),
+    };
+  }).sort((a, b) => {
+    const ay = rowCenterY(a);
+    const by = rowCenterY(b);
+    if (ay != null && by != null && ay !== by) return ay - by;
+    return String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR');
+  });
+
+  const trustedRows = rows.filter(row => !row.reviewRequired);
+  const trustedNames = new Set(trustedRows.map(row => normalizeMemberName(row.name)));
+  const exceptions = (best.exceptions || []).filter(item => {
+    if (item.type !== 'low_confidence') return true;
+    return !trustedNames.has(normalizeMemberName(item.name));
+  });
+  const confidence = trustedRows.length
+    ? trustedRows.reduce((sum, row) => sum + Number(row.confidence || 0), 0) / trustedRows.length
+    : 0;
+  const lowestConfidence = trustedRows.length ? Math.min(...trustedRows.map(row => Number(row.confidence || 0))) : 0;
+  const accepted = Boolean(
+    trustedRows.length >= minRows
+    && confidence >= minConfidence
+    && lowestConfidence >= Math.max(0.62, lineMinConfidence - 0.08)
+    && exceptions.length === 0
+    && rows.every(row => !row.reviewRequired)
+  );
+  const usable = Boolean(rows.length >= minRows);
+  const reason = accepted ? null : rows.length < minRows ? 'rows' : exceptions.length ? 'exceptions' : rows.some(row => row.reviewRequired) ? 'review' : 'confidence';
+  const warnings = [...new Set([...(best.warnings || [])].filter(warning => {
+    if (!consensusRows) return true;
+    return !/confian[cç]a|exce[cç][aã]o/i.test(String(warning));
+  }))];
+  if (recoveredRows) warnings.push(`${recoveredRows} linha(s) foram recuperadas cruzando passagens locais do OCR.`);
+  if (passConflicts) warnings.push(`${passConflicts} divergência(s) entre passagens locais foram preservadas para revisão.`);
+  if (!accepted && rows.some(row => row.reviewRequired)) warnings.push(`${rows.filter(row => row.reviewRequired).length} linha(s) continuam aguardando confirmação manual.`);
+
+  const qualityScore = Math.max(0, Math.min(1,
+    (rows.length ? 0.22 : 0)
+    + Math.min(0.22, trustedRows.length * 0.022)
+    + confidence * 0.42
+    + Math.min(0.12, consensusRows * 0.018)
+    - Math.min(0.22, (exceptions.length + passConflicts) * 0.035)
+  ));
+
+  return {
+    ...best,
+    accepted, usable, reason, snapshotType:type, rows, trustedRows, exceptions, warnings,
+    confidence, lowestConfidence, qualityScore,
+    consensusFusion:true,
+    consensusRows,
+    recoveredRows,
+    passConflicts,
+    candidatePasses:valid.length,
+  };
+}
+
 async function runOcrPipeline({
   buffer,
   timeoutMs,
@@ -809,11 +1004,13 @@ async function runOcrPipeline({
     });
     parsed = annotateParsedGeometry(parsed, regions.table, dimensions, 'table');
     parsedCandidates.push({ ...parsed, pass: 'table-standard', rawText: safeText(tablePass.text) });
-    if (parsed.accepted) {
+    // Uma leitura muito forte pode encerrar cedo. Abaixo disso fazemos uma segunda
+    // passagem e cruzamos os resultados, em vez de confiar em uma única interpretação.
+    if (parsed.accepted && Number(parsed.confidence || 0) >= 0.90) {
       return { parsed, passes, rawText: safeText(tablePass.text), headerText: safeText(headerText, 1200), dimensions, regions };
     }
 
-    onProgress?.({ stage: 'ocr_variant', variant: 'adaptive', reason: parsed.reason, exceptions: parsed.exceptions.length });
+    onProgress?.({ stage: 'ocr_variant', variant: 'adaptive', reason: parsed.reason || 'consensus_check', exceptions: parsed.exceptions.length });
     const adaptivePass = await recognizePass({
       worker, buffer, rectangle: regions.table, timeoutMs: perPassTimeout,
       variant: 'adaptive', region: 'table', psm: '11', role: 'mixed', snapshotType, onProgress,
@@ -829,13 +1026,15 @@ async function runOcrPipeline({
     });
     adaptive = annotateParsedGeometry(adaptive, regions.table, dimensions, 'table');
     parsedCandidates.push({ ...adaptive, pass: 'table-adaptive', rawText: safeText(adaptivePass.text) });
-    if (adaptive.accepted) {
-      return { parsed: adaptive, passes, rawText: safeText(adaptivePass.text), headerText: safeText(headerText, 1200), dimensions, regions };
+    const fusedAfterAdaptive = fuseOcrCandidates({ candidates:parsedCandidates, snapshotType, minRows, minConfidence, lineMinConfidence });
+    if (fusedAfterAdaptive?.accepted) {
+      onProgress?.({ stage:'ocr_consensus', rows:fusedAfterAdaptive.rows.length, consensusRows:fusedAfterAdaptive.consensusRows || 0, recoveredRows:fusedAfterAdaptive.recoveredRows || 0, conflicts:fusedAfterAdaptive.passConflicts || 0 });
+      return { parsed: fusedAfterAdaptive, passes, rawText: safeText(adaptivePass.text), headerText: safeText(headerText, 1200), dimensions, regions };
     }
 
     // Quando o TSV separa nickname e valor em blocos diferentes, uma leitura única
     // não consegue formar a linha. Lemos as colunas separadamente e pareamos pelo eixo Y.
-    const currentBest = chooseBestParse(parsedCandidates);
+    const currentBest = fuseOcrCandidates({ candidates:parsedCandidates, snapshotType, minRows, minConfidence, lineMinConfidence }) || chooseBestParse(parsedCandidates);
     if ((currentBest?.trustedRows?.length || 0) < minRows && regions.nameColumn && regions.valueColumn) {
       onProgress?.({ stage: 'ocr_column_pairing', snapshotType, reason: currentBest?.reason || 'rows' });
       const namePass = await recognizePass({
@@ -867,8 +1066,10 @@ async function runOcrPipeline({
         trustedRows: paired.trustedRows.length,
         exceptions: paired.exceptions.length,
       });
-      if (paired.accepted) {
-        return { parsed: paired, passes, rawText: safeText(`${namePass.text}\n${valuePass.text}`), headerText: safeText(headerText, 1200), dimensions, regions };
+      const fusedAfterPairing = fuseOcrCandidates({ candidates:parsedCandidates, snapshotType, minRows, minConfidence, lineMinConfidence });
+      if (fusedAfterPairing?.accepted) {
+        onProgress?.({ stage:'ocr_consensus', rows:fusedAfterPairing.rows.length, consensusRows:fusedAfterPairing.consensusRows || 0, recoveredRows:fusedAfterPairing.recoveredRows || 0, conflicts:fusedAfterPairing.passConflicts || 0 });
+        return { parsed: fusedAfterPairing, passes, rawText: safeText(`${namePass.text}\n${valuePass.text}`), headerText: safeText(headerText, 1200), dimensions, regions };
       }
 
       if (!paired.rows.length && Array.isArray(regions.columnVariants) && regions.columnVariants[1]) {
@@ -891,15 +1092,24 @@ async function runOcrPipeline({
         });
         parsedCandidates.push({ ...altPaired, pass: 'column-pair-alt', rawText: safeText(`${altNamePass.text}\n${altValuePass.text}`) });
         onProgress?.({ stage: 'ocr_column_pairing_done', snapshotType, rows: altPaired.rows.length, trustedRows: altPaired.trustedRows.length, exceptions: altPaired.exceptions.length, alternate: true });
-        if (altPaired.accepted) {
-          return { parsed: altPaired, passes, rawText: safeText(`${altNamePass.text}\n${altValuePass.text}`), headerText: safeText(headerText, 1200), dimensions, regions };
+        const fusedAfterAlt = fuseOcrCandidates({ candidates:parsedCandidates, snapshotType, minRows, minConfidence, lineMinConfidence });
+        if (fusedAfterAlt?.accepted) {
+          onProgress?.({ stage:'ocr_consensus', rows:fusedAfterAlt.rows.length, consensusRows:fusedAfterAlt.consensusRows || 0, recoveredRows:fusedAfterAlt.recoveredRows || 0, conflicts:fusedAfterAlt.passConflicts || 0 });
+          return { parsed: fusedAfterAlt, passes, rawText: safeText(`${altNamePass.text}\n${altValuePass.text}`), headerText: safeText(headerText, 1200), dimensions, regions };
         }
       }
     }
   }
 
-  const bestBeforeFull = chooseBestParse(parsedCandidates);
-  if (!bestBeforeFull?.accepted && (!snapshotType || forceFull || (bestBeforeFull?.rows?.length || 0) === 0)) {
+  const bestBeforeFull = fuseOcrCandidates({ candidates:parsedCandidates, snapshotType, minRows, minConfidence, lineMinConfidence }) || chooseBestParse(parsedCandidates);
+  const needsFullFallback = !bestBeforeFull?.accepted && (
+    !snapshotType
+    || forceFull
+    || (bestBeforeFull?.rows?.length || 0) === 0
+    || (bestBeforeFull?.exceptions?.length || 0) > 0
+    || (bestBeforeFull?.rows || []).some(row => row.reviewRequired)
+  );
+  if (needsFullFallback) {
     const fullAdaptive = await recognizePass({
       worker, buffer, rectangle: null, timeoutMs: perPassTimeout,
       variant: 'adaptive', region: 'full', psm: '11', role: 'mixed', snapshotType, onProgress,
@@ -919,7 +1129,10 @@ async function runOcrPipeline({
     snapshotType = detected || snapshotType;
   }
 
-  const best = chooseBestParse(parsedCandidates);
+  const best = fuseOcrCandidates({ candidates:parsedCandidates, snapshotType, minRows, minConfidence, lineMinConfidence }) || chooseBestParse(parsedCandidates);
+  if (best?.consensusFusion) {
+    onProgress?.({ stage:'ocr_consensus', rows:best.rows.length, consensusRows:best.consensusRows || 0, recoveredRows:best.recoveredRows || 0, conflicts:best.passConflicts || 0 });
+  }
   return {
     parsed: best || parseAllianceOcr({ text: headerText, snapshotTypeHint, minRows, minConfidence, lineMinConfidence }),
     passes,
@@ -978,6 +1191,11 @@ export async function extractAllianceScreenshotWithOcr({
               exceptions: parsed.exceptions?.length || 0,
               qualityScore: parsed.qualityScore || 0,
               columnPairing: Boolean(parsed.columnPairing),
+              consensusFusion: Boolean(parsed.consensusFusion),
+              consensusRows: Number(parsed.consensusRows || 0),
+              recoveredRows: Number(parsed.recoveredRows || 0),
+              passConflicts: Number(parsed.passConflicts || 0),
+              candidatePasses: Number(parsed.candidatePasses || 0),
               snapshotTypeHint: SNAPSHOT_TYPES.includes(snapshotTypeHint) ? snapshotTypeHint : null,
             },
             checkpoint: {
@@ -997,6 +1215,11 @@ export async function extractAllianceScreenshotWithOcr({
                 dimensions: pipeline.dimensions,
                 qualityScore: parsed.qualityScore || 0,
                 columnPairing: Boolean(parsed.columnPairing),
+                consensusFusion: Boolean(parsed.consensusFusion),
+                consensusRows: Number(parsed.consensusRows || 0),
+                recoveredRows: Number(parsed.recoveredRows || 0),
+                passConflicts: Number(parsed.passConflicts || 0),
+                candidatePasses: Number(parsed.candidatePasses || 0),
                 snapshotTypeHint: SNAPSHOT_TYPES.includes(snapshotTypeHint) ? snapshotTypeHint : null,
               },
               headerText: pipeline.headerText,
@@ -1012,6 +1235,9 @@ export async function extractAllianceScreenshotWithOcr({
             exceptions: parsed.exceptions?.length || 0,
             reason: parsed.reason,
             passes: pipeline.passes.length,
+            consensusRows: Number(parsed.consensusRows || 0),
+            recoveredRows: Number(parsed.recoveredRows || 0),
+            passConflicts: Number(parsed.passConflicts || 0),
           });
           return result;
         } catch (error) {

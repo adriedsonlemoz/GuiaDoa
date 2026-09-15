@@ -49,7 +49,7 @@ test('application and API locks agree with the native release metadata', () => {
     assert.equal(read(file).version, version);
     assert.equal(read(file).packages[''].version, version);
   }
-  assert.equal(read('mobile/android-version.json').versionCode, 100080);
+  assert.equal(read('mobile/android-version.json').versionCode, 100081);
 });
 
 test('workflow validates before publishing exactly one signed APK and no artifact archive', () => {
@@ -65,4 +65,13 @@ test('workflow validates before publishing exactly one signed APK and no artifac
   assert.match(flow, /assets\[0\]\.name, 'GuiaDOA\.apk'/);
   assert.match(flow, /github\.event_name != 'pull_request'/);
   assert.match(flow, /--target "\$GITHUB_SHA"/);
+});
+
+
+test('workflow usa o SDK do runner sem a action Android que tenta instalar o pacote legado tools', () => {
+  const flow = readFileSync(new URL('../.github/workflows/build-apk.yml', import.meta.url), 'utf8');
+  assert.doesNotMatch(flow, /android-actions\/setup-android/);
+  assert.match(flow, /command -v sdkmanager/);
+  assert.match(flow, /\"\$SDKMANAGER\" --install 'platform-tools' 'platforms;android-36'/);
+  assert.doesNotMatch(flow, /sdkmanager\s+tools(?:\s|$)/);
 });

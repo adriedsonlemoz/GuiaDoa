@@ -87,10 +87,18 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
-
-      - name: Instalar SDK e ferramentas Android fixadas
-        run: sdkmanager 'platforms;android-36' "build-tools;$ANDROID_BUILD_TOOLS"
+      - name: Preparar SDK Android do runner
+        shell: bash
+        run: |
+          test -n "${ANDROID_HOME:-}"
+          SDKMANAGER="$(command -v sdkmanager || true)"
+          if [ -z "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager -print | sort -V | tail -n 1)"
+          fi
+          test -n "$SDKMANAGER"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install 'platform-tools' 'platforms;android-36' "build-tools;$ANDROID_BUILD_TOOLS"
 
       - name: Instalar Capacitor isolado do build web
         run: npm install --no-save --package-lock=false @capacitor/core@8.5.0 @capacitor/android@8.5.0 @capacitor/cli@8.5.0

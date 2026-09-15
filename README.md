@@ -4,7 +4,7 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 
 ## Versão
 
-**1.0.0-beta.2.80** | Android `versionCode`: **100080**
+**1.0.0-beta.2.81** | Android `versionCode`: **100081**
 
 ## Principais módulos
 
@@ -15,6 +15,15 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 - **Extras → Reinos** com catálogo canônico, abertura/idade calculada, fuso, horários confirmados, eventos ativos e histórico
 - Extras: Reinos, Doação, Sobre, Texto Colorido e Backup
 - Painel Admin para manutenção dos conteúdos do MongoDB
+
+## Beta 2.81 — correção do build Android
+
+- Corrigida a falha do GitHub Actions antes da compilação do APK: `android-actions/setup-android@v3` tentava instalar o pacote legado `tools`, que não existe mais no repositório atual do Android SDK.
+- O workflow agora reutiliza o Android SDK já disponível no runner `ubuntu-24.04` e instala explicitamente apenas `platform-tools`, `platforms;android-36` e `build-tools;36.0.0`.
+- Mantidas as validações, testes, geração via Capacitor, assinatura e publicação de `GuiaDOA.apk` já existentes.
+- Frontend, API e metadados Android avançam para `1.0.0-beta.2.81` / `versionCode 100081`.
+
+Detalhes da correção: [Build Android Beta 2.81](docs/BUILD_ANDROID_BETA_2_81.md).
 
 ## Beta 2.80 — comparação de tropas
 

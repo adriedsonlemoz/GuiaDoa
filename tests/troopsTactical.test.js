@@ -124,3 +124,18 @@ test('troop detail always exposes good/weak matchup state', () => {
   assert.match(pt, /'troops\.matchup_unknown': 'Ainda não identificado'/);
   assert.match(admin, />Bom contra </);
 });
+
+test('comparação mantém três colunas fixas e permite substituir tropa diretamente no slot', () => {
+  const page = read('src/components/tropas/TropaComparar.jsx');
+  const table = read('src/components/tropas/comparar/TropaComparisonTable.jsx');
+  const slot = read('src/components/tropas/comparar/TropaSlot.jsx');
+  const css = read('src/index.css');
+  assert.match(table, /slots\.map\(\(tropa, index\)/);
+  assert.match(table, /troop-compare-empty-value/);
+  assert.match(table, /troops\.slot/);
+  assert.match(css, /grid-template-columns:minmax\(102px,1\.12fr\) repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(page, /troop-compare-picker-hint/);
+  assert.match(slot, /onClick=\{onSelecionar\}/);
+  assert.match(slot, /event\.stopPropagation\(\)/);
+  assert.match(slot, /troops\.compare_change/);
+});

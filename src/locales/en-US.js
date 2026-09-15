@@ -1181,6 +1181,8 @@ const enUS = {
   'troops.compare_title': '⚖️ Compare Troops',
   'troops.compare_add': 'Tap ➕ to add a troop',
   'troops.compare_add_second': 'Add one more troop to start comparing',
+  'troops.compare_change': 'Tap a troop to replace it',
+  'troops.compare_best_legend': '▲ marks the highest value; ties highlight every leader.',
   'troops.simulator.remove_title': 'Remove unit',
   'troops.simulator.remove_text': 'Remove {name} from the formation?',
   'troops.simulator.exit_title': 'Exit simulator',

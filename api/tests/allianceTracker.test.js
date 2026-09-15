@@ -11,7 +11,7 @@ import {
   isValidDateParts,
   scoreNicknameCandidate,
 } from '../utils/allianceTracker.js';
-import { buildOcrRegions, detectSnapshotTypeFromOcr, fuseOcrCandidates, imageDimensions, parseAllianceOcr } from '../services/alliance/ocr.js';
+import { buildOcrRegions, detectSnapshotTypeFromOcr, fuseOcrCandidates, imageDimensions, parseAllianceOcr, parseColumnPairs } from '../services/alliance/ocr.js';
 import { extractAllianceScreenshot } from '../services/alliance/vision.js';
 import { resolveAllianceOcrLocally, weightedNicknameSimilarity } from '../services/alliance/localResolver.js';
 
@@ -28,6 +28,16 @@ function allianceOcrTsv(lines = []) {
     });
     top += 30;
   });
+  return [header, ...rows].join('\n');
+}
+
+function allianceOcrTsvPositioned(lines = []) {
+  const header = ['level','page_num','block_num','par_num','line_num','word_num','left','top','width','height','conf','text'].join('\t');
+  const rows = lines.map((line, index) => [
+    5, 1, 1, 1, index + 1, 1,
+    line.left ?? 10, line.top ?? 10, line.width ?? 120, line.height ?? 20,
+    line.conf ?? 96, line.text,
+  ].join('\t'));
   return [header, ...rows].join('\n');
 }
 
@@ -77,6 +87,39 @@ test('OCR local rejeita leitura ambígua em vez de inventar números', () => {
   });
   assert.equal(parsed.accepted, false);
   assert.equal(parsed.rows.length, 0);
+});
+
+
+test('OCR local recupera número com confusão visual apenas como hipótese revisável', () => {
+  const parsed = parseAllianceOcr({
+    text:'Poder', snapshotTypeHint:'power', minRows:1,
+    tsv: allianceOcrTsv([[{ text:'Daizu', conf:97, width:500 }, { text:'15O0000', conf:97 }]]),
+  });
+  assert.equal(parsed.rows.length, 1);
+  assert.equal(parsed.rows[0].power, 1500000);
+  assert.equal(parsed.rows[0].reviewRequired, true);
+  assert.equal(parsed.rows[0].ocrValueAmbiguous, true);
+  assert.ok(parsed.rows[0].reviewReasons.includes('numeric_ocr_ambiguity'));
+  assert.equal(parsed.accepted, false);
+});
+
+test('pareamento por colunas preserva a ordem global quando o pareamento guloso perderia uma linha', () => {
+  const parsed = parseColumnPairs({
+    namesTsv: allianceOcrTsvPositioned([
+      { text:'Alpha', top:100, conf:98 },
+      { text:'Bravo', top:140, conf:98 },
+    ]),
+    valuesTsv: allianceOcrTsvPositioned([
+      { text:'100000', top:128, conf:98 },
+      { text:'200000', top:140, conf:98 },
+    ]),
+    snapshotType:'power', minRows:1, minConfidence:.70, lineMinConfidence:.70,
+  });
+  assert.equal(parsed.columnPairingMethod, 'monotonic-dp');
+  assert.equal(parsed.rows.length, 2);
+  assert.deepEqual(parsed.rows.map(row => [row.name, row.power]), [['Alpha',100000],['Bravo',200000]]);
+  assert.ok(parsed.rows[0].reviewReasons.includes('column_alignment_weak'));
+  assert.equal(parsed.rows[1].reviewRequired, false);
 });
 
 test('Alliance Tracker respeita o limite de 120 membros do jogo', () => {
@@ -452,6 +495,40 @@ test('consenso multipass recupera linha que a melhor passagem isolada perdeu', (
   assert.equal(fused.rows.find(row => row.name === 'G⊙KU™').ocrRecoveredFromAlternatePass, true);
 });
 
+test('consenso multipass confirma hipótese numérica quando outra passagem lê o mesmo valor sem ambiguidade', () => {
+  const fused = fuseOcrCandidates({
+    snapshotType:'power', minRows:1, minConfidence:.70, lineMinConfidence:.70,
+    candidates:[
+      { pass:'table-standard', snapshotType:'power', rows:[
+        { name:'Daizu', power:1500000, confidence:.90, reviewRequired:true, reviewReasons:['numeric_ocr_ambiguity'], ocrValueAmbiguous:true, ocrBox:{left:20,top:100,width:500,height:24} },
+      ], exceptions:[], warnings:[] },
+      { pass:'table-adaptive', snapshotType:'power', rows:[
+        { name:'Daizu', power:1500000, confidence:.95, reviewRequired:false, reviewReasons:[], ocrValueAmbiguous:false, ocrBox:{left:20,top:101,width:500,height:24} },
+      ], exceptions:[], warnings:[] },
+    ],
+  });
+  assert.equal(fused.rows[0].reviewRequired, false);
+  assert.equal(fused.rows[0].ocrValueConsensusCount, 2);
+  assert.equal(fused.rows[0].ocrValueAmbiguityResolved, true);
+  assert.equal(fused.accepted, true);
+});
+
+test('consenso multipass resolve um único valor divergente quando duas passagens independentes concordam', () => {
+  const fused = fuseOcrCandidates({
+    snapshotType:'power', minRows:1, minConfidence:.70, lineMinConfidence:.70,
+    candidates:[
+      { pass:'a', snapshotType:'power', rows:[{ name:'Daizu', power:1500000, confidence:.96, reviewRequired:false, reviewReasons:[], ocrBox:{left:20,top:100,width:500,height:24} }], exceptions:[], warnings:[] },
+      { pass:'b', snapshotType:'power', rows:[{ name:'Daizu', power:1500000, confidence:.94, reviewRequired:false, reviewReasons:[], ocrBox:{left:20,top:101,width:500,height:24} }], exceptions:[], warnings:[] },
+      { pass:'c', snapshotType:'power', rows:[{ name:'Daizu', power:1508000, confidence:.93, reviewRequired:false, reviewReasons:[], ocrBox:{left:20,top:100,width:500,height:24} }], exceptions:[], warnings:[] },
+    ],
+  });
+  assert.equal(fused.rows[0].power, 1500000);
+  assert.equal(fused.rows[0].reviewRequired, false);
+  assert.equal(fused.rows[0].ocrResolvedValueOutlier, true);
+  assert.equal(fused.resolvedOutliers, 1);
+  assert.equal(fused.passConflicts, 0);
+});
+
 test('consenso multipass nunca decide silenciosamente quando o valor diverge na mesma linha', () => {
   const fused = fuseOcrCandidates({
     snapshotType:'power', minRows:1, minConfidence:.70, lineMinConfidence:.70,
@@ -494,6 +571,18 @@ test('resolvedor local corrige nickname com histórico + poder sem chamar IA ext
   assert.equal(result.resolver.structuralExceptions, 0);
 });
 
+
+test('resolvedor local pode corrigir só o nickname quando o valor tem consenso e o histórico é inequívoco', () => {
+  const result = resolveAllianceOcrLocally({
+    ocr:{ snapshotType:'power', usable:true, rows:[
+      { name:'Da1zu', power:1500000, confidence:.94, reviewRequired:true, reviewReasons:['ocr_pass_nickname_conflict'], ocrValueConsensusCount:2 },
+    ], trustedRows:[], exceptions:[], warnings:[] },
+    knownMembers:[{ currentName:'Daizu', latestPower:1500000 }],
+  });
+  assert.equal(result.rows[0].name, 'Daizu');
+  assert.equal(result.rows[0].reviewRequired, false);
+  assert.equal(result.rows[0].resolverResolved, true);
+});
 
 test('resolvedor local não apaga conflito multipass mesmo para membro conhecido', () => {
   const result = resolveAllianceOcrLocally({

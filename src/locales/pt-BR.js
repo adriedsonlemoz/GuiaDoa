@@ -1223,6 +1223,8 @@ const ptBR = {
   'troops.compare_title': '⚖️ Comparar Tropas',
   'troops.compare_add': 'Clique em ➕ para adicionar uma tropa',
   'troops.compare_add_second': 'Adicione mais uma tropa para iniciar a comparação',
+  'troops.compare_change': 'Toque em uma tropa para trocar',
+  'troops.compare_best_legend': '▲ destaca o maior valor; empates destacam todas.',
   'troops.simulator.remove_title': 'Remover unidade',
   'troops.simulator.remove_text': 'Retirar {name} da formação?',
   'troops.simulator.exit_title': 'Sair do simulador',

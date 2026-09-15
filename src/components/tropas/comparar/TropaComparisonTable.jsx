@@ -9,35 +9,51 @@ export default function TropaComparisonTable({ slots }) {
   if (tropasAtivas.length < 2) return null;
 
   return (
-    <div className="game-info-table-wrap">
-      <div className="game-info-table-head" style={{ gridTemplateColumns:`1.1fr repeat(${tropasAtivas.length}, minmax(0,1fr))` }}>
-        <span>{t('troops.attribute')}</span>
-        {tropasAtivas.map(tropa => (
-          <span key={tropa.nome} style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{content(tropa,'nome').split(' ')[0]}</span>
-        ))}
+    <div className="troop-compare-table-block">
+      <div className="game-info-table-wrap troop-compare-table">
+        <div className="game-info-table-head troop-compare-grid">
+          <span className="troop-compare-attribute-head">{t('troops.attribute')}</span>
+          {slots.map((tropa, index) => (
+            <span
+              key={`head-${index}`}
+              className={`troop-compare-column-head${tropa ? '' : ' is-empty'}`}
+              style={{ '--slot-color': SLOT_CORES[index] }}
+              title={tropa ? content(tropa, 'nome') : t('troops.slot', { number:index + 1 })}
+            >
+              {tropa ? content(tropa, 'nome') : t('troops.slot', { number:index + 1 })}
+            </span>
+          ))}
+        </div>
+
+        <div className="game-info-table-body troop-compare-table-body">
+          {ATRIBUTOS.map(attr => {
+            const values = slots.map(tropa => (tropa ? Number(tropa[attr.id]) || 0 : null));
+            const activeValues = values.filter(value => value !== null);
+            const maxVal = Math.max(...activeValues, 0);
+
+            return (
+              <div key={attr.id} className="game-info-table-row troop-compare-grid troop-compare-row">
+                <span className="game-info-label troop-compare-attribute-label">{attr.icon} {attr.labelKey ? t(attr.labelKey) : attr.label}</span>
+                {slots.map((tropa, index) => {
+                  if (!tropa) {
+                    return <span key={`empty-${index}`} className="troop-compare-empty-value" aria-hidden="true">—</span>;
+                  }
+
+                  const value = values[index];
+                  const best = value === maxVal && maxVal > 0;
+                  return (
+                    <span key={`${tropa.nome}-${index}`} className={`troop-compare-value${best ? ' is-best' : ''}`}>
+                      {value ? fmtFull(value, locale) : '—'}
+                      {best ? <span className="troop-compare-best-marker" style={{ color:SLOT_CORES[index] }}>▲</span> : null}
+                    </span>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <div className="game-info-table-body">
-        {ATRIBUTOS.map(attr => {
-          const values = tropasAtivas.map(tropa => Number(tropa[attr.id]) || 0);
-          const maxVal = Math.max(...values);
-          return (
-            <div key={attr.id} className="game-info-table-row" style={{ gridTemplateColumns:`1.1fr repeat(${tropasAtivas.length}, minmax(0,1fr))` }}>
-              <span className="game-info-label">{attr.icon} {attr.labelKey ? t(attr.labelKey) : attr.label}</span>
-              {tropasAtivas.map(tropa => {
-                const value = Number(tropa[attr.id]) || 0;
-                const best = value === maxVal && maxVal > 0;
-                const color = SLOT_CORES[slots.indexOf(tropa)] || '#3D746B';
-                return (
-                  <span key={tropa.nome} style={{ textAlign:'center', color:best ? '#FFF08A' : '#F1E4C2', fontWeight:best ? 850 : 650 }}>
-                    {value ? fmtFull(value, locale) : '—'}
-                    {best ? <span style={{ color, marginLeft:3 }}>▲</span> : null}
-                  </span>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
+      <p className="troop-compare-legend">{t('troops.compare_best_legend')}</p>
     </div>
   );
 }

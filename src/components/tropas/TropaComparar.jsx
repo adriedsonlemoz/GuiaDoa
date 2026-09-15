@@ -32,11 +32,11 @@ const TropaComparar = () => {
   return (
     <>
       {pickerSlot !== null && <TropaPicker tropas={tropas} selecionadas={slots} onEscolher={adicionarTropa} onFechar={() => setPickerSlot(null)} />}
-      <div style={{ maxWidth:620, margin:'0 auto', paddingBottom:16 }}>
+      <div className="troop-compare-page">
         <GameHeader title={t('troops.compare_title').replace('⚖️ ', '')} subtitle={t('troops.compare_desc')} />
 
-        <section className="game-panel" style={{ padding:'10px', marginBottom:10 }}>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,minmax(0,1fr))', gap:7 }}>
+        <section className="game-panel troop-compare-picker-panel">
+          <div className="troop-compare-slots">
             {slots.map((tropa, index) => (
               <TropaSlot
                 key={index}
@@ -48,15 +48,13 @@ const TropaComparar = () => {
               />
             ))}
           </div>
-          {tropasAtivas.length === 0 ? (
-            <p style={{ textAlign:'center', margin:'9px 0 0', color:'#687064', fontSize:'.76rem', fontWeight:650 }}>{t('troops.compare_add')}</p>
-          ) : null}
+          <p className="troop-compare-picker-hint">{tropasAtivas.length === 0 ? t('troops.compare_add') : t('troops.compare_change')}</p>
         </section>
 
         <TropaComparisonTable slots={slots} />
 
         {tropasAtivas.length === 1 ? (
-          <div className="game-panel" style={{ textAlign:'center', padding:'18px 14px', color:'#687064', fontSize:'.76rem', fontWeight:650 }}>
+          <div className="game-panel troop-compare-add-second">
             ⚖ {t('troops.compare_add_second')}
           </div>
         ) : null}

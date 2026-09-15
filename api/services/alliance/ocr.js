@@ -224,24 +224,80 @@ function normalizeValuePunctuation(value = '') {
     .trim();
 }
 
+const NUMERIC_OCR_CONFUSABLES = Object.freeze({
+  O: '0', o: '0', I: '1', l: '1', L: '1', '|': '1', S: '5', s: '5', B: '8',
+});
+
+function replaceNumericOcrConfusables(value = '') {
+  const substitutions = [];
+  const normalized = [...String(value || '')].map((char, index) => {
+    const replacement = NUMERIC_OCR_CONFUSABLES[char];
+    if (!replacement) return char;
+    substitutions.push({ index, from: char, to: replacement });
+    return replacement;
+  }).join('');
+  return { normalized, substitutions };
+}
+
 function dateCandidate(text = '') {
   const normalized = normalizeValuePunctuation(text);
-  const match = normalized.match(/\b(20\d{2})[-/.](\d{2})[-/.](\d{2})\s+(\d{2}):(\d{2})(?::(\d{2}))?\b/);
-  if (!match) return null;
-  const [, year, month, day, hour, minute, second = '00'] = match;
-  if (!isValidDateParts(Number(year), Number(month), Number(day), Number(hour), Number(minute), Number(second))) return null;
-  return { raw: match[0], normalized: `${year}-${month}-${day} ${hour}:${minute}:${second}`, index: match.index ?? -1 };
+  const direct = normalized.match(/\b(20\d{2})[-/.](\d{2})[-/.](\d{2})\s+(\d{2}):(\d{2})(?::(\d{2}))?\b/);
+  if (direct) {
+    const [, year, month, day, hour, minute, second = '00'] = direct;
+    if (!isValidDateParts(Number(year), Number(month), Number(day), Number(hour), Number(minute), Number(second))) return null;
+    return { raw: direct[0], normalized: `${year}-${month}-${day} ${hour}:${minute}:${second}`, index: direct.index ?? -1, ambiguous: false, substitutions: [] };
+  }
+
+  // Recupera somente datas que já têm formato de data/hora e no máximo poucas
+  // confusões clássicas do OCR. A linha permanece marcada para revisão até outra
+  // passagem independente confirmar o mesmo valor.
+  const fuzzy = [...normalized.matchAll(/(?<![\p{L}\p{N}])([0-9OolILSsB|]{4}[-/.][0-9OolILSsB|]{2}[-/.][0-9OolILSsB|]{2}\s+[0-9OolILSsB|]{2}:[0-9OolILSsB|]{2}(?::[0-9OolILSsB|]{2})?)(?![\p{L}\p{N}])/gu)];
+  for (const match of fuzzy.reverse()) {
+    const raw = match[1];
+    const realDigits = (raw.match(/\d/g) || []).length;
+    const converted = replaceNumericOcrConfusables(raw);
+    if (realDigits < 8 || converted.substitutions.length < 1 || converted.substitutions.length > 2) continue;
+    const parsed = converted.normalized.match(/^(20\d{2})[-/.](\d{2})[-/.](\d{2})\s+(\d{2}):(\d{2})(?::(\d{2}))?$/);
+    if (!parsed) continue;
+    const [, year, month, day, hour, minute, second = '00'] = parsed;
+    if (!isValidDateParts(Number(year), Number(month), Number(day), Number(hour), Number(minute), Number(second))) continue;
+    return {
+      raw,
+      normalized: `${year}-${month}-${day} ${hour}:${minute}:${second}`,
+      index: match.index ?? -1,
+      ambiguous: true,
+      substitutions: converted.substitutions,
+    };
+  }
+  return null;
 }
 
 function powerCandidate(text = '') {
   const normalized = normalizeValuePunctuation(text);
   const matches = [...normalized.matchAll(/\b\d{1,3}(?:[.,\s]\d{3})+\b|\b\d{4,12}\b/g)];
-  if (!matches.length) return null;
-  const match = matches[matches.length - 1];
-  const digits = match[0].replace(/\D/g, '');
-  const value = Number(digits);
-  if (!Number.isSafeInteger(value) || value < 1) return null;
-  return { raw: match[0], value, index: match.index ?? -1 };
+  if (matches.length) {
+    const match = matches[matches.length - 1];
+    const digits = match[0].replace(/\D/g, '');
+    const value = Number(digits);
+    if (Number.isSafeInteger(value) && value >= 1) {
+      return { raw: match[0], value, index: match.index ?? -1, ambiguous: false, substitutions: [] };
+    }
+  }
+
+  // Ex.: "1S0.000" ou "2O2600". Não adivinha livremente: exige pelo menos
+  // três dígitos reais e aceita no máximo duas substituições visuais conhecidas.
+  const fuzzy = [...normalized.matchAll(/(?<![\p{L}\p{N}])([0-9OolILSsB|]{1,3}(?:[.,\s][0-9OolILSsB|]{3})+|[0-9OolILSsB|]{4,12})(?![\p{L}\p{N}])/gu)];
+  for (const match of fuzzy.reverse()) {
+    const raw = match[1];
+    const realDigits = (raw.match(/\d/g) || []).length;
+    const converted = replaceNumericOcrConfusables(raw);
+    if (realDigits < 3 || converted.substitutions.length < 1 || converted.substitutions.length > 2) continue;
+    const digits = converted.normalized.replace(/\D/g, '');
+    const value = Number(digits);
+    if (!Number.isSafeInteger(value) || value < 1) continue;
+    return { raw, value, index: match.index ?? -1, ambiguous: true, substitutions: converted.substitutions };
+  }
+  return null;
 }
 
 function onlineCandidate(text = '') {
@@ -330,16 +386,21 @@ export function parseAllianceOcr({
     }
 
     if (row) {
-      const reviewRequired = Number(row.confidence || 0) < lineMinConfidence;
+      const reviewReasons = [];
+      if (Number(row.confidence || 0) < lineMinConfidence) reviewReasons.push('low_ocr_confidence');
+      if (marker?.ambiguous) reviewReasons.push('numeric_ocr_ambiguity');
+      const reviewRequired = reviewReasons.length > 0;
       rows.push({
         ...row,
         source: 'ocr',
         reviewRequired,
-        reviewReasons: reviewRequired ? ['low_ocr_confidence'] : [],
+        reviewReasons,
+        ocrValueAmbiguous: Boolean(marker?.ambiguous),
+        ocrValueSubstitutions: Array.isArray(marker?.substitutions) ? marker.substitutions : [],
         ocrLine: lineIndex,
         ocrBox: line.box,
       });
-      if (reviewRequired) {
+      if (Number(row.confidence || 0) < lineMinConfidence) {
         exceptions.push({
           type: 'low_confidence',
           line: lineIndex,
@@ -607,17 +668,33 @@ function annotateParsedGeometry(parsed, rectangle, dimensions, region) {
 function valueFromText(text = '', snapshotType = null) {
   if (snapshotType === 'power') {
     const marker = powerCandidate(text);
-    return marker ? { power: marker.value, raw: marker.raw } : null;
+    return marker ? {
+      power: marker.value,
+      raw: marker.raw,
+      ocrValueAmbiguous: Boolean(marker.ambiguous),
+      ocrValueSubstitutions: Array.isArray(marker.substitutions) ? marker.substitutions : [],
+    } : null;
   }
   if (snapshotType === 'joined_at') {
     const marker = dateCandidate(text);
-    return marker ? { joinedAt: marker.normalized, raw: marker.raw } : null;
+    return marker ? {
+      joinedAt: marker.normalized,
+      raw: marker.raw,
+      ocrValueAmbiguous: Boolean(marker.ambiguous),
+      ocrValueSubstitutions: Array.isArray(marker.substitutions) ? marker.substitutions : [],
+    } : null;
   }
   if (snapshotType === 'last_connection') {
     const date = dateCandidate(text);
     const online = onlineCandidate(text);
-    if (date) return { lastConnection: date.normalized, online: false, raw: date.raw };
-    if (online) return { lastConnection: '', online: true, raw: online.raw };
+    if (date) return {
+      lastConnection: date.normalized,
+      online: false,
+      raw: date.raw,
+      ocrValueAmbiguous: Boolean(date.ambiguous),
+      ocrValueSubstitutions: Array.isArray(date.substitutions) ? date.substitutions : [],
+    };
+    if (online) return { lastConnection: '', online: true, raw: online.raw, ocrValueAmbiguous: false, ocrValueSubstitutions: [] };
   }
   return null;
 }
@@ -632,7 +709,110 @@ function cleanNameOnlyLine(text = '') {
   return suspiciousName(name) ? null : name;
 }
 
-function parseColumnPairs({
+function columnLineCenter(line = {}) {
+  const box = line.box || {};
+  return Number(box.top || 0) + Math.max(1, Number(box.height || 1)) / 2;
+}
+
+function collapseColumnLines(lines = []) {
+  const sorted = [...lines].sort((a, b) => columnLineCenter(a) - columnLineCenter(b) || Number(b.confidence || 0) - Number(a.confidence || 0));
+  const collapsed = [];
+  for (const line of sorted) {
+    const center = columnLineCenter(line);
+    const prior = collapsed[collapsed.length - 1];
+    if (prior) {
+      const tolerance = Math.max(4, Math.max(Number(prior.box?.height || 1), Number(line.box?.height || 1)) * 0.55);
+      if (Math.abs(columnLineCenter(prior) - center) <= tolerance) {
+        // parseTsv gera linhas nativas e reconstruídas. Se ambas ocupam a mesma
+        // faixa visual, preservamos só a leitura de maior confiança desta passagem.
+        if (Number(line.confidence || 0) > Number(prior.confidence || 0)) collapsed[collapsed.length - 1] = line;
+        continue;
+      }
+    }
+    collapsed.push(line);
+  }
+  return collapsed;
+}
+
+function alignColumnLines(nameLines = [], valueLines = []) {
+  const names = collapseColumnLines(nameLines);
+  const values = collapseColumnLines(valueLines);
+  const n = names.length;
+  const m = values.length;
+  const skipCost = 0.92;
+  const dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(Infinity));
+  const prev = Array.from({ length: n + 1 }, () => Array(m + 1).fill(null));
+  dp[0][0] = 0;
+
+  const relax = (ni, nj, cost, step) => {
+    if (cost + 1e-9 < dp[ni][nj]) {
+      dp[ni][nj] = cost;
+      prev[ni][nj] = step;
+    }
+  };
+
+  for (let i = 0; i <= n; i += 1) {
+    for (let j = 0; j <= m; j += 1) {
+      if (!Number.isFinite(dp[i][j])) continue;
+      if (i < n) relax(i + 1, j, dp[i][j] + skipCost, { i, j, action: 'skip-name' });
+      if (j < m) relax(i, j + 1, dp[i][j] + skipCost, { i, j, action: 'skip-value' });
+      if (i < n && j < m) {
+        const nameLine = names[i];
+        const valueLine = values[j];
+        const distance = Math.abs(columnLineCenter(nameLine) - columnLineCenter(valueLine));
+        const scale = Math.max(8, Math.max(Number(nameLine.box?.height || 1), Number(valueLine.box?.height || 1)) * 1.35);
+        if (distance <= scale * 1.85) {
+          const confidencePenalty = (2 - Math.max(0, Math.min(1, Number(nameLine.confidence || 0))) - Math.max(0, Math.min(1, Number(valueLine.confidence || 0)))) * 0.10;
+          const pairCost = (distance / scale) + confidencePenalty;
+          relax(i + 1, j + 1, dp[i][j] + pairCost, { i, j, action: 'pair', distance, scale });
+        }
+      }
+    }
+  }
+
+  const pairs = [];
+  const usedNames = new Set();
+  const usedValues = new Set();
+  let i = n;
+  let j = m;
+  while (i > 0 || j > 0) {
+    const step = prev[i][j];
+    if (!step) break;
+    if (step.action === 'pair') {
+      pairs.push({
+        nameLine: names[step.i],
+        valueLine: values[step.j],
+        nameIndex: step.i,
+        valueIndex: step.j,
+        distance: step.distance,
+        scale: step.scale,
+      });
+      usedNames.add(step.i);
+      usedValues.add(step.j);
+    }
+    i = step.i;
+    j = step.j;
+  }
+  pairs.reverse();
+
+  return {
+    names,
+    values,
+    pairs,
+    unmatchedNames: names.map((line, index) => ({ line, index })).filter(item => !usedNames.has(item.index)),
+    unmatchedValues: values.map((line, index) => ({ line, index })).filter(item => !usedValues.has(item.index)),
+  };
+}
+
+function nearbyColumnLine(line, opposite = []) {
+  const center = columnLineCenter(line);
+  return opposite.some(other => {
+    const scale = Math.max(10, Math.max(Number(line.box?.height || 1), Number(other.box?.height || 1)) * 2.15);
+    return Math.abs(center - columnLineCenter(other)) <= scale;
+  });
+}
+
+export function parseColumnPairs({
   namesTsv = '',
   valuesTsv = '',
   snapshotType,
@@ -643,71 +823,81 @@ function parseColumnPairs({
   valueRectangle = null,
   dimensions = null,
 } = {}) {
-  const nameLines = parseTsv(namesTsv).map(line => ({
+  const rawNameLines = parseTsv(namesTsv).map(line => ({
     ...line,
     box: offsetBox(line.box, nameRectangle),
     name: cleanNameOnlyLine(line.text),
   })).filter(line => line.name);
-  const valueLines = parseTsv(valuesTsv).map(line => ({
+  const rawValueLines = parseTsv(valuesTsv).map(line => ({
     ...line,
     box: offsetBox(line.box, valueRectangle),
     value: valueFromText(line.text, snapshotType),
   })).filter(line => line.value);
 
+  const aligned = alignColumnLines(rawNameLines, rawValueLines);
   const pairs = [];
-  const usedNames = new Set();
-  for (const valueLine of valueLines) {
-    const valueCenter = valueLine.box.top + valueLine.box.height / 2;
-    const candidates = nameLines
-      .map((nameLine, index) => {
-        const nameCenter = nameLine.box.top + nameLine.box.height / 2;
-        const scale = Math.max(8, Math.max(nameLine.box.height, valueLine.box.height) * 1.35);
-        return { nameLine, index, distance: Math.abs(nameCenter - valueCenter), scale };
-      })
-      .filter(item => !usedNames.has(item.index) && item.distance <= item.scale)
-      .sort((a, b) => a.distance - b.distance || b.nameLine.confidence - a.nameLine.confidence);
-    if (!candidates.length) continue;
-    const match = candidates[0];
-    usedNames.add(match.index);
-    const confidence = Math.max(0, Math.min(1, Math.min(match.nameLine.confidence, valueLine.confidence)));
-    const left = Math.min(match.nameLine.box.left, valueLine.box.left);
-    const top = Math.min(match.nameLine.box.top, valueLine.box.top);
-    const right = Math.max(match.nameLine.box.left + match.nameLine.box.width, valueLine.box.left + valueLine.box.width);
-    const bottom = Math.max(match.nameLine.box.top + match.nameLine.box.height, valueLine.box.top + valueLine.box.height);
-    const reviewRequired = confidence < lineMinConfidence;
+  for (const match of aligned.pairs) {
+    const { nameLine, valueLine, distance, scale } = match;
+    const alignmentRatio = distance / Math.max(1, scale);
+    const alignmentFactor = Math.max(0.68, 1 - Math.min(0.28, alignmentRatio * 0.18));
+    const confidence = Math.max(0, Math.min(1, Math.min(nameLine.confidence, valueLine.confidence) * alignmentFactor));
+    const left = Math.min(nameLine.box.left, valueLine.box.left);
+    const top = Math.min(nameLine.box.top, valueLine.box.top);
+    const right = Math.max(nameLine.box.left + nameLine.box.width, valueLine.box.left + valueLine.box.width);
+    const bottom = Math.max(nameLine.box.top + nameLine.box.height, valueLine.box.top + valueLine.box.height);
+    const reviewReasons = [];
+    if (confidence < lineMinConfidence) reviewReasons.push('low_ocr_confidence');
+    if (valueLine.value.ocrValueAmbiguous) reviewReasons.push('numeric_ocr_ambiguity');
+    if (alignmentRatio > 0.95) reviewReasons.push('column_alignment_weak');
     pairs.push({
-      name: match.nameLine.name,
+      name: nameLine.name,
       ...valueLine.value,
       confidence,
       source: 'ocr',
-      reviewRequired,
-      reviewReasons: reviewRequired ? ['low_ocr_confidence'] : [],
+      reviewRequired: reviewReasons.length > 0,
+      reviewReasons,
       ocrBox: { left, top, width: right - left, height: bottom - top },
       ocrImageDimensions: dimensions ? { width: dimensions.width, height: dimensions.height } : null,
       ocrRegion: 'column-pair',
+      ocrPairMethod: 'monotonic-dp',
+      ocrPairDistance: Number(distance.toFixed(2)),
+      ocrPairDistanceRatio: Number(alignmentRatio.toFixed(3)),
     });
+  }
+
+  const exceptions = pairs.filter(row => row.reviewReasons.includes('low_ocr_confidence')).map((row, line) => ({
+    type: 'low_confidence',
+    line,
+    name: row.name,
+    confidence: row.confidence,
+  }));
+
+  // Se uma coluna tem uma linha sem par, mas existe conteúdo na outra coluna na mesma
+  // vizinhança vertical, não a descartamos silenciosamente: vira exceção estrutural.
+  for (const { line } of aligned.unmatchedNames) {
+    if (Number(line.confidence || 0) < 0.50 || !nearbyColumnLine(line, aligned.values)) continue;
+    exceptions.push({ type: 'unpaired_name', name: line.name, confidence: line.confidence, text: line.text.slice(0, 160), ocrBox: line.box });
+  }
+  for (const { line } of aligned.unmatchedValues) {
+    if (Number(line.confidence || 0) < 0.50 || !nearbyColumnLine(line, aligned.names)) continue;
+    exceptions.push({ type: 'unpaired_value', value: line.value?.raw || '', confidence: line.confidence, text: line.text.slice(0, 160), ocrBox: line.box });
   }
 
   const trustedRows = pairs.filter(row => !row.reviewRequired);
   const confidence = trustedRows.length
     ? trustedRows.reduce((sum, row) => sum + Number(row.confidence || 0), 0) / trustedRows.length
     : 0;
-  const exceptions = pairs.filter(row => row.reviewRequired).map((row, line) => ({
-    type: 'low_confidence',
-    line,
-    name: row.name,
-    confidence: row.confidence,
-  }));
-  const accepted = trustedRows.length >= minRows && confidence >= minConfidence && exceptions.length === 0;
+  const accepted = trustedRows.length >= minRows && confidence >= minConfidence && exceptions.length === 0 && pairs.every(row => !row.reviewRequired);
   const usable = trustedRows.length >= minRows || pairs.length >= minRows;
   const warnings = [];
   if (trustedRows.length < minRows) warnings.push(`Pareamento por colunas confirmou ${trustedRows.length} linha(s) segura(s).`);
-  if (exceptions.length) warnings.push(`${exceptions.length} linha(s) pareadas ficaram para revisão.`);
+  if (pairs.some(row => row.reviewRequired)) warnings.push(`${pairs.filter(row => row.reviewRequired).length} linha(s) pareadas ficaram para revisão.`);
+  if (exceptions.some(item => item.type === 'unpaired_name' || item.type === 'unpaired_value')) warnings.push('O alinhamento local encontrou conteúdo sem par entre as colunas; essas linhas foram preservadas para revisão.');
 
   return {
     accepted,
     usable,
-    reason: accepted ? null : trustedRows.length < minRows ? 'rows' : exceptions.length ? 'exceptions' : 'confidence',
+    reason: accepted ? null : pairs.length < minRows ? 'rows' : exceptions.length ? 'exceptions' : pairs.some(row => row.reviewRequired) ? 'review' : 'confidence',
     snapshotType,
     detectedFromText: snapshotType,
     rows: pairs,
@@ -716,10 +906,18 @@ function parseColumnPairs({
     warnings,
     confidence,
     lowestConfidence: trustedRows.length ? Math.min(...trustedRows.map(row => row.confidence)) : 0,
-    linesCount: Math.max(nameLines.length, valueLines.length),
-    parsedRatio: valueLines.length ? pairs.length / valueLines.length : 0,
-    qualityScore: Math.max(0, Math.min(1, (pairs.length ? 0.3 : 0) + confidence * 0.55 + Math.min(0.15, pairs.length * 0.02))),
+    linesCount: Math.max(aligned.names.length, aligned.values.length),
+    parsedRatio: aligned.values.length ? pairs.length / aligned.values.length : 0,
+    qualityScore: Math.max(0, Math.min(1,
+      (pairs.length ? 0.30 : 0)
+      + confidence * 0.52
+      + Math.min(0.16, pairs.length * 0.02)
+      - Math.min(0.20, exceptions.length * 0.035)
+    )),
     columnPairing: true,
+    columnPairingMethod: 'monotonic-dp',
+    unmatchedNames: aligned.unmatchedNames.length,
+    unmatchedValues: aligned.unmatchedValues.length,
   };
 }
 
@@ -788,6 +986,7 @@ function matchFusionGroup(groups, row, snapshotType) {
     else if (sameName && visual) score = 3;
     else if (sameValue && visual && similarity >= 0.45) score = 2 + similarity;
     else if (sameValue && visual) score = 1.5;
+    else if (visual && representative.ocrPass !== row.ocrPass && similarity >= 0.55) score = 1 + similarity;
     if (score > bestScore) { best = group; bestScore = score; }
   }
   return bestScore >= 0 ? best : null;
@@ -797,6 +996,53 @@ function matchFusionGroup(groups, row, snapshotType) {
  * Combina deterministicamente as várias passagens do Tesseract. Nenhuma inferência externa
  * é feita: uma linha só ganha confiança quando duas ou mais passagens concordam em nome+valor.
  * Divergências ficam explicitamente marcadas para revisão.
+ */
+function bestEvidenceRow(rows = []) {
+  return [...rows].sort((a, b) => {
+    if (Boolean(a.ocrValueAmbiguous) !== Boolean(b.ocrValueAmbiguous)) return a.ocrValueAmbiguous ? 1 : -1;
+    if (Boolean(a.reviewRequired) !== Boolean(b.reviewRequired)) return a.reviewRequired ? 1 : -1;
+    return Number(b.confidence || 0) - Number(a.confidence || 0);
+  })[0] || null;
+}
+
+function rankFieldVotes(rows = [], keyOf) {
+  const votes = new Map();
+  for (const row of rows) {
+    const key = String(keyOf(row) ?? '');
+    if (!key) continue;
+    const vote = votes.get(key) || { key, rows: [], passes: new Set(), weight: 0 };
+    vote.rows.push(row);
+    vote.passes.add(row.ocrPass || `row-${vote.rows.length}`);
+    vote.weight += Math.max(0.05, Number(row.confidence) || 0);
+    votes.set(key, vote);
+  }
+  return [...votes.values()].sort((a, b) => b.passes.size - a.passes.size || b.rows.length - a.rows.length || b.weight - a.weight);
+}
+
+function strictFieldMajority(ranked = []) {
+  const first = ranked[0];
+  const second = ranked[1];
+  return Boolean(first && first.passes.size >= 2 && first.passes.size > Number(second?.passes?.size || 0));
+}
+
+function copyTypedOcrValue(target, source, snapshotType) {
+  if (!source) return target;
+  if (snapshotType === 'power') target.power = source.power;
+  if (snapshotType === 'joined_at') target.joinedAt = source.joinedAt;
+  if (snapshotType === 'last_connection') {
+    target.lastConnection = source.lastConnection || '';
+    target.online = Boolean(source.online);
+  }
+  target.ocrValueAmbiguous = Boolean(source.ocrValueAmbiguous);
+  target.ocrValueSubstitutions = Array.isArray(source.ocrValueSubstitutions) ? source.ocrValueSubstitutions : [];
+  return target;
+}
+
+/**
+ * Combina deterministicamente as várias passagens do Tesseract. O consenso é feito
+ * tanto pela linha inteira quanto separadamente por nickname e valor. Maioria entre
+ * passagens independentes pode eliminar um outlier; empate ou conflito real continua
+ * obrigatoriamente em revisão.
  */
 export function fuseOcrCandidates({
   candidates = [],
@@ -823,55 +1069,85 @@ export function fuseOcrCandidates({
   const bestKeys = new Set((best.rows || []).map(row => occurrenceKey(row, type)));
   let recoveredRows = 0;
   let consensusRows = 0;
+  let fieldConsensusRows = 0;
   let passConflicts = 0;
+  let resolvedOutliers = 0;
 
   const rows = groups.map(group => {
     const occurrences = group.occurrences;
-    const votes = new Map();
-    for (const row of occurrences) {
-      const key = occurrenceKey(row, type);
-      const vote = votes.get(key) || { key, rows:[], weight:0 };
-      vote.rows.push(row);
-      vote.weight += Math.max(0.05, Number(row.confidence) || 0);
-      votes.set(key, vote);
-    }
-    const rankedVotes = [...votes.values()].sort((a, b) => b.rows.length - a.rows.length || b.weight - a.weight);
-    const winner = rankedVotes[0];
+    const fullVotes = rankFieldVotes(occurrences, row => occurrenceKey(row, type));
+    const nameVotes = rankFieldVotes(occurrences, row => normalizeMemberName(row.name));
+    const valueVotes = rankFieldVotes(occurrences, row => typedRowValue(row, type));
+    const winner = fullVotes[0];
+    const nameWinner = nameVotes[0];
+    const valueWinner = valueVotes[0];
     const winnerRows = winner?.rows || occurrences;
-    const representative = [...winnerRows].sort((a, b) => {
-      if (Boolean(a.reviewRequired) !== Boolean(b.reviewRequired)) return a.reviewRequired ? 1 : -1;
-      return Number(b.confidence || 0) - Number(a.confidence || 0);
-    })[0] || occurrences[0];
+    const representative = bestEvidenceRow(winnerRows) || bestEvidenceRow(occurrences) || occurrences[0];
+    const selectedNameRow = bestEvidenceRow(nameWinner?.rows || []) || representative;
+    const selectedValueRow = bestEvidenceRow(valueWinner?.rows || []) || representative;
+    const fusedRow = { ...representative, name: selectedNameRow.name };
+    copyTypedOcrValue(fusedRow, selectedValueRow, type);
+
     const nameAlternatives = [...new Set(occurrences.map(row => String(row.name || '').trim()).filter(Boolean))];
     const valueAlternatives = [...new Set(occurrences.map(row => typedRowValue(row, type)).filter(Boolean))];
-    const consensusCount = winnerRows.length;
+    const consensusCount = Number(winner?.passes?.size || 0);
+    const nameConsensusCount = Number(nameWinner?.passes?.size || 0);
+    const valueConsensusCount = Number(valueWinner?.passes?.size || 0);
     const passes = [...new Set(occurrences.map(row => row.ocrPass).filter(Boolean))];
-    const confidence = consensusCount >= 2 ? consensusConfidence(winnerRows) : Math.max(0, Math.min(1, Number(representative.confidence) || 0));
     const sameNameValueConsensus = consensusCount >= 2;
-    const valueConflict = valueAlternatives.length > 1;
-    const nameConflict = nameAlternatives.length > 1 && !sameNameValueConsensus;
-    const reviewReasons = new Set(representative.reviewReasons || []);
+    const nameMajority = strictFieldMajority(nameVotes);
+    const valueMajority = strictFieldMajority(valueVotes);
+    const fieldConsensus = nameConsensusCount >= 2 && valueConsensusCount >= 2;
 
-    if (sameNameValueConsensus && confidence >= lineMinConfidence && Number(representative.confidence || 0) >= 0.52) {
+    let confidence = Math.max(0, Math.min(1, Number(representative.confidence) || 0));
+    if (sameNameValueConsensus) confidence = consensusConfidence(winnerRows);
+    else if (fieldConsensus) confidence = Math.min(consensusConfidence(nameWinner.rows), consensusConfidence(valueWinner.rows));
+
+    const evidenceRows = [...new Set([representative, ...(nameWinner?.rows || []), ...(valueWinner?.rows || [])])];
+    const reviewReasons = new Set(evidenceRows.flatMap(row => row.reviewReasons || []));
+    if ((sameNameValueConsensus || fieldConsensus) && confidence >= lineMinConfidence && Number(representative.confidence || 0) >= 0.52) {
       reviewReasons.delete('low_ocr_confidence');
+      reviewReasons.delete('column_alignment_weak');
     }
+    const valueAmbiguityConfirmed = valueConsensusCount >= 2
+      && ((valueWinner?.rows || []).some(row => !row.ocrValueAmbiguous) || valueConsensusCount >= 3);
+    if (valueAmbiguityConfirmed) reviewReasons.delete('numeric_ocr_ambiguity');
+
+    const valueConflict = valueAlternatives.length > 1 && !valueMajority;
+    const nameConflict = nameAlternatives.length > 1 && !sameNameValueConsensus && !nameMajority;
     if (valueConflict) reviewReasons.add('ocr_pass_value_conflict');
+    else reviewReasons.delete('ocr_pass_value_conflict');
     if (nameConflict) reviewReasons.add('ocr_pass_nickname_conflict');
-    const reviewRequired = valueConflict || nameConflict || reviewReasons.size > 0;
+    else reviewReasons.delete('ocr_pass_nickname_conflict');
+
+    const valueOutlierResolved = valueAlternatives.length > 1 && valueMajority;
+    const nameOutlierResolved = nameAlternatives.length > 1 && nameMajority;
+    if (valueOutlierResolved || nameOutlierResolved) resolvedOutliers += 1;
+    const reviewRequired = reviewReasons.size > 0;
     if (valueConflict || nameConflict) passConflicts += 1;
     if (sameNameValueConsensus) consensusRows += 1;
-    if (!bestKeys.has(winner?.key || occurrenceKey(representative, type))) recoveredRows += 1;
+    if (!sameNameValueConsensus && fieldConsensus) fieldConsensusRows += 1;
+
+    const finalKey = occurrenceKey(fusedRow, type);
+    const recovered = !bestKeys.has(finalKey);
+    if (recovered) recoveredRows += 1;
+    const consensusSource = sameNameValueConsensus || fieldConsensus;
 
     return {
-      ...representative,
+      ...fusedRow,
       confidence,
       reviewRequired,
       reviewReasons:[...reviewReasons],
-      source: sameNameValueConsensus ? 'ocr_consensus' : (representative.source || 'ocr'),
-      sources:[...new Set([...(representative.sources || [representative.source || 'ocr']), ...(sameNameValueConsensus ? ['ocr_consensus'] : [])])],
+      source: consensusSource ? 'ocr_consensus' : (representative.source || 'ocr'),
+      sources:[...new Set([...(representative.sources || [representative.source || 'ocr']), ...(consensusSource ? ['ocr_consensus'] : [])])],
       ocrConsensusCount: consensusCount,
+      ocrNameConsensusCount: nameConsensusCount,
+      ocrValueConsensusCount: valueConsensusCount,
       ocrPasses: passes,
-      ocrRecoveredFromAlternatePass: !bestKeys.has(winner?.key || occurrenceKey(representative, type)),
+      ocrRecoveredFromAlternatePass: recovered,
+      ocrValueAmbiguityResolved: Boolean(valueAmbiguityConfirmed),
+      ocrResolvedValueOutlier: Boolean(valueOutlierResolved),
+      ocrResolvedNameOutlier: Boolean(nameOutlierResolved),
       ...(nameAlternatives.length > 1 ? { nameAlternatives } : {}),
       ...(valueAlternatives.length > 1 ? { ocrValueAlternatives:valueAlternatives } : {}),
     };
@@ -884,9 +1160,15 @@ export function fuseOcrCandidates({
 
   const trustedRows = rows.filter(row => !row.reviewRequired);
   const trustedNames = new Set(trustedRows.map(row => normalizeMemberName(row.name)));
+  const trustedValues = new Set(trustedRows.map(row => typedRowValue(row, type)).filter(Boolean));
   const exceptions = (best.exceptions || []).filter(item => {
-    if (item.type !== 'low_confidence') return true;
-    return !trustedNames.has(normalizeMemberName(item.name));
+    if (item.type === 'low_confidence') return !trustedNames.has(normalizeMemberName(item.name));
+    if (item.type === 'unpaired_name') return !trustedNames.has(normalizeMemberName(item.name));
+    if (item.type === 'unpaired_value') {
+      const parsedValue = valueFromText(item.value || item.text || '', type);
+      return !parsedValue || !trustedValues.has(typedRowValue(parsedValue, type));
+    }
+    return true;
   });
   const confidence = trustedRows.length
     ? trustedRows.reduce((sum, row) => sum + Number(row.confidence || 0), 0) / trustedRows.length
@@ -902,18 +1184,21 @@ export function fuseOcrCandidates({
   const usable = Boolean(rows.length >= minRows);
   const reason = accepted ? null : rows.length < minRows ? 'rows' : exceptions.length ? 'exceptions' : rows.some(row => row.reviewRequired) ? 'review' : 'confidence';
   const warnings = [...new Set([...(best.warnings || [])].filter(warning => {
-    if (!consensusRows) return true;
+    if (!(consensusRows || fieldConsensusRows)) return true;
     return !/confian[cç]a|exce[cç][aã]o/i.test(String(warning));
   }))];
   if (recoveredRows) warnings.push(`${recoveredRows} linha(s) foram recuperadas cruzando passagens locais do OCR.`);
-  if (passConflicts) warnings.push(`${passConflicts} divergência(s) entre passagens locais foram preservadas para revisão.`);
+  if (resolvedOutliers) warnings.push(`${resolvedOutliers} divergência(s) isolada(s) foram resolvidas por maioria entre passagens locais.`);
+  if (passConflicts) warnings.push(`${passConflicts} divergência(s) sem maioria entre passagens locais foram preservadas para revisão.`);
   if (!accepted && rows.some(row => row.reviewRequired)) warnings.push(`${rows.filter(row => row.reviewRequired).length} linha(s) continuam aguardando confirmação manual.`);
 
   const qualityScore = Math.max(0, Math.min(1,
     (rows.length ? 0.22 : 0)
     + Math.min(0.22, trustedRows.length * 0.022)
-    + confidence * 0.42
-    + Math.min(0.12, consensusRows * 0.018)
+    + confidence * 0.41
+    + Math.min(0.10, consensusRows * 0.018)
+    + Math.min(0.06, fieldConsensusRows * 0.012)
+    + Math.min(0.04, resolvedOutliers * 0.008)
     - Math.min(0.22, (exceptions.length + passConflicts) * 0.035)
   ));
 
@@ -923,8 +1208,10 @@ export function fuseOcrCandidates({
     confidence, lowestConfidence, qualityScore,
     consensusFusion:true,
     consensusRows,
+    fieldConsensusRows,
     recoveredRows,
     passConflicts,
+    resolvedOutliers,
     candidatePasses:valid.length,
   };
 }
@@ -1028,7 +1315,7 @@ async function runOcrPipeline({
     parsedCandidates.push({ ...adaptive, pass: 'table-adaptive', rawText: safeText(adaptivePass.text) });
     const fusedAfterAdaptive = fuseOcrCandidates({ candidates:parsedCandidates, snapshotType, minRows, minConfidence, lineMinConfidence });
     if (fusedAfterAdaptive?.accepted) {
-      onProgress?.({ stage:'ocr_consensus', rows:fusedAfterAdaptive.rows.length, consensusRows:fusedAfterAdaptive.consensusRows || 0, recoveredRows:fusedAfterAdaptive.recoveredRows || 0, conflicts:fusedAfterAdaptive.passConflicts || 0 });
+      onProgress?.({ stage:'ocr_consensus', rows:fusedAfterAdaptive.rows.length, consensusRows:fusedAfterAdaptive.consensusRows || 0, fieldConsensusRows:fusedAfterAdaptive.fieldConsensusRows || 0, recoveredRows:fusedAfterAdaptive.recoveredRows || 0, resolvedOutliers:fusedAfterAdaptive.resolvedOutliers || 0, conflicts:fusedAfterAdaptive.passConflicts || 0 });
       return { parsed: fusedAfterAdaptive, passes, rawText: safeText(adaptivePass.text), headerText: safeText(headerText, 1200), dimensions, regions };
     }
 
@@ -1068,7 +1355,7 @@ async function runOcrPipeline({
       });
       const fusedAfterPairing = fuseOcrCandidates({ candidates:parsedCandidates, snapshotType, minRows, minConfidence, lineMinConfidence });
       if (fusedAfterPairing?.accepted) {
-        onProgress?.({ stage:'ocr_consensus', rows:fusedAfterPairing.rows.length, consensusRows:fusedAfterPairing.consensusRows || 0, recoveredRows:fusedAfterPairing.recoveredRows || 0, conflicts:fusedAfterPairing.passConflicts || 0 });
+        onProgress?.({ stage:'ocr_consensus', rows:fusedAfterPairing.rows.length, consensusRows:fusedAfterPairing.consensusRows || 0, fieldConsensusRows:fusedAfterPairing.fieldConsensusRows || 0, recoveredRows:fusedAfterPairing.recoveredRows || 0, resolvedOutliers:fusedAfterPairing.resolvedOutliers || 0, conflicts:fusedAfterPairing.passConflicts || 0 });
         return { parsed: fusedAfterPairing, passes, rawText: safeText(`${namePass.text}\n${valuePass.text}`), headerText: safeText(headerText, 1200), dimensions, regions };
       }
 
@@ -1094,7 +1381,7 @@ async function runOcrPipeline({
         onProgress?.({ stage: 'ocr_column_pairing_done', snapshotType, rows: altPaired.rows.length, trustedRows: altPaired.trustedRows.length, exceptions: altPaired.exceptions.length, alternate: true });
         const fusedAfterAlt = fuseOcrCandidates({ candidates:parsedCandidates, snapshotType, minRows, minConfidence, lineMinConfidence });
         if (fusedAfterAlt?.accepted) {
-          onProgress?.({ stage:'ocr_consensus', rows:fusedAfterAlt.rows.length, consensusRows:fusedAfterAlt.consensusRows || 0, recoveredRows:fusedAfterAlt.recoveredRows || 0, conflicts:fusedAfterAlt.passConflicts || 0 });
+          onProgress?.({ stage:'ocr_consensus', rows:fusedAfterAlt.rows.length, consensusRows:fusedAfterAlt.consensusRows || 0, fieldConsensusRows:fusedAfterAlt.fieldConsensusRows || 0, recoveredRows:fusedAfterAlt.recoveredRows || 0, resolvedOutliers:fusedAfterAlt.resolvedOutliers || 0, conflicts:fusedAfterAlt.passConflicts || 0 });
           return { parsed: fusedAfterAlt, passes, rawText: safeText(`${altNamePass.text}\n${altValuePass.text}`), headerText: safeText(headerText, 1200), dimensions, regions };
         }
       }
@@ -1131,7 +1418,7 @@ async function runOcrPipeline({
 
   const best = fuseOcrCandidates({ candidates:parsedCandidates, snapshotType, minRows, minConfidence, lineMinConfidence }) || chooseBestParse(parsedCandidates);
   if (best?.consensusFusion) {
-    onProgress?.({ stage:'ocr_consensus', rows:best.rows.length, consensusRows:best.consensusRows || 0, recoveredRows:best.recoveredRows || 0, conflicts:best.passConflicts || 0 });
+    onProgress?.({ stage:'ocr_consensus', rows:best.rows.length, consensusRows:best.consensusRows || 0, fieldConsensusRows:best.fieldConsensusRows || 0, recoveredRows:best.recoveredRows || 0, resolvedOutliers:best.resolvedOutliers || 0, conflicts:best.passConflicts || 0 });
   }
   return {
     parsed: best || parseAllianceOcr({ text: headerText, snapshotTypeHint, minRows, minConfidence, lineMinConfidence }),
@@ -1193,7 +1480,9 @@ export async function extractAllianceScreenshotWithOcr({
               columnPairing: Boolean(parsed.columnPairing),
               consensusFusion: Boolean(parsed.consensusFusion),
               consensusRows: Number(parsed.consensusRows || 0),
+              fieldConsensusRows: Number(parsed.fieldConsensusRows || 0),
               recoveredRows: Number(parsed.recoveredRows || 0),
+              resolvedOutliers: Number(parsed.resolvedOutliers || 0),
               passConflicts: Number(parsed.passConflicts || 0),
               candidatePasses: Number(parsed.candidatePasses || 0),
               snapshotTypeHint: SNAPSHOT_TYPES.includes(snapshotTypeHint) ? snapshotTypeHint : null,
@@ -1217,7 +1506,9 @@ export async function extractAllianceScreenshotWithOcr({
                 columnPairing: Boolean(parsed.columnPairing),
                 consensusFusion: Boolean(parsed.consensusFusion),
                 consensusRows: Number(parsed.consensusRows || 0),
+                fieldConsensusRows: Number(parsed.fieldConsensusRows || 0),
                 recoveredRows: Number(parsed.recoveredRows || 0),
+                resolvedOutliers: Number(parsed.resolvedOutliers || 0),
                 passConflicts: Number(parsed.passConflicts || 0),
                 candidatePasses: Number(parsed.candidatePasses || 0),
                 snapshotTypeHint: SNAPSHOT_TYPES.includes(snapshotTypeHint) ? snapshotTypeHint : null,
@@ -1236,7 +1527,9 @@ export async function extractAllianceScreenshotWithOcr({
             reason: parsed.reason,
             passes: pipeline.passes.length,
             consensusRows: Number(parsed.consensusRows || 0),
+            fieldConsensusRows: Number(parsed.fieldConsensusRows || 0),
             recoveredRows: Number(parsed.recoveredRows || 0),
+            resolvedOutliers: Number(parsed.resolvedOutliers || 0),
             passConflicts: Number(parsed.passConflicts || 0),
           });
           return result;

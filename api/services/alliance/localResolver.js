@@ -178,7 +178,15 @@ export function resolveAllianceOcrLocally({
     const threshold = best?.learned && Number((corrections || []).find(c => normalizeMemberName(c.observedName) === normalizeMemberName(row.name) && normalizeMemberName(c.confirmedName) === normalizeMemberName(best.name))?.count || 0) >= 2
       ? Math.min(autoScore, 0.93)
       : autoScore;
-    const hardReviewReasons = (raw.reviewReasons || []).filter(reason => !['low_ocr_confidence','local_resolver_suggestion'].includes(reason));
+    const valueConsensusBacked = Number(raw.ocrValueConsensusCount || 0) >= 2;
+    const strongIdentityEvidence = Boolean(best && best.score >= Math.max(threshold, 0.95) && margin >= minMargin);
+    const hardReviewReasons = (raw.reviewReasons || []).filter(reason => {
+      if (['low_ocr_confidence','local_resolver_suggestion'].includes(reason)) return false;
+      // Duas passagens locais concordando no valor + candidato histórico praticamente
+      // inequívoco permitem resolver apenas a grafia do nickname. O valor nunca é alterado.
+      if (reason === 'ocr_pass_nickname_conflict' && valueConsensusBacked && strongIdentityEvidence) return false;
+      return true;
+    });
     const safeAuto = Boolean(best && best.score >= threshold && margin >= minMargin && ocrConfidence >= 0.58 && hardReviewReasons.length === 0);
 
     if (safeAuto) {
@@ -188,7 +196,7 @@ export function resolveAllianceOcrLocally({
       row.reviewReasons = [];
       row.resolverResolved = true;
       row.resolverConfidence = Number(best.score.toFixed(3));
-      row.resolverReasons = best.reasons;
+      row.resolverReasons = [...best.reasons, ...(valueConsensusBacked && (raw.reviewReasons || []).includes('ocr_pass_nickname_conflict') ? ['valor confirmado por múltiplas passagens locais'] : [])];
       row.source = 'local_resolver';
       row.sources = [...new Set([...(raw.sources || [raw.source || 'ocr']), 'local_resolver'])];
       autoResolved += 1;

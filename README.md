@@ -4,7 +4,7 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 
 ## Versão
 
-**1.0.0-beta.2.79** | Android `versionCode`: **100079**
+**1.0.0-beta.2.80** | Android `versionCode`: **100080**
 
 ## Principais módulos
 
@@ -15,6 +15,18 @@ Guia comunitário e não oficial para **Dragons of Atlantis**, com frontend Reac
 - **Extras → Reinos** com catálogo canônico, abertura/idade calculada, fuso, horários confirmados, eventos ativos e histórico
 - Extras: Reinos, Doação, Sobre, Texto Colorido e Backup
 - Painel Admin para manutenção dos conteúdos do MongoDB
+
+## Beta 2.80 — comparação de tropas
+
+- A tabela de comparação mantém **3 colunas fixas de tropas**, mesmo quando apenas duas unidades estão selecionadas, evitando deslocamento dos atributos.
+- Cada coluna usa a mesma cor do respectivo slot para facilitar a associação visual entre card e valores.
+- Colunas vazias permanecem reservadas e discretas, preservando o alinhamento da comparação.
+- O cabeçalho da tabela passa a preservar o nome completo da tropa, com truncamento visual apenas quando necessário.
+- Uma tropa selecionada pode ser **trocada tocando no próprio card**, sem precisar removê-la antes.
+- A indicação de melhor atributo ganhou legenda para deixar claro que empates destacam todas as líderes.
+- Frontend e metadados Android avançam para `1.0.0-beta.2.80` / `versionCode 100080`.
+
+Detalhes da implementação: [Comparação de Tropas Beta 2.80](docs/COMPARACAO_TROPAS_BETA_2_80.md).
 
 ## Beta 2.79 — tela inteira no Android
 

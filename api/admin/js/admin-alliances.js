@@ -429,14 +429,17 @@ function atScanNarrate(event) {
   }
   if (event.type === 'vision_progress' && event.stage === 'ocr_consensus') {
     const consensus = Number(event.consensusRows || 0);
+    const fieldConsensus = Number(event.fieldConsensusRows || 0);
     const recovered = Number(event.recoveredRows || 0);
+    const resolved = Number(event.resolvedOutliers || 0);
     const conflicts = Number(event.conflicts || 0);
+    const confirmed = consensus + fieldConsensus;
     return atScanStory({
       kicker:`Imagem ${current} de ${total} · consenso local`,
-      title:consensus ? `${consensus} linha(s) confirmada(s) por mais de uma passagem.` : 'Cruzando as passagens locais do OCR…',
-      text:`${recovered ? `${recovered} linha(s) foram recuperadas de uma passagem complementar. ` : ''}${conflicts ? `${conflicts} divergência(s) permaneceram marcadas para revisão.` : 'Nenhuma divergência entre as leituras ficou pendente.'}`,
+      title:confirmed ? `${confirmed} linha(s) confirmada(s) cruzando passagens.` : 'Cruzando as passagens locais do OCR…',
+      text:`${fieldConsensus ? `${fieldConsensus} linha(s) foram confirmadas por consenso separado de nickname/valor. ` : ''}${recovered ? `${recovered} linha(s) foram recuperadas de uma passagem complementar. ` : ''}${resolved ? `${resolved} outlier(s) isolado(s) foram vencidos por maioria. ` : ''}${conflicts ? `${conflicts} divergência(s) permaneceram marcadas para revisão.` : 'Nenhuma divergência sem maioria ficou pendente.'}`,
       progress:realProgress, completed, total,
-      line:`Consenso OCR: ${consensus} confirmada(s) · ${recovered} recuperada(s) · ${conflicts} conflito(s).`,
+      line:`Consenso OCR: ${consensus} completo · ${fieldConsensus} por campo · ${resolved} outlier(s) resolvido(s) · ${conflicts} conflito(s).`,
     });
   }
   if (event.type === 'vision_progress' && event.stage === 'ocr_retry') {
@@ -542,7 +545,7 @@ function atScanNarrate(event) {
       title:`Encontrei ${event.rows} linha${event.rows === 1 ? '' : 's'} nesta captura.`,
       text:event.reviewItems ? `${event.trustedRows || 0} linha(s) foram preservadas e ${event.reviewItems} exceção(ões) seguem marcadas para revisão. Fonte: ${source}.` : event.warnings ? `Também encontrei ${event.warnings} ponto${event.warnings === 1 ? '' : 's'} que merece revisão. Fonte: ${source}.` : done < total ? `Resultado preservado (${source}). Agora sigo para a próxima imagem.` : `Todas as imagens foram lidas. Última fonte: ${source}.`,
       progress:pct, completed:done, total,
-      line:`Imagem ${current} concluída: ${event.rows} membro(s) · ${event.consensusRows || 0} por consenso · ${event.recoveredRows || 0} recuperada(s) · ${event.exceptions || 0} exceção(ões) · ${source}.`,
+      line:`Imagem ${current} concluída: ${event.rows} membro(s) · ${Number(event.consensusRows || 0)+Number(event.fieldConsensusRows || 0)} por consenso · ${event.resolvedOutliers || 0} outlier(s) resolvido(s) · ${event.recoveredRows || 0} recuperada(s) · ${event.exceptions || 0} exceção(ões) · ${source}.`,
     });
   }
   if (event.type === 'merge_start') {
@@ -872,6 +875,10 @@ function atReviewReasonLabel(reason) {
     local_resolver_suggestion:'Sugestão do resolvedor local',
     ocr_pass_value_conflict:'Valor divergente entre passagens do OCR',
     ocr_pass_nickname_conflict:'Nickname divergente entre passagens do OCR',
+    numeric_ocr_ambiguity:'Número com caractere visualmente ambíguo no OCR',
+    column_alignment_weak:'Nome e valor ficaram distantes no pareamento por coluna',
+    unpaired_name:'Nickname sem valor pareado na mesma linha',
+    unpaired_value:'Valor sem nickname pareado na mesma linha',
     snapshot_type_manual:'Tipo da captura requer confirmação',
     image_manual_entry:'Imagem requer entrada manual',
     structural_manual_review:'Trecho não reconstruído pelo OCR',
@@ -950,7 +957,7 @@ function atRenderReview() {
       <div class="at-review-head"><div><h3>Revisar leitura</h3><p class="at-muted">${rows.length} membro(s) únicos em ${r.imagesCount || AT.files.length} imagem(ns). Leitura concluída 100% localmente.</p></div><button class="btn btn-ghost" onclick="atCancelReview()">← Voltar</button></div>
       <div class="at-reader-metrics">
         <div><span>Leitura local</span><strong>${Math.round(localRate)}%</strong><small>${Number(m.localAutoResolved || 0)} correção(ões) local(is)</small></div>
-        <div><span>Consenso OCR</span><strong>${Number(m.ocrConsensusRows || 0)}</strong><small>${Number(m.ocrRecoveredRows || 0)} linha(s) recuperada(s)</small></div>
+        <div><span>Consenso OCR</span><strong>${Number(m.ocrConsensusRows || 0) + Number(m.ocrFieldConsensusRows || 0)}</strong><small>${Number(m.ocrResolvedOutliers || 0)} outlier(s) resolvido(s) · ${Number(m.ocrRecoveredRows || 0)} recuperada(s)</small></div>
         <div><span>Revisão manual</span><strong>${Number(m.manualReviewImages || 0)}</strong><small>imagem(ns) com alguma dúvida</small></div>
         <div><span>Exceções</span><strong>${pending}</strong><small>linhas aguardando confirmação</small></div>
         <div><span>Duplicados</span><strong>${Number(m.duplicatesSkipped ?? r.duplicatesSkipped ?? 0)}</strong><small>screenshots não relidos</small></div>

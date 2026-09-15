@@ -99,3 +99,18 @@ O sistema apenas sugere uma possível troca usando sinais como nome, histórico 
 ## Limite
 
 O módulo aplica o limite de 120 membros por Alliance.
+
+## Reforço do OCR local por consenso
+
+O importador também usa consenso determinístico entre passagens do próprio Tesseract, sem IA externa:
+
+- passagens independentes votam na linha completa e, separadamente, em **nickname** e **valor**;
+- uma divergência isolada pode ser descartada quando existe maioria real entre passagens (por exemplo, 2 leituras iguais contra 1 outlier);
+- empate continua obrigatoriamente em revisão;
+- confusões numéricas típicas do OCR (`O/0`, `I/1`, `S/5`, `B/8`) podem ser recuperadas apenas como hipótese marcada; a hipótese só deixa a revisão quando outra passagem confirma o mesmo valor sem ambiguidade ou há consenso local reforçado;
+- o pareamento entre coluna de nickname e coluna de valor passou a preservar a ordem global das linhas, evitando que uma linha deslocada consuma o valor da linha seguinte;
+- conteúdo detectado em uma coluna sem par plausível na outra não some silenciosamente: vira exceção estrutural;
+- quando o valor já foi confirmado por múltiplas passagens e o histórico local aponta um único membro com confiança muito alta, o resolvedor pode corrigir somente a grafia do nickname; conflitos de valor nunca são apagados pelo histórico;
+- o Admin mostra consenso completo, consenso por campo, linhas recuperadas, outliers resolvidos e conflitos ainda pendentes.
+
+A regra permanece conservadora: o sistema pode usar redundância local para confirmar evidências, mas nunca transforma empate ou conflito sem maioria em dado definitivo.

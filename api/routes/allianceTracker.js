@@ -399,7 +399,9 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
         ocrConfidence: result.ocrConfidence ?? null,
         ocrPasses: result.ocrDiagnostics?.passesCount || 0,
         consensusRows: Number(result.ocrDiagnostics?.consensusRows || 0),
+        fieldConsensusRows: Number(result.ocrDiagnostics?.fieldConsensusRows || 0),
         recoveredRows: Number(result.ocrDiagnostics?.recoveredRows || 0),
+        resolvedOutliers: Number(result.ocrDiagnostics?.resolvedOutliers || 0),
         passConflicts: Number(result.ocrDiagnostics?.passConflicts || 0),
         trustedRows: result.ocrTrustedRows ?? result.ocrDiagnostics?.trustedRows ?? result.rows.length,
         exceptions: result.ocrExceptions ?? result.ocrDiagnostics?.exceptions ?? result.reviewItems?.length ?? 0,
@@ -441,7 +443,9 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
     const localAutoResolved = batch.results.reduce((sum, r) => sum + Number(r.localResolver?.autoResolved || 0), 0);
     const localSuggested = batch.results.reduce((sum, r) => sum + Number(r.localResolver?.suggested || 0), 0);
     const ocrConsensusRows = batch.results.reduce((sum, r) => sum + Number(r.ocrDiagnostics?.consensusRows || 0), 0);
+    const ocrFieldConsensusRows = batch.results.reduce((sum, r) => sum + Number(r.ocrDiagnostics?.fieldConsensusRows || 0), 0);
     const ocrRecoveredRows = batch.results.reduce((sum, r) => sum + Number(r.ocrDiagnostics?.recoveredRows || 0), 0);
+    const ocrResolvedOutliers = batch.results.reduce((sum, r) => sum + Number(r.ocrDiagnostics?.resolvedOutliers || 0), 0);
     const ocrPassConflicts = batch.results.reduce((sum, r) => sum + Number(r.ocrDiagnostics?.passConflicts || 0), 0);
     const data = {
       ...merged,
@@ -471,7 +475,9 @@ router.post('/extract-stream', upload.array('images', 10), async (req, res) => {
         manualReviewImages,
         totalOcrPasses,
         ocrConsensusRows,
+        ocrFieldConsensusRows,
         ocrRecoveredRows,
+        ocrResolvedOutliers,
         ocrPassConflicts,
         localResolverImages,
         localAutoResolved,

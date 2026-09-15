@@ -1781,3 +1781,46 @@
   .realm-filter-chips{grid-template-columns:1fr 1fr;}
   .btn-lg{padding-left:12px!important;padding-right:12px!important;}
 }
+
+/* ── Troops · comparison alignment & usability · Beta 2.80 ─────────────── */
+.troop-compare-page{max-width:620px;margin:0 auto;padding-bottom:16px}
+.troop-compare-picker-panel{padding:10px;margin-bottom:10px}
+.troop-compare-slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.troop-compare-slot{min-width:0;min-height:126px;border-radius:4px;font-family:var(--ui-font);transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease}
+.troop-compare-slot:focus-visible{outline:2px solid #d7bc67;outline-offset:2px}
+.troop-compare-slot-empty{padding:12px 6px;border:1px dashed #82907a;background:rgba(236,229,199,.45);cursor:pointer;text-align:center;color:#687064}
+.troop-compare-slot-empty:active,.troop-compare-slot-active:active{transform:translateY(1px)}
+.troop-compare-slot-add{font-size:1.15rem;line-height:1}
+.troop-compare-slot-empty-label{font-size:.72rem;font-weight:750;margin-top:5px}
+.troop-compare-slot-active{padding:8px 6px;border:1px solid var(--slot-color);background:linear-gradient(180deg,rgba(240,232,204,.9),rgba(220,209,173,.9));position:relative;box-shadow:inset 0 3px 0 var(--slot-color);cursor:pointer}
+.troop-compare-slot-active:hover{box-shadow:inset 0 3px 0 var(--slot-color),0 2px 5px rgba(55,45,26,.10)}
+.troop-compare-slot-remove{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:3px;background:rgba(181,35,25,.08);border:1px solid rgba(181,35,25,.22);color:#a83c2c;font-size:.72rem;cursor:pointer;display:grid;place-items:center;z-index:1}
+.troop-compare-slot-icon{font-size:1.45rem;line-height:1;text-align:center;margin-top:3px}
+.troop-compare-slot-name{margin-top:6px;padding:0 10px;color:#2e342f;font-size:.74rem;font-weight:780;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.troop-compare-slot-type{margin-top:3px;font-size:.72rem;font-weight:700;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.troop-compare-slot-power{margin-top:7px;text-align:center}
+.troop-compare-slot-power strong{display:block;color:#315b56;font-size:.82rem}
+.troop-compare-slot-power span{color:#7b8377;font-size:.72rem;font-weight:800;letter-spacing:.05em}
+.troop-compare-picker-hint{margin:8px 0 0;text-align:center;color:#687064;font-size:.72rem;font-weight:700;line-height:1.35}
+.troop-compare-add-second{text-align:center;padding:18px 14px;color:#687064;font-size:.76rem;font-weight:650}
+.troop-compare-table-block{margin-bottom:10px}
+.troop-compare-grid{grid-template-columns:minmax(102px,1.12fr) repeat(3,minmax(0,1fr))!important;gap:5px!important}
+.troop-compare-table .game-info-table-head{padding:6px 8px}
+.troop-compare-table-body{padding:7px 8px 8px}
+.troop-compare-attribute-head{text-align:left;padding-left:2px}
+.troop-compare-column-head{min-width:0;padding:5px 3px 4px;border-bottom:2px solid var(--slot-color);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.troop-compare-column-head.is-empty{border-bottom-color:rgba(246,236,212,.18);color:rgba(246,236,212,.44);font-weight:650}
+.troop-compare-row{min-height:30px}
+.troop-compare-attribute-label{min-width:0;line-height:1.15}
+.troop-compare-value,.troop-compare-empty-value{text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
+.troop-compare-value{color:#f1e4c2;font-weight:650}
+.troop-compare-value.is-best{color:#fff08a;font-weight:850}
+.troop-compare-best-marker{margin-left:3px;font-size:.72rem}
+.troop-compare-empty-value{color:rgba(241,228,194,.20)}
+.troop-compare-legend{margin:5px 3px 0;color:#756d59;font-size:.72rem;font-weight:650;line-height:1.35;text-align:right}
+@media(max-width:390px){
+  .troop-compare-grid{grid-template-columns:minmax(94px,1.08fr) repeat(3,minmax(0,1fr))!important;gap:3px!important}
+  .troop-compare-table .game-info-table-head,.troop-compare-table-body{padding-left:6px;padding-right:6px}
+  .troop-compare-column-head,.troop-compare-row{font-size:.72rem}
+  .troop-compare-slot-name{padding:0 7px}
+}

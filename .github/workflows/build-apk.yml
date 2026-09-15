@@ -1,0 +1,213 @@
+name: Build APK Android
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Tipo de build'
+        required: true
+        default: debug
+        type: choice
+        options: [debug, release]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: write
+    env:
+      BUILD_TYPE: ${{ inputs.build_type || 'debug' }}
+      VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://guiadoa-agrq.onrender.com' }}
+      ANDROID_BUILD_TOOLS: '36.0.0'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            api/package-lock.json
+
+      - name: Validar API e versao Android
+        id: metadata
+        run: node scripts/android-build-config.mjs validate
+
+      - name: Validar configuracao de assinatura Release
+        if: env.BUILD_TYPE == 'release'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Secret obrigatorio ausente: $name. Release nao sera publicada sem assinatura."
+              exit 1
+            fi
+          done
+
+      - name: Instalar dependencias fixadas nos locks
+        run: |
+          npm ci
+          npm --prefix api ci
+
+      - name: Testes e verificacoes
+        run: |
+          npm test
+          npm run check
+
+      - name: Testes de navegador
+        run: |
+          npx --no-install playwright install --with-deps chromium
+          npm run test:browser
+
+      - name: Build web
+        run: npm run build
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Instalar SDK e ferramentas Android fixadas
+        run: sdkmanager 'platforms;android-36' "build-tools;$ANDROID_BUILD_TOOLS"
+
+      - name: Instalar Capacitor isolado do build web
+        run: npm install --no-save --package-lock=false @capacitor/core@8.5.0 @capacitor/android@8.5.0 @capacitor/cli@8.5.0
+
+      - name: Preparar plataforma Android
+        run: |
+          if [ ! -d android ]; then
+            npx --no-install cap add android
+          fi
+          npx --no-install cap sync android
+          node scripts/apply-android-name.mjs
+          node scripts/apply-android-icon.mjs
+          node scripts/apply-android-fullscreen.mjs
+          node scripts/android-build-config.mjs apply
+          chmod +x android/gradlew
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-cap8.5.0-${{ hashFiles('android/**/*.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-cap8.5.0-
+
+      # Debug is for testing only. Cache reuse is not a durable signing identity.
+      - uses: actions/cache@v4
+        if: env.BUILD_TYPE == 'debug'
+        with:
+          path: ~/.android/debug.keystore
+          key: guiadoa-debug-keystore-v1
+
+      - name: Compilar APK
+        working-directory: android
+        run: |
+          case "$BUILD_TYPE" in
+            debug) task=assembleDebug ;;
+            release) task=assembleRelease ;;
+            *) echo '::error::Tipo de build invalido'; exit 1 ;;
+          esac
+          ./gradlew "$task" --no-daemon --stacktrace -Dorg.gradle.jvmargs=-Xmx2048m
+
+      - name: Preparar APK Debug
+        if: env.BUILD_TYPE == 'debug'
+        run: |
+          mkdir -p release-apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk release-apk/GuiaDOA.apk
+
+      - name: Assinar APK Release
+        if: env.BUILD_TYPE == 'release'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          umask 077
+          KEYSTORE_PATH="$RUNNER_TEMP/guiadoa-release.keystore"
+          trap 'rm -f "$KEYSTORE_PATH"' EXIT
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+          mkdir -p release-apk
+          TOOLS="$ANDROID_HOME/build-tools/$ANDROID_BUILD_TOOLS"
+          "$TOOLS/zipalign" -f -p 4 android/app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/guiadoa-aligned.apk"
+          "$TOOLS/apksigner" sign --ks "$KEYSTORE_PATH" --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEY_PASSWORD \
+            --v4-signing-enabled false --out release-apk/GuiaDOA.apk "$RUNNER_TEMP/guiadoa-aligned.apk"
+
+      - name: Verificar assinatura e versao do APK final
+        env:
+          EXPECTED_VERSION: ${{ steps.metadata.outputs.version }}
+          EXPECTED_CODE: ${{ steps.metadata.outputs.version_code }}
+        run: |
+          test -s release-apk/GuiaDOA.apk
+          TOOLS="$ANDROID_HOME/build-tools/$ANDROID_BUILD_TOOLS"
+          "$TOOLS/apksigner" verify --verbose release-apk/GuiaDOA.apk
+          "$TOOLS/zipalign" -c -p 4 release-apk/GuiaDOA.apk
+          export APK_BADGING="$("$TOOLS/aapt" dump badging release-apk/GuiaDOA.apk)"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const appId = JSON.parse(readFileSync('capacitor.config.json')).appId;
+          const info = process.env.APK_BADGING.split('\n').find(line => line.startsWith('package:')) || '';
+          const value = key => info.match(new RegExp(`${key}='([^']*)'`))?.[1];
+          assert.equal(value('name'), appId);
+          assert.equal(value('versionName'), process.env.EXPECTED_VERSION);
+          assert.equal(value('versionCode'), process.env.EXPECTED_CODE);
+          NODE
+
+      - name: Publicar somente APK na Release
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+        run: |
+          TAG="v${VERSION}-${BUILD_TYPE}-${GITHUB_RUN_NUMBER}"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --draft --target "$GITHUB_SHA" \
+              --title "Guia Doa $VERSION ($BUILD_TYPE)" \
+              --notes "APK Android $BUILD_TYPE. Commit: $GITHUB_SHA. Baixe GuiaDOA.apk; Source code e o codigo-fonte automatico do GitHub."
+          fi
+          gh release upload "$TAG" release-apk/GuiaDOA.apk --clobber
+          gh release view "$TAG" --json assets > "$RUNNER_TEMP/guiadoa-release-assets.json"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync, statSync } from 'node:fs';
+          const { assets } = JSON.parse(readFileSync(`${process.env.RUNNER_TEMP}/guiadoa-release-assets.json`));
+          assert.equal(assets.length, 1, 'A Release deve conter somente um asset.');
+          assert.equal(assets[0].name, 'GuiaDOA.apk');
+          assert.equal(assets[0].state, 'uploaded');
+          assert.equal(assets[0].size, statSync('release-apk/GuiaDOA.apk').size);
+          NODE
+          PRERELEASE=false
+          if [[ "$VERSION" == *-* || "$BUILD_TYPE" == debug ]]; then PRERELEASE=true; fi
+          gh release edit "$TAG" --draft=false --prerelease="$PRERELEASE" --latest=false
+          printf '## Guia Doa %s\n\n[Baixar GuiaDOA.apk](https://github.com/%s/releases/download/%s/GuiaDOA.apk)\n' "$VERSION" "$GH_REPO" "$TAG" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Resumo de validacao sem publicacao
+        if: github.event_name == 'pull_request' || (github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master')
+        run: printf 'APK validado. Pull requests e branches de trabalho nao publicam Releases.\n' >> "$GITHUB_STEP_SUMMARY"

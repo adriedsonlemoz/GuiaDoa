@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia DOA — Admin</title>
+<link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="tela-login">
+  <div class="login-box">
+    <h1>🛡️ Guia DOA</h1>
+    <p>PAINEL DE ADMINISTRAÇÃO</p>
+    <div class="login-divider"></div>
+
+    <div id="bootstrap-user-card" class="bootstrap-user-card" style="display:none">
+      <div class="bootstrap-first-icon">🧭</div>
+      <h2>Primeiro acesso</h2>
+      <p id="bootstrap-user-resumo">Nenhum administrador foi encontrado. Crie o primeiro usuário para continuar.</p>
+      <div class="field"><label>Novo usuário</label><input type="text" id="bootstrap-user" placeholder="admin" autocomplete="username"></div>
+      <div class="field"><label>Nova senha</label><input type="password" id="bootstrap-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+      <div class="field"><label>Confirmar senha</label><input type="password" id="bootstrap-pass2" placeholder="Repita a senha" autocomplete="new-password"></div>
+      <div class="field" id="bootstrap-key-wrap" style="display:none"><label>SETUP_KEY</label><input type="password" id="bootstrap-key" placeholder="Chave configurada no Render" autocomplete="off"></div>
+      <button class="btn btn-gold btn-full" id="btn-bootstrap-user" onclick="criarPrimeiroAdmin()">Criar administrador e continuar</button>
+      <button class="bootstrap-link-btn" onclick="mostrarLoginNormal()">Já tenho um usuário</button>
+      <p id="bootstrap-user-erro" class="bootstrap-inline-error" style="display:none"></p>
+    </div>
+
+    <form id="login-form" autocomplete="on">
+      <div id="bootstrap-bank-notice" class="bootstrap-bank-notice" style="display:none"></div>
+      <div class="field"><label>Usuário</label><input type="text" id="login-user" name="username" placeholder="adrilemoz" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
+      <div class="field"><label>Senha</label><input type="password" id="login-pass" name="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <label class="login-remember" for="remember-user">
+        <input type="checkbox" id="remember-user" name="remember-user">
+        <span>Lembrar meu usuário neste aparelho</span>
+      </label>
+      <button type="submit" class="btn btn-navy btn-full" id="btn-login">Acessar o Quartel</button>
+      <button type="button" onclick="rodarDiagnostico()" style="width:100%;margin-top:6px;background:transparent;border:1px solid rgba(200,168,74,0.3);border-radius:8px;padding:7px;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.72rem;color:rgba(200,168,74,0.75);cursor:pointer;letter-spacing:0.5px;">🔍 Diagnosticar conexão</button>
+      <p id="login-erro" style="color:var(--red);font-size:0.75rem;text-align:center;margin-top:10px;display:none;"></p>
+    </form>
+
+    <!-- Painel de debug -->
+    <div id="debug-box" style="display:none;margin-top:14px;background:#0A0F1A;border:1px solid rgba(200,168,74,0.3);border-radius:8px;overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:rgba(200,168,74,0.08);border-bottom:1px solid rgba(200,168,74,0.2);">
+        <span style="font-family:monospace;font-size:0.62rem;color:rgba(200,168,74,0.7);letter-spacing:1px;">▸ LOG DE DIAGNÓSTICO</span>
+        <div style="display:flex;gap:5px;">
+          <button onclick="limparLog()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);border-radius:4px;padding:2px 8px;font-size:0.6rem;cursor:pointer;font-family:monospace;">✕ Limpar</button>
+          <button onclick="copiarLog()" id="btn-copiar-log" style="background:rgba(200,168,74,0.15);border:1px solid rgba(200,168,74,0.4);color:rgba(200,168,74,0.9);border-radius:4px;padding:2px 8px;font-size:0.6rem;cursor:pointer;font-family:monospace;">📋 Copiar</button>
+        </div>
+      </div>
+      <div id="debug-lines" style="padding:8px 10px;font-family:monospace;font-size:0.67rem;max-height:220px;overflow-y:auto;line-height:1.75;"></div>
+    </div>
+
+    <div id="api-status" style="margin-top:12px;font-size:0.65rem;text-align:center;color:var(--muted)"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOPBAR -->
+  <nav class="topbar">
+    <div class="topbar-brand" onclick="irHome()">
+      <img src="/img/app-icon.png" alt="GUIA DOA">
+      <span class="admin-brand-copy"><strong>GUIA DOA</strong><small>Admin</small></span>
+    </div>
+    <div class="topbar-right">
+      <a class="topbar-project-link" href="https://guia-doa.vercel.app/#/" target="_blank" rel="noopener noreferrer" title="Ver Projeto">
+        <span>🌐 Ver Projeto</span>
+      </a>
+      <div class="topbar-divider"></div>
+      <span class="topbar-user" id="topbar-user">—</span>
+      <button class="btn btn-sm btn-ghost" onclick="sair()" title="Sair">Sair</button>
+    </div>
+  </nav>
+
+  <!-- BREADCRUMB -->
+  <div class="breadcrumb" id="breadcrumb">
+    <span class="breadcrumb-item" onclick="irHome()">🏠 Início</span>
+  </div>
+
+  <!-- CONTENT -->
+  <main class="content" id="content">
+    <div class="loading"><span class="spinner"></span> Carregando...</div>
+  </main>
+</div>
+
+<!-- MODAL TROPA -->
+<div class="modal-bg" id="modal-tropa">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-titulo">Nova Tropa</h3>
+      <button class="modal-close" onclick="fecharModal('modal-tropa')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid2">
+        <div class="field"><label>Nome</label><input id="f-nome" placeholder="Nome da tropa"></div>
+        <div class="field"><label>Tipo de Unidade</label>
+          <select id="f-tipo">
+            <option value="treinavel">Treinável</option>
+            <option value="especial">Especial</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Combate ⚔️</label>
+          <select id="f-combate">
+            <option value="corpo_a_corpo">⚔️ Corpo a Corpo</option>
+            <option value="distancia">🏹 Distância</option>
+          </select>
+        </div>
+        <div class="field"><label>Velocidade de Marcha ⚡</label>
+          <select id="f-rapida">
+            <option value="false">Normal</option>
+            <option value="true">⚡ Rápida</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Categoria tática</label>
+          <select id="f-categoria">
+            <option value="infantaria">Infantaria</option>
+            <option value="distancia">Distância</option>
+            <option value="cavalaria">Cavalaria</option>
+            <option value="dragao">Dragão</option>
+            <option value="pesada">Unidade pesada</option>
+            <option value="transporte">Transporte</option>
+            <option value="outro">Outra</option>
+          </select>
+        </div>
+        <div class="field"><label>Funções táticas</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:7px">
+            <label style="font-weight:600"><input id="f-role-ataque" type="checkbox"> Ataque</label>
+            <label style="font-weight:600"><input id="f-role-defesa" type="checkbox"> Defesa</label>
+            <label style="font-weight:600"><input id="f-role-farming" type="checkbox"> Farming</label>
+            <label style="font-weight:600"><input id="f-role-suporte" type="checkbox"> Suporte</label>
+            <label style="font-weight:600"><input id="f-role-equilibrada" type="checkbox"> Equilibrada</label>
+          </div>
+        </div>
+      </div>
+      <details class="admin-collapse">
+        <summary>⚔️ Dados de combate, counters e evidências <span>opcional</span></summary>
+        <div class="admin-collapse-body">
+          <div class="grid3">
+            <div class="field"><label>Tipo oficial</label><select id="f-combat-official"><option value="">Não informado</option><option value="supply">Supply / Suprimento</option><option value="mounted">Mounted / Montada</option><option value="foot">Foot / Infantaria</option><option value="ranged">Ranged / Distância</option></select></div>
+            <div class="field"><label>Tier</label><input id="f-combat-tier" type="number" min="1" max="99" placeholder="Ex.: 4"></div>
+            <div class="field"><label>Confiança geral</label><select id="f-combat-confidence"><option value="">Não informada</option><option value="confirmado">🟢 Confirmado</option><option value="experimental">🟡 Experimental</option><option value="hipotese">🔴 Hipótese</option></select></div>
+          </div>
+          <div class="field"><label>Funções táticas</label><div class="admin-check-row">
+            <label><input id="f-combat-role-melee" type="checkbox"> ⚔️ Melee</label>
+            <label><input id="f-combat-role-ranged" type="checkbox"> 🏹 Ranged</label>
+            <label><input id="f-combat-role-speed" type="checkbox"> 💨 Speed</label>
+            <label><input id="f-combat-role-tank" type="checkbox"> 🛡️ Tank</label>
+            <label><input id="f-combat-role-supply" type="checkbox"> 📦 Supply</label>
+          </div></div>
+          <div class="grid2">
+            <div class="field"><label>Bom contra <span class="field-hint">uma tropa ou categoria por linha</span></label><textarea id="f-combat-strong" placeholder="Nome ou categoria"></textarea></div>
+            <div class="field"><label>Fraco contra <span class="field-hint">uma tropa ou categoria por linha</span></label><textarea id="f-combat-weak" placeholder="Nome ou categoria"></textarea></div>
+          </div>
+          <div class="field"><label>Habilidades especiais <span class="field-hint">uma por linha</span></label><textarea id="f-combat-skills" placeholder="Somente habilidades conhecidas"></textarea></div>
+          <div class="grid2">
+            <div class="field"><label>Como usar / função recomendada</label><textarea id="f-combat-recommended" placeholder="Uso estratégico recomendado"></textarea></div>
+            <div class="field"><label>Prioridade de alvo</label><textarea id="f-combat-target" placeholder="Deixe vazio quando desconhecida"></textarea></div>
+          </div>
+          <div class="field"><label>Observações estratégicas</label><textarea id="f-combat-notes" placeholder="Resultados, limites e hipóteses"></textarea></div>
+          <div class="field"><label>Fonte / origem da informação</label><textarea id="f-combat-source" placeholder="Fonte oficial, relatório, teste, comunidade..."></textarea></div>
+
+          <div class="admin-subtitle">Confiança por grupo de informação</div>
+          <div class="grid3">
+            <div class="field"><label>Tipo oficial</label><select id="f-conf-official"></select></div>
+            <div class="field"><label>Funções táticas</label><select id="f-conf-roles"></select></div>
+            <div class="field"><label>Atributos numéricos</label><select id="f-conf-attributes"></select></div>
+          </div>
+          <div class="grid3">
+            <div class="field"><label>Counters</label><select id="f-conf-counters"></select></div>
+            <div class="field"><label>Habilidades</label><select id="f-conf-skills"></select></div>
+            <div class="field"><label>Tier</label><select id="f-conf-tier"></select></div>
+          </div>
+          <div class="grid3">
+            <div class="field"><label>Como usar</label><select id="f-conf-recommended"></select></div>
+            <div class="field"><label>Observações</label><select id="f-conf-notes"></select></div>
+            <div class="field"><label>Prioridade de alvo</label><select id="f-conf-target"></select></div>
+          </div>
+
+          <details class="admin-collapse admin-collapse-nested">
+            <summary>🌐 English — combate <span>opcional</span></summary>
+            <div class="admin-collapse-body">
+              <div class="grid2">
+                <div class="field"><label>Strong against</label><textarea id="f-en-combat-strong" placeholder="One per line"></textarea></div>
+                <div class="field"><label>Weak against</label><textarea id="f-en-combat-weak" placeholder="One per line"></textarea></div>
+              </div>
+              <div class="field"><label>Special abilities</label><textarea id="f-en-combat-skills" placeholder="One per line"></textarea></div>
+              <div class="grid2"><div class="field"><label>How to use</label><textarea id="f-en-combat-recommended"></textarea></div><div class="field"><label>Target priority</label><textarea id="f-en-combat-target"></textarea></div></div>
+              <div class="field"><label>Strategic notes</label><textarea id="f-en-combat-notes"></textarea></div>
+              <div class="field"><label>Information source</label><textarea id="f-en-combat-source"></textarea></div>
+            </div>
+          </details>
+        </div>
+      </details>
+
+      <div class="grid3">
+        <div class="field"><label>Poder ⭐</label><input id="f-poder" type="number" min="0" placeholder="0"></div>
+        <div class="field"><label>Vida ❤️</label><input id="f-vida" type="number" min="0" placeholder="0"></div>
+        <div class="field"><label>Defesa 🛡️</label><input id="f-def" type="number" min="0" placeholder="0"></div>
+      </div>
+      <div class="grid3">
+        <div class="field"><label>Atq. Perto ⚔️</label><input id="f-atqPerto" type="number" min="0" placeholder="0"></div>
+        <div class="field"><label>Atq. Dist 🏹</label><input id="f-atqDist" type="number" min="0" placeholder="0"></div>
+        <div class="field"><label>Alcance 📐</label><input id="f-alcance" type="number" min="0" placeholder="0"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Velocidade ⚡</label><input id="f-vel" type="number" min="0" placeholder="0"></div>
+        <div class="field"><label>Carga 📦</label><input id="f-car" type="number" min="0" placeholder="0"></div>
+      </div>
+      <div class="field"><label>Imagem da tropa <span style="font-weight:500;color:var(--muted)">(URL opcional)</span></label><input id="f-imagem" placeholder="https://.../imagem-da-tropa.webp"></div>
+      <div class="field"><label>Descrição</label><textarea id="f-desc" placeholder="Descrição da tropa..."></textarea></div>
+      <div class="i18n-section" style="border-color:rgba(184,150,90,.45)">
+        <div class="i18n-title">🔓 Requisito de desbloqueio <span>opcional</span></div>
+        <div class="grid2">
+          <div class="field"><label>Tipo</label><select id="f-unlock-tipo"><option value="">Não informado</option><option value="edificio">Edifício</option><option value="pesquisa">Pesquisa</option><option value="evento">Evento</option><option value="outro">Outro</option></select></div>
+          <div class="field"><label>Nível necessário</label><input id="f-unlock-nivel" type="number" min="0" placeholder="Ex.: 18"></div>
+        </div>
+        <div class="field"><label>Edifício / Pesquisa / Fonte</label><input id="f-unlock-fonte" placeholder="Ex.: Fábrica"></div>
+        <div class="field"><label>Observação</label><input id="f-unlock-observacao" placeholder="Como esta tropa é desbloqueada"></div>
+      </div>
+      <div class="i18n-section">
+        <div class="i18n-title">🌐 English <span>opcional</span></div>
+        <div class="field"><label>Name</label><input id="f-en-nome" placeholder="Troop name in English"></div>
+        <div class="field"><label>Description</label><textarea id="f-en-desc" placeholder="Troop description in English..."></textarea></div>
+        <div class="grid2"><div class="field"><label>Unlock source</label><input id="f-en-unlock-fonte" placeholder="Factory"></div><div class="field"><label>Unlock note</label><input id="f-en-unlock-observacao" placeholder="How this unit is unlocked"></div></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-tropa')">Cancelar</button>
+      <button class="btn btn-navy" onclick="salvarTropa()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRM -->
+<div class="modal-bg" id="confirm-modal">
+  <div class="modal" style="max-width:300px">
+    <div class="modal-body" style="text-align:center;padding:20px">
+      <div class="confirm-icon">⚠️</div>
+      <p class="confirm-msg" id="confirm-msg">Tem certeza?</p>
+    </div>
+    <div class="modal-footer" style="justify-content:center">
+      <button class="btn btn-ghost" onclick="fecharModal('confirm-modal')">Cancelar</button>
+      <button class="btn btn-red" id="confirm-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="/admin/js/admin-core.js"></script>
+<script src="/admin/js/admin-state.js"></script>
+<script src="/admin/js/admin-diagnostic.js"></script>
+<script src="/admin/js/admin-bootstrap.js"></script>
+<script src="/admin/js/admin-auth.js"></script>
+<script src="/admin/js/admin-shell.js"></script>
+<script src="/admin/js/admin-tropas.js"></script>
+<script src="/admin/js/admin-niveis.js"></script>
+<script src="/admin/js/admin-dragoes.js"></script>
+<script src="/admin/js/admin-edificios.js"></script>
+<script src="/admin/js/admin-itens.js"></script>
+
+  <!-- Modal Nível -->
+  <div id="modal-nivel" class="modal-bg">
+    <div class="modal-card" style="max-width:340px">
+      <div class="modal-header">
+        <h3 id="modal-nivel-titulo">Novo Nível</h3>
+        <button class="btn-close" onclick="fecharModal('modal-nivel')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Nível *</label>
+          <input id="fn-nivel" type="number" min="1" max="999" placeholder="Ex: 30">
+        </div>
+        <div class="field">
+          <label>Poder Necessário <span style="color:var(--muted);font-weight:600">(deixe vazio se desconhecido)</span></label>
+          <input id="fn-poder" type="number" min="0" placeholder="Ex: 2205066">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="fecharModal('modal-nivel')">Cancelar</button>
+        <button class="btn btn-gold" onclick="salvarNivel()">💾 Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Dragão (meta) -->
+  <div id="modal-dragao" class="modal-bg">
+    <div class="modal-card" style="max-width:560px">
+      <div class="modal-header">
+        <h3 id="modal-dragao-titulo">Novo Dragão</h3>
+        <button class="btn-close" onclick="fecharModal('modal-dragao')">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="field-row">
+          <div class="field">
+            <label>Slug * <span style="font-size:0.6rem;color:var(--muted)">(único, sem espaço)</span></label>
+            <input id="fdr-slug" type="text" placeholder="Ex: grande_dragao">
+          </div>
+          <div class="field">
+            <label>Nome *</label>
+            <input id="fdr-nome" type="text" placeholder="Ex: Grande Dragão">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Elemento</label>
+            <input id="fdr-elemento" type="text" placeholder="Ex: Fogo, Água, Terra">
+          </div>
+          <div class="field">
+            <label>Raridade</label>
+            <input id="fdr-raridade" type="text" placeholder="Ex: Lendário, Épico">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Descrição</label>
+          <textarea id="fdr-descricao" rows="2" placeholder="Descrição do dragão..."></textarea>
+        </div>
+        <div class="field">
+          <label>Retrato <span style="font-size:0.6rem;color:var(--muted)">(caminho ou URL)</span></label>
+          <input id="fdr-imagem" type="text" placeholder="/assets/dragons/grande_dragao.webp">
+        </div>
+
+        <div style="padding:12px;margin:12px 0;background:var(--bg2);border:1px solid rgba(200,168,74,.3);border-radius:10px">
+          <div style="font-size:.65rem;font-weight:900;letter-spacing:1.2px;color:var(--gold3);text-transform:uppercase;margin-bottom:8px">🐉 Como obter</div>
+          <div class="field-row">
+            <div class="field"><label>Tipo</label><select id="fdr-obt-tipo"><option value="desconhecido">Desconhecido</option><option value="inicial">Inicial</option><option value="recompensa">Recompensa</option><option value="recompensa_ou_captura">Recompensa ou captura</option><option value="fragmentos">Fragmentos</option><option value="captura">Captura</option><option value="evento">Evento</option></select></div>
+            <div class="field"><label>Dia <span style="font-size:.6rem;color:var(--muted)">(se aplicável)</span></label><input id="fdr-obt-dia" type="number" min="1" placeholder="Ex: 2"></div>
+          </div>
+          <div class="field"><label>Resumo</label><textarea id="fdr-obt-resumo" rows="2" placeholder="Como o jogador obtém este dragão..."></textarea></div>
+          <div class="field-row">
+            <div class="field"><label>Fonte / Campo</label><input id="fdr-obt-fonte" placeholder="Ex: Campo de Floresta"></div>
+            <div class="field"><label>Slug futuro</label><input id="fdr-obt-slug" placeholder="Ex: campo-floresta"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Nível mínimo</label><input id="fdr-obt-min" type="number" min="1"></div>
+            <div class="field"><label>Nível máximo</label><input id="fdr-obt-max" type="number" min="1"></div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Bônus de Marcha</label><input id="fdr-bonus" placeholder="Ex: +5% ataque"></div>
+          <div class="field"><label>Atributo</label><input id="fdr-atributo" placeholder="Ex: Ataque de tropas"></div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Emoji Elemento</label>
+            <input id="fdr-emoji" type="text" placeholder="🔥" style="font-size:1.4rem;text-align:center">
+          </div>
+          <div class="field">
+            <label>Emoji Dragão</label>
+            <input id="fdr-emojidragao" type="text" placeholder="🐉" style="font-size:1.4rem;text-align:center">
+          </div>
+          <div class="field">
+            <label>Cor</label>
+            <input id="fdr-cor" type="color" value="#C8A84A"
+              style="width:100%;height:38px;padding:3px;border:1.5px solid var(--gold);border-radius:8px;cursor:pointer;background:#F8F4E8">
+          </div>
+        </div>
+
+        <div class="i18n-section">
+          <div class="i18n-title">🌐 English <span>opcional</span></div>
+          <div class="field-row">
+            <div class="field"><label>Name</label><input id="fdr-en-nome" placeholder="e.g. Great Dragon"></div>
+            <div class="field"><label>Element</label><input id="fdr-en-elemento" placeholder="e.g. Fire, Water, Earth"></div>
+          </div>
+          <div class="field"><label>Rarity</label><input id="fdr-en-raridade" placeholder="e.g. Legendary, Epic"></div>
+          <div class="field"><label>Description</label><textarea id="fdr-en-descricao" rows="2" placeholder="Dragon description in English..."></textarea></div>
+          <div class="field-row">
+            <div class="field"><label>March bonus</label><input id="fdr-en-bonus" placeholder="e.g. +5% attack"></div>
+            <div class="field"><label>Attribute</label><input id="fdr-en-atributo" placeholder="e.g. Troop attack"></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="fecharModal('modal-dragao')">Cancelar</button>
+        <button class="btn btn-gold"  onclick="salvarDragao()">💾 Salvar Dragão</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Atributos por Nível -->
+  <div id="modal-dniv" class="modal-bg">
+    <div class="modal-card" style="max-width:900px">
+      <div class="modal-header">
+        <h3 id="modal-dniv-titulo">Atributos por Nível</h3>
+        <button class="btn-close" onclick="fecharModal('modal-dniv')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.72rem;color:var(--muted);font-weight:700;margin-bottom:12px">
+          💡 Clique em uma linha da tabela para ver a comparação com o próximo nível. Todos os atributos iniciam em <strong>0</strong>.
+        </p>
+        <div id="dniv-conteudo"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="fecharModal('modal-dniv')">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Habilidades do Dragão -->
+  <div id="modal-dhab" class="modal-bg">
+    <div class="modal-card" style="max-width:620px">
+      <div class="modal-header">
+        <h3 id="modal-dhab-titulo">Habilidades</h3>
+        <button class="btn-close" onclick="fecharModal('modal-dhab')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:.72rem;color:var(--muted);font-weight:700;margin:0 0 12px">Cadastre somente a habilidade base. Não é necessário preencher os 90 níveis.</p>
+        <div id="dhab-lista"></div>
+        <div id="dhab-form" style="display:none;margin-top:12px;padding:12px;background:var(--bg2);border:1px solid rgba(200,168,74,.35);border-radius:10px">
+          <div class="field-row"><div class="field"><label>Nome *</label><input id="dhab-nome"></div><div class="field"><label>Tipo</label><select id="dhab-tipo"><option value="batalha">Batalha</option><option value="comum">Comum</option></select></div></div>
+          <div class="field"><label>Imagem <span style="font-size:.6rem;color:var(--muted)">(opcional)</span></label><input id="dhab-imagem" placeholder="/assets/... ou URL"></div>
+          <div class="field"><label>Descrição / efeito base</label><textarea id="dhab-descricao" rows="4"></textarea></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="fecharFormHabilidade()">Cancelar</button><button class="btn btn-gold" onclick="salvarHabilidadeDragao()">💾 Salvar habilidade</button></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-ghost" onclick="fecharModal('modal-dhab')">Fechar</button></div>
+    </div>
+  </div>
+
+  <!-- Modal Edifício (meta) -->
+  <div id="modal-edificio" class="modal-bg">
+    <div class="modal-card" style="max-width:520px">
+      <div class="modal-header">
+        <h3 id="modal-ed-titulo">Novo Edifício</h3>
+        <button class="btn-close" onclick="fecharModal('modal-edificio')">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="field-row">
+          <div class="field">
+            <label>Slug * <span style="font-size:0.6rem;color:var(--muted);font-weight:600">(identificador único, sem espaço)</span></label>
+            <input id="fed-slug" type="text" placeholder="Ex: Casa, PontoDeReuniao">
+          </div>
+          <div class="field">
+            <label>Nome *</label>
+            <input id="fed-nome" type="text" placeholder="Ex: Casa">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Tag <span style="font-size:0.6rem;color:var(--muted);font-weight:600">(recurso principal)</span></label>
+            <input id="fed-tag" type="text" placeholder="Ex: Pop., Alim., Ouro">
+          </div>
+          <div class="field">
+            <label>Ordem (posição no seletor)</label>
+            <input id="fed-ordem" type="number" min="0" placeholder="0">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Ícone</label>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+            <div id="emoji-preview-ed" style="width:48px;height:48px;border-radius:50%;display:flex;align-items:center;
+              justify-content:center;font-size:1.7rem;background:rgba(200,168,74,0.1);border:2px solid var(--gold);flex-shrink:0">🏗️</div>
+            <span style="font-size:0.7rem;color:var(--muted);font-weight:700">Clique para escolher o ícone</span>
+          </div>
+          <div id="emoji-grid-ed" style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;
+            max-height:120px;overflow-y:auto;padding:8px;background:var(--bg2);
+            border:1px solid rgba(200,168,74,0.3);border-radius:10px"></div>
+        </div>
+
+        <div class="field">
+          <label>Descrição</label>
+          <textarea id="fed-descricao" rows="2" placeholder="Descrição do edifício..."
+            style="width:100%;font-family:inherit;font-size:0.85rem;font-weight:600;background:#F8F4E8;
+                   color:var(--dark);border:1.5px solid var(--gold);border-radius:8px;padding:8px 12px;
+                   outline:none;resize:vertical;min-height:60px;"
+            onfocus="this.style.borderColor='var(--gold3)'" onblur="this.style.borderColor='var(--gold)'"></textarea>
+        </div>
+
+        <div class="i18n-section">
+          <div class="i18n-title">🌐 English <span>opcional</span></div>
+          <div class="field-row">
+            <div class="field"><label>Name</label><input id="fed-en-nome" placeholder="Building name in English"></div>
+            <div class="field"><label>Tag</label><input id="fed-en-tag" placeholder="e.g. Pop., Food, Gold"></div>
+          </div>
+          <div class="field"><label>Description</label><textarea id="fed-en-descricao" rows="2" placeholder="Building description in English..."></textarea></div>
+        </div>
+
+        <div class="field">
+          <label>Colunas da tabela de níveis
+            <button type="button" onclick="adicionarColuna()"
+              style="margin-left:8px;padding:2px 8px;font-size:0.68rem;font-weight:800;
+                     background:rgba(200,168,74,0.12);border:1px solid rgba(200,168,74,0.4);
+                     border-radius:5px;cursor:pointer;color:var(--gold3)">＋ Coluna</button>
+          </label>
+          <div id="colunas-editor" style="margin-top:6px"></div>
+          <p style="font-size:0.65rem;color:var(--muted);margin-top:6px;font-weight:600">
+            💡 Defina as colunas antes de editar os níveis. Ex: <code>prodHora</code> / Prod./h / Número
+          </p>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="fecharModal('modal-edificio')">Cancelar</button>
+        <button class="btn btn-gold"  onclick="salvarEdificio()">💾 Salvar Edifício</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Níveis -->
+  <div id="modal-niveis" class="modal-bg">
+    <div class="modal-card" style="max-width:700px">
+      <div class="modal-header">
+        <h3 id="modal-niv-titulo">Níveis</h3>
+        <button class="btn-close" onclick="fecharModal('modal-niveis')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.72rem;color:var(--muted);font-weight:700;margin-bottom:10px">
+          💡 Edite os valores diretamente na tabela. Clique em <strong>＋ Adicionar Nível</strong> para inserir linhas. Salve ao terminar.
+        </p>
+        <div id="niveis-editor"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="fecharModal('modal-niveis')">Cancelar</button>
+        <button class="btn btn-gold"  onclick="salvarNiveis()">💾 Salvar Níveis</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Item -->
+  <div id="modal-item" class="modal-bg">
+    <div class="modal-card" style="max-width:560px">
+      <div class="modal-header">
+        <h3 id="modal-item-titulo">Novo Item</h3>
+        <button class="btn-close" onclick="fecharModal('modal-item')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label>Nome *</label><input id="fi-nome" type="text" placeholder="Ex: Aceleração de 8 Horas"></div>
+        <div class="grid2">
+          <div class="field"><label>Identificador / slug</label><input id="fi-slug" type="text" placeholder="Gerado pelo nome se vazio"></div>
+          <div class="field"><label>Imagem (URL ou /assets/...)</label><input id="fi-imagem" type="text" placeholder="/assets/items/..."></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Grupo da aba</label><select id="fi-grupo"><option value="geral">Geral</option><option value="recursos">Recursos</option><option value="aceleracoes">Acelerações</option><option value="arcas">Arcas</option></select></div>
+          <div class="field"><label>Categoria específica</label><input id="fi-categoria" type="text" placeholder="Ex: Nanos, Dragão, Teleporte"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Raridade</label><input id="fi-raridade" type="text" placeholder="Opcional"></div>
+          <div class="field"><label>Quantidade / pacote</label><input id="fi-quantidade" type="number" min="0" placeholder="Opcional"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Preço atual (Rubis)</label><input id="fi-preco" type="number" min="0" step="1" placeholder="Ex: 40"></div>
+          <div class="field"><label>Preço anterior (Rubis)</label><input id="fi-preco-original" type="number" min="0" step="1" placeholder="Para promoções"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Ordem</label><input id="fi-ordem" type="number" value="999"></div>
+          <div class="field" style="display:flex;align-items:flex-end"><label style="display:flex;align-items:center;gap:8px;min-height:38px;cursor:pointer"><input id="fi-destaque" type="checkbox" style="width:auto"> ★ Mostrar em Destaques</label></div>
+        </div>
+
+        <details class="admin-collapse" open>
+          <summary>🖼️ Visual e descrição</summary>
+          <div class="admin-collapse-body">
+            <div class="field"><label>Ícone</label><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><div id="emoji-preview" style="width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;background:rgba(200,168,74,0.1);border:2px solid var(--gold);flex-shrink:0">🎒</div><span style="font-size:0.7rem;color:var(--muted);font-weight:700">Usado quando não há imagem.</span></div><div id="emoji-grid" style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;max-height:120px;overflow-y:auto;padding:8px;background:var(--bg2);border:1px solid rgba(200,168,74,0.3);border-radius:10px"></div></div>
+            <div class="field"><label>Descrição</label><textarea id="fi-descricao" rows="3" placeholder="Descrição exibida na lista e no detalhe"></textarea></div>
+            <div class="field"><label>Origem</label><textarea id="fi-origem" rows="2" placeholder="Loja, evento, baú..."></textarea></div>
+            <div class="field"><label>Utilização</label><textarea id="fi-uso" rows="2" placeholder="Para que o item serve..."></textarea></div>
+            <div class="field"><label>Limites</label><textarea id="fi-limites" rows="2" placeholder="Limites de uso ou disponibilidade..."></textarea></div>
+            <div class="field"><label>Onde conseguir</label><textarea id="fi-onde" rows="2" placeholder="Onde obter o item..."></textarea></div>
+          </div>
+        </details>
+
+        <details class="admin-collapse">
+          <summary>⚙️ Efeito estruturado</summary>
+          <div class="admin-collapse-body">
+            <div class="grid2"><div class="field"><label>Tipo de efeito</label><input id="fi-efeito-tipo" placeholder="aceleracao, recurso, producao..."></div><div class="field"><label>Valor</label><input id="fi-efeito-valor" type="number" step="any" placeholder="Ex: 8"></div></div>
+            <div class="field"><label>Unidade</label><input id="fi-efeito-unidade" placeholder="horas, minutos, madeira, percentual..."></div>
+            <div class="field"><label>Tags</label><input id="fi-tags" placeholder="Separadas por vírgula"></div>
+          </div>
+        </details>
+
+        <details class="admin-collapse">
+          <summary>▣ Conteúdo da Arca</summary>
+          <div class="admin-collapse-body">
+            <div style="font-size:.68rem;color:var(--muted);margin-bottom:8px">Relacione itens do próprio catálogo. Isso permite reutilizar o mesmo dado em Arcas e Tutoriais.</div>
+            <div id="fi-conteudo-lista"></div>
+            <button type="button" class="btn btn-navy btn-sm" onclick="adicionarConteudoItem()">＋ Adicionar item</button>
+            <div class="field" style="margin-top:10px"><label>Observação sobre o conteúdo</label><textarea id="fi-conteudo-observacao" rows="2" placeholder="Use para conteúdo aleatório ou ainda não estruturado"></textarea></div>
+          </div>
+        </details>
+
+        <details class="admin-collapse">
+          <summary>🌐 English (opcional)</summary>
+          <div class="admin-collapse-body i18n-section" style="margin:0">
+            <div class="field"><label>Name</label><input id="fi-en-nome" type="text" placeholder="Item name in English"></div>
+            <div class="field"><label>Description</label><textarea id="fi-en-descricao" rows="2" placeholder="Item description in English..."></textarea></div>
+            <div class="field"><label>Where to get it</label><textarea id="fi-en-onde" rows="2" placeholder="Where to obtain this item..."></textarea></div>
+          </div>
+        </details>
+      </div>
+      <div class="modal-footer"><button class="btn btn-ghost" onclick="fecharModal('modal-item')">Cancelar</button><button class="btn btn-gold" onclick="salvarItem()">💾 Salvar Item</button></div>
+    </div>
+  </div>
+
+
+
+
+<!-- ═════════════════════════════════════════════════════════════════
+     MÓDULO: PESQUISAS — modais
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-pesquisa">
+  <div class="modal-card" style="max-width:440px;width:100%">
+    <div class="modal-header">
+      <h3 id="modal-pesquisa-titulo">🔬 Nova Pesquisa</h3>
+      <button class="modal-close" onclick="fecharModal('modal-pesquisa')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:72vh;overflow-y:auto">
+      <input type="hidden" id="pe-slug-original">
+      <div class="field">
+        <label>Slug (identificador único)</label>
+        <input type="text" id="pe-slug" placeholder="ex: cc-maestria-golpe">
+      </div>
+      <div class="field">
+        <label>Nome</label>
+        <input type="text" id="pe-nome" placeholder="ex: Maestria do Golpe">
+      </div>
+      <div class="field">
+        <label>Categoria</label>
+        <select id="pe-categoria">
+          <option value="Produção">Produção</option>
+          <option value="Movimento e Construção">Movimento e Construção</option>
+          <option value="Corpo a Corpo">Corpo a Corpo</option>
+          <option value="Ataque à Distância">Ataque à Distância</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field" style="margin-bottom:0">
+          <label>Nível Máximo (1–15)</label>
+          <input type="number" id="pe-nivel-max" min="1" max="15" value="10">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>Ordem na lista</label>
+          <input type="number" id="pe-ordem" min="0" value="0">
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>Ícone</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span id="emoji-preview-pe" style="font-size:2.2rem;line-height:1">🔬</span>
+          <span style="font-size:0.65rem;color:var(--muted);font-weight:800">ÍCONE SELECIONADO</span>
+        </div>
+        <div id="emoji-grid-pe" style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px"></div>
+      </div>
+      <div class="field">
+        <label>Descrição</label>
+        <textarea id="pe-descricao" rows="3" placeholder="Descreva o efeito desta pesquisa…"></textarea>
+      </div>
+      <div class="i18n-section">
+        <div class="i18n-title">🌐 English <span>opcional</span></div>
+        <div class="field"><label>Name</label><input type="text" id="pe-en-nome" placeholder="Research name in English"></div>
+        <div class="field"><label>Description</label><textarea id="pe-en-descricao" rows="2" placeholder="Research description in English..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-pesquisa')">Cancelar</button>
+      <button class="btn btn-gold" onclick="salvarPesquisa()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-niveis-pesquisa">
+  <div class="modal-card" style="max-width:380px;width:100%">
+    <div class="modal-header">
+      <h3 id="modal-niveis-pe-titulo">⏱ Tempos da Pesquisa</h3>
+      <button class="modal-close" onclick="fecharModal('modal-niveis-pesquisa')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:68vh;overflow-y:auto;padding:14px 16px">
+      <p style="font-size:0.7rem;color:var(--muted);font-weight:600;margin:0 0 12px;line-height:1.5">
+        Preencha somente os níveis que você conhece. Use formatos como <strong>31m 37s</strong>, <strong>4h 5m 47s</strong> ou <strong>2d 3h</strong>. Campos vazios continuam como desconhecidos.
+      </p>
+      <div id="niveis-pesquisa-lista"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-niveis-pesquisa')">Cancelar</button>
+      <button class="btn btn-gold" onclick="salvarNiveisPesquisa()">💾 Salvar Tempos</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Reino -->
+<div class="modal-bg" id="modal-reino">
+  <div class="modal-card admin-realm-modal">
+    <div class="card-header admin-event-modal-head"><h2 id="mr-titulo">🌍 Novo Reino</h2><button class="btn-close" onclick="fecharModal('modal-reino')">✕</button></div>
+    <div class="card-body admin-event-modal-body">
+      <div class="admin-form-section"><h3>Identificação</h3>
+        <div class="grid2"><div class="field"><label>ID numérico *</label><input id="mr-id" type="number" min="1" placeholder="Ex: 348"></div><div class="field"><label>Nome *</label><input id="mr-nome" placeholder="Ex: Zulanka"></div></div>
+        <div class="grid2"><div class="field"><label>Status</label><input id="mr-status" placeholder="Deixe vazio quando não estiver confirmado"></div><div class="field"><label>Tipo especial</label><select id="mr-tipo-especial"><option value="">Normal</option><option value="idade_dragao">🐉 Idade do Dragão</option><option value="hardcore">⚔️ Hardcore</option></select></div></div>
+      </div>
+      <div class="admin-form-section"><h3>Tempo</h3>
+        <div class="grid2"><div class="field"><label>Data de abertura</label><input id="mr-abertura" type="date"></div><div class="field"><label>Fuso horário</label><select id="mr-fuso"><option value="">— Não informado —</option></select></div></div>
+        <small class="admin-field-help">A idade é calculada automaticamente. Não há campo manual para “X dias”.</small>
+      </div>
+      <div class="admin-form-section"><h3>Horários do reino</h3>
+        <div class="field"><label>Fim dos torneios (UTC do jogo)</label><input id="mr-torneios" type="time"></div>
+        <div class="grid2"><div class="field"><label>Zyrvorthian (UTC do jogo)</label><input id="mr-zyrvorthian" type="time"></div><div class="field"><label>Batalha do Dragão (UTC do jogo)</label><input id="mr-dragao" type="time"></div></div>
+        <small class="admin-field-help">Campos vazios permanecem como “não informado”.</small>
+      </div>
+      <div class="admin-form-section"><h3>Histórico</h3>
+        <div class="field"><label>Status histórico</label><input id="mr-historico-status" placeholder="Opcional"></div>
+        <div class="field"><label>Observações históricas</label><textarea id="mr-historico-obs" rows="3"></textarea></div>
+        <div class="admin-callout compact"><strong>Fusões futuras</strong><span>A arquitetura já separa reino original, reino parceiro, data, reino resultante, observações e histórico. Nenhuma fusão fictícia é criada por este formulário.</span></div>
+      </div>
+      <div class="admin-form-section admin-i18n-section"><div class="i18n-title">🌐 English <span>opcional</span></div>
+        <div class="field"><label>Name</label><input id="mr-en-nome" placeholder="Optional English name"></div>
+        <div class="field"><label>Status</label><input id="mr-en-status" placeholder="Optional English status"></div>
+        <div class="grid2"><div class="field"><label>Historical status</label><input id="mr-en-historico-status"></div><div class="field"><label>Historical notes</label><textarea id="mr-en-historico-obs" rows="2"></textarea></div></div>
+      </div>
+    </div>
+    <div class="admin-event-modal-footer"><button class="btn btn-ghost" onclick="fecharModal('modal-reino')">Cancelar</button><button class="btn btn-gold" onclick="salvarReino()">💾 Salvar</button></div>
+  </div>
+</div>
+
+<script src="/admin/js/admin-pesquisas.js"></script>
+<script src="/admin/js/admin-reinos.js"></script>
+<script src="/admin/js/admin-eventos.js"></script>
+<script src="/admin/js/admin-eventos-datas.js"></script>
+<script src="/admin/js/admin-eventos-reinos.js"></script>
+<script src="/admin/js/admin-eventos-recompensas.js"></script>
+<script src="/admin/js/admin-dicas.js"></script>
+<script src="/admin/js/admin-alliances.js"></script>
+<script src="/admin/js/admin-campanha.js"></script>
+<script src="/admin/js/admin-ui.js"></script>
+
+</body>
+</html>
